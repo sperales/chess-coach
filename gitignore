@@ -1,0 +1,56 @@
+# Chess Coach - local configuration files
+config/database.php
+config/engine.php
+config/cron.php
+
+# Logs
+storage/logs/*
+!storage/logs/.gitkeep
+
+# Temporary / cache files
+*.log
+*.tmp
+*.temp
+.cache/
+tmp/
+temp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Archives / generated packages
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+
+# Backups
+*.bak
+*.backup
+*.old
+*~
+
+# PHP dependency folders, if ever created locally
+vendor/
+
+# Node dependency folders, if ever created locally
+node_modules/
+dist/
+build/
+
+# Test / coverage artifacts
+coverage/
+.phpunit.result.cache
