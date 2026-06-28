@@ -1,0 +1,3 @@
+-- Chess Coach PWA 0.5.2
+-- UI-only change: Importar PGN is collapsed by default.
+-- No database schema changes required.

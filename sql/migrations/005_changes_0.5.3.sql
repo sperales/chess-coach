@@ -1,0 +1,3 @@
+-- Chess Coach PWA v0.5.3
+-- Cambio técnico: separación de configuración en config/app.php, config/version.php, config/security.php y config/database.php.
+-- No requiere cambios de esquema en MariaDB.
