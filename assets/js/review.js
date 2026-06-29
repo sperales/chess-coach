@@ -96,28 +96,36 @@ function renderChart() {
   const w = canvas.width;
   const h = canvas.height;
   ctx.clearRect(0,0,w,h);
-  ctx.fillStyle = '#f7f7f3';
+  ctx.fillStyle = '#0d171d';
   ctx.fillRect(0,0,w,h);
+  const pad = 22;
+  const step = moves.length > 1 ? (w - pad*2) / (moves.length - 1) : 0;
+  const points = moves.map((m,i) => ({
+    x: pad + i*step,
+    y: h/2 - (scoreForChart(m) / 6) * (h/2 - pad)
+  }));
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, h);
+  points.forEach(point => ctx.lineTo(point.x, point.y));
+  ctx.lineTo(points[points.length - 1].x, h);
+  ctx.closePath();
+  ctx.fillStyle = '#f7f7f3';
+  ctx.fill();
   ctx.strokeStyle = '#c8c8c3';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(0,h/2); ctx.lineTo(w,h/2); ctx.stroke();
-  const pad = 22;
-  const step = moves.length > 1 ? (w - pad*2) / (moves.length - 1) : 0;
   ctx.beginPath();
   ctx.lineWidth = 3;
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
   ctx.strokeStyle = '#4f4d49';
-  moves.forEach((m,i) => {
-    const x = pad + i*step;
-    const y = h/2 - (scoreForChart(m) / 6) * (h/2 - pad);
-    if (i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  points.forEach((point,i) => {
+    if (i === 0) ctx.moveTo(point.x,point.y); else ctx.lineTo(point.x,point.y);
   });
   ctx.stroke();
   moves.forEach((m,i) => {
-    const x = pad + i*step;
-    const y = h/2 - (scoreForChart(m) / 6) * (h/2 - pad);
+    const { x, y } = points[i];
     const bucket = m.review_bucket;
     if (!['inaccuracy','mistake','blunder'].includes(bucket)) return;
     ctx.beginPath();

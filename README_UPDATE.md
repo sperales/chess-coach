@@ -20,7 +20,7 @@ This version changes only the evaluation chart styling on the game review page. 
 
 ## User-facing change
 
-The review page evaluation chart now uses a light chart area with a darker evaluation line, closer to the target visual style.
+The review page evaluation chart now fills only the area under the evaluation line in light color, closer to the target visual style.
 
 Critical move markers remain color-coded.
 
@@ -65,6 +65,6 @@ Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
 - Confirm `config/version.php` reports `0.8.8`.
 - Confirm `service-worker.js` uses `chess-coach-v0.8.8`.
 - Open an analyzed game review page.
-- Confirm the "Gráfico de evaluación" chart area is light.
+- Confirm only the area under the "Gráfico de evaluación" line is light.
 - Confirm the evaluation line and critical move markers remain visible.
 - Confirm no real credentials were committed.

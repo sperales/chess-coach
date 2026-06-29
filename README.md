@@ -119,7 +119,7 @@ Includes:
 - Board reconstruction from FEN
 - Move-by-move review
 - Evaluation graph
-- Light evaluation chart background in v0.8.8
+- Light area under the evaluation line in v0.8.8
 - Approximate accuracy
 - ACPL
 - Move classification

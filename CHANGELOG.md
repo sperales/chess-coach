@@ -4,7 +4,7 @@
 
 ### Changed
 
-- Updated the review page evaluation chart to use a light chart area.
+- Updated the review page evaluation chart to fill the area under the evaluation line in light color.
 - Changed the evaluation chart line to a darker neutral stroke for contrast.
 - Kept critical move markers color-coded.
 - Bumped `config/version.php` to `0.8.8`.

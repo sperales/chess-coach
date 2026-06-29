@@ -36,7 +36,7 @@ The product should help answer questions like:
 
 v0.8.8 is a review chart visual refinement built on top of v0.8.7.
 
-It updates the review page evaluation chart to use a light chart area with a darker evaluation line, while keeping the surrounding review UI dark.
+It updates the review page evaluation chart to fill the area under the evaluation line in light color, while keeping the chart background and surrounding review UI dark.
 
 ### v0.8.7 developer verification baseline
 
