@@ -1,5 +1,40 @@
 # CHANGELOG
 
+## v0.9.0 - Smart Tags
+
+### Added
+
+- Added Smart Tags schema and initial Spanish tag catalog.
+- Added automatic Smart Tags generation after completed Stockfish analysis.
+- Added game-level tags for opening issues, endgame mistakes, lost winning positions, comebacks, converted advantages, precise games and strong finishes.
+- Added move-level tags for own inaccuracies, mistakes, blunders, missed mates and allowed mates.
+- Added Smart Tags chips to the home game list.
+- Added frequent tags summary to the dashboard.
+- Added game and move tags to the review page.
+- Added profile "Procesos batch" block for Smart Tags backfill on previously analyzed games.
+- Added `smart_tag_runs` tracking for backfill executions.
+
+### Changed
+
+- Bumped `config/version.php` to `0.9.0`.
+- Updated the service worker cache name to `chess-coach-v0.9.0`.
+- Added `profile.php` to the service worker asset list.
+- Added cache-busting query parameters for page CSS/JS assets touched by Smart Tags UI.
+
+### Verification
+
+- PHP syntax lint passed locally across all PHP files.
+
+### Database
+
+- Added SQL migration `sql/migrations/017_changes_0.9.0.sql`.
+
+### Notes
+
+- Smart Tags detect, store and display patterns only.
+- This release does not add training recommendations or generated exercises.
+- Existing analyzed games require the profile backfill process to receive Smart Tags.
+
 ## v0.8.8 - Review chart visual refinement
 
 ### Changed

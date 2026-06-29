@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v0.8.8**
+Current stable baseline: **v0.9.0**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,7 +32,15 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v0.8.8
+## Current baseline — v0.9.0
+
+v0.9.0 adds Smart Tags.
+
+It detects, stores and displays reliable Spanish tags for analyzed games and moves. It also adds a profile batch process to backfill tags for games that were analyzed before Smart Tags existed.
+
+The feature is intentionally limited to pattern detection and tagging. Training recommendations and generated exercises remain planned for later versions.
+
+### v0.8.8 review chart baseline
 
 v0.8.8 is a review chart visual refinement built on top of v0.8.7.
 
@@ -92,11 +100,13 @@ It adds the deployment structure that should be tracked in Git:
 
 ---
 
-# Planned versions
+# Version roadmap
 
 ---
 
 ## v0.9.0 — Smart Tags
+
+Status: completed in v0.9.0.
 
 ### Goal
 

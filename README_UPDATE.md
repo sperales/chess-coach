@@ -1,10 +1,10 @@
-# Chess Coach v0.8.8 Update Notes
+# Chess Coach v0.9.0 Update Notes
 
 ## Release type
 
-Small review page visual refinement.
+Smart Tags feature release.
 
-This version changes only the evaluation chart styling on the game review page. It does not change database schema, analysis logic, Stockfish integration, move parsing, evaluation calculation, or review data interpretation.
+This version detects, stores and displays Smart Tags for analyzed games and moves. It does not add training recommendations, exercises or a full coaching engine yet.
 
 ## Changed files
 
@@ -13,16 +13,30 @@ This version changes only the evaluation chart styling on the game review page. 
 - `README.md`
 - `README_UPDATE.md`
 - `ROADMAP.md`
+- `api/analyze.php`
+- `api/games.php`
+- `api/review.php`
+- `app.php`
 - `assets/css/app.css`
+- `assets/js/app.js`
 - `assets/js/review.js`
 - `config/version.php`
+- `includes/analysis_queue.php`
+- `includes/smart_tags.php`
+- `profile.php`
+- `review.php`
 - `service-worker.js`
+- `sql/install.sql`
+- `sql/migrations/017_changes_0.9.0.sql`
 
-## User-facing change
+## User-facing changes
 
-The review page evaluation chart now fills only the area under the evaluation line in light color, closer to the target visual style.
-
-Critical move markers remain color-coded.
+- Smart Tags are generated automatically after Stockfish analysis completes.
+- Game-level tags are shown in the home game list.
+- Frequent tags are summarized on the dashboard.
+- Game-level tags are shown in review.
+- Move-level tags are shown in review for tagged moves.
+- A new "Procesos batch" block in profile allows backfilling Smart Tags for previously analyzed games.
 
 ## Deployment notes
 
@@ -40,14 +54,39 @@ No real config files changed in this release.
 
 ## SQL migration
 
-No SQL migration is required for v0.8.8.
+Run this migration before using Smart Tags:
+
+```text
+sql/migrations/017_changes_0.9.0.sql
+```
+
+The migration creates:
+
+- `smart_tag_definitions`
+- `game_tags`
+- `move_tags`
+- `smart_tag_runs`
+
+It also inserts the initial Spanish Smart Tags catalog.
+
+## Backfill
+
+Newly analyzed games are tagged automatically.
+
+For games that were already analyzed before v0.9.0, open:
+
+```text
+Ajustes / Mi Perfil -> Procesos batch -> Backfill de Smart Tags
+```
+
+Each execution processes up to 20 already analyzed games without rerunning Stockfish.
 
 ## Service worker
 
 The service worker cache name was updated to:
 
 ```text
-chess-coach-v0.8.8
+chess-coach-v0.9.0
 ```
 
 After deployment, hard refresh the browser or reinstall the PWA if stale cached assets appear.
@@ -62,9 +101,12 @@ Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
 
 ## Manual verification checklist
 
-- Confirm `config/version.php` reports `0.8.8`.
-- Confirm `service-worker.js` uses `chess-coach-v0.8.8`.
-- Open an analyzed game review page.
-- Confirm only the area under the "Gráfico de evaluación" line is light.
-- Confirm the evaluation line and critical move markers remain visible.
+- Confirm `config/version.php` reports `0.9.0`.
+- Confirm `service-worker.js` uses `chess-coach-v0.9.0`.
+- Run migration `017_changes_0.9.0.sql`.
+- Analyze or reanalyze a game and confirm Smart Tags are inserted.
+- Confirm game tags appear on the home page.
+- Confirm game and move tags appear on review.
+- Open profile and run the Smart Tags backfill batch.
+- Confirm the backfill pending count decreases or reports no pending games.
 - Confirm no real credentials were committed.
