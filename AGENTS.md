@@ -10,7 +10,7 @@ This file defines the working rules for Codex and other coding agents. Follow th
 
 ## Current stable baseline
 
-Current stable version: **0.8.7**
+Current stable version: **0.8.8**
 
 The app is deployed manually to shared hosting and must remain compatible with that environment.
 
@@ -117,7 +117,7 @@ The service worker cache name must change on each release to prevent stale brows
 Example:
 
 ```js
-const CACHE_NAME = 'chess-coach-v0.8.7';
+const CACHE_NAME = 'chess-coach-v0.8.8';
 ```
 
 After a version PR is explicitly approved by the user and merged into `main`, create and push the matching Git tag and create the GitHub Release.
@@ -392,7 +392,7 @@ Suggested commit style:
 ```text
 feat: add smart tags foundation
 fix: restore unicode board pieces
-chore: bump version to 0.8.7
+chore: bump version to 0.8.8
 docs: update installation notes
 ```
 

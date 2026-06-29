@@ -14,7 +14,7 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v0.8.7**
+Current stable baseline: **v0.8.8**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
@@ -119,6 +119,7 @@ Includes:
 - Board reconstruction from FEN
 - Move-by-move review
 - Evaluation graph
+- Light area under the evaluation line in v0.8.8
 - Approximate accuracy
 - ACPL
 - Move classification

@@ -1,10 +1,10 @@
-# Chess Coach v0.8.7 Update Notes
+# Chess Coach v0.8.8 Update Notes
 
 ## Release type
 
-Developer verification and documentation release.
+Small review page visual refinement.
 
-This version does not change application behavior, database schema, analysis logic, Stockfish integration, or review-board behavior.
+This version changes only the evaluation chart styling on the game review page. It does not change database schema, analysis logic, Stockfish integration, move parsing, evaluation calculation, or review data interpretation.
 
 ## Changed files
 
@@ -13,9 +13,16 @@ This version does not change application behavior, database schema, analysis log
 - `README.md`
 - `README_UPDATE.md`
 - `ROADMAP.md`
-- `VERIFY.md`
+- `assets/css/app.css`
+- `assets/js/review.js`
 - `config/version.php`
 - `service-worker.js`
+
+## User-facing change
+
+The review page evaluation chart now fills only the area under the evaluation line in light color, closer to the target visual style.
+
+Critical move markers remain color-coded.
 
 ## Deployment notes
 
@@ -33,14 +40,14 @@ No real config files changed in this release.
 
 ## SQL migration
 
-No SQL migration is required for v0.8.7.
+No SQL migration is required for v0.8.8.
 
 ## Service worker
 
 The service worker cache name was updated to:
 
 ```text
-chess-coach-v0.8.7
+chess-coach-v0.8.8
 ```
 
 After deployment, hard refresh the browser or reinstall the PWA if stale cached assets appear.
@@ -55,7 +62,9 @@ Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
 
 ## Manual verification checklist
 
-- Confirm `config/version.php` reports `0.8.7`.
-- Confirm `service-worker.js` uses `chess-coach-v0.8.7`.
-- Confirm `VERIFY.md` is included in the release source archive.
+- Confirm `config/version.php` reports `0.8.8`.
+- Confirm `service-worker.js` uses `chess-coach-v0.8.8`.
+- Open an analyzed game review page.
+- Confirm only the area under the "Gráfico de evaluación" line is light.
+- Confirm the evaluation line and critical move markers remain visible.
 - Confirm no real credentials were committed.
