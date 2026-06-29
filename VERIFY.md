@@ -18,6 +18,8 @@ The project is designed for shared hosting and intentionally avoids npm, Compose
 6. Confirm whether a SQL migration is required.
 7. Update `README_UPDATE.md`.
 8. Update `CHANGELOG.md`.
+9. After the approved version PR is merged to `main`, create the matching tag.
+10. After the tag is pushed, create the matching GitHub Release.
 
 ---
 
@@ -62,6 +64,40 @@ Select-String -Path service-worker.js -Pattern "CACHE_NAME"
 ```
 
 Both should match the release version.
+
+---
+
+## Tag And Release Checks
+
+Create tags only after the version PR has been approved by the user and merged into `main`.
+
+Use the version tag format:
+
+```text
+vX.Y.Z
+```
+
+Example for `v0.8.7`:
+
+```powershell
+git switch main
+git pull --ff-only origin main
+git tag -a v0.8.7 -m "Chess Coach v0.8.7"
+git push origin v0.8.7
+gh release create v0.8.7 --title "Chess Coach v0.8.7" --notes-file README_UPDATE.md
+```
+
+Confirm the tag points at the merged `main` commit:
+
+```powershell
+git log -1 --oneline "v0.8.7^{}"
+```
+
+Confirm the GitHub Release exists:
+
+```powershell
+gh release view v0.8.7
+```
 
 ---
 

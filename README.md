@@ -446,7 +446,9 @@ For each release:
 3. Run the new SQL migration if one exists.
 4. Confirm `config/version.php` has the expected version.
 5. Confirm `service-worker.js` cache name was updated.
-6. Hard refresh the browser or reinstall the PWA if cached assets appear stale.
+6. After the approved version PR is merged into `main`, create the matching Git tag.
+7. Create the matching GitHub Release.
+8. Hard refresh the browser or reinstall the PWA if cached assets appear stale.
 
 ---
 
@@ -458,6 +460,13 @@ Each version should update:
 config/version.php
 service-worker.js
 README_UPDATE.md
+```
+
+After merging a version PR into `main`, each version should also get:
+
+```text
+Git tag: vX.Y.Z
+GitHub Release: Chess Coach vX.Y.Z
 ```
 
 A SQL migration should be added only when needed.

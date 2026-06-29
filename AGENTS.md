@@ -120,6 +120,24 @@ Example:
 const CACHE_NAME = 'chess-coach-v0.8.7';
 ```
 
+After a version PR is explicitly approved by the user and merged into `main`, create and push the matching Git tag and create the GitHub Release.
+
+Use the version tag format:
+
+```text
+vX.Y.Z
+```
+
+Example:
+
+```powershell
+git tag -a v0.8.7 -m "Chess Coach v0.8.7"
+git push origin v0.8.7
+gh release create v0.8.7 --title "Chess Coach v0.8.7" --notes-file README_UPDATE.md
+```
+
+Do not create release tags before the version PR has been merged into `main`.
+
 ---
 
 ## SQL migration rules
@@ -400,6 +418,8 @@ fix/0.8.6-review-board
 Open pull requests against `main` for review.
 
 Do not merge pull requests into `main` unless the user explicitly asks for the merge.
+
+When a version PR is merged into `main`, create the corresponding version tag and GitHub Release before considering the release workflow complete.
 
 ---
 
