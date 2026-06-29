@@ -1,4 +1,4 @@
-<?php require_once __DIR__.'/includes/auth.php'; require_once __DIR__.'/includes/helpers.php'; $u=require_login(); $gameId=(int)($_GET['id']??0); ?>
+<?php require_once __DIR__.'/includes/auth.php'; require_once __DIR__.'/includes/helpers.php'; $u=require_login(); $gameId=(int)($_GET['id']??0); $assetVersion=(string)filemtime(__DIR__.'/assets/css/app.css'); $reviewJsVersion=(string)filemtime(__DIR__.'/assets/js/review.js'); $layoutJsVersion=(string)filemtime(__DIR__.'/assets/js/layout.js'); ?>
 <!doctype html>
 <html lang="es">
 <head>
@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Revisión de partida · Chess Coach</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/app.css?v=<?=e($assetVersion)?>">
   <link rel="icon" href="assets/icons/favicon.ico">
 </head>
 <body class="dark-shell">
@@ -88,7 +88,7 @@
 </main>
 </div>
 <script>window.CHESS_REVIEW_GAME_ID = <?= (int)$gameId ?>;</script>
-<script src="assets/js/layout.js"></script>
-<script src="assets/js/review.js"></script>
+<script src="assets/js/layout.js?v=<?=e($layoutJsVersion)?>"></script>
+<script src="assets/js/review.js?v=<?=e($reviewJsVersion)?>"></script>
 </body>
 </html>

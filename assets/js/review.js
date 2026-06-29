@@ -75,7 +75,7 @@ function renderSummary() {
   document.getElementById('reviewIntro').textContent = `${g.white_player || 'Blancas'} vs ${g.black_player || 'Negras'} · ${g.result_raw || '-'} · ${g.played_at || ''}`;
   document.getElementById('reviewHeadline').textContent = s.headline || 'Revisión de partida';
   document.getElementById('reviewComment').textContent = s.comment || 'Vamos a revisar los momentos importantes.';
-  renderTagList(document.getElementById('reviewSmartTags'), s.smart_tags || []);
+  renderTagList(ensureTagList('reviewSmartTags', 'reviewComment', 'review-tags'), s.smart_tags || []);
   document.getElementById('accuracyValue').textContent = s.accuracy ?? '--';
   document.getElementById('acplValue').textContent = s.acpl ?? '--';
   document.getElementById('movesValue').textContent = s.moves ?? '--';
@@ -87,6 +87,18 @@ function renderSummary() {
   document.getElementById('reviewCounts').innerHTML = labels.map(([key,label]) => `
     <div class="review-count ${key}"><span>${bucketIcon(key)}</span><strong>${counts[key] || 0}</strong><small>${label}</small></div>
   `).join('');
+}
+
+function ensureTagList(id, afterId, extraClass) {
+  let el = document.getElementById(id);
+  if (el) return el;
+  const after = document.getElementById(afterId);
+  if (!after || !after.parentNode) return null;
+  el = document.createElement('div');
+  el.id = id;
+  el.className = `smart-tag-list ${extraClass || ''}`.trim();
+  after.parentNode.insertBefore(el, after.nextSibling);
+  return el;
 }
 
 function smartTagClass(tag) {
@@ -191,7 +203,7 @@ function renderMove() {
   document.getElementById('moveSan').textContent = `${m.san || m.uci} es ${m.review_label.toLowerCase()}`;
   document.getElementById('moveEval').textContent = evalText(m);
   document.getElementById('moveExplanation').textContent = m.explanation || '';
-  renderTagList(document.getElementById('moveSmartTags'), m.smart_tags || []);
+  renderTagList(ensureTagList('moveSmartTags', 'moveExplanation', 'move-tags'), m.smart_tags || []);
   renderBoard(m.fen_after, m.uci);
   renderMoveList();
 }
