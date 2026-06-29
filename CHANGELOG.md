@@ -1,5 +1,29 @@
 # CHANGELOG
 
+## v0.8.8 - Review chart visual refinement
+
+### Changed
+
+- Updated the review page evaluation chart to use a light chart area.
+- Changed the evaluation chart line to a darker neutral stroke for contrast.
+- Kept critical move markers color-coded.
+- Bumped `config/version.php` to `0.8.8`.
+- Updated the service worker cache name to `chess-coach-v0.8.8`.
+- Updated release documentation for the current version.
+
+### Verification
+
+- PHP syntax lint passed locally across all PHP files.
+
+### Database
+
+- No SQL migration required.
+
+### Notes
+
+- No analysis logic changed.
+- No Stockfish, PGN parsing, move reconstruction, review calculation, authentication, or database logic changed.
+
 ## v0.8.7 - Developer verification docs
 
 ### Added

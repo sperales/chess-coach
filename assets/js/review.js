@@ -96,17 +96,19 @@ function renderChart() {
   const w = canvas.width;
   const h = canvas.height;
   ctx.clearRect(0,0,w,h);
-  ctx.fillStyle = '#0d171d';
+  ctx.fillStyle = '#f7f7f3';
   ctx.fillRect(0,0,w,h);
-  ctx.strokeStyle = '#40505b';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = '#c8c8c3';
+  ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(0,h/2); ctx.lineTo(w,h/2); ctx.stroke();
   const pad = 22;
   const step = moves.length > 1 ? (w - pad*2) / (moves.length - 1) : 0;
   ctx.beginPath();
   ctx.lineWidth = 3;
-  ctx.strokeStyle = '#75d45b';
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#4f4d49';
   moves.forEach((m,i) => {
     const x = pad + i*step;
     const y = h/2 - (scoreForChart(m) / 6) * (h/2 - pad);
