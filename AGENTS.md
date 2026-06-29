@@ -10,7 +10,7 @@ This file defines the working rules for Codex and other coding agents. Follow th
 
 ## Current stable baseline
 
-Current stable version: **0.8.6**
+Current stable version: **0.8.7**
 
 The app is deployed manually to shared hosting and must remain compatible with that environment.
 
@@ -117,7 +117,7 @@ The service worker cache name must change on each release to prevent stale brows
 Example:
 
 ```js
-const CACHE_NAME = 'chess-coach-v0.8.6';
+const CACHE_NAME = 'chess-coach-v0.8.7';
 ```
 
 ---
@@ -296,6 +296,18 @@ find . -name "*.php" -print0 | xargs -0 -n1 php -l
 
 If `xargs -0` is unavailable, use an equivalent loop.
 
+On Windows PowerShell, use:
+
+```powershell
+Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
+```
+
+For release checks, also consult:
+
+```text
+VERIFY.md
+```
+
 Also inspect changed JavaScript for obvious syntax errors.
 
 Manual validation checklist:
@@ -339,6 +351,7 @@ README_UPDATE.md
 AGENTS.md
 ROADMAP.md
 CHANGELOG.md
+VERIFY.md
 ```
 
 Recommended responsibilities:
@@ -348,6 +361,7 @@ Recommended responsibilities:
 - `AGENTS.md`: coding-agent rules.
 - `ROADMAP.md`: planned features and version roadmap.
 - `CHANGELOG.md`: release history.
+- `VERIFY.md`: local verification commands and release checks.
 
 ---
 
@@ -360,7 +374,7 @@ Suggested commit style:
 ```text
 feat: add smart tags foundation
 fix: restore unicode board pieces
-chore: bump version to 0.8.6
+chore: bump version to 0.8.7
 docs: update installation notes
 ```
 

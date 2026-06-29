@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v0.8.6**
+Current stable baseline: **v0.8.7**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,7 +32,17 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v0.8.6
+## Current baseline — v0.8.7
+
+v0.8.7 is a developer verification and documentation release built on top of v0.8.6.
+
+It adds:
+
+- `VERIFY.md`
+- documented PHP lint commands for Windows PowerShell and Unix-like shells
+- clearer release verification notes
+
+### v0.8.6 repository baseline
 
 v0.8.6 is a repository hygiene and documentation release built on top of the v0.8.5 app baseline.
 
