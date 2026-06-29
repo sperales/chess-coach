@@ -222,3 +222,101 @@ function smart_tag_generate_for_analysis(int $analysisId, int $userId): array {
     'user_side' => $userSide,
   ];
 }
+
+function smart_tag_backfill_pending_count(int $userId): int {
+  $sql = 'SELECT COUNT(*)
+          FROM game_analysis a
+          WHERE a.user_id=?
+            AND a.status="done"
+            AND a.id=(SELECT id FROM game_analysis WHERE game_id=a.game_id AND user_id=? AND status="done" ORDER BY id DESC LIMIT 1)
+            AND NOT EXISTS (SELECT 1 FROM game_tags gt WHERE gt.analysis_id=a.id AND gt.user_id=?)';
+  $st = db()->prepare($sql);
+  $st->execute([$userId, $userId, $userId]);
+  return (int)$st->fetchColumn();
+}
+
+function smart_tag_backfill_batch(int $userId, int $limit = 10, string $trigger = 'profile-page'): array {
+  $limit = max(1, min(50, $limit));
+  $started = microtime(true);
+  $pendingBefore = smart_tag_backfill_pending_count($userId);
+  $runId = null;
+
+  try {
+    $run = db()->prepare('INSERT INTO smart_tag_runs (user_id,trigger_source,status,started_at) VALUES (?,?,"running",NOW())');
+    $run->execute([$userId, $trigger]);
+    $runId = (int)db()->lastInsertId();
+  } catch (Throwable $e) {
+    $runId = null;
+  }
+
+  $sql = 'SELECT a.id
+          FROM game_analysis a
+          WHERE a.user_id=?
+            AND a.status="done"
+            AND a.id=(SELECT id FROM game_analysis WHERE game_id=a.game_id AND user_id=? AND status="done" ORDER BY id DESC LIMIT 1)
+            AND NOT EXISTS (SELECT 1 FROM game_tags gt WHERE gt.analysis_id=a.id AND gt.user_id=?)
+          ORDER BY COALESCE(a.completed_at,a.updated_at,a.created_at) DESC, a.id DESC
+          LIMIT '.(int)$limit;
+  $st = db()->prepare($sql);
+  $st->execute([$userId, $userId, $userId]);
+  $analysisIds = array_map('intval', array_column($st->fetchAll(), 'id'));
+
+  $processed = 0;
+  $tagged = 0;
+  $errors = 0;
+  $messages = [];
+
+  foreach ($analysisIds as $analysisId) {
+    try {
+      $result = smart_tag_generate_for_analysis($analysisId, $userId);
+      $processed++;
+      if (!empty($result['game_tags']) || !empty($result['move_tags'])) $tagged++;
+      if (empty($result['ok'])) {
+        $errors++;
+        if (!empty($result['error'])) $messages[] = $result['error'];
+      }
+    } catch (Throwable $e) {
+      $processed++;
+      $errors++;
+      $messages[] = $e->getMessage();
+    }
+  }
+
+  $pendingAfter = smart_tag_backfill_pending_count($userId);
+  $durationMs = (int)round((microtime(true) - $started) * 1000);
+  $message = $processed === 0
+    ? 'No hay partidas pendientes de etiquetar.'
+    : 'Backfill de Smart Tags ejecutado correctamente.';
+  if ($errors > 0) $message = 'Backfill completado con errores parciales.';
+
+  if ($runId) {
+    try {
+      $up = db()->prepare('UPDATE smart_tag_runs SET status=?, processed_games=?, tagged_games=?, error_count=?, duration_ms=?, message=?, error_message=?, completed_at=NOW() WHERE id=?');
+      $up->execute([
+        $errors > 0 ? 'error' : 'done',
+        $processed,
+        $tagged,
+        $errors,
+        $durationMs,
+        $message,
+        $messages ? implode(' | ', array_slice($messages, 0, 5)) : null,
+        $runId,
+      ]);
+    } catch (Throwable $e) {
+      // Backfill result should still be returned even if run logging fails.
+    }
+  }
+
+  return [
+    'ok' => $errors === 0,
+    'run_id' => $runId,
+    'processed_games' => $processed,
+    'tagged_games' => $tagged,
+    'error_count' => $errors,
+    'pending_before' => $pendingBefore,
+    'pending_after' => $pendingAfter,
+    'duration_ms' => $durationMs,
+    'message' => $message,
+    'errors' => $messages,
+  ];
+}

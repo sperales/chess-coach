@@ -109,4 +109,5 @@ html,body{max-width:100%;overflow-x:hidden}
 .review-tags{margin-top:12px}
 .move-tags{margin-top:12px}
 .smart-tag-summary{display:grid;gap:10px;margin-top:8px}.smart-tag-summary div{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);background:#0d171d;border-radius:12px;padding:10px 12px}.smart-tag-summary strong{font-size:20px}.move-list-tags{grid-column:2 / -1;margin-top:-2px}
-@media(max-width:640px){.smart-tag{max-width:100%;white-space:normal}.move-list-tags{grid-column:1 / -1}.smart-tag-summary div{align-items:flex-start;flex-direction:column;gap:6px}}
+.batch-row{display:flex;align-items:center;justify-content:space-between;gap:18px;border:1px solid var(--line);background:#0d171d;border-radius:14px;padding:14px}.batch-row strong{display:block;margin-bottom:6px}.batch-row p{margin:0 0 6px}.batch-row button{white-space:nowrap}
+@media(max-width:640px){.smart-tag{max-width:100%;white-space:normal}.move-list-tags{grid-column:1 / -1}.smart-tag-summary div{align-items:flex-start;flex-direction:column;gap:6px}.batch-row{align-items:flex-start;flex-direction:column}.batch-row button{width:100%}}

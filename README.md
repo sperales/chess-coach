@@ -14,7 +14,7 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v0.8.8**
+Current stable baseline: **v0.9.0**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
@@ -125,6 +125,16 @@ Includes:
 - Move classification
 - Best move hint
 - Unicode chess pieces restored in v0.8.5 for stability
+
+### Smart Tags
+
+- Automatic Smart Tags after analysis
+- Game-level tags
+- Move-level tags
+- Dashboard frequent tags summary
+- Tags visible in the game list
+- Tags visible in review
+- Profile batch process for backfilling tags on existing analyzed games
 
 ### Repository / deployment hygiene
 
@@ -594,12 +604,12 @@ The README should only contain a short roadmap snapshot so it stays useful as in
 
 Current planned direction:
 
-### v0.9.0 — Smart Tags
+### Completed in v0.9.0 — Smart Tags
 
 - Automatic game tags
 - Tactical/strategic pattern detection
-- Search games by tag
-- Stats by recurring error type
+- Tags visible in game list and review
+- Profile backfill process for existing analyzed games
 
 ### v1.0.0 — Personal Trainer
 

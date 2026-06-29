@@ -73,6 +73,22 @@ if ($action === 'run_worker') {
   json_response(worker_run_batch($userId, $batch, 'manual-page'));
 }
 
+if ($action === 'smart_tags_backfill') {
+  ignore_user_abort(true);
+  @set_time_limit(300);
+  $body = json_decode(file_get_contents('php://input'), true) ?: [];
+  $limit = max(1, min(50, (int)($body['limit'] ?? 10)));
+  if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
+  json_response(smart_tag_backfill_batch($userId, $limit, 'profile-page'));
+}
+
+if ($action === 'smart_tags_backfill_status') {
+  json_response([
+    'ok' => true,
+    'pending' => smart_tag_backfill_pending_count($userId),
+  ]);
+}
+
 if ($action === 'process') {
   ignore_user_abort(true);
   @set_time_limit(300);

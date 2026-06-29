@@ -10,7 +10,7 @@ This file defines the working rules for Codex and other coding agents. Follow th
 
 ## Current stable baseline
 
-Current stable version: **0.8.8**
+Current stable version: **0.9.0**
 
 The app is deployed manually to shared hosting and must remain compatible with that environment.
 
@@ -117,7 +117,7 @@ The service worker cache name must change on each release to prevent stale brows
 Example:
 
 ```js
-const CACHE_NAME = 'chess-coach-v0.8.8';
+const CACHE_NAME = 'chess-coach-v0.9.0';
 ```
 
 After a version PR is explicitly approved by the user and merged into `main`, create and push the matching Git tag and create the GitHub Release.
@@ -429,7 +429,6 @@ Do not implement roadmap items unless the user explicitly asks.
 
 The current likely roadmap direction is:
 
-- v0.9.0 — Smart Tags
 - v1.0.0 — Personal Trainer
 - v1.1.0 — Training Center
 - v1.2.0 — Openings Lab
