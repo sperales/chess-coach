@@ -10,7 +10,7 @@ This file defines the working rules for Codex and other coding agents. Follow th
 
 ## Current stable baseline
 
-Current stable version: **0.8.5**
+Current stable version: **0.8.6**
 
 The app is deployed manually to shared hosting and must remain compatible with that environment.
 
@@ -372,6 +372,20 @@ For larger changes, use feature branches:
 feature/0.9.0-smart-tags
 fix/0.8.6-review-board
 ```
+
+When working on a new version or a scoped change, create a dedicated branch before implementation.
+
+Use branch names that include the version and purpose when applicable:
+
+```text
+feature/0.8.6-repo-cleanup
+feature/0.9.0-smart-tags
+fix/0.8.6-review-board
+```
+
+Open pull requests against `main` for review.
+
+Do not merge pull requests into `main` unless the user explicitly asks for the merge.
 
 ---
 
