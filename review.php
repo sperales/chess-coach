@@ -28,6 +28,7 @@
         <div>
           <h2 id="reviewHeadline">Revisión de partida</h2>
           <p id="reviewComment">Preparando resumen...</p>
+          <div class="smart-tag-list review-tags" id="reviewSmartTags"></div>
         </div>
       </div>
       <div class="review-kpis">
@@ -63,6 +64,7 @@
           <span id="moveEval">--</span>
         </div>
         <p id="moveExplanation">Selecciona una jugada para ver la explicación.</p>
+        <div class="smart-tag-list move-tags" id="moveSmartTags"></div>
       </div>
       <div class="board-wrap">
         <div class="chess-board" id="reviewBoard"></div>

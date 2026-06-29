@@ -22,15 +22,62 @@ if($action==='list'){
   $statsGlobal = game_stats_for_user($u['id'], false);
   $statsRecent = game_stats_for_user($u['id'], true);
 
-  $sql = 'SELECT g.id, g.game_uid, g.white_player, g.black_player, g.result_raw, g.user_result, g.played_at, g.event_name, g.site, g.imported_at, g.source, a.status AS analysis_status, a.blunders, a.mistakes, a.inaccuracies FROM games g LEFT JOIN game_analysis a ON a.id=(SELECT id FROM game_analysis WHERE game_id=g.id ORDER BY id DESC LIMIT 1) WHERE g.user_id=? ORDER BY COALESCE(g.played_at, g.imported_at) DESC, g.id DESC LIMIT '.(int)$perPage.' OFFSET '.(int)$offset;
+  $sql = 'SELECT g.id, g.game_uid, g.white_player, g.black_player, g.result_raw, g.user_result, g.played_at, g.event_name, g.site, g.imported_at, g.source, a.id AS analysis_id, a.status AS analysis_status, a.blunders, a.mistakes, a.inaccuracies FROM games g LEFT JOIN game_analysis a ON a.id=(SELECT id FROM game_analysis WHERE game_id=g.id ORDER BY id DESC LIMIT 1) WHERE g.user_id=? ORDER BY COALESCE(g.played_at, g.imported_at) DESC, g.id DESC LIMIT '.(int)$perPage.' OFFSET '.(int)$offset;
   $st=db()->prepare($sql);
   $st->execute([$u['id']]);
+  $games = $st->fetchAll();
+  attach_smart_tags_to_games($games, (int)$u['id']);
   json_response([
     'ok'=>true,
-    'games'=>$st->fetchAll(),
+    'games'=>$games,
     'pagination'=>['page'=>$page,'per_page'=>$perPage,'total'=>$total,'pages'=>$pages],
-    'stats'=>['global'=>$statsGlobal,'recent10'=>$statsRecent,'queue'=>queue_stats((int)$u['id'])]
+    'stats'=>['global'=>$statsGlobal,'recent10'=>$statsRecent,'queue'=>queue_stats((int)$u['id']),'smart_tags'=>smart_tag_summary_for_user((int)$u['id'])]
   ]);
+}
+
+function attach_smart_tags_to_games(array &$games, int $userId): void {
+  $analysisIds = [];
+  foreach ($games as &$game) {
+    $game['smart_tags'] = [];
+    if (!empty($game['analysis_id']) && ($game['analysis_status'] ?? '') === 'done') {
+      $analysisIds[] = (int)$game['analysis_id'];
+    }
+  }
+  unset($game);
+  if (!$analysisIds) return;
+
+  $placeholders = implode(',', array_fill(0, count($analysisIds), '?'));
+  $params = array_merge([$userId], $analysisIds);
+  $sql = "SELECT gt.game_id, gt.tag_code, gt.confidence, gt.evidence_count, gt.primary_ply, d.label, d.category, d.severity
+          FROM game_tags gt
+          JOIN smart_tag_definitions d ON d.code=gt.tag_code
+          WHERE gt.user_id=? AND gt.analysis_id IN ($placeholders)
+          ORDER BY FIELD(d.severity,'critical','high','medium','low','info'), gt.evidence_count DESC, d.label ASC";
+  $st = db()->prepare($sql);
+  $st->execute($params);
+  $byGame = [];
+  foreach ($st->fetchAll() as $tag) {
+    $byGame[(int)$tag['game_id']][] = $tag;
+  }
+  foreach ($games as &$game) {
+    $game['smart_tags'] = $byGame[(int)$game['id']] ?? [];
+  }
+  unset($game);
+}
+
+function smart_tag_summary_for_user(int $userId): array {
+  $sql = 'SELECT gt.tag_code, d.label, d.category, d.severity, COUNT(*) AS total
+          FROM game_tags gt
+          JOIN smart_tag_definitions d ON d.code=gt.tag_code
+          JOIN game_analysis a ON a.id=gt.analysis_id
+          WHERE gt.user_id=?
+            AND a.id=(SELECT id FROM game_analysis WHERE game_id=gt.game_id AND user_id=? AND status="done" ORDER BY id DESC LIMIT 1)
+          GROUP BY gt.tag_code, d.label, d.category, d.severity
+          ORDER BY total DESC, FIELD(d.severity,"critical","high","medium","low","info"), d.label ASC
+          LIMIT 5';
+  $st = db()->prepare($sql);
+  $st->execute([$userId, $userId]);
+  return $st->fetchAll();
 }
 
 function game_stats_for_user(int $userId, bool $recent): array {

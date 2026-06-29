@@ -40,6 +40,7 @@ function renderStats() {
     ['clock','Pendientes de análisis', pending, 'Ver cola →'],
   ];
   el.innerHTML = cards.map(c => `<article class="metric-card ${c[0]}"><div class="metric-icon">${iconFor(c[0])}</div><div><span>${c[1]}</span><b>${c[2]}</b><small>${c[3]}</small></div></article>`).join('');
+  renderSmartTagInsight();
 }
 
 function iconFor(k){ return k==='pulse'?'⌁':k==='target'?'◎':k==='star'?'★':'◷'; }
@@ -48,7 +49,7 @@ function renderRows() {
   const el = document.getElementById('rows');
   if (!el) return;
   const list = allGamesMode ? games : games.slice(0, 5);
-  el.innerHTML = list.map(g => `<tr><td>${opponentCell(g)}</td><td>${resultBadge(g)}</td><td>${escapeHtml(g.event_name || rhythmFromSite(g.site) || '-')}</td><td class="hide-sm">${g.played_at || (g.imported_at || '').slice(0,10) || '-'}</td><td>${analysisCell(g)}</td></tr>`).join('') || `<tr><td colspan="5" class="muted">Todavía no hay partidas. Empieza importando tus PGN o desde Chess.com.</td></tr>`;
+  el.innerHTML = list.map(g => `<tr><td>${opponentCell(g)}${gameTagsCell(g)}</td><td>${resultBadge(g)}</td><td>${escapeHtml(g.event_name || rhythmFromSite(g.site) || '-')}</td><td class="hide-sm">${g.played_at || (g.imported_at || '').slice(0,10) || '-'}</td><td>${analysisCell(g)}</td></tr>`).join('') || `<tr><td colspan="5" class="muted">Todavía no hay partidas. Empieza importando tus PGN o desde Chess.com.</td></tr>`;
 }
 
 function opponentCell(g) {
@@ -119,6 +120,40 @@ function analysisCell(g) {
   if (status === 'error') return `<button class="secondary small" onclick="analyzeGame(${g.id}, true)">Reintentar</button>`;
   if (status === 'cancelled') return `<button class="secondary small" onclick="analyzeGame(${g.id}, true)">Encolar</button>`;
   return `<button class="secondary small" onclick="analyzeGame(${g.id})">Encolar</button>`;
+}
+
+function smartTagClass(tag) {
+  const severity = tag && tag.severity ? tag.severity : 'info';
+  const category = tag && tag.category ? tag.category : '';
+  if (category === 'positive') return 'positive';
+  return severity;
+}
+
+function smartTagChip(tag) {
+  return `<span class="smart-tag ${smartTagClass(tag)}" title="${escapeHtml(tag.tag_code || '')}">${escapeHtml(tag.label || tag.tag_code || '')}</span>`;
+}
+
+function gameTagsCell(g) {
+  const tags = (g.smart_tags || []).slice(0, 3);
+  if (!tags.length) return '';
+  const more = (g.smart_tags || []).length > tags.length ? `<span class="smart-tag more">+${(g.smart_tags || []).length - tags.length}</span>` : '';
+  return `<div class="smart-tag-list game-tags">${tags.map(smartTagChip).join('')}${more}</div>`;
+}
+
+function renderSmartTagInsight() {
+  const card = document.getElementById('smartTagInsight');
+  if (!card) return;
+  const tags = (stats.smart_tags || []).slice(0, 5);
+  if (!tags.length) {
+    card.innerHTML = `<h2>Etiquetas frecuentes</h2><p class="muted">Analiza o reanaliza partidas para empezar a detectar patrones.</p>`;
+    return;
+  }
+  card.innerHTML = `
+    <h2>Etiquetas frecuentes</h2>
+    <div class="smart-tag-summary">
+      ${tags.map(tag => `<div><span>${smartTagChip(tag)}</span><strong>${Number(tag.total || 0)}</strong></div>`).join('')}
+    </div>
+  `;
 }
 
 async function analyzeGame(id, force = false) {

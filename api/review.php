@@ -95,6 +95,8 @@ if (!$analysis) json_response(['ok' => false, 'error' => 'La partida todavía no
 $m = db()->prepare('SELECT * FROM game_move_analysis WHERE analysis_id=? ORDER BY ply');
 $m->execute([$analysis['id']]);
 $moves = $m->fetchAll();
+$gameTags = review_game_tags((int)$analysis['id'], $userId);
+$moveTags = review_move_tags((int)$analysis['id'], $userId);
 
 $count = count($moves);
 $totalLoss = 0;
@@ -118,6 +120,7 @@ foreach ($moves as $row) {
   $row['review_bucket'] = $bucket;
   $row['review_label'] = review_bucket_label($bucket);
   $row['explanation'] = review_explanation($row);
+  $row['smart_tags'] = $moveTags[(int)$row['id']] ?? [];
   $reviewMoves[] = $row;
 }
 // Si la última posición es mate, forzamos la dirección del mate según el resultado real de la partida.
@@ -172,6 +175,31 @@ json_response([
     'counts' => $counts,
     'headline' => $headline,
     'comment' => $comment,
+    'smart_tags' => $gameTags,
   ],
   'moves' => $reviewMoves,
 ]);
+
+function review_game_tags(int $analysisId, int $userId): array {
+  $st = db()->prepare('SELECT gt.tag_code, gt.confidence, gt.evidence_count, gt.primary_ply, d.label, d.category, d.severity
+                       FROM game_tags gt
+                       JOIN smart_tag_definitions d ON d.code=gt.tag_code
+                       WHERE gt.analysis_id=? AND gt.user_id=?
+                       ORDER BY FIELD(d.severity,"critical","high","medium","low","info"), gt.evidence_count DESC, d.label ASC');
+  $st->execute([$analysisId, $userId]);
+  return $st->fetchAll();
+}
+
+function review_move_tags(int $analysisId, int $userId): array {
+  $st = db()->prepare('SELECT mt.move_analysis_id, mt.tag_code, mt.confidence, mt.severity, d.label, d.category
+                       FROM move_tags mt
+                       JOIN smart_tag_definitions d ON d.code=mt.tag_code
+                       WHERE mt.analysis_id=? AND mt.user_id=?
+                       ORDER BY FIELD(mt.severity,"critical","high","medium","low","info"), d.label ASC');
+  $st->execute([$analysisId, $userId]);
+  $byMove = [];
+  foreach ($st->fetchAll() as $tag) {
+    $byMove[(int)$tag['move_analysis_id']][] = $tag;
+  }
+  return $byMove;
+}

@@ -28,11 +28,9 @@
       <div class="pagination" id="pagination"></div><div class="muted page-info" id="pageInfo"></div>
     </section>
 
-    <section class="panel insight-card">
-      <h2><span>💡</span> Insight del día</h2>
-      <p><strong>Tu precisión en las aperturas</strong> ha mejorado en la última semana. Sigue así.</p>
-      <div class="mini-chart"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-      <a class="btn full" href="#">Ver estadísticas completas</a>
+    <section class="panel insight-card" id="smartTagInsight">
+      <h2>Etiquetas frecuentes</h2>
+      <p class="muted">Cargando patrones detectados...</p>
     </section>
   </section>
 
