@@ -14,7 +14,7 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v0.8.6**
+Current stable baseline: **v0.8.7**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
@@ -134,6 +134,12 @@ Includes:
 - Release notes in `README_UPDATE.md`
 - Release history in `CHANGELOG.md`
 
+### Developer verification
+
+- PHP CLI lint command documented in `VERIFY.md`
+- Windows PowerShell verification flow documented
+- Release checklist consolidated for future versions
+
 ---
 
 ## Project structure
@@ -205,6 +211,7 @@ chess-coach/
   service-worker.js
   README_UPDATE.md
   CHANGELOG.md
+  VERIFY.md
 ```
 
 ---
@@ -502,6 +509,14 @@ Before producing a new version, run:
 find . -name "*.php" -print0 | xargs -0 -n1 php -l
 ```
 
+On Windows PowerShell, run:
+
+```powershell
+Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
+```
+
+See `VERIFY.md` for the full lightweight verification checklist.
+
 Also verify manually:
 
 - Login works
@@ -623,6 +638,8 @@ The repository should also include:
 AGENTS.md
 ROADMAP.md
 CHANGELOG.md
+README_UPDATE.md
+VERIFY.md
 ```
 
 Suggested purpose:
@@ -630,6 +647,8 @@ Suggested purpose:
 - `AGENTS.md`: strict instructions for Codex and other coding agents
 - `ROADMAP.md`: product roadmap and planned versions
 - `CHANGELOG.md`: release history and user-facing changes
+- `README_UPDATE.md`: specific notes for the current release
+- `VERIFY.md`: local verification commands and release checks
 
 ---
 

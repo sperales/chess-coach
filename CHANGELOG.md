@@ -1,5 +1,33 @@
 # CHANGELOG
 
+## v0.8.7 - Developer verification docs
+
+### Added
+
+- Added `VERIFY.md` with lightweight local verification commands.
+- Documented the Windows PowerShell PHP lint command.
+- Documented the Unix-like PHP lint command.
+
+### Changed
+
+- Bumped `config/version.php` to `0.8.7`.
+- Updated the service worker cache name to `chess-coach-v0.8.7`.
+- Updated release documentation for the current version.
+- Updated project documentation to point to `VERIFY.md`.
+
+### Verification
+
+- PHP syntax lint passed locally across all PHP files.
+
+### Database
+
+- No SQL migration required.
+
+### Notes
+
+- No application behavior changed.
+- No Stockfish, analysis, PGN parsing, review, authentication, or database logic changed.
+
 ## v0.8.6 - Repository cleanup
 
 ### Added
