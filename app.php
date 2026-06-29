@@ -1,5 +1,5 @@
-<?php require_once __DIR__.'/includes/auth.php'; require_once __DIR__.'/includes/helpers.php'; $u=require_login(); ?>
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Chess Coach</title><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="assets/css/app.css"><link rel="icon" href="assets/icons/favicon.ico"></head><body class="dark-shell"><?php header_bar('Chess Coach'); ?><div class="app-area">
+<?php require_once __DIR__.'/includes/auth.php'; require_once __DIR__.'/includes/helpers.php'; $u=require_login(); $assetVersion=(string)filemtime(__DIR__.'/assets/css/app.css'); $appJsVersion=(string)filemtime(__DIR__.'/assets/js/app.js'); $layoutJsVersion=(string)filemtime(__DIR__.'/assets/js/layout.js'); ?>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Chess Coach</title><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="assets/css/app.css?v=<?=e($assetVersion)?>"><link rel="icon" href="assets/icons/favicon.ico"></head><body class="dark-shell"><?php header_bar('Chess Coach'); ?><div class="app-area">
 <main class="dashboard">
   <section class="hero-card">
     <div>
@@ -28,15 +28,13 @@
       <div class="pagination" id="pagination"></div><div class="muted page-info" id="pageInfo"></div>
     </section>
 
-    <section class="panel insight-card">
-      <h2><span>💡</span> Insight del día</h2>
-      <p><strong>Tu precisión en las aperturas</strong> ha mejorado en la última semana. Sigue así.</p>
-      <div class="mini-chart"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-      <a class="btn full" href="#">Ver estadísticas completas</a>
+    <section class="panel insight-card" id="smartTagInsight">
+      <h2>Etiquetas frecuentes</h2>
+      <p class="muted">Cargando patrones detectados...</p>
     </section>
   </section>
 
   <section class="quote-panel panel"><span>“</span><p>No se trata de jugar perfecto, sino de aprender cada día.<br><small>– José Raúl Capablanca</small></p><b>♞</b></section>
 </main>
 </div>
-<script>window.CHESS_COACH_USERNAME = <?=json_encode($u['username'])?>; window.CHESS_COACH_CONFIG = { gamesPerPage: <?php echo (int)(app_config()['games_per_page'] ?? 50); ?> };</script><script src="assets/js/layout.js"></script><script src="assets/js/app.js"></script></body></html>
+<script>window.CHESS_COACH_USERNAME = <?=json_encode($u['username'])?>; window.CHESS_COACH_CONFIG = { gamesPerPage: <?php echo (int)(app_config()['games_per_page'] ?? 50); ?> };</script><script src="assets/js/layout.js?v=<?=e($layoutJsVersion)?>"></script><script src="assets/js/app.js?v=<?=e($appJsVersion)?>"></script></body></html>

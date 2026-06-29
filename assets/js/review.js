@@ -75,6 +75,7 @@ function renderSummary() {
   document.getElementById('reviewIntro').textContent = `${g.white_player || 'Blancas'} vs ${g.black_player || 'Negras'} · ${g.result_raw || '-'} · ${g.played_at || ''}`;
   document.getElementById('reviewHeadline').textContent = s.headline || 'Revisión de partida';
   document.getElementById('reviewComment').textContent = s.comment || 'Vamos a revisar los momentos importantes.';
+  renderTagList(ensureTagList('reviewSmartTags', 'reviewComment', 'review-tags'), s.smart_tags || []);
   document.getElementById('accuracyValue').textContent = s.accuracy ?? '--';
   document.getElementById('acplValue').textContent = s.acpl ?? '--';
   document.getElementById('movesValue').textContent = s.moves ?? '--';
@@ -86,6 +87,40 @@ function renderSummary() {
   document.getElementById('reviewCounts').innerHTML = labels.map(([key,label]) => `
     <div class="review-count ${key}"><span>${bucketIcon(key)}</span><strong>${counts[key] || 0}</strong><small>${label}</small></div>
   `).join('');
+}
+
+function ensureTagList(id, afterId, extraClass) {
+  let el = document.getElementById(id);
+  if (el) return el;
+  const after = document.getElementById(afterId);
+  if (!after || !after.parentNode) return null;
+  el = document.createElement('div');
+  el.id = id;
+  el.className = `smart-tag-list ${extraClass || ''}`.trim();
+  after.parentNode.insertBefore(el, after.nextSibling);
+  return el;
+}
+
+function smartTagClass(tag) {
+  const severity = tag && tag.severity ? tag.severity : 'info';
+  const category = tag && tag.category ? tag.category : '';
+  if (category === 'positive') return 'positive';
+  return severity;
+}
+
+function smartTagChip(tag) {
+  return `<span class="smart-tag ${smartTagClass(tag)}" title="${rEscape(tag.tag_code || '')}">${rEscape(tag.label || tag.tag_code || '')}</span>`;
+}
+
+function renderTagList(el, tags, limit = 8) {
+  if (!el) return;
+  const visible = (tags || []).slice(0, limit);
+  if (!visible.length) {
+    el.innerHTML = '';
+    return;
+  }
+  const more = (tags || []).length > visible.length ? `<span class="smart-tag more">+${(tags || []).length - visible.length}</span>` : '';
+  el.innerHTML = visible.map(smartTagChip).join('') + more;
 }
 
 function renderChart() {
@@ -143,8 +178,15 @@ function renderMoveList() {
       <span>${Math.floor((Number(m.ply)-1)/2)+1}${Number(m.ply)%2===1?'.':'...'}</span>
       <strong>${rEscape(m.san || m.uci || '-')}</strong>
       <em class="${m.review_bucket}">${bucketIcon(m.review_bucket)} ${rEscape(m.review_label)}</em>
+      ${moveTagsSummary(m)}
     </button>
   `).join('');
+}
+
+function moveTagsSummary(move) {
+  const tags = (move.smart_tags || []).slice(0, 2);
+  if (!tags.length) return '';
+  return `<div class="smart-tag-list move-list-tags">${tags.map(smartTagChip).join('')}</div>`;
 }
 
 function renderMove() {
@@ -161,6 +203,7 @@ function renderMove() {
   document.getElementById('moveSan').textContent = `${m.san || m.uci} es ${m.review_label.toLowerCase()}`;
   document.getElementById('moveEval').textContent = evalText(m);
   document.getElementById('moveExplanation').textContent = m.explanation || '';
+  renderTagList(ensureTagList('moveSmartTags', 'moveExplanation', 'move-tags'), m.smart_tags || []);
   renderBoard(m.fen_after, m.uci);
   renderMoveList();
 }

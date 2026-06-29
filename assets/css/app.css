@@ -94,3 +94,19 @@ html,body{max-width:100%;overflow-x:hidden}
 /* v0.8.1 review fixes */
 .sq span.white-piece{color:#f7f8f3!important;text-shadow:0 2px 2px rgba(0,0,0,.55)}
 .sq span.black-piece{color:#121416!important;text-shadow:0 1px 1px rgba(255,255,255,.18)}
+
+/* v0.9.0 Smart Tags UI */
+.home-grid{grid-template-columns:minmax(0,2.35fr) minmax(300px,.95fr)}
+.smart-tag-list{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.smart-tag{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;border:1px solid #40505b;background:#26313a;color:#dbe4ec;font-size:11px;font-weight:800;line-height:1.2;white-space:nowrap}
+.smart-tag.critical{background:#3b1d1d;color:#ffb4ae;border-color:#6b2c2c}
+.smart-tag.high{background:#4a2b11;color:#ffb36b;border-color:#70411a}
+.smart-tag.medium{background:#3c3219;color:#ffd665;border-color:#69562a}
+.smart-tag.low{background:#24345b;color:#9ec5ff;border-color:#3356a2}
+.smart-tag.positive{background:#173d23;color:#7cec71;border-color:#265e32}
+.smart-tag.more{background:#10191f;color:#a9b1ba;border-color:var(--line)}
+.game-tags{margin-top:7px}
+.review-tags{margin-top:12px}
+.move-tags{margin-top:12px}
+.smart-tag-summary{display:grid;gap:10px;margin-top:8px}.smart-tag-summary div{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);background:#0d171d;border-radius:12px;padding:10px 12px}.smart-tag-summary strong{font-size:20px}.move-list-tags{grid-column:2 / -1;margin-top:-2px}
+@media(max-width:640px){.smart-tag{max-width:100%;white-space:normal}.move-list-tags{grid-column:1 / -1}.smart-tag-summary div{align-items:flex-start;flex-direction:column;gap:6px}}
