@@ -96,6 +96,7 @@ html,body{max-width:100%;overflow-x:hidden}
 .sq span.black-piece{color:#121416!important;text-shadow:0 1px 1px rgba(255,255,255,.18)}
 
 /* v0.9.0 Smart Tags UI */
+.home-grid{grid-template-columns:minmax(0,2.35fr) minmax(300px,.95fr)}
 .smart-tag-list{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .smart-tag{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;border:1px solid #40505b;background:#26313a;color:#dbe4ec;font-size:11px;font-weight:800;line-height:1.2;white-space:nowrap}
 .smart-tag.critical{background:#3b1d1d;color:#ffb4ae;border-color:#6b2c2c}
