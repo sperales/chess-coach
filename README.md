@@ -14,7 +14,7 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v0.8.5**
+Current stable baseline: **v0.8.6**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
@@ -125,6 +125,15 @@ Includes:
 - Best move hint
 - Unicode chess pieces restored in v0.8.5 for stability
 
+### Repository / deployment hygiene
+
+- Correct `.gitignore` filename
+- Tracked `config/.htaccess`
+- Tracked `worker/.htaccess`
+- Tracked `storage/logs/.gitkeep`
+- Release notes in `README_UPDATE.md`
+- Release history in `CHANGELOG.md`
+
 ---
 
 ## Project structure
@@ -194,6 +203,8 @@ chess-coach/
   logout.php
   manifest.webmanifest
   service-worker.js
+  README_UPDATE.md
+  CHANGELOG.md
 ```
 
 ---
@@ -628,4 +639,6 @@ Suggested purpose:
 - The worker is executed through HTTP GET cron.
 - Stockfish runs server-side.
 - The app currently uses Unicode chess pieces in the review board for stability.
+- The repository tracks deployment protection files for `config/` and `worker/`.
+- The repository tracks `storage/logs/.gitkeep`; real log files remain ignored.
 - Real credentials must stay outside GitHub.
