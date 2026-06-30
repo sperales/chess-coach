@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## v0.9.4 - CSS formatting maintenance
+
+### Changed
+
+- Reformatted `assets/css/app.css` to make future UI changes easier to review and maintain.
+- Bumped `config/version.php` to `0.9.4`.
+- Updated the service worker cache name to `chess-coach-v0.9.4`.
+
+### Verification
+
+- PHP syntax lint passed locally across all PHP files.
+- No JavaScript files changed in this release.
+
+### Database
+
+- No SQL migration required.
+
 ## v0.9.3 - More UX/UI polish
 
 ### Added
