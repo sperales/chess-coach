@@ -1,4 +1,4 @@
-<?php require_once __DIR__.'/includes/auth.php'; require_once __DIR__.'/includes/helpers.php'; $u=require_login(); $assetVersion=(string)filemtime(__DIR__.'/assets/css/app.css'); $appJsVersion=(string)filemtime(__DIR__.'/assets/js/app.js'); $layoutJsVersion=(string)filemtime(__DIR__.'/assets/js/layout.js'); ?>
+<?php require_once __DIR__.'/includes/auth.php'; require_once __DIR__.'/includes/helpers.php'; require_once __DIR__.'/includes/motivational_quotes.php'; $u=require_login(); $quote=random_motivational_quote(); $assetVersion=(string)filemtime(__DIR__.'/assets/css/app.css'); $appJsVersion=(string)filemtime(__DIR__.'/assets/js/app.js'); $layoutJsVersion=(string)filemtime(__DIR__.'/assets/js/layout.js'); ?>
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Chess Coach</title><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="assets/css/app.css?v=<?=e($assetVersion)?>"><link rel="icon" href="assets/icons/favicon.ico"></head><body class="dark-shell"><?php header_bar('Chess Coach'); ?><div class="app-area">
 <main class="dashboard">
   <section class="hero-card">
@@ -34,7 +34,7 @@
     </section>
   </section>
 
-  <section class="quote-panel panel"><span>“</span><p>No se trata de jugar perfecto, sino de aprender cada día.<br><small>– José Raúl Capablanca</small></p><b>♞</b></section>
+  <section class="quote-panel panel"><span>“</span><p><?=e($quote['quote_text'] ?? '')?><br><small>– <?=e($quote['author'] ?? '')?></small></p><b>♞</b></section>
 </main>
 </div>
 <script>window.CHESS_COACH_USERNAME = <?=json_encode($u['username'])?>; window.CHESS_COACH_CONFIG = { gamesPerPage: <?php echo (int)(app_config()['games_per_page'] ?? 50); ?> };</script><script src="assets/js/layout.js?v=<?=e($layoutJsVersion)?>"></script><script src="assets/js/app.js?v=<?=e($appJsVersion)?>"></script></body></html>

@@ -1,4 +1,4 @@
-<?php require_once __DIR__.'/includes/auth.php'; require_once __DIR__.'/includes/helpers.php'; $u=require_login(); ?>
+<?php require_once __DIR__.'/includes/auth.php'; require_once __DIR__.'/includes/helpers.php'; $u=require_login(); $layoutJsVersion=(string)filemtime(__DIR__.'/assets/js/layout.js'); $analysisJsVersion=(string)filemtime(__DIR__.'/assets/js/analysis_queue.js'); ?>
 <!doctype html>
 <html lang="es">
 <head>
@@ -74,6 +74,8 @@
           <tbody id="queueRows"></tbody>
         </table>
       </div>
+      <div class="pagination" id="queuePagination"></div>
+      <div class="muted page-info" id="queuePageInfo"></div>
     </section>
   </section>
 
@@ -102,7 +104,8 @@
   </section>
 </main>
 </div>
-<script src="assets/js/layout.js"></script>
-<script src="assets/js/analysis_queue.js"></script>
+<script>window.CHESS_COACH_CONFIG = Object.assign(window.CHESS_COACH_CONFIG || {}, { analysisPerPage: <?php echo (int)(app_config()['analysis_per_page'] ?? 50); ?> });</script>
+<script src="assets/js/layout.js?v=<?=e($layoutJsVersion)?>"></script>
+<script src="assets/js/analysis_queue.js?v=<?=e($analysisJsVersion)?>"></script>
 </body>
 </html>

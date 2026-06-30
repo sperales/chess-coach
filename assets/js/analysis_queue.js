@@ -1,6 +1,8 @@
 let queueAuto = false;
 let queueBusy = false;
 let queuePoll = null;
+let queuePage = 1;
+let queuePagination = { page: 1, per_page: (window.CHESS_COACH_CONFIG && window.CHESS_COACH_CONFIG.analysisPerPage) || 50, total: 0, pages: 1 };
 
 async function apiGet(url) {
   const r = await fetch(url, { cache: 'no-store' });
@@ -145,6 +147,25 @@ function renderQueueRows(jobs) {
   `).join('') || `<tr><td colspan="5" class="muted">No hay análisis en la cola.</td></tr>`;
 }
 
+function renderQueuePagination(pagination) {
+  queuePagination = pagination || queuePagination;
+  queuePage = queuePagination.page || queuePage;
+
+  const controls = document.getElementById('queuePagination');
+  const info = document.getElementById('queuePageInfo');
+  const total = Number(queuePagination.total || 0);
+  const page = Number(queuePagination.page || 1);
+  const pages = Number(queuePagination.pages || 1);
+  const perPage = Number(queuePagination.per_page || 50);
+  const start = total ? ((page - 1) * perPage) + 1 : 0;
+  const end = Math.min(total, page * perPage);
+
+  if (info) info.textContent = total ? `${start}-${end} de ${total}` : '0 análisis';
+  if (!controls) return;
+  if (pages <= 1) { controls.innerHTML = ''; return; }
+  controls.innerHTML = `<button class="secondary small" ${page <= 1 ? 'disabled' : ''} onclick="goQueuePage(${page - 1})">Anterior</button><span class="page-current">Página ${page} de ${pages}</span><button class="secondary small" ${page >= pages ? 'disabled' : ''} onclick="goQueuePage(${page + 1})">Siguiente</button>`;
+}
+
 function renderHistory(rows) {
   const el = document.getElementById('workerHistoryRows');
   if (!el) return;
@@ -164,14 +185,17 @@ function renderHistory(rows) {
   }).join('') || `<tr><td colspan="6" class="muted">Todavía no hay ejecuciones registradas.</td></tr>`;
 }
 
-async function refreshQueue(silent = false) {
+async function refreshQueue(silent = false, page = queuePage) {
   const msg = document.getElementById('queueMsg');
   try {
-    const data = await apiGet('api/analyze.php?action=dashboard&limit=100');
+    const perPage = queuePagination.per_page || ((window.CHESS_COACH_CONFIG && window.CHESS_COACH_CONFIG.analysisPerPage) || 50);
+    const requestedPage = Math.max(1, Number(page) || 1);
+    const data = await apiGet(`api/analyze.php?action=dashboard&page=${requestedPage}&per_page=${perPage}`);
     renderStats(data);
     renderEngine(data);
     renderWorkerSummary(data);
     renderQueueRows(data.jobs || []);
+    renderQueuePagination(data.pagination || {});
     renderHistory(data.history || []);
     if (msg && !silent) msg.textContent = 'Panel actualizado.';
     const q = data.queue || {};
@@ -180,6 +204,11 @@ async function refreshQueue(silent = false) {
   } catch (e) {
     if (msg) msg.textContent = 'Error actualizando la cola: ' + e.message;
   }
+}
+
+function goQueuePage(page) {
+  if (page < 1 || page > (queuePagination.pages || 1) || page === queuePage) return;
+  refreshQueue(false, page);
 }
 
 async function processNextJob() {
