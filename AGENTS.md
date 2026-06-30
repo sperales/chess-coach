@@ -233,6 +233,8 @@ Preserve this architecture:
 worker/analyze_queue.php?token=...
 ```
 
+Do not add an `.htaccess` file that blocks HTTP access to `worker/analyze_queue.php`; shared-hosting cron jobs must be able to call that endpoint by GET.
+
 The worker token must come from:
 
 ```text
