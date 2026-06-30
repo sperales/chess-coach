@@ -23,9 +23,9 @@
 
   <section class="home-grid">
     <section class="panel" id="partidas">
-      <div class="panel-head"><h2>Últimas partidas</h2><a id="gamesToggleLink" href="#partidas" onclick="showAllGames(event)">Ver todas</a></div>
+      <div class="panel-head"><h2>Últimas partidas</h2><a id="gamesToggleLink" href="games.php">Ver todas</a></div>
       <table class="games"><thead><tr><th>Rival</th><th>Resultado</th><th>Ritmo</th><th class="hide-sm">Fecha</th><th>Análisis</th></tr></thead><tbody id="rows"></tbody></table>
-      <div class="pagination" id="pagination"></div><div class="muted page-info" id="pageInfo"></div>
+      <div class="pagination" id="pagination"></div>
     </section>
 
     <section class="panel insight-card" id="smartTagInsight">

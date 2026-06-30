@@ -12,9 +12,10 @@ if($action==='list'){
   $perPage = max(1, min(200, $perPage));
   $page = max(1, (int)($_GET['page'] ?? 1));
   $offset = ($page - 1) * $perPage;
+  [$whereSql, $filterParams] = game_list_filter_sql((int)$u['id'], (string)$u['username']);
 
-  $countSt = db()->prepare('SELECT COUNT(*) FROM games WHERE user_id=?');
-  $countSt->execute([$u['id']]);
+  $countSt = db()->prepare("SELECT COUNT(*) FROM games g WHERE $whereSql");
+  $countSt->execute($filterParams);
   $total = (int)$countSt->fetchColumn();
   $pages = max(1, (int)ceil($total / $perPage));
   if ($page > $pages) { $page = $pages; $offset = ($page - 1) * $perPage; }
@@ -23,17 +24,55 @@ if($action==='list'){
   $statsRecent = game_stats_for_user($u['id'], true);
   $accuracyStats = analysis_accuracy_stats_for_user((int)$u['id']);
 
-  $sql = 'SELECT g.id, g.game_uid, g.white_player, g.black_player, g.result_raw, g.user_result, g.played_at, g.event_name, g.site, g.imported_at, g.source, a.id AS analysis_id, a.status AS analysis_status, a.blunders, a.mistakes, a.inaccuracies FROM games g LEFT JOIN game_analysis a ON a.id=(SELECT id FROM game_analysis WHERE game_id=g.id ORDER BY id DESC LIMIT 1) WHERE g.user_id=? ORDER BY COALESCE(g.played_at, g.imported_at) DESC, g.id DESC LIMIT '.(int)$perPage.' OFFSET '.(int)$offset;
+  $sql = 'SELECT g.id, g.game_uid, g.white_player, g.black_player, g.result_raw, g.user_result, g.played_at, g.event_name, g.site, g.imported_at, g.source, a.id AS analysis_id, a.status AS analysis_status, a.blunders, a.mistakes, a.inaccuracies FROM games g LEFT JOIN game_analysis a ON a.id=(SELECT id FROM game_analysis WHERE game_id=g.id AND user_id=? ORDER BY id DESC LIMIT 1) WHERE '.$whereSql.' ORDER BY COALESCE(g.played_at, g.imported_at) DESC, g.id DESC LIMIT '.(int)$perPage.' OFFSET '.(int)$offset;
   $st=db()->prepare($sql);
-  $st->execute([$u['id']]);
+  $st->execute(array_merge([(int)$u['id']], $filterParams));
   $games = $st->fetchAll();
   attach_smart_tags_to_games($games, (int)$u['id']);
   json_response([
     'ok'=>true,
     'games'=>$games,
     'pagination'=>['page'=>$page,'per_page'=>$perPage,'total'=>$total,'pages'=>$pages],
+    'filters'=>['tags'=>smart_tag_options_for_user((int)$u['id'])],
     'stats'=>['global'=>$statsGlobal,'recent10'=>$statsRecent,'analysis_accuracy'=>$accuracyStats,'queue'=>queue_stats((int)$u['id']),'smart_tags'=>smart_tag_summary_for_user((int)$u['id'])]
   ]);
+}
+
+function game_list_filter_sql(int $userId, string $username): array {
+  $where = ['g.user_id=?'];
+  $params = [$userId];
+
+  $color = $_GET['color'] ?? '';
+  if ($color === 'white') {
+    $where[] = 'LOWER(COALESCE(g.white_player,""))=LOWER(?)';
+    $params[] = $username;
+  } elseif ($color === 'black') {
+    $where[] = 'LOWER(COALESCE(g.black_player,""))=LOWER(?)';
+    $params[] = $username;
+  }
+
+  $result = $_GET['result'] ?? '';
+  if (in_array($result, ['win', 'loss', 'draw'], true)) {
+    $where[] = 'g.user_result=?';
+    $params[] = $result;
+  }
+
+  $tag = trim((string)($_GET['tag'] ?? ''));
+  if ($tag !== '') {
+    $where[] = 'EXISTS (
+      SELECT 1
+      FROM game_tags gt
+      WHERE gt.game_id=g.id
+        AND gt.user_id=?
+        AND gt.tag_code=?
+        AND gt.analysis_id=(SELECT id FROM game_analysis WHERE game_id=g.id AND user_id=? AND status="done" ORDER BY id DESC LIMIT 1)
+    )';
+    $params[] = $userId;
+    $params[] = $tag;
+    $params[] = $userId;
+  }
+
+  return [implode(' AND ', $where), $params];
 }
 
 function accuracy_from_acpl(float $acpl): float {
@@ -105,6 +144,20 @@ function smart_tag_summary_for_user(int $userId): array {
           GROUP BY gt.tag_code, d.label, d.category, d.severity
           ORDER BY total DESC, FIELD(d.severity,"critical","high","medium","low","info"), d.label ASC
           LIMIT 5';
+  $st = db()->prepare($sql);
+  $st->execute([$userId, $userId]);
+  return $st->fetchAll();
+}
+
+function smart_tag_options_for_user(int $userId): array {
+  $sql = 'SELECT gt.tag_code, d.label, d.category, d.severity, COUNT(*) AS total
+          FROM game_tags gt
+          JOIN smart_tag_definitions d ON d.code=gt.tag_code
+          JOIN game_analysis a ON a.id=gt.analysis_id
+          WHERE gt.user_id=?
+            AND a.id=(SELECT id FROM game_analysis WHERE game_id=gt.game_id AND user_id=? AND status="done" ORDER BY id DESC LIMIT 1)
+          GROUP BY gt.tag_code, d.label, d.category, d.severity
+          ORDER BY d.label ASC';
   $st = db()->prepare($sql);
   $st->execute([$userId, $userId]);
   return $st->fetchAll();
