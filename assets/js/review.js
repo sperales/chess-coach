@@ -3,7 +3,7 @@ let currentMoveIndex = 0;
 let showingBest = false;
 
 const PIECES = {
-  P:'♙', N:'♘', B:'♗', R:'♖', Q:'♕', K:'♔',
+  P:'♟', N:'♞', B:'♝', R:'♜', Q:'♛', K:'♚',
   p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚'
 };
 

@@ -21,6 +21,7 @@ if($action==='list'){
 
   $statsGlobal = game_stats_for_user($u['id'], false);
   $statsRecent = game_stats_for_user($u['id'], true);
+  $accuracyStats = analysis_accuracy_stats_for_user((int)$u['id']);
 
   $sql = 'SELECT g.id, g.game_uid, g.white_player, g.black_player, g.result_raw, g.user_result, g.played_at, g.event_name, g.site, g.imported_at, g.source, a.id AS analysis_id, a.status AS analysis_status, a.blunders, a.mistakes, a.inaccuracies FROM games g LEFT JOIN game_analysis a ON a.id=(SELECT id FROM game_analysis WHERE game_id=g.id ORDER BY id DESC LIMIT 1) WHERE g.user_id=? ORDER BY COALESCE(g.played_at, g.imported_at) DESC, g.id DESC LIMIT '.(int)$perPage.' OFFSET '.(int)$offset;
   $st=db()->prepare($sql);
@@ -31,8 +32,37 @@ if($action==='list'){
     'ok'=>true,
     'games'=>$games,
     'pagination'=>['page'=>$page,'per_page'=>$perPage,'total'=>$total,'pages'=>$pages],
-    'stats'=>['global'=>$statsGlobal,'recent10'=>$statsRecent,'queue'=>queue_stats((int)$u['id']),'smart_tags'=>smart_tag_summary_for_user((int)$u['id'])]
+    'stats'=>['global'=>$statsGlobal,'recent10'=>$statsRecent,'analysis_accuracy'=>$accuracyStats,'queue'=>queue_stats((int)$u['id']),'smart_tags'=>smart_tag_summary_for_user((int)$u['id'])]
   ]);
+}
+
+function accuracy_from_acpl(float $acpl): float {
+  if ($acpl <= 0) return 100.0;
+  return round(max(0, min(100, 100 * exp(-$acpl / 220))), 1);
+}
+
+function analysis_accuracy_stats_for_user(int $userId): array {
+  $sql = 'SELECT a.id AS analysis_id, AVG(LEAST(GREATEST(COALESCE(m.centipawn_loss, 0), 0), 1000)) AS acpl
+          FROM game_analysis a
+          JOIN game_move_analysis m ON m.analysis_id=a.id
+          WHERE a.user_id=?
+            AND a.status="done"
+            AND a.id=(SELECT id FROM game_analysis WHERE game_id=a.game_id AND user_id=? AND status="done" ORDER BY id DESC LIMIT 1)
+          GROUP BY a.id';
+  $st = db()->prepare($sql);
+  $st->execute([$userId, $userId]);
+
+  $totalAccuracy = 0.0;
+  $totalAnalyzed = 0;
+  foreach ($st->fetchAll() as $row) {
+    $totalAccuracy += accuracy_from_acpl((float)($row['acpl'] ?? 0));
+    $totalAnalyzed++;
+  }
+
+  return [
+    'average' => $totalAnalyzed ? round($totalAccuracy / $totalAnalyzed, 1) : null,
+    'analyzed_games' => $totalAnalyzed,
+  ];
 }
 
 function attach_smart_tags_to_games(array &$games, int $userId): void {
