@@ -140,7 +140,7 @@ Includes:
 
 - Correct `.gitignore` filename
 - Tracked `config/.htaccess`
-- Tracked `worker/.htaccess`
+- Removed the blocking `worker/.htaccess` so HTTP GET cron can reach the worker
 - Tracked `storage/logs/.gitkeep`
 - Release notes in `README_UPDATE.md`
 - Release history in `CHANGELOG.md`
@@ -208,7 +208,6 @@ chess-coach/
       .gitkeep
 
   worker/
-    .htaccess
     analyze_queue.php
 
   index.php
@@ -434,6 +433,8 @@ The token must match the one configured in:
 ```text
 config/cron.php
 ```
+
+Do not block this endpoint with `worker/.htaccess`. The endpoint must be reachable by HTTP GET, and the secret token in `config/cron.php` is the access protection.
 
 Recommended interval:
 
@@ -678,6 +679,7 @@ Suggested purpose:
 - The worker is executed through HTTP GET cron.
 - Stockfish runs server-side.
 - The app currently uses Unicode chess pieces in the review board for stability.
-- The repository tracks deployment protection files for `config/` and `worker/`.
+- The repository tracks `config/.htaccess` for config protection.
+- The repository does not track `worker/.htaccess`; the HTTP cron worker must remain reachable and is protected by token.
 - The repository tracks `storage/logs/.gitkeep`; real log files remain ignored.
 - Real credentials must stay outside GitHub.

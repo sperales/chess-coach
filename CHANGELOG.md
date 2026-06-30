@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## v0.9.5 - Cron worker access fix
+
+### Changed
+
+- Removed the blocking `worker/.htaccess` file so shared-hosting HTTP GET cron jobs can reach `worker/analyze_queue.php`.
+- Documented that the worker endpoint must remain reachable and is protected by the token in `config/cron.php`.
+- Bumped `config/version.php` to `0.9.5`.
+- Updated the service worker cache name to `chess-coach-v0.9.5`.
+
+### Verification
+
+- PHP syntax lint passed locally across all PHP files.
+- No JavaScript files changed in this release.
+
+### Database
+
+- No SQL migration required.
+
 ## v0.9.4 - CSS formatting maintenance
 
 ### Changed

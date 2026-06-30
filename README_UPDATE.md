@@ -1,23 +1,25 @@
-# Chess Coach v0.9.4 Update Notes
+# Chess Coach v0.9.5 Update Notes
 
 ## Release type
 
-Technical maintenance release.
+Cron worker access fix.
 
-This version reformats the main stylesheet to make future CSS changes easier to review and maintain.
+This version removes the blocking `worker/.htaccess` file so shared-hosting HTTP GET cron jobs can execute `worker/analyze_queue.php` with the configured token.
 
 ## Changed files
 
+- `AGENTS.md`
 - `CHANGELOG.md`
 - `README_UPDATE.md`
-- `assets/css/app.css`
+- `README.md`
 - `config/version.php`
 - `service-worker.js`
+- `worker/.htaccess`
 
 ## User-facing changes
 
-- No visual or functional changes are intended.
-- `assets/css/app.css` is now formatted across multiple lines instead of compacted long rules.
+- HTTP GET cron execution should work when called as `worker/analyze_queue.php?token=...`.
+- The worker remains protected by the token configured in `config/cron.php`.
 
 ## Deployment notes
 
@@ -35,14 +37,14 @@ No real config files changed in this release.
 
 ## SQL migration
 
-No SQL migration is required for v0.9.4.
+No SQL migration is required for v0.9.5.
 
 ## Service worker
 
 The service worker cache name was updated to:
 
 ```text
-chess-coach-v0.9.4
+chess-coach-v0.9.5
 ```
 
 After deployment, hard refresh the browser or reinstall the PWA if stale cached assets appear.
@@ -59,7 +61,9 @@ No JavaScript files changed in this release.
 
 ## Manual verification checklist
 
-- Confirm `config/version.php` reports `0.9.4`.
-- Confirm `service-worker.js` uses `chess-coach-v0.9.4`.
-- Open the main app pages and confirm there are no visual regressions from the CSS formatting.
+- Confirm `config/version.php` reports `0.9.5`.
+- Confirm `service-worker.js` uses `chess-coach-v0.9.5`.
+- Confirm `worker/.htaccess` is not deployed.
+- Confirm the hosting cron URL returns JSON when called with the correct token.
+- Confirm the hosting cron URL returns `Forbidden` with an invalid or missing token.
 - Confirm no real credentials were committed.
