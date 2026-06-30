@@ -1,5 +1,31 @@
 # CHANGELOG
 
+## v0.9.2 - UX/UI polish
+
+### Added
+
+- Added `motivational_quotes` table for home dashboard motivational quotes.
+- Added an initial catalog of 15 chess-inspired motivational quotes with authors and source URLs.
+- Added a server-side quote helper with a safe fallback while the migration is pending.
+- Added configurable analysis queue pagination through `analysis_per_page` in `config/app.php`.
+
+### Changed
+
+- Replaced the fixed home quote with a random active quote on each home page load.
+- Paginated `analysis-pending.php` with 50 analysis jobs per page by default.
+- Bumped `config/version.php` to `0.9.2`.
+- Updated the service worker cache name to `chess-coach-v0.9.2`.
+- Updated `sql/install.sql` for fresh installs.
+
+### Verification
+
+- PHP syntax lint passed locally across all PHP files.
+- JavaScript syntax check could not be run because Node.js is not installed locally.
+
+### Database
+
+- Added SQL migration `sql/migrations/018_changes_0.9.2.sql`.
+
 ## v0.9.1 - Dashboard accuracy and review piece polish
 
 ### Changed

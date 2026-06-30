@@ -101,8 +101,15 @@ function queue_request_cancel(int $analysisId, int $userId): array {
   return ['ok' => true, 'status' => $status];
 }
 
-function queue_list(int $userId, int $limit = 50): array {
+function queue_total_count(int $userId): int {
+  $st = db()->prepare('SELECT COUNT(*) FROM game_analysis WHERE user_id=?');
+  $st->execute([$userId]);
+  return (int)$st->fetchColumn();
+}
+
+function queue_list(int $userId, int $limit = 50, int $offset = 0): array {
   $limit = max(1, min(200, $limit));
+  $offset = max(0, $offset);
   $sql = 'SELECT a.id AS analysis_id, a.game_id, a.status, a.engine_name, a.engine_depth, a.current_ply, a.total_ply,
                  a.blunders, a.mistakes, a.inaccuracies, a.attempts, a.error_message, a.created_at, a.started_at, a.completed_at, a.updated_at,
                  g.white_player, g.black_player, g.result_raw, g.user_result, g.played_at, g.event_name, g.site, g.source
@@ -110,7 +117,7 @@ function queue_list(int $userId, int $limit = 50): array {
           JOIN games g ON g.id=a.game_id
           WHERE a.user_id=?
           ORDER BY FIELD(a.status, "running","queued","error","cancelled","done"), a.created_at DESC
-          LIMIT '.(int)$limit;
+          LIMIT '.(int)$limit.' OFFSET '.(int)$offset;
   $st = db()->prepare($sql);
   $st->execute([$userId]);
   return $st->fetchAll();

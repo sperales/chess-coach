@@ -7,11 +7,17 @@ $u = require_login();
 $userId = (int)$u['id'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
-function queue_payload(int $userId, int $limit = 80): array {
+function queue_payload(int $userId, int $page = 1, int $perPage = 50): array {
+  $perPage = max(1, min(200, $perPage));
+  $total = queue_total_count($userId);
+  $pages = max(1, (int)ceil($total / $perPage));
+  $page = max(1, min($pages, $page));
+  $offset = ($page - 1) * $perPage;
   return [
     'ok' => true,
     'queue' => queue_stats($userId),
-    'jobs' => queue_list($userId, $limit),
+    'jobs' => queue_list($userId, $perPage, $offset),
+    'pagination' => ['page' => $page, 'per_page' => $perPage, 'total' => $total, 'pages' => $pages],
     'stockfish' => stockfish_available(),
     'worker' => worker_summary($userId),
     'history' => worker_history($userId, 20),
@@ -28,8 +34,11 @@ if ($action === 'status' || $action === 'engine_status' || $action === 'queue_st
 }
 
 if ($action === 'queue_list' || $action === 'dashboard') {
-  $limit = (int)($_GET['limit'] ?? 80);
-  json_response(queue_payload($userId, $limit));
+  $cfg = app_config();
+  $defaultPerPage = max(1, (int)($cfg['analysis_per_page'] ?? 50));
+  $perPage = (int)($_GET['per_page'] ?? ($_GET['limit'] ?? $defaultPerPage));
+  $page = max(1, (int)($_GET['page'] ?? 1));
+  json_response(queue_payload($userId, $page, $perPage));
 }
 
 if ($action === 'queue') {
