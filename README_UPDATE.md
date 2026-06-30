@@ -1,42 +1,26 @@
-# Chess Coach v0.9.0 Update Notes
+# Chess Coach v0.9.1 Update Notes
 
 ## Release type
 
-Smart Tags feature release.
+Small polish release.
 
-This version detects, stores and displays Smart Tags for analyzed games and moves. It does not add training recommendations, exercises or a full coaching engine yet.
+This version improves the review board piece rendering and replaces the dashboard placeholder for "Accuracy media" with a value calculated from analyzed games.
 
 ## Changed files
 
-- `AGENTS.md`
 - `CHANGELOG.md`
-- `README.md`
 - `README_UPDATE.md`
-- `ROADMAP.md`
-- `api/analyze.php`
 - `api/games.php`
-- `api/review.php`
-- `app.php`
-- `assets/css/app.css`
 - `assets/js/app.js`
 - `assets/js/review.js`
 - `config/version.php`
-- `includes/analysis_queue.php`
-- `includes/smart_tags.php`
-- `profile.php`
-- `review.php`
 - `service-worker.js`
-- `sql/install.sql`
-- `sql/migrations/017_changes_0.9.0.sql`
 
 ## User-facing changes
 
-- Smart Tags are generated automatically after Stockfish analysis completes.
-- Game-level tags are shown in the home game list.
-- Frequent tags are summarized on the dashboard.
-- Game-level tags are shown in review.
-- Move-level tags are shown in review for tagged moves.
-- A new "Procesos batch" block in profile allows backfilling Smart Tags for previously analyzed games.
+- White pieces in the review board now use the same filled Unicode glyphs as black pieces, with the white color applied through CSS.
+- The home dashboard now shows "Accuracy media" based on completed game analyses.
+- If no games have completed analysis yet, the metric keeps showing `--`.
 
 ## Deployment notes
 
@@ -54,39 +38,14 @@ No real config files changed in this release.
 
 ## SQL migration
 
-Run this migration before using Smart Tags:
-
-```text
-sql/migrations/017_changes_0.9.0.sql
-```
-
-The migration creates:
-
-- `smart_tag_definitions`
-- `game_tags`
-- `move_tags`
-- `smart_tag_runs`
-
-It also inserts the initial Spanish Smart Tags catalog.
-
-## Backfill
-
-Newly analyzed games are tagged automatically.
-
-For games that were already analyzed before v0.9.0, open:
-
-```text
-Ajustes / Mi Perfil -> Procesos batch -> Backfill de Smart Tags
-```
-
-Each execution processes up to 20 already analyzed games without rerunning Stockfish.
+No SQL migration is required for v0.9.1.
 
 ## Service worker
 
 The service worker cache name was updated to:
 
 ```text
-chess-coach-v0.9.0
+chess-coach-v0.9.1
 ```
 
 After deployment, hard refresh the browser or reinstall the PWA if stale cached assets appear.
@@ -99,14 +58,12 @@ PHP syntax lint passed locally with:
 Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
 ```
 
+JavaScript syntax check could not be run because Node.js is not installed locally.
+
 ## Manual verification checklist
 
-- Confirm `config/version.php` reports `0.9.0`.
-- Confirm `service-worker.js` uses `chess-coach-v0.9.0`.
-- Run migration `017_changes_0.9.0.sql`.
-- Analyze or reanalyze a game and confirm Smart Tags are inserted.
-- Confirm game tags appear on the home page.
-- Confirm game and move tags appear on review.
-- Open profile and run the Smart Tags backfill batch.
-- Confirm the backfill pending count decreases or reports no pending games.
+- Confirm `config/version.php` reports `0.9.1`.
+- Confirm `service-worker.js` uses `chess-coach-v0.9.1`.
+- Open the home page and confirm "Accuracy media" shows a percentage when analyzed games exist.
+- Open `review.php` and confirm white pieces are clearly visible on light squares.
 - Confirm no real credentials were committed.

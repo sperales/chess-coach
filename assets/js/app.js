@@ -1,7 +1,7 @@
 let games = [];
 let currentPage = 1;
 let pagination = { page: 1, per_page: (window.CHESS_COACH_CONFIG && window.CHESS_COACH_CONFIG.gamesPerPage) || 50, total: 0, pages: 1 };
-let stats = { global: { total: 0, wins: 0, losses: 0, draws: 0, avg_per_day: '0.00' }, recent10: { total: 0, wins: 0, losses: 0, draws: 0, avg_per_day: '0.00' } };
+let stats = { global: { total: 0, wins: 0, losses: 0, draws: 0, avg_per_day: '0.00' }, recent10: { total: 0, wins: 0, losses: 0, draws: 0, avg_per_day: '0.00' }, analysis_accuracy: { average: null, analyzed_games: 0 } };
 let analyzing = new Set();
 let pollTimer = null;
 let allGamesMode = false;
@@ -31,12 +31,15 @@ function renderStats() {
   const el = document.getElementById('stats');
   if (!el) return;
   const st = stats.recent10 || { total: 0, wins: 0, losses: 0, draws: 0, avg_per_day: '0.00' };
+  const accuracy = stats.analysis_accuracy || { average: null, analyzed_games: 0 };
   const winRate = st.total ? Math.round((st.wins || 0) * 100 / st.total) : 0;
   const pending = (stats.queue && typeof stats.queue.pending_total !== 'undefined') ? stats.queue.pending_total : games.filter(g => !g.analysis_status || g.analysis_status === 'queued' || g.analysis_status === 'running').length;
+  const analyzedGames = Number(accuracy.analyzed_games || 0);
+  const avgAccuracy = accuracy.average === null || typeof accuracy.average === 'undefined' ? null : Number(accuracy.average);
   const cards = [
     ['pulse','Partidas (10 días)', st.total || 0, '↗ actividad reciente'],
     ['target','Win Rate', `${winRate}%`, `${st.wins || 0} victorias / ${st.total || 0}`],
-    ['star','Accuracy media', '--', 'se calculará con análisis'],
+    ['star','Accuracy media', avgAccuracy === null ? '--' : `${avgAccuracy.toFixed(1)}%`, analyzedGames ? `${analyzedGames} partidas analizadas` : 'sin partidas analizadas'],
     ['clock','Pendientes de análisis', pending, 'Ver cola →'],
   ];
   el.innerHTML = cards.map(c => `<article class="metric-card ${c[0]}"><div class="metric-icon">${iconFor(c[0])}</div><div><span>${c[1]}</span><b>${c[2]}</b><small>${c[3]}</small></div></article>`).join('');

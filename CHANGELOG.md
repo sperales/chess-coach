@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## v0.9.1 - Dashboard accuracy and review piece polish
+
+### Changed
+
+- Updated the review board so white pieces use the same filled Unicode glyphs as black pieces, with color applied through CSS.
+- Calculated the home dashboard "Accuracy media" from completed analyzed games instead of showing a placeholder.
+- Bumped `config/version.php` to `0.9.1`.
+- Updated the service worker cache name to `chess-coach-v0.9.1`.
+
+### Verification
+
+- PHP syntax lint passed locally across all PHP files.
+- JavaScript syntax check could not be run because Node.js is not installed locally.
+
+### Database
+
+- No SQL migration required.
+
 ## v0.9.0 - Smart Tags
 
 ### Added
