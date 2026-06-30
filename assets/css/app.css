@@ -111,3 +111,10 @@ html,body{max-width:100%;overflow-x:hidden}
 .smart-tag-summary{display:grid;gap:10px;margin-top:8px}.smart-tag-summary div{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);background:#0d171d;border-radius:12px;padding:10px 12px}.smart-tag-summary strong{font-size:20px}.move-list-tags{grid-column:2 / -1;margin-top:-2px}
 .batch-row{display:flex;align-items:center;justify-content:space-between;gap:18px;border:1px solid var(--line);background:#0d171d;border-radius:14px;padding:14px}.batch-row strong{display:block;margin-bottom:6px}.batch-row p{margin:0 0 6px}.batch-row button{white-space:nowrap}
 @media(max-width:640px){.smart-tag{max-width:100%;white-space:normal}.move-list-tags{grid-column:1 / -1}.smart-tag-summary div{align-items:flex-start;flex-direction:column;gap:6px}.batch-row{align-items:flex-start;flex-direction:column}.batch-row button{width:100%}}
+.metric-card.done .metric-icon{background:linear-gradient(135deg,#61d66a,#18a34a)}
+.metric-card.kpi-error .metric-icon{background:linear-gradient(135deg,#ff6b64,#d62828)}
+select{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit;background:#0d171d;color:#fff}
+.games-filter-panel{margin:20px 0 0}
+.games-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.games-page #partidas{margin-top:20px}
+@media(max-width:980px){.games-filter-grid{grid-template-columns:minmax(0,1fr)}}

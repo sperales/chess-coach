@@ -1,33 +1,36 @@
-# Chess Coach v0.9.2 Update Notes
+# Chess Coach v0.9.3 Update Notes
 
 ## Release type
 
 UX/UI polish release.
 
-This version makes the motivational quote on the home dashboard dynamic and paginates the analysis queue.
+This version adds a dedicated games page with filters and refines analysis queue KPI colors.
 
 ## Changed files
 
 - `CHANGELOG.md`
 - `README_UPDATE.md`
-- `analysis-pending.php`
-- `api/analyze.php`
-- `assets/js/analysis_queue.js`
+- `api/games.php`
 - `app.php`
-- `config/app.php`
+- `assets/css/app.css`
+- `assets/js/analysis_queue.js`
+- `assets/js/games.js`
 - `config/version.php`
-- `includes/analysis_queue.php`
-- `includes/motivational_quotes.php`
+- `games.php`
+- `includes/helpers.php`
 - `service-worker.js`
-- `sql/install.sql`
-- `sql/migrations/018_changes_0.9.2.sql`
 
 ## User-facing changes
 
-- The fixed home quote was replaced with a random quote from the database.
-- The quote panel keeps a safe fallback phrase if the SQL migration has not run yet.
-- The analysis queue is now paginated.
-- The default analysis queue page size is configurable with `analysis_per_page` in `config/app.php`.
+- The hamburger menu "Partidas" item now opens a dedicated `games.php` page.
+- The home "Ver todas" link now opens the dedicated games page.
+- The dedicated games page shows the same table fields as the home list.
+- The games page includes filters for:
+  - Color: blancas / negras
+  - Result: ganadas / perdidas / tablas
+  - Smart Tag
+- The analysis queue "Analizadas" KPI icon is green.
+- The analysis queue "Errores" KPI icon is red.
 
 ## Deployment notes
 
@@ -45,25 +48,20 @@ No real config files changed in this release.
 
 ## SQL migration
 
-Run this migration:
-
-```text
-sql/migrations/018_changes_0.9.2.sql
-```
-
-The migration creates:
-
-- `motivational_quotes`
-
-It also inserts the initial quote catalog and registers version `0.9.2` in `app_migrations`.
+No SQL migration is required for v0.9.3.
 
 ## Service worker
 
 The service worker cache name was updated to:
 
 ```text
-chess-coach-v0.9.2
+chess-coach-v0.9.3
 ```
+
+The service worker asset list now includes:
+
+- `games.php`
+- `assets/js/games.js`
 
 After deployment, hard refresh the browser or reinstall the PWA if stale cached assets appear.
 
@@ -75,15 +73,19 @@ PHP syntax lint passed locally with:
 Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
 ```
 
-JavaScript syntax check could not be run because Node.js is not installed locally.
+JavaScript syntax checks passed locally with:
+
+```powershell
+node --check assets\js\analysis_queue.js
+node --check assets\js\games.js
+```
 
 ## Manual verification checklist
 
-- Run migration `018_changes_0.9.2.sql`.
-- Confirm `config/version.php` reports `0.9.2`.
-- Confirm `service-worker.js` uses `chess-coach-v0.9.2`.
-- Load the home page several times and confirm the quote can change.
-- Confirm the home page still loads if the quote table is unavailable during deployment.
-- Open `analysis-pending.php` and confirm the queue shows 50 items per page by default.
-- Change `analysis_per_page` in `config/app.php` and confirm the queue page size follows the setting.
+- Confirm `config/version.php` reports `0.9.3`.
+- Confirm `service-worker.js` uses `chess-coach-v0.9.3`.
+- Open the hamburger menu and confirm "Partidas" opens `games.php`.
+- Confirm the games page paginates and displays the same table fields as the home list.
+- Confirm filters work individually and combined.
+- Confirm queue KPI colors: "Analizadas" green, "Errores" red.
 - Confirm no real credentials were committed.

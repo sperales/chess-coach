@@ -90,14 +90,14 @@ function renderStats(data) {
   const cards = [
     ['clock', 'En cola', q.queued || 0, 'pendientes'],
     ['target', 'Analizando', q.running || 0, 'en proceso'],
-    ['star', 'Analizadas', q.done || 0, 'completadas'],
-    ['pulse', 'Errores', q.errors || 0, 'requieren revisión'],
+    ['done', 'Analizadas', q.done || 0, 'completadas'],
+    ['kpi-error', 'Errores', q.errors || 0, 'requieren revisión'],
   ];
   el.innerHTML = cards.map(c => `<article class="metric-card ${c[0]}"><div class="metric-icon">${iconForQueue(c[0])}</div><div><span>${c[1]}</span><b>${c[2]}</b><small>${c[3]}</small></div></article>`).join('');
 }
 
 function iconForQueue(k) {
-  return k === 'clock' ? '◷' : k === 'target' ? '▶' : k === 'star' ? '✓' : '!';
+  return k === 'clock' ? '◷' : k === 'target' ? '▶' : k === 'done' ? '✓' : '!';
 }
 
 function renderEngine(data) {

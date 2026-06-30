@@ -4,7 +4,7 @@ function e(?string $s): string { return htmlspecialchars($s ?? '', ENT_QUOTES, '
 function coach_menu_items(): array {
   return [
     ['app.php', '⌂', 'Inicio', false],
-    ['app.php#partidas', '♟', 'Partidas', false],
+    ['games.php', '♟', 'Partidas', false],
     ['import-chesscom.php', '⇩', 'Importar partidas', false],
     ['analysis-pending.php', '◷', 'Análisis pendientes', false],
     ['#', '◎', 'Entrenamiento', true],

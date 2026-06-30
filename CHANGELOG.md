@@ -1,5 +1,31 @@
 # CHANGELOG
 
+## v0.9.3 - More UX/UI polish
+
+### Added
+
+- Added dedicated `games.php` page for paginated game browsing.
+- Added game filters for color, result and Smart Tag.
+- Added `assets/js/games.js` for the dedicated games page.
+
+### Changed
+
+- Updated the hamburger menu "Partidas" link to open `games.php`.
+- Updated the home "Ver todas" link to open `games.php`.
+- Updated analysis queue KPI colors: analyzed games use green and errors use red.
+- Bumped `config/version.php` to `0.9.3`.
+- Updated the service worker cache name to `chess-coach-v0.9.3`.
+- Added `games.php` and `assets/js/games.js` to the service worker asset list.
+
+### Verification
+
+- PHP syntax lint passed locally across all PHP files.
+- JavaScript syntax checks passed locally for changed JS files.
+
+### Database
+
+- No SQL migration required.
+
 ## v0.9.2 - UX/UI polish
 
 ### Added
