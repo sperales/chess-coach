@@ -54,7 +54,7 @@ function renderStats() {
     { kind: 'pulse', label: 'Partidas', value: global.total || 0, detail: 'Ver todas', href: 'games.php' },
     { kind: 'target', label: 'Win Rate', value: `${winRate}%`, detail: `${global.wins || 0} victorias / ${global.total || 0}` },
     { kind: 'star', label: 'Accuracy media', value: avgAccuracy === null ? '--' : `${avgAccuracy.toFixed(1)}%`, detail: analyzedGames ? `${analyzedGames} partidas analizadas` : 'sin partidas analizadas' },
-    { kind: 'clock', label: 'Pendientes de analisis', value: pending, detail: 'Ver cola' }
+    { kind: 'clock', label: 'Pendientes de análisis', value: pending, detail: 'Ver cola' }
   ];
   el.innerHTML = cards.map(card => {
     const detail = card.href
@@ -97,7 +97,7 @@ function renderFocus() {
   const minimum = dashboardData.period ? Number(dashboardData.period.minimum_games_for_trend || 6) : 6;
   if (period) period.textContent = `${available}/10 analizadas`;
   if (!items.length) {
-    list.innerHTML = `<p class="muted">No hay focos detectados todavia.</p>`;
+    list.innerHTML = `<p class="muted">No hay focos detectados todavía.</p>`;
     return;
   }
   list.innerHTML = items.map((focus, index) => `
@@ -111,7 +111,7 @@ function renderFocus() {
         ${focus.games_url ? `<a href="${escapeAttr(focus.games_url)}">Ver partidas relacionadas</a>` : ''}
       </div>
     </article>
-  `).join('') + (available < minimum ? `<p class="muted small-note">Con ${minimum} partidas analizadas el diagnostico sera mas fiable.</p>` : '');
+  `).join('') + (available < minimum ? `<p class="muted small-note">Con ${minimum} partidas analizadas el diagnóstico será más fiable.</p>` : '');
 }
 
 function focusEvidence(focus) {
@@ -132,7 +132,7 @@ function renderState() {
     `;
   }
   if (actionEl) {
-    actionEl.textContent = focus && focus.recommended_action ? focus.recommended_action : 'Analiza mas partidas para obtener una recomendacion clara.';
+    actionEl.textContent = focus && focus.recommended_action ? focus.recommended_action : 'Analiza más partidas para obtener una recomendación clara.';
   }
 }
 
@@ -166,7 +166,7 @@ function renderStrengths() {
   if (!el) return;
   const strengths = dashboardData.strengths || [];
   if (!strengths.length) {
-    el.innerHTML = `<p class="muted">Todavia no hay fortalezas claras. Analiza algunas partidas mas.</p>`;
+    el.innerHTML = `<p class="muted">Todavía no hay fortalezas claras. Analiza algunas partidas más.</p>`;
     return;
   }
   el.innerHTML = strengths.map(item => `
@@ -183,11 +183,11 @@ function renderRows() {
   if (!el) return;
   if (gamesPanelMode === 'recommended') {
     const recommended = dashboardData ? (dashboardData.recommended_reviews || []) : [];
-    el.innerHTML = recommended.map(recommendedRow).join('') || `<tr><td colspan="5" class="muted">No hay recomendaciones todavia. Necesito mas partidas analizadas.</td></tr>`;
+    el.innerHTML = recommended.map(recommendedRow).join('') || `<tr><td colspan="5" class="muted">No hay recomendaciones todavía. Necesito más partidas analizadas.</td></tr>`;
     return;
   }
   const list = games.slice(0, 5);
-  el.innerHTML = list.map(gameRow).join('') || `<tr><td colspan="5" class="muted">Todavia no hay partidas. Empieza importando tus PGN o desde Chess.com.</td></tr>`;
+  el.innerHTML = list.map(gameRow).join('') || `<tr><td colspan="5" class="muted">Todavía no hay partidas. Empieza importando tus PGN o desde Chess.com.</td></tr>`;
 }
 
 function gameRow(game) {

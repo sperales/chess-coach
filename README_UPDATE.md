@@ -29,6 +29,7 @@ This PR adds the first Personal Trainer Dashboard UI on the home page, consuming
   - detected patterns
   - recommended games to review
 - Existing home KPIs, latest games, quick actions and motivational quote remain available.
+- PR3 polishes Spanish UI copy in the Personal Trainer Dashboard, including accents and `ñ` characters in visible labels, cards and generated dashboard messages.
 
 ## Deployment notes
 

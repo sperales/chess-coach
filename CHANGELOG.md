@@ -11,6 +11,7 @@
 - Added Personal Trainer Dashboard home UI blocks for current state, top 3 training focus, recent summary, strengths, detected patterns and recommended reviews.
 - Added `assets/js/dashboard.js` for home dashboard rendering.
 - Added URL-driven filters to `games.php` so dashboard links can open filtered game lists.
+- Polished Spanish UI copy in the Personal Trainer Dashboard, including accents and `ñ` characters in visible labels and generated dashboard messages.
 
 ### Notes
 

@@ -249,20 +249,20 @@ function dashboard_focus_definitions(): array {
   return [
     'results' => [
       'title' => 'Resultados recientes',
-      'description' => 'Tus resultados recientes necesitan atencion antes de hilar mas fino.',
+      'description' => 'Tus resultados recientes necesitan atención antes de hilar más fino.',
       'action' => 'Revisa las partidas perdidas o tablas con errores propios claros.',
       'tags' => [],
     ],
     'tactics' => [
-      'title' => 'Vision tactica',
-      'description' => 'Estas dejando pasar golpes tacticos o permitiendo recursos fuertes al rival.',
+      'title' => 'Visión táctica',
+      'description' => 'Estás dejando pasar golpes tácticos o permitiendo recursos fuertes al rival.',
       'action' => 'Empieza revisando omisiones graves, mates omitidos y mates permitidos.',
       'tags' => ['blunder_own', 'mistake_own', 'missed_mate', 'allowed_mate'],
     ],
     'accuracy' => [
-      'title' => 'Precision y consistencia',
-      'description' => 'Tu precision reciente esta por debajo de tu bloque anterior.',
-      'action' => 'Busca jugadas con perdidas moderadas repetidas antes de mirar solo la omision mas grande.',
+      'title' => 'Precisión y consistencia',
+      'description' => 'Tu precisión reciente está por debajo de tu bloque anterior.',
+      'action' => 'Busca jugadas con pérdidas moderadas repetidas antes de mirar solo la omisión más grande.',
       'tags' => ['inaccuracy_own'],
     ],
     'opening' => [
@@ -273,14 +273,14 @@ function dashboard_focus_definitions(): array {
     ],
     'endgame' => [
       'title' => 'Finales',
-      'description' => 'Estas perdiendo precision en el tramo final.',
-      'action' => 'Revisa finales recientes y posiciones donde la ventaja cambio tarde.',
+      'description' => 'Estás perdiendo precisión en el tramo final.',
+      'action' => 'Revisa finales recientes y posiciones donde la ventaja cambió tarde.',
       'tags' => ['endgame_mistake'],
     ],
     'conversion' => [
       'title' => 'Convertir ventajas',
       'description' => 'Llegas a posiciones favorables, pero no siempre las conviertes.',
-      'action' => 'Revisa ventajas desperdiciadas y compara con partidas donde si convertiste.',
+      'action' => 'Revisa ventajas desperdiciadas y compara con partidas donde sí convertiste.',
       'tags' => ['lost_winning_position'],
     ],
   ];
@@ -317,7 +317,7 @@ function dashboard_training_focus(array $recentSummary, array $previousSummary, 
   $scoreRate = (int)($recentSummary['score_rate'] ?? 0);
   if ($recentGames >= $minimumGames && ($losses >= 4 || $scoreRate < 45)) {
     $scores['results']['score'] += 10;
-    $scores['results']['evidence'][] = "{$losses} derrotas en las ultimas {$recentGames} analizadas";
+    $scores['results']['evidence'][] = "{$losses} derrotas en las últimas {$recentGames} analizadas";
   }
 
   $accuracy = $recentSummary['avg_accuracy'];
@@ -348,7 +348,7 @@ function dashboard_training_focus(array $recentSummary, array $previousSummary, 
 
   if (($recentSummary['own_blunders_per_game'] ?? 0) >= 1) {
     $scores['tactics']['score'] += 4;
-    $scores['tactics']['evidence'][] = 'Al menos una omision grave propia por partida';
+    $scores['tactics']['evidence'][] = 'Al menos una omisión grave propia por partida';
   }
 
   usort($scores, fn($a, $b) => $b['score'] <=> $a['score']);
@@ -357,10 +357,10 @@ function dashboard_training_focus(array $recentSummary, array $previousSummary, 
     $top[] = [
       'code' => 'maintenance',
       'title' => 'Mantener consistencia',
-      'description' => 'No hay un patron negativo dominante con los datos actuales.',
+      'description' => 'No hay un patrón negativo dominante con los datos actuales.',
       'recommended_action' => 'Revisa una partida precisa reciente y una partida con errores para mantener contraste.',
       'score' => 1,
-      'evidence' => ['Sin foco critico dominante'],
+      'evidence' => ['Sin foco crítico dominante'],
       'tag_codes' => [],
       'games_url' => null,
     ];
@@ -381,7 +381,7 @@ function dashboard_strengths(array $recentSummary, array $tags): array {
   }
   if (($recentSummary['score_rate'] ?? 0) >= 65 && ($recentSummary['games'] ?? 0) >= 6) {
     $strengths[] = [
-      'title' => 'Resultados solidos',
+      'title' => 'Resultados sólidos',
       'evidence' => 'Score reciente de ' . (int)$recentSummary['score_rate'] . '%',
       'tag_code' => null,
       'games_url' => 'games.php?result=win',
@@ -389,7 +389,7 @@ function dashboard_strengths(array $recentSummary, array $tags): array {
   }
   if (($recentSummary['avg_accuracy'] ?? null) !== null && (float)$recentSummary['avg_accuracy'] >= 75) {
     $strengths[] = [
-      'title' => 'Buena precision reciente',
+      'title' => 'Buena precisión reciente',
       'evidence' => 'Accuracy media de ' . number_format((float)$recentSummary['avg_accuracy'], 1) . '%',
       'tag_code' => null,
       'games_url' => null,
@@ -408,7 +408,7 @@ function dashboard_recommended_reviews(array $games, array $tags): array {
     $inaccuracies = (int)($game['own_inaccuracies'] ?? 0);
     if ($loss > 0) {
       $score += $loss * 8;
-      $reasons[] = 'omision grave';
+      $reasons[] = 'omisión grave';
     }
     if ($mistakes > 0) {
       $score += $mistakes * 5;
@@ -491,23 +491,23 @@ function dashboard_form_state(array $recentSummary, array $previousSummary, int 
   $delta = ($accuracy !== null && $previousAccuracy !== null) ? round((float)$accuracy - (float)$previousAccuracy, 1) : null;
 
   if ($scoreRate >= 65 && ($delta === null || $delta >= -2)) {
-    return ['state' => 'good', 'label' => 'Buen momento', 'message' => 'Los resultados recientes acompanan. Ahora toca consolidar patrones.'];
+    return ['state' => 'good', 'label' => 'Buen momento', 'message' => 'Los resultados recientes acompañan. Ahora toca consolidar patrones.'];
   }
   if ($delta !== null && $delta >= 3) {
-    return ['state' => 'improving', 'label' => 'Mejorando', 'message' => 'Tu accuracy sube frente al bloque anterior. Buena senal.'];
+    return ['state' => 'improving', 'label' => 'Mejorando', 'message' => 'Tu accuracy sube frente al bloque anterior. Buena señal.'];
   }
   if ($scoreRate < 45 || ($delta !== null && $delta <= -3)) {
-    return ['state' => 'declining', 'label' => 'Atencion', 'message' => 'Hay senales de bajada. Revisa primero las partidas recomendadas.'];
+    return ['state' => 'declining', 'label' => 'Atención', 'message' => 'Hay señales de bajada. Revisa primero las partidas recomendadas.'];
   }
-  return ['state' => 'stable', 'label' => 'Estable', 'message' => 'No hay caida clara, pero si margen para atacar los focos detectados.'];
+  return ['state' => 'stable', 'label' => 'Estable', 'message' => 'No hay caída clara, pero sí margen para atacar los focos detectados.'];
 }
 
 function dashboard_recent_summary_text(array $recentSummary, array $focus): string {
   $games = (int)($recentSummary['games'] ?? 0);
-  if ($games === 0) return 'Aun no hay partidas analizadas para construir un resumen de entrenamiento.';
+  if ($games === 0) return 'Aún no hay partidas analizadas para construir un resumen de entrenamiento.';
   $accuracy = $recentSummary['avg_accuracy'] === null ? 'sin accuracy disponible' : 'accuracy media ' . number_format((float)$recentSummary['avg_accuracy'], 1) . '%';
   $focusTitle = $focus[0]['title'] ?? 'mantener consistencia';
-  return "En tus ultimas {$games} partidas analizadas tienes {$recentSummary['wins']} victorias, {$recentSummary['losses']} derrotas y {$recentSummary['draws']} tablas, con {$accuracy}. Tu primer foco ahora mismo: {$focusTitle}.";
+  return "En tus últimas {$games} partidas analizadas tienes {$recentSummary['wins']} victorias, {$recentSummary['losses']} derrotas y {$recentSummary['draws']} tablas, con {$accuracy}. Tu primer foco ahora mismo: {$focusTitle}.";
 }
 
 function dashboard_payload(int $userId, string $username): array {
