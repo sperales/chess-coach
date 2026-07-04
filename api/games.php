@@ -59,14 +59,27 @@ function game_list_filter_sql(int $userId, string $username): array {
 
   $tag = trim((string)($_GET['tag'] ?? ''));
   if ($tag !== '') {
-    $where[] = 'EXISTS (
-      SELECT 1
-      FROM game_tags gt
-      WHERE gt.game_id=g.id
-        AND gt.user_id=?
-        AND gt.tag_code=?
-        AND gt.analysis_id=(SELECT id FROM game_analysis WHERE game_id=g.id AND user_id=? AND status="done" ORDER BY id DESC LIMIT 1)
+    $where[] = '(
+      EXISTS (
+        SELECT 1
+        FROM game_tags gt
+        WHERE gt.game_id=g.id
+          AND gt.user_id=?
+          AND gt.tag_code=?
+          AND gt.analysis_id=(SELECT id FROM game_analysis WHERE game_id=g.id AND user_id=? AND status="done" ORDER BY id DESC LIMIT 1)
+      )
+      OR EXISTS (
+        SELECT 1
+        FROM move_tags mt
+        WHERE mt.game_id=g.id
+          AND mt.user_id=?
+          AND mt.tag_code=?
+          AND mt.analysis_id=(SELECT id FROM game_analysis WHERE game_id=g.id AND user_id=? AND status="done" ORDER BY id DESC LIMIT 1)
+      )
     )';
+    $params[] = $userId;
+    $params[] = $tag;
+    $params[] = $userId;
     $params[] = $userId;
     $params[] = $tag;
     $params[] = $userId;
@@ -150,16 +163,28 @@ function smart_tag_summary_for_user(int $userId): array {
 }
 
 function smart_tag_options_for_user(int $userId): array {
-  $sql = 'SELECT gt.tag_code, d.label, d.category, d.severity, COUNT(*) AS total
-          FROM game_tags gt
-          JOIN smart_tag_definitions d ON d.code=gt.tag_code
-          JOIN game_analysis a ON a.id=gt.analysis_id
-          WHERE gt.user_id=?
-            AND a.id=(SELECT id FROM game_analysis WHERE game_id=gt.game_id AND user_id=? AND status="done" ORDER BY id DESC LIMIT 1)
-          GROUP BY gt.tag_code, d.label, d.category, d.severity
-          ORDER BY d.label ASC';
+  $sql = 'SELECT tag_code, label, category, severity, SUM(total) AS total
+          FROM (
+            SELECT gt.tag_code, d.label, d.category, d.severity, COUNT(*) AS total
+            FROM game_tags gt
+            JOIN smart_tag_definitions d ON d.code=gt.tag_code
+            JOIN game_analysis a ON a.id=gt.analysis_id
+            WHERE gt.user_id=?
+              AND a.id=(SELECT id FROM game_analysis WHERE game_id=gt.game_id AND user_id=? AND status="done" ORDER BY id DESC LIMIT 1)
+            GROUP BY gt.tag_code, d.label, d.category, d.severity
+            UNION ALL
+            SELECT mt.tag_code, d.label, d.category, mt.severity, COUNT(DISTINCT mt.game_id) AS total
+            FROM move_tags mt
+            JOIN smart_tag_definitions d ON d.code=mt.tag_code
+            JOIN game_analysis a ON a.id=mt.analysis_id
+            WHERE mt.user_id=?
+              AND a.id=(SELECT id FROM game_analysis WHERE game_id=mt.game_id AND user_id=? AND status="done" ORDER BY id DESC LIMIT 1)
+            GROUP BY mt.tag_code, d.label, d.category, mt.severity
+          ) tag_options
+          GROUP BY tag_code, label, category, severity
+          ORDER BY label ASC';
   $st = db()->prepare($sql);
-  $st->execute([$userId, $userId]);
+  $st->execute([$userId, $userId, $userId, $userId]);
   return $st->fetchAll();
 }
 

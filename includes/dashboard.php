@@ -252,36 +252,42 @@ function dashboard_focus_definitions(): array {
       'description' => 'Tus resultados recientes necesitan atención antes de hilar más fino.',
       'action' => 'Revisa las partidas perdidas o tablas con errores propios claros.',
       'tags' => [],
+      'games_url' => 'games.php?result=loss',
     ],
     'tactics' => [
       'title' => 'Visión táctica',
       'description' => 'Estás dejando pasar golpes tácticos o permitiendo recursos fuertes al rival.',
       'action' => 'Empieza revisando omisiones graves, mates omitidos y mates permitidos.',
       'tags' => ['blunder_own', 'mistake_own', 'missed_mate', 'allowed_mate'],
+      'games_url' => 'games.php?tag=blunder_own',
     ],
     'accuracy' => [
       'title' => 'Precisión y consistencia',
       'description' => 'Tu precisión reciente está por debajo de tu bloque anterior.',
       'action' => 'Busca jugadas con pérdidas moderadas repetidas antes de mirar solo la omisión más grande.',
       'tags' => ['inaccuracy_own'],
+      'games_url' => 'games.php?tag=inaccuracy_own',
     ],
     'opening' => [
       'title' => 'Apertura',
       'description' => 'Los problemas aparecen demasiado pronto en la partida.',
       'action' => 'Revisa partidas con errores en las primeras jugadas y busca principios repetidos.',
       'tags' => ['opening_issue'],
+      'games_url' => 'games.php?tag=opening_issue',
     ],
     'endgame' => [
       'title' => 'Finales',
       'description' => 'Estás perdiendo precisión en el tramo final.',
       'action' => 'Revisa finales recientes y posiciones donde la ventaja cambió tarde.',
       'tags' => ['endgame_mistake'],
+      'games_url' => 'games.php?tag=endgame_mistake',
     ],
     'conversion' => [
       'title' => 'Convertir ventajas',
       'description' => 'Llegas a posiciones favorables, pero no siempre las conviertes.',
       'action' => 'Revisa ventajas desperdiciadas y compara con partidas donde sí convertiste.',
       'tags' => ['lost_winning_position'],
+      'games_url' => 'games.php?tag=lost_winning_position',
     ],
   ];
 }
@@ -308,27 +314,49 @@ function dashboard_training_focus(array $recentSummary, array $previousSummary, 
       'score' => 0,
       'evidence' => [],
       'tag_codes' => $definition['tags'],
-      'games_url' => null,
+      'games_url' => $definition['games_url'] ?? null,
     ];
   }
 
   $recentGames = (int)($recentSummary['games'] ?? 0);
+  if ($recentGames === 0) {
+    return [[
+      'code' => 'start',
+      'title' => 'Primeras partidas analizadas',
+      'description' => 'Todavía no hay partidas analizadas para detectar patrones reales.',
+      'recommended_action' => 'Importa partidas, encola análisis y vuelve al dashboard cuando haya resultados.',
+      'score' => 1,
+      'evidence' => ['Sin partidas analizadas todavía'],
+      'tag_codes' => [],
+      'games_url' => 'analysis-pending.php',
+    ]];
+  }
+
   $losses = (int)($recentSummary['losses'] ?? 0);
   $scoreRate = (int)($recentSummary['score_rate'] ?? 0);
   if ($recentGames >= $minimumGames && ($losses >= 4 || $scoreRate < 45)) {
-    $scores['results']['score'] += 10;
+    $scores['results']['score'] += 6 + max(0, $losses - 2) * 2;
     $scores['results']['evidence'][] = "{$losses} derrotas en las últimas {$recentGames} analizadas";
+  }
+  if ($recentGames >= $minimumGames && $scoreRate < 35) {
+    $scores['results']['score'] += 4;
+    $scores['results']['evidence'][] = 'Win rate muy bajo en el bloque reciente';
   }
 
   $accuracy = $recentSummary['avg_accuracy'];
   $previousAccuracy = $previousSummary['avg_accuracy'];
   if ($recentGames >= $minimumGames && $accuracy !== null && $previousAccuracy !== null && ($accuracy + 3) < $previousAccuracy) {
-    $scores['accuracy']['score'] += 4;
-    $scores['accuracy']['evidence'][] = 'Accuracy bajando frente al bloque anterior';
+    $drop = round((float)$previousAccuracy - (float)$accuracy, 1);
+    $scores['accuracy']['score'] += $drop >= 8 ? 6 : 4;
+    $scores['accuracy']['evidence'][] = 'Accuracy bajando ' . $drop . ' puntos frente al bloque anterior';
   }
   if ($recentGames >= $minimumGames && $accuracy !== null && $accuracy < 65) {
-    $scores['accuracy']['score'] += 2;
+    $scores['accuracy']['score'] += $accuracy < 55 ? 5 : 2;
     $scores['accuracy']['evidence'][] = 'Accuracy reciente por debajo de 65%';
+  }
+  if ($recentGames >= $minimumGames && ($recentSummary['own_inaccuracies_per_game'] ?? 0) >= 2.5) {
+    $scores['accuracy']['score'] += 3;
+    $scores['accuracy']['evidence'][] = 'Muchas imprecisiones repetidas por partida';
   }
 
   $combinedTags = array_merge($tags['game_tags'] ?? [], $tags['move_tags'] ?? []);
@@ -347,8 +375,12 @@ function dashboard_training_focus(array $recentSummary, array $previousSummary, 
   }
 
   if (($recentSummary['own_blunders_per_game'] ?? 0) >= 1) {
-    $scores['tactics']['score'] += 4;
+    $scores['tactics']['score'] += 6;
     $scores['tactics']['evidence'][] = 'Al menos una omisión grave propia por partida';
+  }
+  if (($recentSummary['own_mistakes_per_game'] ?? 0) >= 2) {
+    $scores['tactics']['score'] += 4;
+    $scores['tactics']['evidence'][] = 'Errores importantes repetidos en el bloque reciente';
   }
 
   usort($scores, fn($a, $b) => $b['score'] <=> $a['score']);
