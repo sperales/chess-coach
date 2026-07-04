@@ -1669,7 +1669,8 @@ select {
   gap:20px
 }
 .secondary-trainer-grid {
-  grid-template-columns:minmax(0,1fr) minmax(280px,.85fr)
+  grid-template-columns:minmax(0,1fr) minmax(280px,.85fr);
+  margin-top:20px
 }
 .trainer-focus-list {
   display:grid;
