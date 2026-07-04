@@ -1,25 +1,34 @@
-# Chess Coach v0.9.5 Update Notes
+# Chess Coach v1.0.0 Update Notes
 
 ## Release type
 
-Cron worker access fix.
+Personal Trainer Dashboard UI foundation.
 
-This version removes the blocking `worker/.htaccess` file so shared-hosting HTTP GET cron jobs can execute `worker/analyze_queue.php` with the configured token.
+This PR adds the first Personal Trainer Dashboard UI on the home page, consuming the backend payload from PR1.
 
 ## Changed files
 
-- `AGENTS.md`
 - `CHANGELOG.md`
-- `README_UPDATE.md`
 - `README.md`
-- `config/version.php`
+- `README_UPDATE.md`
+- `api/dashboard.php`
+- `app.php`
+- `assets/css/app.css`
+- `assets/js/dashboard.js`
+- `assets/js/games.js`
+- `includes/dashboard.php`
 - `service-worker.js`
-- `worker/.htaccess`
 
 ## User-facing changes
 
-- HTTP GET cron execution should work when called as `worker/analyze_queue.php?token=...`.
-- The worker remains protected by the token configured in `config/cron.php`.
+- The home dashboard now shows:
+  - current state
+  - top 3 training focus
+  - recent summary
+  - recent strengths
+  - detected patterns
+  - recommended games to review
+- Existing home KPIs, latest games, quick actions and motivational quote remain available.
 
 ## Deployment notes
 
@@ -37,17 +46,17 @@ No real config files changed in this release.
 
 ## SQL migration
 
-No SQL migration is required for v0.9.5.
+No SQL migration is required for this PR.
 
 ## Service worker
 
-The service worker cache name was updated to:
+The service worker asset list now includes:
 
 ```text
-chess-coach-v0.9.5
+assets/js/dashboard.js
 ```
 
-After deployment, hard refresh the browser or reinstall the PWA if stale cached assets appear.
+The final v1.0.0 release PR should bump the service worker cache name.
 
 ## Local verification performed
 
@@ -57,13 +66,18 @@ PHP syntax lint passed locally with:
 Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
 ```
 
-No JavaScript files changed in this release.
+JavaScript syntax check passed locally with:
+
+```powershell
+node --check assets\js\dashboard.js
+```
 
 ## Manual verification checklist
 
-- Confirm `config/version.php` reports `0.9.5`.
-- Confirm `service-worker.js` uses `chess-coach-v0.9.5`.
-- Confirm `worker/.htaccess` is not deployed.
-- Confirm the hosting cron URL returns JSON when called with the correct token.
-- Confirm the hosting cron URL returns `Forbidden` with an invalid or missing token.
+- Confirm `api/dashboard.php` returns JSON when logged in.
+- Confirm `api/dashboard.php` redirects to login when logged out.
+- Confirm the payload includes `overview`, `training_focus`, `strengths`, `recommended_reviews`, `patterns`, `recent_games` and `queue`.
+- Confirm the home dashboard renders current state, focus cards, strengths and recommended reviews.
+- Confirm the home "Partidas" panel can switch between latest and recommended games.
+- Confirm dashboard links to `games.php?tag=...` open the games page with the tag filter applied.
 - Confirm no real credentials were committed.

@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## v1.0.0 - Personal Trainer Dashboard
+
+### Added
+
+- Added Personal Trainer Dashboard backend foundation.
+- Added authenticated read-only `api/dashboard.php` endpoint.
+- Added `includes/dashboard.php` service layer for recent performance, trends, top training focus, strengths and recommended reviews.
+- Added calculations based on the latest 10 analyzed games, with a 6-game minimum for trend confidence.
+- Added Personal Trainer Dashboard home UI blocks for current state, top 3 training focus, recent summary, strengths, detected patterns and recommended reviews.
+- Added `assets/js/dashboard.js` for home dashboard rendering.
+- Added URL-driven filters to `games.php` so dashboard links can open filtered game lists.
+
+### Notes
+
+- PR1 added backend data. PR2 adds the home UI that consumes it.
+- No external AI, paid APIs, npm, Composer, Docker or persistent worker processes were introduced.
+
+### Database
+
+- No SQL migration required.
+
 ## v0.9.5 - Cron worker access fix
 
 ### Changed

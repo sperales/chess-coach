@@ -160,6 +160,7 @@ chess-coach/
   api/
     analyze.php
     chesscom.php
+    dashboard.php
     games.php
     review.php
 
@@ -175,6 +176,7 @@ chess-coach/
       analysis_queue.js
       app.js
       chesscom.js
+      dashboard.js
       layout.js
       review.js
 
@@ -193,6 +195,7 @@ chess-coach/
     chess_server.php
     chesscom.php
     config.php
+    dashboard.php
     db.php
     helpers.php
     pgn.php

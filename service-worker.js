@@ -9,6 +9,7 @@ const ASSETS = [
   './profile.php',
   './assets/css/app.css',
   './assets/js/app.js',
+  './assets/js/dashboard.js',
   './assets/js/games.js',
   './assets/js/layout.js',
   './assets/js/chesscom.js',
