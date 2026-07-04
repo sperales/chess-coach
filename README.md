@@ -615,12 +615,13 @@ Current planned direction:
 - Tags visible in game list and review
 - Profile backfill process for existing analyzed games
 
-### v1.0.0 — Personal Trainer
+### Completed in v1.0.0 — Personal Trainer
 
-- Stronger dashboard
-- Weekly summary
-- Main weakness detection
-- Training recommendation
+- Personal Trainer Dashboard on the home page
+- Recent summary based on the latest analyzed games
+- Main training focus detection
+- Recommended games to review
+- Strengths and detected patterns
 
 ### v1.1.0 — Training Center
 

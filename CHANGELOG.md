@@ -13,10 +13,12 @@
 - Added URL-driven filters to `games.php` so dashboard links can open filtered game lists.
 - Polished Personal Trainer Dashboard focus scoring, Spanish UI copy, empty states and actionable links.
 - Expanded `games.php?tag=...` filtering to include both game-level and move-level Smart Tags.
+- Bumped `config/version.php` to `1.0.0`.
+- Updated the service worker cache name to `chess-coach-v1.0.0`.
 
 ### Notes
 
-- PR1 added backend data. PR2 adds the home UI that consumes it.
+- PR1 added backend data. PR2 added the home UI that consumes it. PR3 polished focus scoring, copy, empty states and links. PR4 closes the release version/cache readiness.
 - No external AI, paid APIs, npm, Composer, Docker or persistent worker processes were introduced.
 
 ### Database
