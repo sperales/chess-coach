@@ -1720,6 +1720,32 @@ select {
   text-decoration:none;
   font-weight:700
 }
+.trainer-focus-card a:hover,.trainer-strength a:hover,.empty-state a:hover,.game-title-link:hover {
+  text-decoration:underline
+}
+.empty-state {
+  display:grid;
+  gap:8px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(7,16,20,.42)
+}
+.empty-state.compact {
+  padding:12px
+}
+.empty-state strong {
+  color:#f5f7fb
+}
+.empty-state span {
+  color:#a9b1ba;
+  line-height:1.45
+}
+.empty-state a,.game-title-link {
+  color:#78d95e;
+  text-decoration:none;
+  font-weight:800
+}
 .trainer-rank {
   width:42px;
   height:42px;

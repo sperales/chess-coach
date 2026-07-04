@@ -29,6 +29,12 @@ This PR adds the first Personal Trainer Dashboard UI on the home page, consuming
   - detected patterns
   - recommended games to review
 - Existing home KPIs, latest games, quick actions and motivational quote remain available.
+- PR3 polishes the training focus experience:
+  - refines training focus scoring with recent results, accuracy trend, error rates and Smart Tags
+  - improves Spanish UI copy, including accents and `ñ` characters in visible labels, cards and generated dashboard messages
+  - adds clearer empty states for focus, strengths, recommended reviews and detected patterns
+  - makes dashboard links more actionable through `review.php`, `analysis-pending.php`, `profile.php` and filtered `games.php` views
+  - expands `games.php?tag=...` filtering so it works with both game-level and move-level Smart Tags
 
 ## Deployment notes
 
@@ -80,4 +86,6 @@ node --check assets\js\dashboard.js
 - Confirm the home dashboard renders current state, focus cards, strengths and recommended reviews.
 - Confirm the home "Partidas" panel can switch between latest and recommended games.
 - Confirm dashboard links to `games.php?tag=...` open the games page with the tag filter applied.
+- Confirm move-level Smart Tag links such as `games.php?tag=blunder_own` return matching games when those tags exist.
+- Confirm empty dashboard states are understandable for users with few or no analyzed games.
 - Confirm no real credentials were committed.

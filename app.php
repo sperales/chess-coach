@@ -9,7 +9,7 @@ $assetVersion = (string)filemtime(__DIR__ . '/assets/css/app.css');
 $dashboardJsVersion = (string)filemtime(__DIR__ . '/assets/js/dashboard.js');
 $layoutJsVersion = (string)filemtime(__DIR__ . '/assets/js/layout.js');
 $hour = (int)date('G');
-$greeting = $hour < 12 ? 'Buenos dias' : ($hour < 21 ? 'Buenas tardes' : 'Buenas noches');
+$greeting = $hour < 12 ? 'Buenos días' : ($hour < 21 ? 'Buenas tardes' : 'Buenas noches');
 ?>
 <!doctype html>
 <html lang="es">
@@ -36,7 +36,7 @@ $greeting = $hour < 12 ? 'Buenos dias' : ($hour < 21 ? 'Buenas tardes' : 'Buenas
   <section class="metric-grid" id="stats"></section>
 
   <section class="panel trainer-summary-panel">
-    <h2>Resumen de ultimas partidas</h2>
+    <h2>Resumen de últimas partidas</h2>
     <p class="trainer-summary-text" id="trainerSummary">Cargando resumen...</p>
     <div class="trainer-mini-kpis" id="trainerMiniKpis"></div>
   </section>
@@ -45,7 +45,7 @@ $greeting = $hour < 12 ? 'Buenos dias' : ($hour < 21 ? 'Buenas tardes' : 'Buenas
     <section class="panel trainer-focus-panel">
       <div class="panel-head">
         <h2>Top 3 focos de entrenamiento</h2>
-        <span class="muted" id="trainerPeriod">Ultimas partidas</span>
+        <span class="muted" id="trainerPeriod">Últimas partidas</span>
       </div>
       <div class="trainer-focus-list" id="trainerFocusList"></div>
     </section>
@@ -54,7 +54,7 @@ $greeting = $hour < 12 ? 'Buenos dias' : ($hour < 21 ? 'Buenas tardes' : 'Buenas
       <h2>Estado actual</h2>
       <div class="trainer-state" id="trainerState"></div>
       <hr class="soft-line">
-      <h3>Siguiente accion</h3>
+      <h3>Siguiente acción</h3>
       <p class="muted" id="trainerNextAction">Cargando...</p>
       <hr class="soft-line">
       <h2>Fortalezas recientes</h2>
@@ -67,7 +67,7 @@ $greeting = $hour < 12 ? 'Buenos dias' : ($hour < 21 ? 'Buenas tardes' : 'Buenas
       <div class="panel-head">
         <h2>Partidas</h2>
         <div class="panel-actions">
-          <button class="secondary small active" type="button" id="latestTab" onclick="setGamesPanelMode('latest')">Ultimas</button>
+          <button class="secondary small active" type="button" id="latestTab" onclick="setGamesPanelMode('latest')">Últimas</button>
           <button class="secondary small" type="button" id="recommendedTab" onclick="setGamesPanelMode('recommended')">Recomendadas</button>
           <a id="gamesToggleLink" href="games.php">Ver todas</a>
         </div>
@@ -79,7 +79,7 @@ $greeting = $hour < 12 ? 'Buenos dias' : ($hour < 21 ? 'Buenas tardes' : 'Buenas
             <th>Resultado</th>
             <th>Ritmo</th>
             <th class="hide-sm">Fecha</th>
-            <th>Analisis</th>
+            <th>Análisis</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
@@ -95,11 +95,11 @@ $greeting = $hour < 12 ? 'Buenos dias' : ($hour < 21 ? 'Buenas tardes' : 'Buenas
 
   <section class="quick-panel-wrap">
     <section class="panel quick-panel">
-      <h2>Acciones rapidas</h2>
+      <h2>Acciones rápidas</h2>
       <div class="quick-grid">
         <a class="quick-card green" href="import-chesscom.php"><span>⇩</span><strong>Importar partidas</strong><small>PGN o desde Chess.com</small></a>
-        <button class="quick-card blue" type="button" onclick="analyzePendingVisible()"><span>▶</span><strong>Analizar pendientes</strong><small>Ver cola de analisis</small></button>
-        <button class="quick-card purple" type="button" onclick="reviewLastGame()"><span>⌕</span><strong>Revisar ultima partida</strong><small>Ver analisis completo</small></button>
+        <button class="quick-card blue" type="button" onclick="analyzePendingVisible()"><span>▶</span><strong>Analizar pendientes</strong><small>Ver cola de análisis</small></button>
+        <button class="quick-card purple" type="button" onclick="reviewLastGame()"><span>⌕</span><strong>Revisar última partida</strong><small>Ver análisis completo</small></button>
         <a class="quick-card amber disabled" href="#"><span>◎</span><strong>Entrenamiento</strong><small>Ejercicios personalizados</small></a>
       </div>
     </section>

@@ -54,7 +54,7 @@ function renderStats() {
     { kind: 'pulse', label: 'Partidas', value: global.total || 0, detail: 'Ver todas', href: 'games.php' },
     { kind: 'target', label: 'Win Rate', value: `${winRate}%`, detail: `${global.wins || 0} victorias / ${global.total || 0}` },
     { kind: 'star', label: 'Accuracy media', value: avgAccuracy === null ? '--' : `${avgAccuracy.toFixed(1)}%`, detail: analyzedGames ? `${analyzedGames} partidas analizadas` : 'sin partidas analizadas' },
-    { kind: 'clock', label: 'Pendientes de analisis', value: pending, detail: 'Ver cola' }
+    { kind: 'clock', label: 'Pendientes de análisis', value: pending, detail: 'Ver cola' }
   ];
   el.innerHTML = cards.map(card => {
     const detail = card.href
@@ -82,7 +82,7 @@ function renderHero() {
   const focus = (dashboardData.training_focus || [])[0];
   if (!el) return;
   if (!dashboardData.period || !dashboardData.period.available_games) {
-    el.textContent = 'Importa y analiza partidas para construir tu plan de entrenamiento.';
+    el.textContent = 'Importa y analiza partidas para construir tu primer plan de entrenamiento.';
     return;
   }
   el.textContent = focus ? `Tu foco principal ahora mismo: ${focus.title}.` : 'Cada partida es una oportunidad para mejorar.';
@@ -97,7 +97,13 @@ function renderFocus() {
   const minimum = dashboardData.period ? Number(dashboardData.period.minimum_games_for_trend || 6) : 6;
   if (period) period.textContent = `${available}/10 analizadas`;
   if (!items.length) {
-    list.innerHTML = `<p class="muted">No hay focos detectados todavia.</p>`;
+    list.innerHTML = `
+      <div class="empty-state compact">
+        <strong>No hay focos detectados todavía.</strong>
+        <span>Analiza al menos ${minimum} partidas para que el diagnóstico sea más fiable.</span>
+        <a href="analysis-pending.php">Ver cola de análisis</a>
+      </div>
+    `;
     return;
   }
   list.innerHTML = items.map((focus, index) => `
@@ -108,10 +114,14 @@ function renderFocus() {
         <p>${escapeHtml(focus.description || '')}</p>
         ${focusEvidence(focus)}
         <strong>${escapeHtml(focus.recommended_action || '')}</strong>
-        ${focus.games_url ? `<a href="${escapeAttr(focus.games_url)}">Ver partidas relacionadas</a>` : ''}
+        ${focus.games_url ? `<a href="${escapeAttr(focus.games_url)}">${focusLinkLabel(focus.games_url)}</a>` : ''}
       </div>
     </article>
-  `).join('') + (available < minimum ? `<p class="muted small-note">Con ${minimum} partidas analizadas el diagnostico sera mas fiable.</p>` : '');
+  `).join('') + (available < minimum ? `<p class="muted small-note">Con ${minimum} partidas analizadas el diagnóstico será más fiable.</p>` : '');
+}
+
+function focusLinkLabel(url) {
+  return url && url.indexOf('analysis-pending.php') !== -1 ? 'Ver cola de análisis' : 'Ver partidas relacionadas';
 }
 
 function focusEvidence(focus) {
@@ -132,7 +142,7 @@ function renderState() {
     `;
   }
   if (actionEl) {
-    actionEl.textContent = focus && focus.recommended_action ? focus.recommended_action : 'Analiza mas partidas para obtener una recomendacion clara.';
+    actionEl.textContent = focus && focus.recommended_action ? focus.recommended_action : 'Analiza más partidas para obtener una recomendación clara.';
   }
 }
 
@@ -166,7 +176,12 @@ function renderStrengths() {
   if (!el) return;
   const strengths = dashboardData.strengths || [];
   if (!strengths.length) {
-    el.innerHTML = `<p class="muted">Todavia no hay fortalezas claras. Analiza algunas partidas mas.</p>`;
+    el.innerHTML = `
+      <div class="empty-state compact">
+        <strong>Todavía no hay fortalezas claras.</strong>
+        <span>Cuando haya más partidas analizadas, aquí aparecerán patrones positivos recientes.</span>
+      </div>
+    `;
     return;
   }
   el.innerHTML = strengths.map(item => `
@@ -183,11 +198,16 @@ function renderRows() {
   if (!el) return;
   if (gamesPanelMode === 'recommended') {
     const recommended = dashboardData ? (dashboardData.recommended_reviews || []) : [];
-    el.innerHTML = recommended.map(recommendedRow).join('') || `<tr><td colspan="5" class="muted">No hay recomendaciones todavia. Necesito mas partidas analizadas.</td></tr>`;
+    el.innerHTML = recommended.map(recommendedRow).join('') || `
+      <tr>
+        <td colspan="5" class="muted">
+          No hay recomendaciones todavía. Analiza más partidas para que el entrenador priorice revisiones.
+        </td>
+      </tr>`;
     return;
   }
   const list = games.slice(0, 5);
-  el.innerHTML = list.map(gameRow).join('') || `<tr><td colspan="5" class="muted">Todavia no hay partidas. Empieza importando tus PGN o desde Chess.com.</td></tr>`;
+  el.innerHTML = list.map(gameRow).join('') || `<tr><td colspan="5" class="muted">Todavía no hay partidas. Empieza importando tus PGN o desde Chess.com.</td></tr>`;
 }
 
 function gameRow(game) {
@@ -197,7 +217,7 @@ function gameRow(game) {
 function recommendedRow(item) {
   return `
     <tr>
-      <td><strong>${escapeHtml(item.title || 'Partida')}</strong><small class="recommend-reason">${escapeHtml(item.reason || '')}</small></td>
+      <td><a class="game-title-link" href="${escapeAttr(item.review_url || '#')}"><strong>${escapeHtml(item.title || 'Partida')}</strong></a><small class="recommend-reason">${escapeHtml(item.reason || '')}</small></td>
       <td>${resultBadge(item)}</td>
       <td>${item.accuracy === null || typeof item.accuracy === 'undefined' ? '--' : `${Number(item.accuracy).toFixed(1)}%`}</td>
       <td class="hide-sm">${escapeHtml(item.played_at || '-')}</td>
@@ -277,7 +297,14 @@ function renderPatterns() {
   const moveTags = dashboardData && dashboardData.patterns ? (dashboardData.patterns.move_tags || []) : [];
   const tags = [...gameTags, ...moveTags].slice(0, 6);
   if (!tags.length) {
-    card.innerHTML = `<h2>Patrones detectados</h2><p class="muted">Analiza o reanaliza partidas para empezar a detectar patrones.</p>`;
+    card.innerHTML = `
+      <h2>Patrones detectados</h2>
+      <div class="empty-state compact">
+        <strong>Sin patrones detectados todavía.</strong>
+        <span>Ejecuta Smart Tags sobre partidas analizadas para ver etiquetas frecuentes.</span>
+        <a href="profile.php">Ir a procesos batch</a>
+      </div>
+    `;
     return;
   }
   card.innerHTML = `
