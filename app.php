@@ -8,6 +8,8 @@ $quote = random_motivational_quote();
 $assetVersion = (string)filemtime(__DIR__ . '/assets/css/app.css');
 $dashboardJsVersion = (string)filemtime(__DIR__ . '/assets/js/dashboard.js');
 $layoutJsVersion = (string)filemtime(__DIR__ . '/assets/js/layout.js');
+$hour = (int)date('G');
+$greeting = $hour < 12 ? 'Buenos dias' : ($hour < 21 ? 'Buenas tardes' : 'Buenas noches');
 ?>
 <!doctype html>
 <html lang="es">
@@ -25,7 +27,7 @@ $layoutJsVersion = (string)filemtime(__DIR__ . '/assets/js/layout.js');
 <main class="dashboard trainer-dashboard">
   <section class="hero-card trainer-hero">
     <div>
-      <h1>Buenas, <?=e($u['username'])?></h1>
+      <h1><?=e($greeting)?>, <?=e($u['username'])?></h1>
       <p id="trainerHeroText">Preparando tu panel de entrenamiento...</p>
     </div>
     <div class="hero-piece">♛</div>
