@@ -176,6 +176,7 @@ chess-coach/
       analysis_queue.js
       app.js
       chesscom.js
+      dashboard.js
       layout.js
       review.js
 

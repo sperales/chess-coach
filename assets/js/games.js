@@ -2,6 +2,7 @@ let games = [];
 let currentPage = 1;
 let pagination = { page: 1, per_page: (window.CHESS_COACH_CONFIG && window.CHESS_COACH_CONFIG.gamesPerPage) || 50, total: 0, pages: 1 };
 let availableTags = [];
+const initialGameFilters = new URLSearchParams(window.location.search);
 
 function selectedFilters() {
   return {
@@ -41,7 +42,7 @@ async function loadGames(page = currentPage) {
 function renderTagOptions() {
   const select = document.getElementById('tagFilter');
   if (!select || select.dataset.loaded === '1') return;
-  const current = select.value;
+  const current = select.value || initialGameFilters.get('tag') || '';
   select.innerHTML = '<option value="">Todas</option>' + availableTags.map(tag => `<option value="${escapeHtml(tag.tag_code || '')}">${escapeHtml(tag.label || tag.tag_code || '')}</option>`).join('');
   select.value = current;
   select.dataset.loaded = '1';
@@ -93,6 +94,13 @@ function bindFilters() {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', () => loadGames(1));
   });
+}
+
+function initializeGameFiltersFromUrl() {
+  const color = document.getElementById('colorFilter');
+  const result = document.getElementById('resultFilter');
+  if (color && ['white', 'black'].includes(initialGameFilters.get('color') || '')) color.value = initialGameFilters.get('color');
+  if (result && ['win', 'loss', 'draw'].includes(initialGameFilters.get('result') || '')) result.value = initialGameFilters.get('result');
 }
 
 function opponentCell(g) {
@@ -153,5 +161,6 @@ function escapeHtml(s) {
   return (s || '').toString().replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
 }
 
+initializeGameFiltersFromUrl();
 bindFilters();
 loadGames(1);

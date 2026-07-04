@@ -318,6 +318,14 @@ a {
 .metric-card small {
   color:#72d66b
 }
+.metric-card small a {
+  color:inherit;
+  font-weight:800;
+  text-decoration:none
+}
+.metric-card small a:hover {
+  text-decoration:underline
+}
 .panel {
   background:linear-gradient(180deg,rgba(19,30,37,.96),rgba(13,22,27,.96));
   border:1px solid var(--line);
@@ -1520,7 +1528,11 @@ label {
   font-size:11px;
   font-weight:800;
   line-height:1.2;
-  white-space:nowrap
+  white-space:nowrap;
+  text-decoration:none
+}
+.smart-tag[href]:hover {
+  filter:brightness(1.12)
 }
 .smart-tag.critical {
   background:#3b1d1d;
@@ -1653,5 +1665,190 @@ select {
 @media(max-width:980px) {
   .games-filter-grid {
     grid-template-columns:minmax(0,1fr)
+  }
+}
+
+/* v1.0.0 Personal Trainer Dashboard */
+.trainer-dashboard {
+  gap:20px
+}
+.trainer-hero p {
+  max-width:820px
+}
+.trainer-grid {
+  display:grid;
+  grid-template-columns:minmax(0,1.35fr) minmax(280px,.75fr);
+  gap:20px
+}
+.trainer-summary-panel {
+  margin-bottom:20px
+}
+.trainer-focus-list {
+  display:grid;
+  gap:12px
+}
+.trainer-focus-card {
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr);
+  gap:14px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(7,16,20,.42)
+}
+.trainer-focus-card h3 {
+  margin:0 0 6px;
+  font-size:18px
+}
+.trainer-focus-card p {
+  margin:0 0 8px;
+  color:#cbd5df;
+  line-height:1.45
+}
+.trainer-focus-card ul {
+  margin:0 0 10px;
+  padding-left:18px;
+  color:#a9b1ba
+}
+.trainer-focus-card strong {
+  display:block;
+  color:#f5f7fb;
+  margin:0 0 8px
+}
+.trainer-focus-card a,.trainer-strength a {
+  color:#78d95e;
+  text-decoration:none;
+  font-weight:700
+}
+.trainer-rank {
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:linear-gradient(135deg,#60a5fa,#18a34a);
+  color:#fff;
+  font-weight:900;
+  font-size:20px
+}
+.trainer-state {
+  display:grid;
+  gap:12px
+}
+.trainer-state p {
+  margin:0;
+  color:#cbd5df;
+  line-height:1.5
+}
+.trainer-state-badge {
+  display:inline-flex;
+  width:max-content;
+  max-width:100%;
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:#13242d;
+  color:#f5f7fb;
+  font-weight:800
+}
+.trainer-state-badge.good,.trainer-state-badge.improving {
+  background:#173d23;
+  border-color:#265e32;
+  color:#7cec71
+}
+.trainer-state-badge.declining {
+  background:#3b1d1d;
+  border-color:#6b2c2c;
+  color:#ffb4ae
+}
+.trainer-state-badge.insufficient {
+  background:#24345b;
+  border-color:#3356a2;
+  color:#9ec5ff
+}
+.trainer-summary-text {
+  margin:0 0 16px;
+  color:#dbe4ec;
+  line-height:1.55;
+  font-size:17px
+}
+.trainer-mini-kpis {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px
+}
+.trainer-mini-kpis div {
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:12px;
+  background:rgba(7,16,20,.42)
+}
+.trainer-mini-kpis span {
+  display:block;
+  color:#a9b1ba;
+  font-size:13px
+}
+.trainer-mini-kpis b {
+  display:block;
+  margin-top:4px;
+  font-size:18px
+}
+.trainer-strengths {
+  display:grid;
+  gap:10px
+}
+.trainer-strength {
+  display:grid;
+  gap:4px;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:rgba(7,16,20,.42)
+}
+.trainer-strength span {
+  color:#a9b1ba
+}
+.panel-actions {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end
+}
+.panel-actions .secondary.active {
+  background:#244333;
+  border-color:#326b43;
+  color:#7cec71
+}
+.recommend-reason {
+  display:block;
+  margin-top:5px;
+  color:#a9b1ba
+}
+.quick-panel-wrap {
+  margin-top:20px
+}
+@media(max-width:980px) {
+  .trainer-grid {
+    grid-template-columns:minmax(0,1fr)
+  }
+  .trainer-mini-kpis {
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+}
+@media(max-width:560px) {
+  .trainer-focus-card {
+    grid-template-columns:minmax(0,1fr)
+  }
+  .trainer-rank {
+    width:36px;
+    height:36px;
+    font-size:18px
+  }
+  .trainer-mini-kpis {
+    grid-template-columns:minmax(0,1fr)
+  }
+  .panel-actions {
+    justify-content:flex-start
   }
 }
