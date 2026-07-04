@@ -2,9 +2,9 @@
 
 ## Release type
 
-Personal Trainer Dashboard backend foundation.
+Personal Trainer Dashboard UI foundation.
 
-This PR adds the backend foundation for the Personal Trainer Dashboard. It does not change the home UI yet.
+This PR adds the first Personal Trainer Dashboard UI on the home page, consuming the backend payload from PR1.
 
 ## Changed files
 
@@ -12,12 +12,23 @@ This PR adds the backend foundation for the Personal Trainer Dashboard. It does 
 - `README.md`
 - `README_UPDATE.md`
 - `api/dashboard.php`
+- `app.php`
+- `assets/css/app.css`
+- `assets/js/dashboard.js`
+- `assets/js/games.js`
 - `includes/dashboard.php`
+- `service-worker.js`
 
 ## User-facing changes
 
-- No visible UI change yet.
-- A new authenticated dashboard API is available for the upcoming Personal Trainer home UI.
+- The home dashboard now shows:
+  - current state
+  - top 3 training focus
+  - recent summary
+  - recent strengths
+  - detected patterns
+  - recommended games to review
+- Existing home KPIs, latest games, quick actions and motivational quote remain available.
 
 ## Deployment notes
 
@@ -39,7 +50,13 @@ No SQL migration is required for this PR.
 
 ## Service worker
 
-No service worker asset list change is required for this backend-only PR.
+The service worker asset list now includes:
+
+```text
+assets/js/dashboard.js
+```
+
+The final v1.0.0 release PR should bump the service worker cache name.
 
 ## Local verification performed
 
@@ -49,11 +66,18 @@ PHP syntax lint passed locally with:
 Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
 ```
 
-No JavaScript files changed in this release.
+JavaScript syntax check passed locally with:
+
+```powershell
+node --check assets\js\dashboard.js
+```
 
 ## Manual verification checklist
 
 - Confirm `api/dashboard.php` returns JSON when logged in.
 - Confirm `api/dashboard.php` redirects to login when logged out.
 - Confirm the payload includes `overview`, `training_focus`, `strengths`, `recommended_reviews`, `patterns`, `recent_games` and `queue`.
+- Confirm the home dashboard renders current state, focus cards, strengths and recommended reviews.
+- Confirm the home "Partidas" panel can switch between latest and recommended games.
+- Confirm dashboard links to `games.php?tag=...` open the games page with the tag filter applied.
 - Confirm no real credentials were committed.
