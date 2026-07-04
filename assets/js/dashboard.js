@@ -44,19 +44,24 @@ function render() {
 function renderStats() {
   const el = document.getElementById('stats');
   if (!el) return;
-  const recent = stats.recent10 || { total: 0, wins: 0, losses: 0, draws: 0 };
+  const global = stats.global || { total: 0, wins: 0, losses: 0, draws: 0 };
   const accuracy = stats.analysis_accuracy || { average: null, analyzed_games: 0 };
-  const winRate = recent.total ? Math.round((recent.wins || 0) * 100 / recent.total) : 0;
+  const winRate = global.total ? Math.round((global.wins || 0) * 100 / global.total) : 0;
   const pending = (stats.queue && typeof stats.queue.pending_total !== 'undefined') ? stats.queue.pending_total : 0;
   const analyzedGames = Number(accuracy.analyzed_games || 0);
   const avgAccuracy = accuracy.average === null || typeof accuracy.average === 'undefined' ? null : Number(accuracy.average);
   const cards = [
-    ['pulse', 'Partidas (10 dias)', recent.total || 0, 'actividad reciente'],
-    ['target', 'Win Rate', `${winRate}%`, `${recent.wins || 0} victorias / ${recent.total || 0}`],
-    ['star', 'Accuracy media', avgAccuracy === null ? '--' : `${avgAccuracy.toFixed(1)}%`, analyzedGames ? `${analyzedGames} partidas analizadas` : 'sin partidas analizadas'],
-    ['clock', 'Pendientes de analisis', pending, 'Ver cola']
+    { kind: 'pulse', label: 'Partidas', value: global.total || 0, detail: 'Ver todas', href: 'games.php' },
+    { kind: 'target', label: 'Win Rate', value: `${winRate}%`, detail: `${global.wins || 0} victorias / ${global.total || 0}` },
+    { kind: 'star', label: 'Accuracy media', value: avgAccuracy === null ? '--' : `${avgAccuracy.toFixed(1)}%`, detail: analyzedGames ? `${analyzedGames} partidas analizadas` : 'sin partidas analizadas' },
+    { kind: 'clock', label: 'Pendientes de analisis', value: pending, detail: 'Ver cola' }
   ];
-  el.innerHTML = cards.map(card => `<article class="metric-card ${card[0]}"><div class="metric-icon">${iconFor(card[0])}</div><div><span>${card[1]}</span><b>${card[2]}</b><small>${card[3]}</small></div></article>`).join('');
+  el.innerHTML = cards.map(card => {
+    const detail = card.href
+      ? `<a href="${escapeAttr(card.href)}">${escapeHtml(card.detail)}</a>`
+      : escapeHtml(card.detail);
+    return `<article class="metric-card ${card.kind}"><div class="metric-icon">${iconFor(card.kind)}</div><div><span>${escapeHtml(card.label)}</span><b>${escapeHtml(card.value)}</b><small>${detail}</small></div></article>`;
+  }).join('');
 }
 
 function iconFor(kind) {
@@ -138,7 +143,7 @@ function renderSummary() {
   if (summary) summary.textContent = dashboardData.summary_text || 'Cargando resumen...';
   if (!kpis) return;
   const values = [
-    ['Score', typeof overview.score_rate === 'number' ? `${overview.score_rate}%` : '--'],
+    ['Win rate', typeof overview.score_rate === 'number' ? `${overview.score_rate}%` : '--'],
     ['ACPL', overview.avg_acpl === null || typeof overview.avg_acpl === 'undefined' ? '--' : Number(overview.avg_acpl).toFixed(1)],
     ['Errores', `${overview.own_blunders || 0}/${overview.own_mistakes || 0}/${overview.own_inaccuracies || 0}`],
     ['Color', colorNote(overview)]

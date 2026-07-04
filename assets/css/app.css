@@ -318,6 +318,14 @@ a {
 .metric-card small {
   color:#72d66b
 }
+.metric-card small a {
+  color:inherit;
+  font-weight:800;
+  text-decoration:none
+}
+.metric-card small a:hover {
+  text-decoration:underline
+}
 .panel {
   background:linear-gradient(180deg,rgba(19,30,37,.96),rgba(13,22,27,.96));
   border:1px solid var(--line);
