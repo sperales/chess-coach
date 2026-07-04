@@ -193,7 +193,7 @@ function recommendedRow(item) {
   return `
     <tr>
       <td><strong>${escapeHtml(item.title || 'Partida')}</strong><small class="recommend-reason">${escapeHtml(item.reason || '')}</small></td>
-      <td><span class="result-badge result-unknown">Revisar</span></td>
+      <td>${resultBadge(item)}</td>
       <td>${item.accuracy === null || typeof item.accuracy === 'undefined' ? '--' : `${Number(item.accuracy).toFixed(1)}%`}</td>
       <td class="hide-sm">${escapeHtml(item.played_at || '-')}</td>
       <td><a class="btn secondary small" href="${escapeAttr(item.review_url || '#')}">Revisar</a></td>
