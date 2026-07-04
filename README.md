@@ -160,6 +160,7 @@ chess-coach/
   api/
     analyze.php
     chesscom.php
+    dashboard.php
     games.php
     review.php
 
@@ -193,6 +194,7 @@ chess-coach/
     chess_server.php
     chesscom.php
     config.php
+    dashboard.php
     db.php
     helpers.php
     pgn.php

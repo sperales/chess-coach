@@ -1,25 +1,23 @@
-# Chess Coach v0.9.5 Update Notes
+# Chess Coach v1.0.0 Update Notes
 
 ## Release type
 
-Cron worker access fix.
+Personal Trainer Dashboard backend foundation.
 
-This version removes the blocking `worker/.htaccess` file so shared-hosting HTTP GET cron jobs can execute `worker/analyze_queue.php` with the configured token.
+This PR adds the backend foundation for the Personal Trainer Dashboard. It does not change the home UI yet.
 
 ## Changed files
 
-- `AGENTS.md`
 - `CHANGELOG.md`
-- `README_UPDATE.md`
 - `README.md`
-- `config/version.php`
-- `service-worker.js`
-- `worker/.htaccess`
+- `README_UPDATE.md`
+- `api/dashboard.php`
+- `includes/dashboard.php`
 
 ## User-facing changes
 
-- HTTP GET cron execution should work when called as `worker/analyze_queue.php?token=...`.
-- The worker remains protected by the token configured in `config/cron.php`.
+- No visible UI change yet.
+- A new authenticated dashboard API is available for the upcoming Personal Trainer home UI.
 
 ## Deployment notes
 
@@ -37,17 +35,11 @@ No real config files changed in this release.
 
 ## SQL migration
 
-No SQL migration is required for v0.9.5.
+No SQL migration is required for this PR.
 
 ## Service worker
 
-The service worker cache name was updated to:
-
-```text
-chess-coach-v0.9.5
-```
-
-After deployment, hard refresh the browser or reinstall the PWA if stale cached assets appear.
+No service worker asset list change is required for this backend-only PR.
 
 ## Local verification performed
 
@@ -61,9 +53,7 @@ No JavaScript files changed in this release.
 
 ## Manual verification checklist
 
-- Confirm `config/version.php` reports `0.9.5`.
-- Confirm `service-worker.js` uses `chess-coach-v0.9.5`.
-- Confirm `worker/.htaccess` is not deployed.
-- Confirm the hosting cron URL returns JSON when called with the correct token.
-- Confirm the hosting cron URL returns `Forbidden` with an invalid or missing token.
+- Confirm `api/dashboard.php` returns JSON when logged in.
+- Confirm `api/dashboard.php` redirects to login when logged out.
+- Confirm the payload includes `overview`, `training_focus`, `strengths`, `recommended_reviews`, `patterns`, `recent_games` and `queue`.
 - Confirm no real credentials were committed.
