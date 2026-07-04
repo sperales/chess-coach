@@ -33,6 +33,12 @@ $layoutJsVersion = (string)filemtime(__DIR__ . '/assets/js/layout.js');
 
   <section class="metric-grid" id="stats"></section>
 
+  <section class="panel trainer-summary-panel">
+    <h2>Resumen de ultimas partidas</h2>
+    <p class="trainer-summary-text" id="trainerSummary">Cargando resumen...</p>
+    <div class="trainer-mini-kpis" id="trainerMiniKpis"></div>
+  </section>
+
   <section class="trainer-grid">
     <section class="panel trainer-focus-panel">
       <div class="panel-head">
@@ -48,17 +54,7 @@ $layoutJsVersion = (string)filemtime(__DIR__ . '/assets/js/layout.js');
       <hr class="soft-line">
       <h3>Siguiente accion</h3>
       <p class="muted" id="trainerNextAction">Cargando...</p>
-    </section>
-  </section>
-
-  <section class="trainer-grid secondary-trainer-grid">
-    <section class="panel">
-      <h2>Resumen de ultimas partidas</h2>
-      <p class="trainer-summary-text" id="trainerSummary">Cargando resumen...</p>
-      <div class="trainer-mini-kpis" id="trainerMiniKpis"></div>
-    </section>
-
-    <section class="panel">
+      <hr class="soft-line">
       <h2>Fortalezas recientes</h2>
       <div class="trainer-strengths" id="trainerStrengths"></div>
     </section>
