@@ -1520,7 +1520,11 @@ label {
   font-size:11px;
   font-weight:800;
   line-height:1.2;
-  white-space:nowrap
+  white-space:nowrap;
+  text-decoration:none
+}
+.smart-tag[href]:hover {
+  filter:brightness(1.12)
 }
 .smart-tag.critical {
   background:#3b1d1d;
