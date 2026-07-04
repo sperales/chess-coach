@@ -197,6 +197,8 @@ move_tags
 
 ## v1.0.0 — Personal Trainer Dashboard
 
+Status: completed in Chess Coach v1.0.0.
+
 ### Goal
 
 Turn the dashboard into a real personal training cockpit.
