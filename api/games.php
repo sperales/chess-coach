@@ -24,7 +24,7 @@ if($action==='list'){
   $statsRecent = game_stats_for_user($u['id'], true);
   $accuracyStats = analysis_accuracy_stats_for_user((int)$u['id']);
 
-  $sql = 'SELECT g.id, g.game_uid, g.white_player, g.black_player, g.result_raw, g.user_result, g.played_at, g.event_name, g.site, g.eco_code, g.opening_name, g.pgn, g.imported_at, g.source, a.id AS analysis_id, a.status AS analysis_status, a.blunders, a.mistakes, a.inaccuracies FROM games g LEFT JOIN game_analysis a ON a.id=(SELECT id FROM game_analysis WHERE game_id=g.id AND user_id=? ORDER BY id DESC LIMIT 1) WHERE '.$whereSql.' ORDER BY COALESCE(g.played_at, g.imported_at) DESC, g.id DESC LIMIT '.(int)$perPage.' OFFSET '.(int)$offset;
+  $sql = 'SELECT g.id, g.game_uid, g.white_player, g.black_player, g.result_raw, g.user_result, g.played_at, g.event_name, g.site, g.eco_code, g.opening_name, g.eco_url, g.pgn, g.imported_at, g.source, a.id AS analysis_id, a.status AS analysis_status, a.blunders, a.mistakes, a.inaccuracies FROM games g LEFT JOIN game_analysis a ON a.id=(SELECT id FROM game_analysis WHERE game_id=g.id AND user_id=? ORDER BY id DESC LIMIT 1) WHERE '.$whereSql.' ORDER BY COALESCE(g.played_at, g.imported_at) DESC, g.id DESC LIMIT '.(int)$perPage.' OFFSET '.(int)$offset;
   $st=db()->prepare($sql);
   $st->execute(array_merge([(int)$u['id']], $filterParams));
   $games = $st->fetchAll();
@@ -46,6 +46,9 @@ function attach_opening_info_to_games(array &$games): void {
     }
     if (empty($game['opening_name']) && !empty($game['pgn'])) {
       $game['opening_name'] = pgn_opening_name((string)$game['pgn']);
+    }
+    if (empty($game['eco_url']) && !empty($game['pgn'])) {
+      $game['eco_url'] = pgn_eco_url((string)$game['pgn']);
     }
     unset($game['pgn']);
   }
@@ -230,9 +233,9 @@ if($action==='import'){
   foreach($pgns as $pgn){
     $uid=hash('sha256',$pgn);
     $dt=pgn_date(pgn_tag($pgn,'Date'));
-    $data=[pgn_tag($pgn,'White'),pgn_tag($pgn,'Black'),pgn_tag($pgn,'Result'),result_for_user($pgn,$u['username']),$dt,pgn_tag($pgn,'Event'),pgn_tag($pgn,'Site'),pgn_eco_code($pgn),pgn_opening_name($pgn),$pgn,$u['id'],$uid,'manual'];
+    $data=[pgn_tag($pgn,'White'),pgn_tag($pgn,'Black'),pgn_tag($pgn,'Result'),result_for_user($pgn,$u['username']),$dt,pgn_tag($pgn,'Event'),pgn_tag($pgn,'Site'),pgn_eco_code($pgn),pgn_opening_name($pgn),pgn_eco_url($pgn),$pgn,$u['id'],$uid,'manual'];
     try{
-      $st=db()->prepare('INSERT INTO games (white_player,black_player,result_raw,user_result,played_at,event_name,site,eco_code,opening_name,pgn,user_id,game_uid,source) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)');
+      $st=db()->prepare('INSERT INTO games (white_player,black_player,result_raw,user_result,played_at,event_name,site,eco_code,opening_name,eco_url,pgn,user_id,game_uid,source) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
       $st->execute($data);
       $gameId = (int)db()->lastInsertId();
       if (app_config()['auto_queue_imports'] ?? true) queue_game_analysis($gameId, (int)$u['id'], false);

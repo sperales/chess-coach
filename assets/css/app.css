@@ -1864,6 +1864,13 @@ select {
   color:#a9b1ba;
   font-weight:800
 }
+.opening-cell a {
+  color:#33ff77;
+  text-decoration:none
+}
+.opening-cell a:hover {
+  text-decoration:underline
+}
 .quick-panel-wrap {
   margin-top:20px
 }

@@ -121,10 +121,17 @@ function rhythmFromSite(site) {
 function openingCell(g) {
   const eco = (g.eco_code || '').toString().trim();
   const opening = (g.opening_name || '').toString().trim();
+  const ecoUrl = safeUrl(g.eco_url || '');
+  const ecoLabel = ecoUrl && eco ? `<a href="${escapeHtml(ecoUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(eco)}</a>` : escapeHtml(eco);
   if (!eco && !opening) return '-';
-  if (!opening) return `<span class="opening-cell"><strong>${escapeHtml(eco)}</strong></span>`;
-  const ecoText = eco ? `<small>${escapeHtml(eco)}</small>` : '';
+  if (!opening) return `<span class="opening-cell"><strong>${ecoLabel}</strong></span>`;
+  const ecoText = eco ? `<small>${ecoLabel}</small>` : '';
   return `<span class="opening-cell"><strong>${escapeHtml(opening)}</strong>${ecoText}</span>`;
+}
+
+function safeUrl(value) {
+  const url = (value || '').toString().trim();
+  return /^https?:\/\//i.test(url) ? url : '';
 }
 
 function resultBadge(g) {

@@ -10,12 +10,13 @@
 - Added an `Accuracy` KPI to the home "Resumen de últimas partidas" block.
 - Simplified the home games panel toggle so only the alternate list mode button is shown.
 - Added optional ECO/opening metadata to games and displayed it in a new `Apertura` column in `games.php`.
+- Linked ECO codes to the PGN `ECOUrl` value when available.
 - Bumped `config/version.php` to `1.0.1`.
 - Updated the service worker cache name to `chess-coach-v1.0.1`.
 
 ### Database
 
-- Added `sql/migrations/019_changes_1.0.1.sql` to add optional `eco_code` and `opening_name` columns to `games`.
+- Added `sql/migrations/019_changes_1.0.1.sql` to add optional `eco_code`, `opening_name` and `eco_url` columns to `games`.
 
 ## v1.0.0 - Personal Trainer Dashboard
 
