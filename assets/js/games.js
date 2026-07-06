@@ -141,7 +141,11 @@ function smartTagClass(tag) {
 }
 
 function smartTagChip(tag) {
-  return `<span class="smart-tag ${smartTagClass(tag)}" title="${escapeHtml(tag.tag_code || '')}">${escapeHtml(tag.label || tag.tag_code || '')}</span>`;
+  const code = tag && tag.tag_code ? tag.tag_code.toString() : '';
+  const label = tag && (tag.label || tag.tag_code) ? (tag.label || tag.tag_code).toString() : '';
+  const cls = smartTagClass(tag);
+  if (!code) return `<span class="smart-tag ${cls}">${escapeHtml(label)}</span>`;
+  return `<a class="smart-tag ${cls}" href="games.php?tag=${encodeURIComponent(code)}" title="${escapeHtml(code)}">${escapeHtml(label)}</a>`;
 }
 
 function gameTagsCell(g) {

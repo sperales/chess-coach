@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## v1.0.1 - Games tag filter polish
+
+### Changed
+
+- Made Smart Tag chips in `games.php` clickable so they open the games list filtered by that tag.
+- Bumped `config/version.php` to `1.0.1`.
+- Updated the service worker cache name to `chess-coach-v1.0.1`.
+
+### Database
+
+- No SQL migration required.
+
 ## v1.0.0 - Personal Trainer Dashboard
 
 ### Added
