@@ -329,6 +329,8 @@ function updateGamesPanelTabs() {
   const link = document.getElementById('gamesToggleLink');
   if (latest) latest.classList.toggle('active', gamesPanelMode === 'latest');
   if (recommended) recommended.classList.toggle('active', gamesPanelMode === 'recommended');
+  if (latest) latest.style.display = gamesPanelMode === 'recommended' ? '' : 'none';
+  if (recommended) recommended.style.display = gamesPanelMode === 'latest' ? '' : 'none';
   if (link) link.style.display = gamesPanelMode === 'latest' ? '' : 'none';
 }
 

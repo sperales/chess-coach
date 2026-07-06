@@ -23,6 +23,7 @@ This release improves Smart Tag navigation in the dedicated games list.
 - The home greeting highlights the current main focus in bold.
 - The "Resumen de últimas partidas" error KPI now labels counts as `B`, `M` and `I`.
 - The "Resumen de últimas partidas" block now includes an `Accuracy` KPI between `Win rate` and `ACPL`.
+- The home games panel now shows only the alternate toggle button: `Recomendadas` while viewing latest games, and `Últimas` while viewing recommended games.
 - `config/version.php` is bumped to `1.0.1`.
 - The PWA service worker cache name is bumped to `chess-coach-v1.0.1`.
 
@@ -77,6 +78,7 @@ node --check assets\js\dashboard.js
 - Confirm the home greeting bolds only the main focus after the colon.
 - Confirm the "Errores" KPI uses the `B:x/M:y/I:z` format.
 - Confirm the "Resumen de últimas partidas" block shows five KPI blocks, including `Accuracy`.
+- Confirm the home games panel shows only the alternate toggle button for the current list mode.
 - Confirm the header/footer version displays `1.0.1`.
 - Confirm the service worker cache name is `chess-coach-v1.0.1`.
 - Confirm no real credentials were committed.

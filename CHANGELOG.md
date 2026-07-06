@@ -8,6 +8,7 @@
 - Fixed the home "Pendientes de análisis" KPI so `0` is displayed correctly and "Ver cola" links to `analysis-pending.php`.
 - Highlighted the current main focus in the home greeting and labeled summary error counts as `B`, `M` and `I`.
 - Added an `Accuracy` KPI to the home "Resumen de últimas partidas" block.
+- Simplified the home games panel toggle so only the alternate list mode button is shown.
 - Bumped `config/version.php` to `1.0.1`.
 - Updated the service worker cache name to `chess-coach-v1.0.1`.
 
