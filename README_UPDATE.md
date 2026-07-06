@@ -1,41 +1,30 @@
-# Chess Coach v1.0.1 Update Notes
+# Chess Coach v1.0.2 Update Notes
 
 ## Release type
 
-Small UI polish release.
+Review board piece rendering release.
 
-This release improves Smart Tag navigation in the dedicated games list.
+This release replaces browser-dependent Unicode chess pieces in `review.php` with transparent PNG piece assets.
 
 ## Changed files
 
+- `AGENTS.md`
 - `CHANGELOG.md`
 - `README_UPDATE.md`
-- `api/chesscom.php`
-- `api/games.php`
-- `games.php`
 - `assets/css/app.css`
-- `assets/js/dashboard.js`
-- `assets/js/games.js`
+- `assets/js/review.js`
+- `assets/pieces/*.png`
 - `config/version.php`
-- `includes/pgn.php`
 - `service-worker.js`
-- `sql/install.sql`
-- `sql/migrations/019_changes_1.0.1.sql`
 
 ## User-facing changes
 
-- Smart Tag chips shown inside `games.php` are now clickable.
-- Clicking a tag opens the games list filtered by that tag through `games.php?tag=...`.
-- The home "Pendientes de análisis" KPI now shows `0` correctly and links "Ver cola" to `analysis-pending.php`.
-- The home greeting highlights the current main focus in bold.
-- The "Resumen de últimas partidas" error KPI now labels counts as `B`, `M` and `I`.
-- The "Resumen de últimas partidas" block now includes an `Accuracy` KPI between `Win rate` and `ACPL`.
-- The home games panel now shows only the alternate toggle button: `Recomendadas` while viewing latest games, and `Últimas` while viewing recommended games.
-- `games.php` now includes an `Apertura` column with the opening name and ECO code when available.
-- The ECO code links to the PGN `ECOUrl` value when that tag is present.
-- New manual and Chess.com imports store optional ECO/opening metadata from PGN tags.
-- `config/version.php` is bumped to `1.0.1`.
-- The PWA service worker cache name is bumped to `chess-coach-v1.0.1`.
+- `review.php` now renders board pieces with local transparent PNG images instead of Unicode glyphs.
+- Piece images scale with the square size so the board remains responsive on desktop and mobile.
+- Move highlighting still works over the rendered pieces.
+- `config/version.php` is bumped to `1.0.2`.
+- The PWA service worker cache name is bumped to `chess-coach-v1.0.2`.
+- The 12 PNG piece assets are cached by the service worker.
 
 ## Deployment notes
 
@@ -53,21 +42,17 @@ No real config files changed in this release.
 
 ## SQL migration
 
-Run this migration on the server:
-
-```text
-sql/migrations/019_changes_1.0.1.sql
-```
-
-It adds optional `eco_code`, `opening_name` and `eco_url` columns to `games`.
+No SQL migration is required for this release.
 
 ## Service worker
 
 The service worker cache name is now:
 
 ```text
-chess-coach-v1.0.1
+chess-coach-v1.0.2
 ```
+
+The 12 files under `assets/pieces/` are included in the service worker asset list.
 
 ## Local verification performed
 
@@ -80,25 +65,16 @@ Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
 JavaScript syntax check passed locally with:
 
 ```powershell
-node --check assets\js\games.js
-node --check assets\js\dashboard.js
+node --check assets\js\review.js
 ```
 
 ## Manual verification checklist
 
-- Confirm `games.php` loads the list of games.
-- Confirm clicking a Smart Tag chip in the games list filters the list by that tag.
-- Confirm the tag filter select reflects the clicked tag after the filtered page loads.
-- Confirm the home "Pendientes de análisis" KPI shows `0` when there are no pending games.
-- Confirm clicking "Ver cola" in that KPI opens `analysis-pending.php`.
-- Confirm the home greeting bolds only the main focus after the colon.
-- Confirm the "Errores" KPI uses the `B:x/M:y/I:z` format.
-- Confirm the "Resumen de últimas partidas" block shows five KPI blocks, including `Accuracy`.
-- Confirm the home games panel shows only the alternate toggle button for the current list mode.
-- Confirm `games.php` shows the `Apertura` column.
-- Confirm games with PGN `ECO`/`Opening` tags show opening name plus ECO, or only ECO when the name is missing.
-- Confirm ECO codes link to the PGN `ECOUrl` value when available.
-- Confirm manual and Chess.com imports still work after running the SQL migration.
-- Confirm the header/footer version displays `1.0.1`.
-- Confirm the service worker cache name is `chess-coach-v1.0.1`.
+- Confirm `review.php` loads an analyzed game.
+- Confirm all white and black pieces render as images on light and dark squares.
+- Confirm pieces scale correctly on desktop and mobile board sizes.
+- Confirm previous/current move highlights remain visible.
+- Confirm move navigation still updates the board position.
+- Confirm the header/footer version displays `1.0.2`.
+- Confirm the service worker cache name is `chess-coach-v1.0.2`.
 - Confirm no real credentials were committed.

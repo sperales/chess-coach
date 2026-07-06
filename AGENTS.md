@@ -10,7 +10,7 @@ This file defines the working rules for Codex and other coding agents. Follow th
 
 ## Current stable baseline
 
-Current stable version: **1.0.1**
+Current stable version: **1.0.2**
 
 The app is deployed manually to shared hosting and must remain compatible with that environment.
 
@@ -478,6 +478,6 @@ When in doubt, inspect the existing implementation first instead of guessing.
 
 ## Current known stable decision
 
-As of v0.8.5, the app intentionally uses Unicode chess pieces.
+As of v1.0.2, the review board intentionally uses local transparent PNG chess pieces in `assets/pieces/`.
 
-Do not reintroduce generated SVG/PNG pieces unless the user explicitly asks for another attempt.
+Do not switch the review board back to Unicode pieces unless the user explicitly asks for it.
