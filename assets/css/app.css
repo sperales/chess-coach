@@ -1800,7 +1800,7 @@ select {
 }
 .trainer-mini-kpis {
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-columns:repeat(5,minmax(0,1fr));
   gap:10px
 }
 .trainer-mini-kpis div {
@@ -1850,6 +1850,26 @@ select {
   display:block;
   margin-top:5px;
   color:#a9b1ba
+}
+.opening-cell {
+  display:grid;
+  gap:3px;
+  min-width:150px
+}
+.opening-cell strong {
+  font-size:13px;
+  line-height:1.25
+}
+.opening-cell small {
+  color:#a9b1ba;
+  font-weight:800
+}
+.opening-cell a {
+  color:#33ff77;
+  text-decoration:none
+}
+.opening-cell a:hover {
+  text-decoration:underline
 }
 .quick-panel-wrap {
   margin-top:20px

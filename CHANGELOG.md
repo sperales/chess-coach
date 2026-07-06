@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## v1.0.1 - Games tag filter polish
+
+### Changed
+
+- Made Smart Tag chips in `games.php` clickable so they open the games list filtered by that tag.
+- Fixed the home "Pendientes de análisis" KPI so `0` is displayed correctly and "Ver cola" links to `analysis-pending.php`.
+- Highlighted the current main focus in the home greeting and labeled summary error counts as `B`, `M` and `I`.
+- Added an `Accuracy` KPI to the home "Resumen de últimas partidas" block.
+- Simplified the home games panel toggle so only the alternate list mode button is shown.
+- Added optional ECO/opening metadata to games and displayed it in a new `Apertura` column in `games.php`.
+- Linked ECO codes to the PGN `ECOUrl` value when available.
+- Bumped `config/version.php` to `1.0.1`.
+- Updated the service worker cache name to `chess-coach-v1.0.1`.
+
+### Database
+
+- Added `sql/migrations/019_changes_1.0.1.sql` to add optional `eco_code`, `opening_name` and `eco_url` columns to `games`.
+
 ## v1.0.0 - Personal Trainer Dashboard
 
 ### Added

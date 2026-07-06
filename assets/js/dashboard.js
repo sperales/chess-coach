@@ -54,7 +54,7 @@ function renderStats() {
     { kind: 'pulse', label: 'Partidas', value: global.total || 0, detail: 'Ver todas', href: 'games.php' },
     { kind: 'target', label: 'Win Rate', value: `${winRate}%`, detail: `${global.wins || 0} victorias / ${global.total || 0}` },
     { kind: 'star', label: 'Accuracy media', value: avgAccuracy === null ? '--' : `${avgAccuracy.toFixed(1)}%`, detail: analyzedGames ? `${analyzedGames} partidas analizadas` : 'sin partidas analizadas' },
-    { kind: 'clock', label: 'Pendientes de análisis', value: pending, detail: 'Ver cola' }
+    { kind: 'clock', label: 'Pendientes de análisis', value: pending, detail: 'Ver cola', href: 'analysis-pending.php' }
   ];
   el.innerHTML = cards.map(card => {
     const detail = card.href
@@ -85,7 +85,7 @@ function renderHero() {
     el.textContent = 'Importa y analiza partidas para construir tu primer plan de entrenamiento.';
     return;
   }
-  el.textContent = focus ? `Tu foco principal ahora mismo: ${focus.title}.` : 'Cada partida es una oportunidad para mejorar.';
+  el.innerHTML = focus ? `Tu foco principal ahora mismo: <strong>${escapeHtml(focus.title || 'mantener consistencia')}</strong>.` : 'Cada partida es una oportunidad para mejorar.';
 }
 
 function renderFocus() {
@@ -154,8 +154,9 @@ function renderSummary() {
   if (!kpis) return;
   const values = [
     ['Win rate', typeof overview.score_rate === 'number' ? `${overview.score_rate}%` : '--'],
+    ['Accuracy', overview.avg_accuracy === null || typeof overview.avg_accuracy === 'undefined' ? '--' : `${Number(overview.avg_accuracy).toFixed(1)}%`],
     ['ACPL', overview.avg_acpl === null || typeof overview.avg_acpl === 'undefined' ? '--' : Number(overview.avg_acpl).toFixed(1)],
-    ['Errores', `${overview.own_blunders || 0}/${overview.own_mistakes || 0}/${overview.own_inaccuracies || 0}`],
+    ['Errores', `B:${overview.own_blunders || 0}/M:${overview.own_mistakes || 0}/I:${overview.own_inaccuracies || 0}`],
     ['Color', colorNote(overview)]
   ];
   kpis.innerHTML = values.map(item => `<div><span>${escapeHtml(item[0])}</span><b>${escapeHtml(item[1])}</b></div>`).join('');
@@ -328,6 +329,8 @@ function updateGamesPanelTabs() {
   const link = document.getElementById('gamesToggleLink');
   if (latest) latest.classList.toggle('active', gamesPanelMode === 'latest');
   if (recommended) recommended.classList.toggle('active', gamesPanelMode === 'recommended');
+  if (latest) latest.style.display = gamesPanelMode === 'recommended' ? '' : 'none';
+  if (recommended) recommended.style.display = gamesPanelMode === 'latest' ? '' : 'none';
   if (link) link.style.display = gamesPanelMode === 'latest' ? '' : 'none';
 }
 
@@ -378,7 +381,7 @@ function schedulePollingIfNeeded() {
 }
 
 function escapeHtml(value) {
-  return (value || '').toString().replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
+  return (value === null || typeof value === 'undefined' ? '' : value).toString().replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
 }
 
 function escapeAttr(value) {

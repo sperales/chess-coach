@@ -1,45 +1,41 @@
-# Chess Coach v1.0.0 Update Notes
+# Chess Coach v1.0.1 Update Notes
 
 ## Release type
 
-Personal Trainer Dashboard.
+Small UI polish release.
 
-This release turns the home dashboard into a Personal Trainer Dashboard using existing analyzed games, Stockfish analysis, Smart Tags and local scoring rules.
+This release improves Smart Tag navigation in the dedicated games list.
 
 ## Changed files
 
 - `CHANGELOG.md`
-- `README.md`
 - `README_UPDATE.md`
-- `ROADMAP.md`
-- `AGENTS.md`
-- `api/dashboard.php`
+- `api/chesscom.php`
 - `api/games.php`
-- `app.php`
+- `games.php`
 - `assets/css/app.css`
 - `assets/js/dashboard.js`
 - `assets/js/games.js`
 - `config/version.php`
-- `includes/dashboard.php`
+- `includes/pgn.php`
 - `service-worker.js`
+- `sql/install.sql`
+- `sql/migrations/019_changes_1.0.1.sql`
 
 ## User-facing changes
 
-- The home dashboard now shows:
-  - current state
-  - top 3 training focus
-  - recent summary
-  - recent strengths
-  - detected patterns
-  - recommended games to review
-- Existing home KPIs, latest games, quick actions and motivational quote remain available.
-- Training focus scoring uses recent results, accuracy trend, error rates and Smart Tags.
-- Spanish UI copy includes accents and `ñ` characters in visible labels, cards and generated dashboard messages.
-- Empty states are clearer for focus, strengths, recommended reviews and detected patterns.
-- Dashboard links point to `review.php`, `analysis-pending.php`, `profile.php` and filtered `games.php` views.
-- `games.php?tag=...` filtering works with both game-level and move-level Smart Tags.
-- `config/version.php` is bumped to `1.0.0`.
-- The PWA service worker cache name is bumped to `chess-coach-v1.0.0`.
+- Smart Tag chips shown inside `games.php` are now clickable.
+- Clicking a tag opens the games list filtered by that tag through `games.php?tag=...`.
+- The home "Pendientes de análisis" KPI now shows `0` correctly and links "Ver cola" to `analysis-pending.php`.
+- The home greeting highlights the current main focus in bold.
+- The "Resumen de últimas partidas" error KPI now labels counts as `B`, `M` and `I`.
+- The "Resumen de últimas partidas" block now includes an `Accuracy` KPI between `Win rate` and `ACPL`.
+- The home games panel now shows only the alternate toggle button: `Recomendadas` while viewing latest games, and `Últimas` while viewing recommended games.
+- `games.php` now includes an `Apertura` column with the opening name and ECO code when available.
+- The ECO code links to the PGN `ECOUrl` value when that tag is present.
+- New manual and Chess.com imports store optional ECO/opening metadata from PGN tags.
+- `config/version.php` is bumped to `1.0.1`.
+- The PWA service worker cache name is bumped to `chess-coach-v1.0.1`.
 
 ## Deployment notes
 
@@ -57,20 +53,20 @@ No real config files changed in this release.
 
 ## SQL migration
 
-No SQL migration is required for this PR.
-
-## Service worker
-
-The service worker asset list now includes:
+Run this migration on the server:
 
 ```text
-assets/js/dashboard.js
+sql/migrations/019_changes_1.0.1.sql
 ```
+
+It adds optional `eco_code`, `opening_name` and `eco_url` columns to `games`.
+
+## Service worker
 
 The service worker cache name is now:
 
 ```text
-chess-coach-v1.0.0
+chess-coach-v1.0.1
 ```
 
 ## Local verification performed
@@ -84,20 +80,25 @@ Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
 JavaScript syntax check passed locally with:
 
 ```powershell
-node --check assets\js\dashboard.js
 node --check assets\js\games.js
+node --check assets\js\dashboard.js
 ```
 
 ## Manual verification checklist
 
-- Confirm `api/dashboard.php` returns JSON when logged in.
-- Confirm `api/dashboard.php` redirects to login when logged out.
-- Confirm the payload includes `overview`, `training_focus`, `strengths`, `recommended_reviews`, `patterns`, `recent_games` and `queue`.
-- Confirm the home dashboard renders current state, focus cards, strengths and recommended reviews.
-- Confirm the home "Partidas" panel can switch between latest and recommended games.
-- Confirm dashboard links to `games.php?tag=...` open the games page with the tag filter applied.
-- Confirm move-level Smart Tag links such as `games.php?tag=blunder_own` return matching games when those tags exist.
-- Confirm empty dashboard states are understandable for users with few or no analyzed games.
-- Confirm the header/footer version displays `1.0.0`.
-- Confirm the service worker cache name is `chess-coach-v1.0.0`.
+- Confirm `games.php` loads the list of games.
+- Confirm clicking a Smart Tag chip in the games list filters the list by that tag.
+- Confirm the tag filter select reflects the clicked tag after the filtered page loads.
+- Confirm the home "Pendientes de análisis" KPI shows `0` when there are no pending games.
+- Confirm clicking "Ver cola" in that KPI opens `analysis-pending.php`.
+- Confirm the home greeting bolds only the main focus after the colon.
+- Confirm the "Errores" KPI uses the `B:x/M:y/I:z` format.
+- Confirm the "Resumen de últimas partidas" block shows five KPI blocks, including `Accuracy`.
+- Confirm the home games panel shows only the alternate toggle button for the current list mode.
+- Confirm `games.php` shows the `Apertura` column.
+- Confirm games with PGN `ECO`/`Opening` tags show opening name plus ECO, or only ECO when the name is missing.
+- Confirm ECO codes link to the PGN `ECOUrl` value when available.
+- Confirm manual and Chess.com imports still work after running the SQL migration.
+- Confirm the header/footer version displays `1.0.1`.
+- Confirm the service worker cache name is `chess-coach-v1.0.1`.
 - Confirm no real credentials were committed.

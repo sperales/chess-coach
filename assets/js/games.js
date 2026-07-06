@@ -51,7 +51,7 @@ function renderTagOptions() {
 function renderRows() {
   const el = document.getElementById('gameRows');
   if (!el) return;
-  el.innerHTML = games.map(g => `<tr><td>${opponentCell(g)}${gameTagsCell(g)}</td><td>${resultBadge(g)}</td><td>${escapeHtml(g.event_name || rhythmFromSite(g.site) || '-')}</td><td class="hide-sm">${g.played_at || (g.imported_at || '').slice(0,10) || '-'}</td><td>${analysisCell(g)}</td></tr>`).join('') || `<tr><td colspan="5" class="muted">No hay partidas con los filtros seleccionados.</td></tr>`;
+  el.innerHTML = games.map(g => `<tr><td>${opponentCell(g)}${gameTagsCell(g)}</td><td>${resultBadge(g)}</td><td>${escapeHtml(g.event_name || rhythmFromSite(g.site) || '-')}</td><td class="hide-sm">${openingCell(g)}</td><td class="hide-sm">${g.played_at || (g.imported_at || '').slice(0,10) || '-'}</td><td>${analysisCell(g)}</td></tr>`).join('') || `<tr><td colspan="6" class="muted">No hay partidas con los filtros seleccionados.</td></tr>`;
 }
 
 function renderPagination() {
@@ -118,6 +118,22 @@ function rhythmFromSite(site) {
   return '';
 }
 
+function openingCell(g) {
+  const eco = (g.eco_code || '').toString().trim();
+  const opening = (g.opening_name || '').toString().trim();
+  const ecoUrl = safeUrl(g.eco_url || '');
+  const ecoLabel = ecoUrl && eco ? `<a href="${escapeHtml(ecoUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(eco)}</a>` : escapeHtml(eco);
+  if (!eco && !opening) return '-';
+  if (!opening) return `<span class="opening-cell"><strong>${ecoLabel}</strong></span>`;
+  const ecoText = eco ? `<small>${ecoLabel}</small>` : '';
+  return `<span class="opening-cell"><strong>${escapeHtml(opening)}</strong>${ecoText}</span>`;
+}
+
+function safeUrl(value) {
+  const url = (value || '').toString().trim();
+  return /^https?:\/\//i.test(url) ? url : '';
+}
+
 function resultBadge(g) {
   const cls = g.user_result === 'win' ? 'result-win' : g.user_result === 'loss' ? 'result-loss' : g.user_result === 'draw' ? 'result-draw' : 'result-unknown';
   return `<span class="result-badge ${cls}" title="${escapeHtml(g.user_result || '')}">${escapeHtml(g.result_raw || '-')}</span>`;
@@ -141,7 +157,11 @@ function smartTagClass(tag) {
 }
 
 function smartTagChip(tag) {
-  return `<span class="smart-tag ${smartTagClass(tag)}" title="${escapeHtml(tag.tag_code || '')}">${escapeHtml(tag.label || tag.tag_code || '')}</span>`;
+  const code = tag && tag.tag_code ? tag.tag_code.toString() : '';
+  const label = tag && (tag.label || tag.tag_code) ? (tag.label || tag.tag_code).toString() : '';
+  const cls = smartTagClass(tag);
+  if (!code) return `<span class="smart-tag ${cls}">${escapeHtml(label)}</span>`;
+  return `<a class="smart-tag ${cls}" href="games.php?tag=${encodeURIComponent(code)}" title="${escapeHtml(code)}">${escapeHtml(label)}</a>`;
 }
 
 function gameTagsCell(g) {
