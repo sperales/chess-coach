@@ -7,6 +7,7 @@
 - Made Smart Tag chips in `games.php` clickable so they open the games list filtered by that tag.
 - Fixed the home "Pendientes de análisis" KPI so `0` is displayed correctly and "Ver cola" links to `analysis-pending.php`.
 - Highlighted the current main focus in the home greeting and labeled summary error counts as `B`, `M` and `I`.
+- Added an `Accuracy` KPI to the home "Resumen de últimas partidas" block.
 - Bumped `config/version.php` to `1.0.1`.
 - Updated the service worker cache name to `chess-coach-v1.0.1`.
 

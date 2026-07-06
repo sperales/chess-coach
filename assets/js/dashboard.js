@@ -154,6 +154,7 @@ function renderSummary() {
   if (!kpis) return;
   const values = [
     ['Win rate', typeof overview.score_rate === 'number' ? `${overview.score_rate}%` : '--'],
+    ['Accuracy', overview.avg_accuracy === null || typeof overview.avg_accuracy === 'undefined' ? '--' : `${Number(overview.avg_accuracy).toFixed(1)}%`],
     ['ACPL', overview.avg_acpl === null || typeof overview.avg_acpl === 'undefined' ? '--' : Number(overview.avg_acpl).toFixed(1)],
     ['Errores', `B:${overview.own_blunders || 0}/M:${overview.own_mistakes || 0}/I:${overview.own_inaccuracies || 0}`],
     ['Color', colorNote(overview)]
