@@ -5,6 +5,8 @@ return [
   // Ejemplos: '/home/tu_usuario/bin/stockfish' o __DIR__ . '/../bin/stockfish'
   'stockfish_path' => __DIR__ . '/../bin/stockfish',
   'depth' => 10,
+  'threads' => 1,
+  'hash_mb' => 32,
   'max_halfmoves' => 90,
   'movetime_ms' => 800,
   'queue_stale_minutes' => 30,

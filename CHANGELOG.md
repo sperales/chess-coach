@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## v1.0.3 - Stockfish runner performance
+
+### Changed
+
+- Reused a single Stockfish process for each analyzed game instead of starting a new process for every FEN.
+- Added per-game FEN evaluation caching so repeated positions are evaluated only once during an analysis run.
+- Added explicit Stockfish UCI options for `Threads` and `Hash`, with `threads = 1` and `hash_mb = 32` defaults.
+- Documented the new engine config keys in `config/engine.example.php`.
+- Bumped `config/version.php` to `1.0.3`.
+- Updated the service worker cache name to `chess-coach-v1.0.3`.
+
+### Database
+
+- No SQL migration required.
+
 ## v1.0.2 - Review board piece images
 
 ### Changed

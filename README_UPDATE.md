@@ -1,31 +1,29 @@
-# Chess Coach v1.0.2 Update Notes
+# Chess Coach v1.0.3 Update Notes
 
 ## Release type
 
-Review board piece rendering release.
+Stockfish analysis performance release.
 
-This release replaces browser-dependent Unicode chess pieces in `review.php` with transparent PNG piece assets.
+This release optimizes server-side Stockfish analysis without changing hosting requirements, the HTTP GET cron worker, analysis classification thresholds or review calculations.
 
 ## Changed files
 
 - `AGENTS.md`
 - `CHANGELOG.md`
 - `README_UPDATE.md`
-- `assets/css/app.css`
-- `assets/js/review.js`
-- `assets/pieces/*.png`
+- `config/engine.example.php`
 - `config/version.php`
+- `includes/analysis_queue.php`
+- `includes/stockfish.php`
 - `service-worker.js`
 
 ## User-facing changes
 
-- `review.php` now renders board pieces with local transparent PNG images instead of Unicode glyphs.
-- Piece images scale with the square size so the board remains responsive on desktop and mobile.
-- On small screens, the review board now fills the available panel width while staying square and centered.
-- Move highlighting still works over the rendered pieces.
-- `config/version.php` is bumped to `1.0.2`.
-- The PWA service worker cache name is bumped to `chess-coach-v1.0.2`.
-- The 12 PNG piece assets are cached by the service worker.
+- Analysis should complete faster because each game now reuses one Stockfish process instead of starting Stockfish for every evaluated position.
+- Analysis avoids duplicate FEN evaluations inside the same game.
+- Stockfish now receives explicit UCI options for `Threads` and `Hash`.
+- `config/version.php` is bumped to `1.0.3`.
+- The PWA service worker cache name is bumped to `chess-coach-v1.0.3`.
 
 ## Deployment notes
 
@@ -41,6 +39,17 @@ config/cron.php
 
 No real config files changed in this release.
 
+## Config notes
+
+`config/engine.example.php` now documents:
+
+```php
+'threads' => 1,
+'hash_mb' => 32,
+```
+
+If you want the production `config/engine.php` to use those values explicitly, add them manually to the real server config. If omitted, the code defaults to `threads = 1` and `hash_mb = 32`.
+
 ## SQL migration
 
 No SQL migration is required for this release.
@@ -50,10 +59,8 @@ No SQL migration is required for this release.
 The service worker cache name is now:
 
 ```text
-chess-coach-v1.0.2
+chess-coach-v1.0.3
 ```
-
-The 12 files under `assets/pieces/` are included in the service worker asset list.
 
 ## Local verification performed
 
@@ -63,20 +70,14 @@ PHP syntax lint passed locally with:
 Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
 ```
 
-JavaScript syntax check passed locally with:
-
-```powershell
-node --check assets\js\review.js
-```
-
 ## Manual verification checklist
 
-- Confirm `review.php` loads an analyzed game.
-- Confirm all white and black pieces render as images on light and dark squares.
-- Confirm pieces scale correctly on desktop and mobile board sizes.
-- Confirm the board fills the available review panel width on mobile without horizontal overflow.
-- Confirm previous/current move highlights remain visible.
-- Confirm move navigation still updates the board position.
-- Confirm the header/footer version displays `1.0.2`.
-- Confirm the service worker cache name is `chess-coach-v1.0.2`.
+- Confirm `worker/analyze_queue.php?token=...` still runs from HTTP cron.
+- Confirm a queued game moves from `queued` to `running` to `done`.
+- Confirm review still loads the completed analysis.
+- Confirm move classifications, ACPL and accuracy are present after analysis.
+- Confirm Smart Tags are still generated after analysis.
+- Compare worker duration against a previous similar game if possible.
+- Confirm the header/footer version displays `1.0.3`.
+- Confirm the service worker cache name is `chess-coach-v1.0.3`.
 - Confirm no real credentials were committed.
