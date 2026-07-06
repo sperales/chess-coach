@@ -6,6 +6,7 @@
 
 - Replaced Unicode chess pieces in the review board with local transparent PNG piece assets.
 - Added responsive board-piece CSS so pieces scale with each square on desktop and mobile.
+- Adjusted the mobile review board layout so the board fills the available panel width while staying square.
 - Added the 12 PNG piece assets to the service worker cache.
 - Bumped `config/version.php` to `1.0.2`.
 - Updated the service worker cache name to `chess-coach-v1.0.2`.

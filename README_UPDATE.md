@@ -21,6 +21,7 @@ This release replaces browser-dependent Unicode chess pieces in `review.php` wit
 
 - `review.php` now renders board pieces with local transparent PNG images instead of Unicode glyphs.
 - Piece images scale with the square size so the board remains responsive on desktop and mobile.
+- On small screens, the review board now fills the available panel width while staying square and centered.
 - Move highlighting still works over the rendered pieces.
 - `config/version.php` is bumped to `1.0.2`.
 - The PWA service worker cache name is bumped to `chess-coach-v1.0.2`.
@@ -73,6 +74,7 @@ node --check assets\js\review.js
 - Confirm `review.php` loads an analyzed game.
 - Confirm all white and black pieces render as images on light and dark squares.
 - Confirm pieces scale correctly on desktop and mobile board sizes.
+- Confirm the board fills the available review panel width on mobile without horizontal overflow.
 - Confirm previous/current move highlights remain visible.
 - Confirm move navigation still updates the board position.
 - Confirm the header/footer version displays `1.0.2`.

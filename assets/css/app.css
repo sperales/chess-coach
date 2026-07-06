@@ -1348,11 +1348,12 @@ label {
 }
 .board-wrap {
   display:grid;
-  place-items:center
+  place-items:center;
+  width:100%
 }
 .chess-board {
-  width:min(72vw,520px);
-  height:min(72vw,520px);
+  width:min(100%,520px);
+  aspect-ratio:1/1;
   display:grid;
   grid-template-columns:repeat(8,1fr);
   grid-template-rows:repeat(8,1fr);
@@ -1478,8 +1479,7 @@ label {
     max-height:360px
   }
   .chess-board {
-    width:min(94vw,520px);
-    height:min(94vw,520px)
+    width:100%
   }
 }
 @media(max-width:640px) {
@@ -1504,9 +1504,11 @@ label {
   .review-chart-panel canvas {
     height:180px
   }
+  .review-board-grid > .panel:first-child {
+    padding:12px
+  }
   .chess-board {
-    width:calc(100vw - 44px);
-    height:calc(100vw - 44px)
+    width:100%
   }
 }
 /* v0.9.0 Smart Tags UI */ .home-grid {
