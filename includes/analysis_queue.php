@@ -140,9 +140,14 @@ function process_next_analysis_job(?int $userId = null): array {
   return process_analysis_job((int)$next['id'], (int)$next['user_id']);
 }
 
-function stockfish_eval_cached(string $fen, StockfishRunner $runner, array &$cache): array {
+function stockfish_eval_cached(string $fen, StockfishRunner &$runner, array &$cache, int &$evalCount, int $restartEvery): array {
   if (!array_key_exists($fen, $cache)) {
+    if ($restartEvery > 0 && $evalCount > 0 && $evalCount % $restartEvery === 0) {
+      $runner->close();
+      $runner = stockfish_runner();
+    }
     $cache[$fen] = $runner->evalFen($fen);
+    $evalCount++;
   }
   return $cache[$fen];
 }
@@ -168,6 +173,8 @@ function process_analysis_job(int $analysisId, int $userId): array {
     $rows = [];
     $ply = 0;
     $evalCache = [];
+    $evalCount = 0;
+    $restartEvery = max(0, (int)($cfg['restart_after_evaluations'] ?? 40));
     $runner = stockfish_runner();
     try {
       foreach ($moves as $m) {
@@ -182,8 +189,8 @@ function process_analysis_job(int $analysisId, int $userId): array {
       $movingSide = strpos($m['fen_before'], ' w ') !== false ? 'w' : 'b';
       $afterSide = strpos($m['fen_after'], ' w ') !== false ? 'w' : 'b';
 
-      $before = stockfish_eval_cached($m['fen_before'], $runner, $evalCache);
-      $after = stockfish_eval_cached($m['fen_after'], $runner, $evalCache);
+      $before = stockfish_eval_cached($m['fen_before'], $runner, $evalCache, $evalCount, $restartEvery);
+      $after = stockfish_eval_cached($m['fen_after'], $runner, $evalCache, $evalCount, $restartEvery);
 
       // Stockfish devuelve la evaluación desde la perspectiva del bando que mueve
       // en cada FEN. Primero la convertimos siempre a perspectiva de blancas.

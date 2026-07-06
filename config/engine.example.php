@@ -7,6 +7,7 @@ return [
   'depth' => 10,
   'threads' => 1,
   'hash_mb' => 32,
+  'restart_after_evaluations' => 40,
   'max_halfmoves' => 90,
   'movetime_ms' => 800,
   'queue_stale_minutes' => 30,
