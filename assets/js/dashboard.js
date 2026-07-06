@@ -85,7 +85,7 @@ function renderHero() {
     el.textContent = 'Importa y analiza partidas para construir tu primer plan de entrenamiento.';
     return;
   }
-  el.textContent = focus ? `Tu foco principal ahora mismo: ${focus.title}.` : 'Cada partida es una oportunidad para mejorar.';
+  el.innerHTML = focus ? `Tu foco principal ahora mismo: <strong>${escapeHtml(focus.title || 'mantener consistencia')}</strong>.` : 'Cada partida es una oportunidad para mejorar.';
 }
 
 function renderFocus() {
@@ -155,7 +155,7 @@ function renderSummary() {
   const values = [
     ['Win rate', typeof overview.score_rate === 'number' ? `${overview.score_rate}%` : '--'],
     ['ACPL', overview.avg_acpl === null || typeof overview.avg_acpl === 'undefined' ? '--' : Number(overview.avg_acpl).toFixed(1)],
-    ['Errores', `${overview.own_blunders || 0}/${overview.own_mistakes || 0}/${overview.own_inaccuracies || 0}`],
+    ['Errores', `B:${overview.own_blunders || 0}/M:${overview.own_mistakes || 0}/I:${overview.own_inaccuracies || 0}`],
     ['Color', colorNote(overview)]
   ];
   kpis.innerHTML = values.map(item => `<div><span>${escapeHtml(item[0])}</span><b>${escapeHtml(item[1])}</b></div>`).join('');
