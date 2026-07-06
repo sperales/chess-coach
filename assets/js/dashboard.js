@@ -54,7 +54,7 @@ function renderStats() {
     { kind: 'pulse', label: 'Partidas', value: global.total || 0, detail: 'Ver todas', href: 'games.php' },
     { kind: 'target', label: 'Win Rate', value: `${winRate}%`, detail: `${global.wins || 0} victorias / ${global.total || 0}` },
     { kind: 'star', label: 'Accuracy media', value: avgAccuracy === null ? '--' : `${avgAccuracy.toFixed(1)}%`, detail: analyzedGames ? `${analyzedGames} partidas analizadas` : 'sin partidas analizadas' },
-    { kind: 'clock', label: 'Pendientes de análisis', value: pending, detail: 'Ver cola' }
+    { kind: 'clock', label: 'Pendientes de análisis', value: pending, detail: 'Ver cola', href: 'analysis-pending.php' }
   ];
   el.innerHTML = cards.map(card => {
     const detail = card.href
@@ -378,7 +378,7 @@ function schedulePollingIfNeeded() {
 }
 
 function escapeHtml(value) {
-  return (value || '').toString().replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
+  return (value === null || typeof value === 'undefined' ? '' : value).toString().replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
 }
 
 function escapeAttr(value) {

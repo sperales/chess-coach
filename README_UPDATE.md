@@ -10,6 +10,7 @@ This release improves Smart Tag navigation in the dedicated games list.
 
 - `CHANGELOG.md`
 - `README_UPDATE.md`
+- `assets/js/dashboard.js`
 - `assets/js/games.js`
 - `config/version.php`
 - `service-worker.js`
@@ -18,6 +19,7 @@ This release improves Smart Tag navigation in the dedicated games list.
 
 - Smart Tag chips shown inside `games.php` are now clickable.
 - Clicking a tag opens the games list filtered by that tag through `games.php?tag=...`.
+- The home "Pendientes de análisis" KPI now shows `0` correctly and links "Ver cola" to `analysis-pending.php`.
 - `config/version.php` is bumped to `1.0.1`.
 - The PWA service worker cache name is bumped to `chess-coach-v1.0.1`.
 
@@ -59,6 +61,7 @@ JavaScript syntax check passed locally with:
 
 ```powershell
 node --check assets\js\games.js
+node --check assets\js\dashboard.js
 ```
 
 ## Manual verification checklist
@@ -66,6 +69,8 @@ node --check assets\js\games.js
 - Confirm `games.php` loads the list of games.
 - Confirm clicking a Smart Tag chip in the games list filters the list by that tag.
 - Confirm the tag filter select reflects the clicked tag after the filtered page loads.
+- Confirm the home "Pendientes de análisis" KPI shows `0` when there are no pending games.
+- Confirm clicking "Ver cola" in that KPI opens `analysis-pending.php`.
 - Confirm the header/footer version displays `1.0.1`.
 - Confirm the service worker cache name is `chess-coach-v1.0.1`.
 - Confirm no real credentials were committed.
