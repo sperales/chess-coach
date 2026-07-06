@@ -51,7 +51,7 @@ function renderTagOptions() {
 function renderRows() {
   const el = document.getElementById('gameRows');
   if (!el) return;
-  el.innerHTML = games.map(g => `<tr><td>${opponentCell(g)}${gameTagsCell(g)}</td><td>${resultBadge(g)}</td><td>${escapeHtml(g.event_name || rhythmFromSite(g.site) || '-')}</td><td class="hide-sm">${g.played_at || (g.imported_at || '').slice(0,10) || '-'}</td><td>${analysisCell(g)}</td></tr>`).join('') || `<tr><td colspan="5" class="muted">No hay partidas con los filtros seleccionados.</td></tr>`;
+  el.innerHTML = games.map(g => `<tr><td>${opponentCell(g)}${gameTagsCell(g)}</td><td>${resultBadge(g)}</td><td>${escapeHtml(g.event_name || rhythmFromSite(g.site) || '-')}</td><td class="hide-sm">${openingCell(g)}</td><td class="hide-sm">${g.played_at || (g.imported_at || '').slice(0,10) || '-'}</td><td>${analysisCell(g)}</td></tr>`).join('') || `<tr><td colspan="6" class="muted">No hay partidas con los filtros seleccionados.</td></tr>`;
 }
 
 function renderPagination() {
@@ -116,6 +116,15 @@ function rhythmFromSite(site) {
   if (!site) return '';
   if (/live/i.test(site)) return 'Rapid';
   return '';
+}
+
+function openingCell(g) {
+  const eco = (g.eco_code || '').toString().trim();
+  const opening = (g.opening_name || '').toString().trim();
+  if (!eco && !opening) return '-';
+  if (!opening) return `<span class="opening-cell"><strong>${escapeHtml(eco)}</strong></span>`;
+  const ecoText = eco ? `<small>${escapeHtml(eco)}</small>` : '';
+  return `<span class="opening-cell"><strong>${escapeHtml(opening)}</strong>${ecoText}</span>`;
 }
 
 function resultBadge(g) {

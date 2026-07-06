@@ -62,6 +62,7 @@
             <th>Rival</th>
             <th>Resultado</th>
             <th>Ritmo</th>
+            <th class="hide-sm">Apertura</th>
             <th class="hide-sm">Fecha</th>
             <th>Análisis</th>
           </tr>

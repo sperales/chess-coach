@@ -9,12 +9,13 @@
 - Highlighted the current main focus in the home greeting and labeled summary error counts as `B`, `M` and `I`.
 - Added an `Accuracy` KPI to the home "Resumen de últimas partidas" block.
 - Simplified the home games panel toggle so only the alternate list mode button is shown.
+- Added optional ECO/opening metadata to games and displayed it in a new `Apertura` column in `games.php`.
 - Bumped `config/version.php` to `1.0.1`.
 - Updated the service worker cache name to `chess-coach-v1.0.1`.
 
 ### Database
 
-- No SQL migration required.
+- Added `sql/migrations/019_changes_1.0.1.sql` to add optional `eco_code` and `opening_name` columns to `games`.
 
 ## v1.0.0 - Personal Trainer Dashboard
 

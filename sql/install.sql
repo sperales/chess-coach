@@ -20,12 +20,15 @@ CREATE TABLE IF NOT EXISTS games (
   played_at DATE DEFAULT NULL,
   event_name VARCHAR(255) DEFAULT NULL,
   site VARCHAR(255) DEFAULT NULL,
+  eco_code VARCHAR(10) DEFAULT NULL,
+  opening_name VARCHAR(255) DEFAULT NULL,
   source VARCHAR(40) NOT NULL DEFAULT 'manual',
   pgn MEDIUMTEXT NOT NULL,
   imported_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_games_user_uid (user_id, game_uid),
   KEY idx_games_user_date (user_id, played_at),
+  KEY idx_games_opening (eco_code),
   KEY idx_games_source (source),
   CONSTRAINT fk_games_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

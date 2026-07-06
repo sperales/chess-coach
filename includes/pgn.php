@@ -10,6 +10,14 @@ function split_pgns(string $txt): array {
 function pgn_tag(string $pgn, string $tag): string {
   return preg_match('/\['.preg_quote($tag,'/').'\s+"([^"]*)"\]/', $pgn, $m) ? $m[1] : '';
 }
+function pgn_eco_code(string $pgn): ?string {
+  $eco = trim(pgn_tag($pgn, 'ECO'));
+  return $eco === '' ? null : substr($eco, 0, 10);
+}
+function pgn_opening_name(string $pgn): ?string {
+  $opening = trim(pgn_tag($pgn, 'Opening'));
+  return $opening === '' ? null : substr($opening, 0, 255);
+}
 function result_for_user(string $pgn, string $username): string {
   $res=pgn_tag($pgn,'Result'); $w=pgn_tag($pgn,'White'); $b=pgn_tag($pgn,'Black');
   if($res==='1/2-1/2') return 'draw';

@@ -1851,6 +1851,19 @@ select {
   margin-top:5px;
   color:#a9b1ba
 }
+.opening-cell {
+  display:grid;
+  gap:3px;
+  min-width:150px
+}
+.opening-cell strong {
+  font-size:13px;
+  line-height:1.25
+}
+.opening-cell small {
+  color:#a9b1ba;
+  font-weight:800
+}
 .quick-panel-wrap {
   margin-top:20px
 }

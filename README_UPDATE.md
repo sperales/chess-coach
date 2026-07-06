@@ -10,10 +10,17 @@ This release improves Smart Tag navigation in the dedicated games list.
 
 - `CHANGELOG.md`
 - `README_UPDATE.md`
+- `api/chesscom.php`
+- `api/games.php`
+- `games.php`
+- `assets/css/app.css`
 - `assets/js/dashboard.js`
 - `assets/js/games.js`
 - `config/version.php`
+- `includes/pgn.php`
 - `service-worker.js`
+- `sql/install.sql`
+- `sql/migrations/019_changes_1.0.1.sql`
 
 ## User-facing changes
 
@@ -24,6 +31,8 @@ This release improves Smart Tag navigation in the dedicated games list.
 - The "Resumen de últimas partidas" error KPI now labels counts as `B`, `M` and `I`.
 - The "Resumen de últimas partidas" block now includes an `Accuracy` KPI between `Win rate` and `ACPL`.
 - The home games panel now shows only the alternate toggle button: `Recomendadas` while viewing latest games, and `Últimas` while viewing recommended games.
+- `games.php` now includes an `Apertura` column with the opening name and ECO code when available.
+- New manual and Chess.com imports store optional ECO/opening metadata from PGN tags.
 - `config/version.php` is bumped to `1.0.1`.
 - The PWA service worker cache name is bumped to `chess-coach-v1.0.1`.
 
@@ -43,7 +52,13 @@ No real config files changed in this release.
 
 ## SQL migration
 
-No SQL migration is required for this release.
+Run this migration on the server:
+
+```text
+sql/migrations/019_changes_1.0.1.sql
+```
+
+It adds optional `eco_code` and `opening_name` columns to `games`.
 
 ## Service worker
 
@@ -79,6 +94,9 @@ node --check assets\js\dashboard.js
 - Confirm the "Errores" KPI uses the `B:x/M:y/I:z` format.
 - Confirm the "Resumen de últimas partidas" block shows five KPI blocks, including `Accuracy`.
 - Confirm the home games panel shows only the alternate toggle button for the current list mode.
+- Confirm `games.php` shows the `Apertura` column.
+- Confirm games with PGN `ECO`/`Opening` tags show opening name plus ECO, or only ECO when the name is missing.
+- Confirm manual and Chess.com imports still work after running the SQL migration.
 - Confirm the header/footer version displays `1.0.1`.
 - Confirm the service worker cache name is `chess-coach-v1.0.1`.
 - Confirm no real credentials were committed.
