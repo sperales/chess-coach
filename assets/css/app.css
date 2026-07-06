@@ -1348,11 +1348,12 @@ label {
 }
 .board-wrap {
   display:grid;
-  place-items:center
+  place-items:center;
+  width:100%
 }
 .chess-board {
-  width:min(72vw,520px);
-  height:min(72vw,520px);
+  width:min(100%,520px);
+  aspect-ratio:1/1;
   display:grid;
   grid-template-columns:repeat(8,1fr);
   grid-template-rows:repeat(8,1fr);
@@ -1365,7 +1366,6 @@ label {
   position:relative;
   display:grid;
   place-items:center;
-  font-size:clamp(24px,6vw,48px);
   line-height:1
 }
 .sq.light {
@@ -1376,15 +1376,25 @@ label {
   background:#789857;
   color:#111
 }
-.sq span {
-  filter:drop-shadow(0 2px 1px #0006)
+.board-piece {
+  position:relative;
+  z-index:1;
+  width:92%;
+  height:92%;
+  object-fit:contain;
+  display:block;
+  user-select:none;
+  pointer-events:none;
+  filter:drop-shadow(0 2px 1px #0007)
 }
 .sq.from::after,.sq.to::after {
   content:'';
   position:absolute;
+  z-index:2;
   inset:10%;
   border-radius:10px;
-  background:rgba(255,193,7,.38);
+  pointer-events:none;
+  background:rgba(255,193,7,.28);
   border:3px solid rgba(255,193,7,.55)
 }
 .sq.to::after {
@@ -1469,8 +1479,7 @@ label {
     max-height:360px
   }
   .chess-board {
-    width:min(94vw,520px);
-    height:min(94vw,520px)
+    width:100%
   }
 }
 @media(max-width:640px) {
@@ -1495,18 +1504,12 @@ label {
   .review-chart-panel canvas {
     height:180px
   }
-  .chess-board {
-    width:calc(100vw - 44px);
-    height:calc(100vw - 44px)
+  .review-board-grid > .panel:first-child {
+    padding:12px
   }
-}
-/* v0.8.1 review fixes */ .sq span.white-piece {
-  color:#f7f8f3!important;
-  text-shadow:0 2px 2px rgba(0,0,0,.55)
-}
-.sq span.black-piece {
-  color:#121416!important;
-  text-shadow:0 1px 1px rgba(255,255,255,.18)
+  .chess-board {
+    width:100%
+  }
 }
 /* v0.9.0 Smart Tags UI */ .home-grid {
   grid-template-columns:minmax(0,2.35fr) minmax(300px,.95fr)

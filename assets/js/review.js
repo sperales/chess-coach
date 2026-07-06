@@ -2,9 +2,14 @@ let reviewData = null;
 let currentMoveIndex = 0;
 let showingBest = false;
 
-const PIECES = {
-  P:'♟', N:'♞', B:'♝', R:'♜', Q:'♛', K:'♚',
-  p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚'
+const PIECE_IMAGES = {
+  P: 'wp.png', N: 'wn.png', B: 'wb.png', R: 'wr.png', Q: 'wq.png', K: 'wk.png',
+  p: 'bp.png', n: 'bn.png', b: 'bb.png', r: 'br.png', q: 'bq.png', k: 'bk.png'
+};
+
+const PIECE_LABELS = {
+  P: 'peon blanco', N: 'caballo blanco', B: 'alfil blanco', R: 'torre blanca', Q: 'dama blanca', K: 'rey blanco',
+  p: 'peon negro', n: 'caballo negro', b: 'alfil negro', r: 'torre negra', q: 'dama negra', k: 'rey negro'
 };
 
 function rEscape(s) {
@@ -223,7 +228,7 @@ function renderBoard(fen, uci) {
         const n = Number(ch);
         for (let k=0; k<n; k++) html += squareHtml(r,file++,'',from,to,'');
       } else {
-        html += squareHtml(r,file++,PIECES[ch] || '',from,to,ch);
+        html += squareHtml(r,file++,'',from,to,ch);
       }
     }
   }
@@ -234,8 +239,14 @@ function squareHtml(r,file,piece,from,to,pieceCode='') {
   const sq = String.fromCharCode(97+file) + (8-r);
   const dark = (r+file)%2===1;
   const hl = sq === from ? ' from' : sq === to ? ' to' : '';
-  const pieceClass = pieceCode ? (pieceCode === pieceCode.toUpperCase() ? ' white-piece' : ' black-piece') : '';
-  return `<div class="sq ${dark?'dark':'light'}${hl}" data-sq="${sq}"><span class="${pieceClass}">${piece}</span></div>`;
+  return `<div class="sq ${dark?'dark':'light'}${hl}" data-sq="${sq}">${pieceImageHtml(pieceCode)}</div>`;
+}
+
+function pieceImageHtml(pieceCode) {
+  const file = PIECE_IMAGES[pieceCode];
+  if (!file) return '';
+  const colorClass = pieceCode === pieceCode.toUpperCase() ? 'white-piece' : 'black-piece';
+  return `<img class="board-piece ${colorClass}" src="assets/pieces/${file}" alt="${rEscape(PIECE_LABELS[pieceCode] || 'pieza')}" draggable="false">`;
 }
 
 function goMove(i) {
