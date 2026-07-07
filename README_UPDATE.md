@@ -30,8 +30,11 @@ This PR starts v1.1.0 by adding the database model and backend helper layer need
 - `profile.php` adds a manual Training Center exercise backfill action under `Procesos batch`.
 - `training.php` adds the first Training Center screen with stats, filters and a paginated exercise list.
 - The hamburger menu and home quick action now link to `Entrenamiento`.
+- Exercise cards can now be opened and solved on an interactive board.
+- The user gets immediate feedback after each attempted move, with up to 5 attempts.
+- The Training Center board now matches the review board styling and highlights the previous move when available.
 - The app version is bumped to `1.1.0`.
-- The PWA service worker cache name is bumped to `chess-coach-v1.1.0-training-page`.
+- The PWA service worker cache name is bumped to `chess-coach-v1.1.0-training-solver`.
 
 ## Technical changes
 
@@ -49,6 +52,9 @@ This PR starts v1.1.0 by adding the database model and backend helper layer need
 - Training exercise generation is derived metadata: if it fails, the analysis remains valid and generation can be retried from the profile backfill.
 - Adds authenticated `api/analyze.php` actions for Training Center backfill and backfill status.
 - Adds authenticated `api/training.php` read endpoints for Training Center stats and exercise listing.
+- Adds authenticated `api/training.php` attempt submission for exact `bestmove` validation.
+- Records exercise attempts in `training_attempts` and marks solved exercises through `training_exercises.resolved_at`.
+- Derives the previous move for each exercise from `game_move_analysis`; existing generated exercises do not need to be rebuilt for this context hint.
 
 ## Deployment notes
 
@@ -81,7 +87,7 @@ No additional SQL migration is added by the exercise generation PR.
 The service worker cache name is now:
 
 ```text
-chess-coach-v1.1.0-training-page
+chess-coach-v1.1.0-training-solver
 ```
 
 ## Local verification commands
@@ -102,6 +108,9 @@ node --check service-worker.js
 - Open `training.php` from the hamburger menu and confirm stats, filters and exercise list load.
 - Confirm `Recomendado para mí`, exercise type filters and pending/resolved/all filters work.
 - Confirm exercise cards link back to the original review page.
+- Open a pending exercise, select origin/destination on the board and confirm incorrect moves show feedback.
+- Confirm the correct `bestmove` marks the exercise as solved and removes it from the pending list.
+- Confirm a failed exercise reveals the solution after 5 attempts.
 - Confirm `config/version.php` displays `1.1.0`.
-- Confirm the service worker cache name is `chess-coach-v1.1.0-training-page`.
+- Confirm the service worker cache name is `chess-coach-v1.1.0-training-solver`.
 - Confirm no real credentials were committed.

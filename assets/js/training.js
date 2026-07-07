@@ -4,6 +4,22 @@ let trainingTypeCounts = {};
 let trainingStats = {};
 let trainingPagination = { page: 1, per_page: (window.CHESS_COACH_CONFIG && window.CHESS_COACH_CONFIG.trainingPerPage) || 20, total: 0, pages: 1 };
 let currentTrainingPage = 1;
+let activeExercise = null;
+let trainingBoardOrientation = 'white';
+let selectedTrainingSquare = '';
+let attemptedTrainingMoves = [];
+let trainingStartedAt = 0;
+let trainingUsedHint = false;
+
+const TRAINING_PIECE_IMAGES = {
+  P: 'wp.png', N: 'wn.png', B: 'wb.png', R: 'wr.png', Q: 'wq.png', K: 'wk.png',
+  p: 'bp.png', n: 'bn.png', b: 'bb.png', r: 'br.png', q: 'bq.png', k: 'bk.png'
+};
+
+const TRAINING_PIECE_LABELS = {
+  P: 'peon blanco', N: 'caballo blanco', B: 'alfil blanco', R: 'torre blanca', Q: 'dama blanca', K: 'rey blanco',
+  p: 'peon negro', n: 'caballo negro', b: 'alfil negro', r: 'torre negra', q: 'dama negra', k: 'rey negro'
+};
 
 function selectedTrainingFilters() {
   return {
@@ -103,6 +119,9 @@ function trainingExerciseCard(item) {
   const side = Number(item.ply || 1) % 2 === 1 ? 'blancas' : 'negras';
   const gameTitle = `${item.white_player || 'Blancas'} vs ${item.black_player || 'Negras'}`;
   const date = item.played_at || '';
+  const primaryAction = item.resolved_at
+    ? `<a class="btn secondary small" href="${escapeAttr(item.review_url || '#')}">Ver partida</a>`
+    : `<button class="secondary small" type="button" onclick="openTrainingExercise(${Number(item.id || 0)})">Entrenar</button>`;
   return `
     <article class="training-card">
       <div class="training-card-main">
@@ -123,7 +142,7 @@ function trainingExerciseCard(item) {
         <strong>${escapeHtml(gameTitle)}</strong>
         <small>${escapeHtml(date || item.result_raw || '')}</small>
         <small>Intentos: ${Number(item.attempt_count || 0)}</small>
-        <a class="btn secondary small" href="${escapeAttr(item.review_url || '#')}">Ver partida</a>
+        ${primaryAction}
       </div>
     </article>
   `;
@@ -175,11 +194,245 @@ function clearTrainingFilters() {
   loadTraining(1).catch(showTrainingError);
 }
 
+async function openTrainingExercise(id) {
+  const response = await fetch(`api/training.php?action=get&id=${Number(id)}`, { cache: 'no-store' });
+  const data = await response.json();
+  if (!data.ok) throw new Error(data.error || 'No se pudo cargar el ejercicio.');
+  activeExercise = data.exercise;
+  attemptedTrainingMoves = [];
+  selectedTrainingSquare = '';
+  trainingUsedHint = false;
+  trainingStartedAt = Date.now();
+  trainingBoardOrientation = trainingFenSideToMove(activeExercise.fen) === 'b' ? 'black' : 'white';
+  renderTrainingSolver();
+  const panel = document.getElementById('trainingSolverPanel');
+  if (panel) {
+    panel.hidden = false;
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function closeTrainingSolver() {
+  const panel = document.getElementById('trainingSolverPanel');
+  if (panel) panel.hidden = true;
+  activeExercise = null;
+  attemptedTrainingMoves = [];
+  selectedTrainingSquare = '';
+}
+
+function renderTrainingSolver() {
+  if (!activeExercise) return;
+  const title = document.getElementById('trainingSolverTitle');
+  const prompt = document.getElementById('trainingSolverPrompt');
+  const meta = document.getElementById('trainingSolverMeta');
+  const tags = document.getElementById('trainingSolverTags');
+  const review = document.getElementById('trainingReviewLink');
+  const feedback = document.getElementById('trainingFeedback');
+  if (title) title.textContent = activeExercise.type_label || 'Resolver ejercicio';
+  if (prompt) prompt.textContent = activeExercise.prompt || 'Encuentra la mejor jugada.';
+  if (meta) {
+    const source = activeExercise.source_side === 'opponent' ? 'Rival' : 'Propia';
+    const previousMove = activeExercise.previous_san || activeExercise.previous_uci || '';
+    meta.innerHTML = `
+      <span>${escapeHtml(source)}</span>
+      <span>${escapeHtml(activeExercise.difficulty || 'medium')}</span>
+      <span>Intentos ${attemptedTrainingMoves.length}/5</span>
+      ${previousMove ? `<span>Última jugada: ${escapeHtml(previousMove)}</span>` : ''}
+    `;
+  }
+  if (tags) tags.innerHTML = (activeExercise.smart_tags || []).slice(0, 5).map(smartTagChip).join('');
+  if (review) review.href = activeExercise.review_url || '#';
+  if (feedback) {
+    feedback.textContent = '';
+    feedback.className = 'training-feedback';
+  }
+  renderTrainingAttempts();
+  renderTrainingBoard();
+  updateTrainingDraft();
+}
+
+function renderTrainingBoard() {
+  const board = document.getElementById('trainingBoard');
+  if (!board || !activeExercise) return;
+  const [placement] = (activeExercise.fen || '').split(' ');
+  const grid = trainingBoardGridFromPlacement(placement || '');
+  const previousMove = (activeExercise.previous_uci || '').toString().toLowerCase();
+  const previousFrom = previousMove.length >= 4 ? previousMove.slice(0, 2) : '';
+  const previousTo = previousMove.length >= 4 ? previousMove.slice(2, 4) : '';
+  let html = '';
+  const ranks = trainingBoardOrientation === 'black' ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
+  const files = trainingBoardOrientation === 'black' ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
+  for (const r of ranks) {
+    for (const file of files) {
+      const sq = String.fromCharCode(97 + file) + (8 - r);
+      const dark = (r + file) % 2 === 1;
+      const selectedFrom = selectedTrainingSquare.slice(0, 2);
+      const selectedTo = selectedTrainingSquare.slice(2, 4);
+      const selected = sq === selectedFrom || sq === selectedTo ? ' selected' : '';
+      const previous = sq === previousFrom ? ' from' : sq === previousTo ? ' to' : '';
+      html += `<button class="sq ${dark ? 'dark' : 'light'}${previous}${selected}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(grid[r][file] || '')}</button>`;
+    }
+  }
+  board.innerHTML = html;
+  board.dataset.orientation = trainingBoardOrientation;
+}
+
+function trainingBoardGridFromPlacement(placement) {
+  const rows = placement.split('/');
+  const grid = Array.from({ length: 8 }, () => Array(8).fill(''));
+  for (let r = 0; r < 8; r++) {
+    let file = 0;
+    for (const ch of rows[r] || '') {
+      if (/\d/.test(ch)) file += Number(ch);
+      else if (file < 8) grid[r][file++] = ch;
+    }
+  }
+  return grid;
+}
+
+function trainingPieceImageHtml(pieceCode) {
+  const file = TRAINING_PIECE_IMAGES[pieceCode];
+  if (!file) return '';
+  const colorClass = pieceCode === pieceCode.toUpperCase() ? 'white-piece' : 'black-piece';
+  return `<img class="board-piece ${colorClass}" src="assets/pieces/${file}" alt="${escapeAttr(TRAINING_PIECE_LABELS[pieceCode] || 'pieza')}" draggable="false">`;
+}
+
+function selectTrainingSquare(square) {
+  if (!activeExercise || attemptedTrainingMoves.length >= 5 || activeExercise.resolved_at) return;
+  if (!selectedTrainingSquare) {
+    selectedTrainingSquare = square;
+  } else if (selectedTrainingSquare === square) {
+    selectedTrainingSquare = '';
+  } else {
+    selectedTrainingSquare += square;
+  }
+  renderTrainingBoard();
+  updateTrainingDraft();
+}
+
+function updateTrainingDraft() {
+  const draft = document.getElementById('trainingMoveDraft');
+  const submit = document.getElementById('trainingSubmitBtn');
+  const complete = selectedTrainingSquare.length >= 4;
+  const promotionWrap = document.getElementById('trainingPromotionWrap');
+  const promotion = complete && trainingMoveNeedsPromotion(selectedTrainingSquare);
+  if (promotionWrap) promotionWrap.hidden = !promotion;
+  if (draft) {
+    if (!selectedTrainingSquare) draft.textContent = 'Selecciona origen y destino en el tablero.';
+    else if (!complete) draft.textContent = `Origen seleccionado: ${selectedTrainingSquare}. Ahora elige destino.`;
+    else draft.textContent = `Jugada seleccionada: ${trainingSelectedMoveText()}.`;
+  }
+  if (submit) submit.disabled = !complete || attemptedTrainingMoves.length >= 5 || !!(activeExercise && activeExercise.resolved_at);
+}
+
+function trainingSelectedMoveText() {
+  const base = `${selectedTrainingSquare.slice(0, 2)} → ${selectedTrainingSquare.slice(2, 4)}`;
+  if (!trainingMoveNeedsPromotion(selectedTrainingSquare)) return base;
+  const piece = document.getElementById('trainingPromotionPiece')?.value || 'q';
+  return `${base}=${piece.toUpperCase()}`;
+}
+
+function trainingMoveNeedsPromotion(move) {
+  if (!move || move.length < 4) return false;
+  const from = move.slice(0, 2);
+  const to = move.slice(2, 4);
+  const piece = trainingPieceAtSquare(from);
+  return piece && piece.toLowerCase() === 'p' && (to[1] === '1' || to[1] === '8');
+}
+
+function trainingPieceAtSquare(square) {
+  if (!activeExercise || !square || square.length < 2) return '';
+  const [placement] = (activeExercise.fen || '').split(' ');
+  const grid = trainingBoardGridFromPlacement(placement || '');
+  const file = square.charCodeAt(0) - 97;
+  const rank = Number(square[1]);
+  const row = 8 - rank;
+  if (row < 0 || row > 7 || file < 0 || file > 7) return '';
+  return grid[row][file] || '';
+}
+
+function clearTrainingSelection() {
+  selectedTrainingSquare = '';
+  renderTrainingBoard();
+  updateTrainingDraft();
+}
+
+async function submitTrainingMove() {
+  if (!activeExercise || selectedTrainingSquare.length < 4 || attemptedTrainingMoves.length >= 5) return;
+  let move = selectedTrainingSquare.toLowerCase();
+  if (trainingMoveNeedsPromotion(move)) {
+    move += document.getElementById('trainingPromotionPiece')?.value || 'q';
+  }
+  attemptedTrainingMoves.push(move);
+  selectedTrainingSquare = '';
+  const response = await fetch('api/training.php?action=attempt', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: activeExercise.id,
+      moves: attemptedTrainingMoves,
+      duration_ms: Date.now() - trainingStartedAt,
+      used_hint: trainingUsedHint
+    })
+  });
+  const data = await response.json();
+  if (!data.ok) throw new Error(data.error || 'No se pudo registrar el intento.');
+  if (data.exercise) activeExercise = data.exercise;
+  showTrainingFeedback(data);
+  renderTrainingAttempts();
+  renderTrainingBoard();
+  updateTrainingDraft();
+  renderTrainingStatsFromResponse(data);
+  if (data.solved || data.solution_uci) {
+    await loadTraining(currentTrainingPage);
+  }
+}
+
+function showTrainingFeedback(data) {
+  const feedback = document.getElementById('trainingFeedback');
+  if (!feedback) return;
+  feedback.textContent = data.feedback || (data.solved ? 'Correcto.' : 'Todavía no.');
+  feedback.className = `training-feedback ${data.solved ? 'ok' : 'warn'}`;
+  if (!data.solved && data.solution_uci) {
+    feedback.textContent += ` Solución: ${data.solution_uci}.`;
+  }
+}
+
+function renderTrainingAttempts() {
+  const el = document.getElementById('trainingAttempts');
+  if (!el) return;
+  el.innerHTML = attemptedTrainingMoves.length
+    ? attemptedTrainingMoves.map((move, index) => `<span>${index + 1}. ${escapeHtml(move)}</span>`).join('')
+    : '<span>Sin intentos todavía.</span>';
+}
+
+function renderTrainingStatsFromResponse(data) {
+  if (!data.stats) return;
+  trainingStats = data.stats;
+  renderTrainingStats();
+}
+
+function skipTrainingExercise() {
+  closeTrainingSolver();
+}
+
+function flipTrainingBoard() {
+  trainingBoardOrientation = trainingBoardOrientation === 'white' ? 'black' : 'white';
+  renderTrainingBoard();
+}
+
+function trainingFenSideToMove(fen) {
+  const parts = (fen || '').trim().split(/\s+/);
+  return parts[1] === 'b' ? 'b' : 'w';
+}
+
 function bindTrainingFilters() {
   ['trainingTypeFilter', 'trainingStatusFilter'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', () => loadTraining(1).catch(showTrainingError));
   });
+  const promotion = document.getElementById('trainingPromotionPiece');
+  if (promotion) promotion.addEventListener('change', updateTrainingDraft);
 }
 
 function smartTagClass(tag) {

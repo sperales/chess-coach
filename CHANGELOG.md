@@ -14,15 +14,19 @@
 - Added the first Training Center page with exercise stats, filters and a paginated exercise list.
 - Enabled the `Entrenamiento` menu item and home quick action.
 - Added `assets/js/training.js` and cached the Training Center page/assets in the service worker.
+- Added interactive Training Center exercise solving on a board.
+- Added server-side exact `bestmove` validation and attempt recording.
+- Added a 5-attempt limit per exercise interaction with immediate feedback.
+- Added previous-move context and review-board visual styling to the Training Center board.
 - Bumped `config/version.php` to `1.1.0`.
-- Updated the service worker cache name to `chess-coach-v1.1.0-training-page`.
+- Updated the service worker cache name to `chess-coach-v1.1.0-training-solver`.
 
 ### Notes
 
 - PR1 adds the Training Center backend foundation.
 - PR2 adds exercise generation and profile backfill.
 - PR3 adds the Training Center page and exercise browsing.
-- Interactive solving is planned for later v1.1.0 PRs.
+- PR4 adds interactive board solving and attempt tracking.
 
 ### Database
 

@@ -269,6 +269,13 @@ function training_exercise_tags_for_ids(array $exerciseIds): array {
   return $byExercise;
 }
 
+function training_public_exercise(array $item, bool $includeSolution = false): array {
+  if (!$includeSolution) {
+    unset($item['solution_uci'], $item['solution_san']);
+  }
+  return $item;
+}
+
 function training_list_exercises(int $userId, string $type = 'recommended', string $status = 'pending', int $page = 1, int $perPage = 20): array {
   $types = training_exercise_types();
   if (!isset($types[$type])) $type = 'recommended';
@@ -335,6 +342,7 @@ function training_list_exercises(int $userId, string $type = 'recommended', stri
     $item['type_label'] = training_exercise_type_label((string)$item['exercise_type']);
     $item['review_url'] = 'review.php?id=' . (int)$item['game_id'];
     $item['smart_tags'] = $tagsByExercise[(int)$item['id']] ?? [];
+    $item = training_public_exercise($item, !empty($item['resolved_at']));
   }
   unset($item);
 
@@ -350,6 +358,105 @@ function training_list_exercises(int $userId, string $type = 'recommended', stri
       'type' => $type,
       'status' => $status,
     ],
+  ];
+}
+
+function training_exercise_for_user(int $exerciseId, int $userId): ?array {
+  $st = db()->prepare('SELECT te.*, g.white_player, g.black_player, g.result_raw, g.user_result, g.played_at,
+                              g.event_name, g.site, g.eco_code, g.opening_name,
+                              prev.ply AS previous_ply, prev.uci AS previous_uci, prev.san AS previous_san,
+                              COALESCE(attempts.attempt_count,0) AS attempt_count,
+                              attempts.last_result
+                       FROM training_exercises te
+                       JOIN games g ON g.id=te.game_id
+                       LEFT JOIN game_move_analysis prev ON prev.analysis_id=te.analysis_id AND prev.ply=te.ply-1
+                       LEFT JOIN (
+                         SELECT exercise_id, COUNT(*) AS attempt_count,
+                                SUBSTRING_INDEX(GROUP_CONCAT(result ORDER BY created_at DESC, id DESC), \',\', 1) AS last_result
+                         FROM training_attempts
+                         WHERE user_id=?
+                         GROUP BY exercise_id
+                       ) attempts ON attempts.exercise_id=te.id
+                       WHERE te.id=? AND te.user_id=? AND te.status="active"
+                       LIMIT 1');
+  $st->execute([$userId, $exerciseId, $userId]);
+  $item = $st->fetch();
+  if (!$item) return null;
+
+  $tagsByExercise = training_exercise_tags_for_ids([(int)$item['id']]);
+  $item['id'] = (int)$item['id'];
+  $item['game_id'] = (int)$item['game_id'];
+  $item['analysis_id'] = (int)$item['analysis_id'];
+  $item['move_analysis_id'] = (int)$item['move_analysis_id'];
+  $item['ply'] = (int)$item['ply'];
+  $item['previous_ply'] = $item['previous_ply'] === null ? null : (int)$item['previous_ply'];
+  $item['centipawn_loss'] = (int)$item['centipawn_loss'];
+  $item['priority_score'] = (int)$item['priority_score'];
+  $item['attempt_count'] = (int)$item['attempt_count'];
+  $item['type_label'] = training_exercise_type_label((string)$item['exercise_type']);
+  $item['review_url'] = 'review.php?id=' . (int)$item['game_id'];
+  $item['smart_tags'] = $tagsByExercise[(int)$item['id']] ?? [];
+  return $item;
+}
+
+function training_sanitize_attempted_moves(array $moves): array {
+  $clean = [];
+  foreach ($moves as $move) {
+    $uci = strtolower(trim((string)$move));
+    if (preg_match('/^[a-h][1-8][a-h][1-8][qrbn]?$/', $uci)) $clean[] = $uci;
+    if (count($clean) >= 5) break;
+  }
+  return $clean;
+}
+
+function training_record_attempt(int $userId, int $exerciseId, array $attemptedMoves, int $durationMs = 0, bool $usedHint = false): array {
+  $exercise = training_exercise_for_user($exerciseId, $userId);
+  if (!$exercise) return ['ok' => false, 'error' => 'Ejercicio no encontrado.'];
+  if (!empty($exercise['resolved_at'])) return ['ok' => true, 'already_resolved' => true, 'exercise' => $exercise];
+
+  $moves = training_sanitize_attempted_moves($attemptedMoves);
+  if (!$moves) return ['ok' => false, 'error' => 'No se ha enviado ninguna jugada válida.'];
+
+  $solution = strtolower(trim((string)($exercise['solution_uci'] ?? '')));
+  $finalMove = end($moves);
+  $isSolved = in_array($solution, $moves, true);
+  $result = $isSolved ? 'solved' : 'failed';
+  $durationMs = max(0, min(86400000, $durationMs));
+
+  $ins = db()->prepare('INSERT INTO training_attempts
+      (session_id,exercise_id,user_id,started_at,completed_at,duration_ms,attempts_count,first_move_uci,final_move_uci,
+       attempted_moves_json,is_solved,result,used_hint,difficulty_after_attempt,created_at)
+      VALUES (NULL,?,?,NOW(),NOW(),?,?,?,?,?,?,?,?,?,NOW())');
+  $ins->execute([
+    $exerciseId,
+    $userId,
+    $durationMs,
+    count($moves),
+    $moves[0],
+    $finalMove,
+    json_encode($moves, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+    $isSolved ? 1 : 0,
+    $result,
+    $usedHint ? 1 : 0,
+    $exercise['difficulty'] ?? null,
+  ]);
+
+  if ($isSolved) {
+    db()->prepare('UPDATE training_exercises SET resolved_at=COALESCE(resolved_at,NOW()), last_attempt_at=NOW(), updated_at=NOW() WHERE id=? AND user_id=?')->execute([$exerciseId, $userId]);
+  } else {
+    db()->prepare('UPDATE training_exercises SET last_attempt_at=NOW(), updated_at=NOW() WHERE id=? AND user_id=?')->execute([$exerciseId, $userId]);
+  }
+
+  $updated = training_exercise_for_user($exerciseId, $userId);
+  return [
+    'ok' => true,
+    'solved' => $isSolved,
+    'attempts_count' => count($moves),
+    'remaining_attempts' => max(0, 5 - count($moves)),
+    'solution_uci' => $isSolved || count($moves) >= 5 ? $solution : null,
+    'feedback' => $isSolved ? ($exercise['feedback_success'] ?? training_feedback_success((string)$exercise['exercise_type'])) : ($exercise['feedback_failure'] ?? training_feedback_failure((string)$exercise['exercise_type'])),
+    'exercise' => $updated,
+    'stats' => training_stats_for_user($userId),
   ];
 }
 
