@@ -230,6 +230,129 @@ function training_stats_for_user(int $userId): array {
   ];
 }
 
+function training_type_counts_for_user(int $userId): array {
+  $st = db()->prepare('SELECT exercise_type, COUNT(*) AS total,
+                              SUM(status="active" AND resolved_at IS NULL) AS pending,
+                              SUM(resolved_at IS NOT NULL) AS resolved
+                       FROM training_exercises
+                       WHERE user_id=?
+                       GROUP BY exercise_type
+                       ORDER BY exercise_type');
+  $st->execute([$userId]);
+  $counts = [];
+  foreach ($st->fetchAll() as $row) {
+    $type = (string)$row['exercise_type'];
+    $counts[$type] = [
+      'total' => (int)($row['total'] ?? 0),
+      'pending' => (int)($row['pending'] ?? 0),
+      'resolved' => (int)($row['resolved'] ?? 0),
+    ];
+  }
+  return $counts;
+}
+
+function training_exercise_tags_for_ids(array $exerciseIds): array {
+  $exerciseIds = array_values(array_unique(array_map('intval', $exerciseIds)));
+  if (!$exerciseIds) return [];
+  $placeholders = implode(',', array_fill(0, count($exerciseIds), '?'));
+  $sql = "SELECT tet.exercise_id, tet.tag_code, tet.source, d.label, d.category, d.severity
+          FROM training_exercise_tags tet
+          JOIN smart_tag_definitions d ON d.code=tet.tag_code
+          WHERE tet.exercise_id IN ($placeholders)
+          ORDER BY FIELD(d.severity,'critical','high','medium','low','info'), d.label ASC";
+  $st = db()->prepare($sql);
+  $st->execute($exerciseIds);
+  $byExercise = [];
+  foreach ($st->fetchAll() as $tag) {
+    $byExercise[(int)$tag['exercise_id']][] = $tag;
+  }
+  return $byExercise;
+}
+
+function training_list_exercises(int $userId, string $type = 'recommended', string $status = 'pending', int $page = 1, int $perPage = 20): array {
+  $types = training_exercise_types();
+  if (!isset($types[$type])) $type = 'recommended';
+  if (!in_array($status, ['pending', 'resolved', 'all'], true)) $status = 'pending';
+
+  $perPage = max(1, min(100, $perPage));
+  $where = ['te.user_id=?', 'te.status="active"'];
+  $params = [$userId];
+
+  if ($type !== 'recommended') {
+    $where[] = 'te.exercise_type=?';
+    $params[] = $type;
+  }
+  if ($status === 'pending') {
+    $where[] = 'te.resolved_at IS NULL';
+  } elseif ($status === 'resolved') {
+    $where[] = 'te.resolved_at IS NOT NULL';
+  }
+
+  $whereSql = implode(' AND ', $where);
+  $countSt = db()->prepare("SELECT COUNT(*) FROM training_exercises te WHERE $whereSql");
+  $countSt->execute($params);
+  $total = (int)$countSt->fetchColumn();
+  $pages = max(1, (int)ceil($total / $perPage));
+  $page = max(1, min($pages, $page));
+  $offset = ($page - 1) * $perPage;
+
+  $order = $type === 'recommended'
+    ? 'te.resolved_at IS NOT NULL ASC, te.priority_score DESC, te.last_attempt_at IS NULL DESC, te.created_at DESC, te.id DESC'
+    : 'te.resolved_at IS NOT NULL ASC, te.created_at DESC, te.priority_score DESC, te.id DESC';
+
+  $sql = "SELECT te.*, g.white_player, g.black_player, g.result_raw, g.user_result, g.played_at,
+                 g.event_name, g.site, g.eco_code, g.opening_name,
+                 ga.completed_at,
+                 COALESCE(attempts.attempt_count,0) AS attempt_count,
+                 attempts.last_result
+          FROM training_exercises te
+          JOIN games g ON g.id=te.game_id
+          JOIN game_analysis ga ON ga.id=te.analysis_id
+          LEFT JOIN (
+            SELECT exercise_id, COUNT(*) AS attempt_count,
+                   SUBSTRING_INDEX(GROUP_CONCAT(result ORDER BY created_at DESC, id DESC), ',', 1) AS last_result
+            FROM training_attempts
+            WHERE user_id=?
+            GROUP BY exercise_id
+          ) attempts ON attempts.exercise_id=te.id
+          WHERE $whereSql
+          ORDER BY $order
+          LIMIT " . (int)$perPage . " OFFSET " . (int)$offset;
+  $st = db()->prepare($sql);
+  $st->execute(array_merge([$userId], $params));
+  $items = $st->fetchAll();
+
+  $tagsByExercise = training_exercise_tags_for_ids(array_column($items, 'id'));
+  foreach ($items as &$item) {
+    $item['id'] = (int)$item['id'];
+    $item['game_id'] = (int)$item['game_id'];
+    $item['analysis_id'] = (int)$item['analysis_id'];
+    $item['move_analysis_id'] = (int)$item['move_analysis_id'];
+    $item['ply'] = (int)$item['ply'];
+    $item['centipawn_loss'] = (int)$item['centipawn_loss'];
+    $item['priority_score'] = (int)$item['priority_score'];
+    $item['attempt_count'] = (int)$item['attempt_count'];
+    $item['type_label'] = training_exercise_type_label((string)$item['exercise_type']);
+    $item['review_url'] = 'review.php?id=' . (int)$item['game_id'];
+    $item['smart_tags'] = $tagsByExercise[(int)$item['id']] ?? [];
+  }
+  unset($item);
+
+  return [
+    'items' => $items,
+    'pagination' => [
+      'page' => $page,
+      'per_page' => $perPage,
+      'total' => $total,
+      'pages' => $pages,
+    ],
+    'filters' => [
+      'type' => $type,
+      'status' => $status,
+    ],
+  ];
+}
+
 function training_analysis_game(int $analysisId, int $userId): ?array {
   $st = db()->prepare('SELECT a.id AS analysis_id, a.game_id, a.user_id, a.status,
                               g.white_player, g.black_player, g.user_result, g.result_raw,

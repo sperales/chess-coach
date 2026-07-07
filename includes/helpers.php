@@ -7,7 +7,7 @@ function coach_menu_items(): array {
     ['games.php', '♟', 'Partidas', false],
     ['import-chesscom.php', '⇩', 'Importar partidas', false],
     ['analysis-pending.php', '◷', 'Análisis pendientes', false],
-    ['#', '◎', 'Entrenamiento', true],
+    ['training.php', '◎', 'Entrenamiento', false],
     ['#', '▤', 'Aperturas', true],
     ['#', '▥', 'Estadísticas', true],
     ['#', '◇', 'Etiquetas', true],
