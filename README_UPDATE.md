@@ -32,6 +32,7 @@ This PR starts v1.1.0 by adding the database model and backend helper layer need
 - The hamburger menu and home quick action now link to `Entrenamiento`.
 - Exercise cards can now be opened and solved on an interactive board.
 - The user gets immediate feedback after each attempted move, with up to 5 attempts.
+- The Training Center board now matches the review board styling and highlights the previous move when available.
 - The app version is bumped to `1.1.0`.
 - The PWA service worker cache name is bumped to `chess-coach-v1.1.0-training-solver`.
 
@@ -53,6 +54,7 @@ This PR starts v1.1.0 by adding the database model and backend helper layer need
 - Adds authenticated `api/training.php` read endpoints for Training Center stats and exercise listing.
 - Adds authenticated `api/training.php` attempt submission for exact `bestmove` validation.
 - Records exercise attempts in `training_attempts` and marks solved exercises through `training_exercises.resolved_at`.
+- Derives the previous move for each exercise from `game_move_analysis`; existing generated exercises do not need to be rebuilt for this context hint.
 
 ## Deployment notes
 

@@ -232,10 +232,12 @@ function renderTrainingSolver() {
   if (prompt) prompt.textContent = activeExercise.prompt || 'Encuentra la mejor jugada.';
   if (meta) {
     const source = activeExercise.source_side === 'opponent' ? 'Rival' : 'Propia';
+    const previousMove = activeExercise.previous_san || activeExercise.previous_uci || '';
     meta.innerHTML = `
       <span>${escapeHtml(source)}</span>
       <span>${escapeHtml(activeExercise.difficulty || 'medium')}</span>
       <span>Intentos ${attemptedTrainingMoves.length}/5</span>
+      ${previousMove ? `<span>Última jugada: ${escapeHtml(previousMove)}</span>` : ''}
     `;
   }
   if (tags) tags.innerHTML = (activeExercise.smart_tags || []).slice(0, 5).map(smartTagChip).join('');
@@ -254,6 +256,9 @@ function renderTrainingBoard() {
   if (!board || !activeExercise) return;
   const [placement] = (activeExercise.fen || '').split(' ');
   const grid = trainingBoardGridFromPlacement(placement || '');
+  const previousMove = (activeExercise.previous_uci || '').toString().toLowerCase();
+  const previousFrom = previousMove.length >= 4 ? previousMove.slice(0, 2) : '';
+  const previousTo = previousMove.length >= 4 ? previousMove.slice(2, 4) : '';
   let html = '';
   const ranks = trainingBoardOrientation === 'black' ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
   const files = trainingBoardOrientation === 'black' ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
@@ -261,8 +266,11 @@ function renderTrainingBoard() {
     for (const file of files) {
       const sq = String.fromCharCode(97 + file) + (8 - r);
       const dark = (r + file) % 2 === 1;
-      const selected = sq === selectedTrainingSquare ? ' selected' : '';
-      html += `<button class="sq ${dark ? 'dark' : 'light'}${selected}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(grid[r][file] || '')}</button>`;
+      const selectedFrom = selectedTrainingSquare.slice(0, 2);
+      const selectedTo = selectedTrainingSquare.slice(2, 4);
+      const selected = sq === selectedFrom || sq === selectedTo ? ' selected' : '';
+      const previous = sq === previousFrom ? ' from' : sq === previousTo ? ' to' : '';
+      html += `<button class="sq ${dark ? 'dark' : 'light'}${previous}${selected}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(grid[r][file] || '')}</button>`;
     }
   }
   board.innerHTML = html;

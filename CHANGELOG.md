@@ -17,6 +17,7 @@
 - Added interactive Training Center exercise solving on a board.
 - Added server-side exact `bestmove` validation and attempt recording.
 - Added a 5-attempt limit per exercise interaction with immediate feedback.
+- Added previous-move context and review-board visual styling to the Training Center board.
 - Bumped `config/version.php` to `1.1.0`.
 - Updated the service worker cache name to `chess-coach-v1.1.0-training-solver`.
 

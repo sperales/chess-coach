@@ -364,10 +364,12 @@ function training_list_exercises(int $userId, string $type = 'recommended', stri
 function training_exercise_for_user(int $exerciseId, int $userId): ?array {
   $st = db()->prepare('SELECT te.*, g.white_player, g.black_player, g.result_raw, g.user_result, g.played_at,
                               g.event_name, g.site, g.eco_code, g.opening_name,
+                              prev.ply AS previous_ply, prev.uci AS previous_uci, prev.san AS previous_san,
                               COALESCE(attempts.attempt_count,0) AS attempt_count,
                               attempts.last_result
                        FROM training_exercises te
                        JOIN games g ON g.id=te.game_id
+                       LEFT JOIN game_move_analysis prev ON prev.analysis_id=te.analysis_id AND prev.ply=te.ply-1
                        LEFT JOIN (
                          SELECT exercise_id, COUNT(*) AS attempt_count,
                                 SUBSTRING_INDEX(GROUP_CONCAT(result ORDER BY created_at DESC, id DESC), \',\', 1) AS last_result
@@ -387,6 +389,7 @@ function training_exercise_for_user(int $exerciseId, int $userId): ?array {
   $item['analysis_id'] = (int)$item['analysis_id'];
   $item['move_analysis_id'] = (int)$item['move_analysis_id'];
   $item['ply'] = (int)$item['ply'];
+  $item['previous_ply'] = $item['previous_ply'] === null ? null : (int)$item['previous_ply'];
   $item['centipawn_loss'] = (int)$item['centipawn_loss'];
   $item['priority_score'] = (int)$item['priority_score'];
   $item['attempt_count'] = (int)$item['attempt_count'];

@@ -1960,8 +1960,22 @@ select {
 }
 .training-board .sq {
   border:0;
+  border-radius:0;
+  box-shadow:none;
+  appearance:none;
   padding:0;
+  margin:0;
+  width:100%;
+  height:100%;
+  font:inherit;
+  line-height:1;
   cursor:pointer
+}
+.training-board .sq.light {
+  background:#e8ebc8
+}
+.training-board .sq.dark {
+  background:#789857
 }
 .training-board .sq.selected::after {
   content:'';
