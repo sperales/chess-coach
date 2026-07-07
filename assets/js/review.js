@@ -289,7 +289,7 @@ function showBestMove(){
   const m = moves[currentMoveIndex];
   if (!m) return;
   const explanation = document.getElementById('moveExplanation');
-  const best = m.bestmove || 'no disponible';
+  const best = m.bestmove_human || 'no disponible';
   explanation.textContent = `Mejor alternativa según Stockfish: ${best}. Úsalo como pista, no como una línea para memorizar.`;
 }
 

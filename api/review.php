@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__.'/../includes/auth.php';
 require_once __DIR__.'/../includes/helpers.php';
+require_once __DIR__.'/../includes/move_notation.php';
 $u = require_login();
 $userId = (int)$u['id'];
 $gameId = (int)($_GET['id'] ?? 0);
@@ -78,13 +79,14 @@ function review_explanation(array $m): string {
   $bucket = review_move_bucket($m);
   $loss = (int)($m['centipawn_loss'] ?? 0);
   $best = trim((string)($m['bestmove'] ?? ''));
+  $bestHuman = human_move_notation($best);
   return match ($bucket) {
     'best' => 'Muy buena decisión: mantiene prácticamente toda la ventaja disponible en la posición.',
     'excellent' => 'Jugada excelente: mejora tu posición sin conceder opciones importantes al rival.',
     'good' => 'Jugada correcta. Puede que hubiera una opción algo más precisa, pero no cambia de forma seria la evaluación.',
     'inaccuracy' => 'Pequeña imprecisión. No pierde la partida, pero sí deja escapar parte de la iniciativa.',
-    'mistake' => $best ? "Aquí había una alternativa más fuerte: {$best}. La jugada permite al rival mejorar claramente." : 'Error importante: la evaluación cae bastante y el rival recibe una oportunidad clara.',
-    'blunder' => $best ? "Omisión grave. La mejor alternativa del motor era {$best}. Esta jugada cambia mucho el equilibrio de la posición." : 'Omisión grave: esta jugada cambia mucho el equilibrio de la posición.',
+    'mistake' => $best ? "Aquí había una alternativa más fuerte: {$bestHuman}. La jugada permite al rival mejorar claramente." : 'Error importante: la evaluación cae bastante y el rival recibe una oportunidad clara.',
+    'blunder' => $best ? "Omisión grave. La mejor alternativa del motor era {$bestHuman}. Esta jugada cambia mucho el equilibrio de la posición." : 'Omisión grave: esta jugada cambia mucho el equilibrio de la posición.',
     default => "Pérdida estimada: {$loss} centipawns.",
   };
 }
@@ -129,6 +131,7 @@ foreach ($moves as $row) {
   $row['review_bucket'] = $bucket;
   $row['review_label'] = review_bucket_label($bucket);
   $row['explanation'] = review_explanation($row);
+  $row['bestmove_human'] = human_move_notation($row['bestmove'] ?? '');
   $row['smart_tags'] = $moveTags[(int)$row['id']] ?? [];
   $reviewMoves[] = $row;
 }
