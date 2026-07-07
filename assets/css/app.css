@@ -1387,19 +1387,8 @@ label {
   pointer-events:none;
   filter:drop-shadow(0 2px 1px #0007)
 }
-.sq.from::after,.sq.to::after {
-  content:'';
-  position:absolute;
-  z-index:2;
-  inset:10%;
-  border-radius:10px;
-  pointer-events:none;
-  background:rgba(255,193,7,.28);
-  border:3px solid rgba(255,193,7,.55)
-}
-.sq.to::after {
-  background:rgba(76,175,80,.35);
-  border-color:rgba(139,195,74,.65)
+.sq.from,.sq.to {
+  background:#b8d343
 }
 .review-controls {
   display:grid;
@@ -1995,15 +1984,14 @@ select {
 .training-board .sq.dark {
   background:#789857
 }
-.training-board .sq.selected::after {
-  content:'';
-  position:absolute;
-  z-index:2;
-  inset:10%;
-  border-radius:10px;
-  background:rgba(47,125,246,.32);
-  border:3px solid rgba(47,125,246,.72);
-  pointer-events:none
+.training-board .sq.from,.training-board .sq.to {
+  background:#b8d343
+}
+.training-board .sq.selected {
+  background:#bde7ff
+}
+.training-board .sq.from.selected,.training-board .sq.to.selected {
+  background:#9bd8ff
 }
 .training-solver-info {
   display:grid;
