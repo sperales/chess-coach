@@ -24,6 +24,15 @@ function review_fen_side_to_move(?string $fen): string {
   return ($parts[1] ?? 'w') === 'b' ? 'b' : 'w';
 }
 
+function review_user_side(array $game, string $username): ?string {
+  $user = strtolower(trim($username));
+  $white = strtolower(trim((string)($game['white_player'] ?? '')));
+  $black = strtolower(trim((string)($game['black_player'] ?? '')));
+  if ($user !== '' && $white !== '' && $user === $white) return 'w';
+  if ($user !== '' && $black !== '' && $user === $black) return 'b';
+  return null;
+}
+
 function review_score_to_white(?int $score, string $type, ?string $fen): array {
   $raw = (int)($score ?? 0);
   $side = review_fen_side_to_move($fen);
@@ -168,6 +177,7 @@ json_response([
   'ok' => true,
   'game' => $game,
   'analysis' => $analysis,
+  'user_side' => review_user_side($game, (string)($u['username'] ?? '')),
   'summary' => [
     'moves' => $count,
     'accuracy' => $accuracy,

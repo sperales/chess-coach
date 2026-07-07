@@ -1,6 +1,7 @@
 let reviewData = null;
 let currentMoveIndex = 0;
 let showingBest = false;
+let boardOrientation = 'white';
 
 const PIECE_IMAGES = {
   P: 'wp.png', N: 'wn.png', B: 'wb.png', R: 'wr.png', Q: 'wq.png', K: 'wk.png',
@@ -61,6 +62,8 @@ async function loadReview() {
     if (!data.ok) throw new Error(data.error || 'No se pudo cargar la revisión.');
     reviewData = data;
     currentMoveIndex = 0;
+    boardOrientation = data.user_side === 'b' ? 'black' : 'white';
+    bindBoardControls();
     renderSummary();
     renderChart();
     renderMoveList();
@@ -217,22 +220,35 @@ function renderBoard(fen, uci) {
   const board = document.getElementById('reviewBoard');
   if (!board) return;
   const [placement] = (fen || '').split(' ');
-  const rows = placement.split('/');
+  const grid = boardGridFromPlacement(placement || '');
   const from = uci ? uci.slice(0,2) : '';
   const to = uci ? uci.slice(2,4) : '';
   let html = '';
-  for (let r=0; r<8; r++) {
-    let file = 0;
-    for (const ch of rows[r] || '') {
-      if (/\d/.test(ch)) {
-        const n = Number(ch);
-        for (let k=0; k<n; k++) html += squareHtml(r,file++,'',from,to,'');
-      } else {
-        html += squareHtml(r,file++,'',from,to,ch);
-      }
+  const ranks = boardOrientation === 'black' ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
+  const files = boardOrientation === 'black' ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
+  for (const r of ranks) {
+    for (const file of files) {
+      html += squareHtml(r, file, '', from, to, grid[r][file] || '');
     }
   }
   board.innerHTML = html;
+  board.dataset.orientation = boardOrientation;
+}
+
+function boardGridFromPlacement(placement) {
+  const rows = placement.split('/');
+  const grid = Array.from({ length: 8 }, () => Array(8).fill(''));
+  for (let r = 0; r < 8; r++) {
+    let file = 0;
+    for (const ch of rows[r] || '') {
+      if (/\d/.test(ch)) {
+        file += Number(ch);
+      } else if (file < 8) {
+        grid[r][file++] = ch;
+      }
+    }
+  }
+  return grid;
 }
 
 function squareHtml(r,file,piece,from,to,pieceCode='') {
@@ -247,6 +263,16 @@ function pieceImageHtml(pieceCode) {
   if (!file) return '';
   const colorClass = pieceCode === pieceCode.toUpperCase() ? 'white-piece' : 'black-piece';
   return `<img class="board-piece ${colorClass}" src="assets/pieces/${file}" alt="${rEscape(PIECE_LABELS[pieceCode] || 'pieza')}" draggable="false">`;
+}
+
+function bindBoardControls() {
+  const btn = document.getElementById('flipBoardBtn');
+  if (!btn || btn.dataset.bound === '1') return;
+  btn.dataset.bound = '1';
+  btn.addEventListener('click', () => {
+    boardOrientation = boardOrientation === 'white' ? 'black' : 'white';
+    renderMove();
+  });
 }
 
 function goMove(i) {

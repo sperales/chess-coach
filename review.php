@@ -56,7 +56,10 @@
     <section class="panel">
       <div class="panel-head">
         <h2 id="moveTitle">Movimiento</h2>
-        <span class="queue-status" id="moveBadge">--</span>
+        <div class="review-board-actions">
+          <button class="secondary small" id="flipBoardBtn" type="button">Girar tablero</button>
+          <span class="queue-status" id="moveBadge">--</span>
+        </div>
       </div>
       <div class="move-comment-card">
         <div>

@@ -1465,6 +1465,13 @@ label {
   color:#78d95e;
   text-decoration:none
 }
+.review-board-actions {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap
+}
 @media(max-width:980px) {
   .review-summary-grid,.review-board-grid {
     grid-template-columns:minmax(0,1fr)!important

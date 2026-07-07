@@ -1,30 +1,31 @@
-# Chess Coach v1.0.3 Update Notes
+# Chess Coach v1.0.4 Update Notes
 
 ## Release type
 
-Stockfish analysis performance release.
+Review player perspective and UX release.
 
-This release optimizes server-side Stockfish analysis without changing hosting requirements, the HTTP GET cron worker, analysis classification thresholds or review calculations.
+This PR starts v1.0.4 by orienting the review board from the player's perspective.
 
 ## Changed files
 
 - `AGENTS.md`
 - `CHANGELOG.md`
 - `README_UPDATE.md`
-- `config/engine.example.php`
+- `api/review.php`
+- `assets/css/app.css`
+- `assets/js/review.js`
 - `config/version.php`
-- `includes/analysis_queue.php`
-- `includes/stockfish.php`
+- `review.php`
 - `service-worker.js`
 
 ## User-facing changes
 
-- Analysis should complete faster because each game now reuses Stockfish processes in bounded chunks instead of starting Stockfish for every evaluated position.
-- Analysis avoids duplicate FEN evaluations inside the same game.
-- Stockfish now receives explicit UCI options for `Threads` and `Hash`.
-- The Stockfish runner is recycled periodically to avoid long-running process slowdowns observed on shared hosting.
-- `config/version.php` is bumped to `1.0.3`.
-- The PWA service worker cache name is bumped to `chess-coach-v1.0.3`.
+- `review.php` now opens the board from White's perspective when the player was White.
+- `review.php` now opens the board from Black's perspective when the player was Black.
+- A `Girar tablero` button allows manually flipping the board during review.
+- Move origin/destination highlights remain tied to the real board squares.
+- `config/version.php` is bumped to `1.0.4`.
+- The PWA service worker cache name is bumped to `chess-coach-v1.0.4`.
 
 ## Deployment notes
 
@@ -40,18 +41,6 @@ config/cron.php
 
 No real config files changed in this release.
 
-## Config notes
-
-`config/engine.example.php` now documents:
-
-```php
-'threads' => 1,
-'hash_mb' => 32,
-'restart_after_evaluations' => 40,
-```
-
-If you want the production `config/engine.php` to use those values explicitly, add them manually to the real server config. If omitted, the code defaults to `threads = 1`, `hash_mb = 32` and `restart_after_evaluations = 40`.
-
 ## SQL migration
 
 No SQL migration is required for this release.
@@ -61,7 +50,7 @@ No SQL migration is required for this release.
 The service worker cache name is now:
 
 ```text
-chess-coach-v1.0.3
+chess-coach-v1.0.4
 ```
 
 ## Local verification performed
@@ -72,15 +61,20 @@ PHP syntax lint passed locally with:
 Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
 ```
 
+JavaScript syntax check passed locally with:
+
+```powershell
+node --check assets\js\review.js
+node --check service-worker.js
+```
+
 ## Manual verification checklist
 
-- Confirm `worker/analyze_queue.php?token=...` still runs from HTTP cron.
-- Confirm a queued game moves from `queued` to `running` to `done`.
-- Confirm review still loads the completed analysis.
-- Confirm move classifications, ACPL and accuracy are present after analysis.
-- Confirm Smart Tags are still generated after analysis.
-- Compare worker duration against a previous similar game if possible.
-- If late-game performance drops again, try lowering `restart_after_evaluations` in `config/engine.php` to `30`.
-- Confirm the header/footer version displays `1.0.3`.
-- Confirm the service worker cache name is `chess-coach-v1.0.3`.
+- Confirm `review.php` opens a game played as White with White at the bottom.
+- Confirm `review.php` opens a game played as Black with Black at the bottom.
+- Confirm `Girar tablero` flips the current board without changing the selected move.
+- Confirm previous/current move highlights remain on the correct squares.
+- Confirm previous/next/reset navigation keeps the selected orientation.
+- Confirm the header/footer version displays `1.0.4`.
+- Confirm the service worker cache name is `chess-coach-v1.0.4`.
 - Confirm no real credentials were committed.
