@@ -1,34 +1,39 @@
-# Chess Coach v1.0.4 Update Notes
+# Chess Coach v1.1.0 Update Notes
 
 ## Release type
 
-Review player perspective and UX release.
+Training Center foundation release.
 
-This PR starts v1.0.4 by orienting the review board from the player's perspective.
+This PR starts v1.1.0 by adding the database model and backend helper layer needed to generate and track exercises from analyzed games.
 
 ## Changed files
 
-- `AGENTS.md`
 - `CHANGELOG.md`
 - `README_UPDATE.md`
-- `api/review.php`
-- `assets/css/app.css`
-- `assets/js/review.js`
 - `config/version.php`
-- `includes/move_notation.php`
-- `review.php`
+- `includes/training.php`
 - `service-worker.js`
+- `sql/install.sql`
+- `sql/migrations/020_changes_1.1.0.sql`
 
 ## User-facing changes
 
-- `review.php` now opens the board from White's perspective when the player was White.
-- `review.php` now opens the board from Black's perspective when the player was Black.
-- A `Girar tablero` button allows manually flipping the board during review.
-- Move origin/destination highlights remain tied to the real board squares.
-- Best-move hints no longer show raw UCI as the main visible notation.
-- UCI moves are displayed in a human-readable minimal format, including castling and promotions.
-- `config/version.php` is bumped to `1.0.4`.
-- The PWA service worker cache name is bumped to `chess-coach-v1.0.4`.
+- No new Training Center screen is exposed yet in this PR.
+- The app version is bumped to `1.1.0`.
+- The PWA service worker cache name is bumped to `chess-coach-v1.1.0`.
+
+## Technical changes
+
+- Adds Training Center tables for:
+  - generated exercises
+  - exercise Smart Tag links
+  - training sessions
+  - exercise attempts
+  - exercise generation runs
+- Adds `includes/training.php` with shared definitions for exercise types, source side, difficulty, priority, prompts, feedback and basic stats.
+- The model supports exercises from both the player's moves and opponent moves.
+- Opponent-derived exercises are designed as low-priority `other` exercises.
+- Resolved exercises can be kept out of the recommended queue while unresolved exercises remain available.
 
 ## Deployment notes
 
@@ -46,39 +51,35 @@ No real config files changed in this release.
 
 ## SQL migration
 
-No SQL migration is required for this release.
+Run this migration after uploading the changed files:
+
+```text
+sql/migrations/020_changes_1.1.0.sql
+```
+
+The migration creates the Training Center foundation tables and registers version `1.1.0` in `app_migrations`.
 
 ## Service worker
 
 The service worker cache name is now:
 
 ```text
-chess-coach-v1.0.4
+chess-coach-v1.1.0
 ```
 
-## Local verification performed
+## Local verification commands
 
-PHP syntax lint passed locally with:
+Before merging the final v1.1.0 release, run:
 
 ```powershell
 Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
-```
-
-JavaScript syntax check passed locally with:
-
-```powershell
-node --check assets\js\review.js
 node --check service-worker.js
 ```
 
 ## Manual verification checklist
 
-- Confirm `review.php` opens a game played as White with White at the bottom.
-- Confirm `review.php` opens a game played as Black with Black at the bottom.
-- Confirm `Girar tablero` flips the current board without changing the selected move.
-- Confirm previous/current move highlights remain on the correct squares.
-- Confirm previous/next/reset navigation keeps the selected orientation.
-- Confirm best-move hints show `e5 -> f6`, `e7 -> e8=Q`, `O-O` or `O-O-O` instead of raw UCI.
-- Confirm the header/footer version displays `1.0.4`.
-- Confirm the service worker cache name is `chess-coach-v1.0.4`.
+- Run `sql/migrations/020_changes_1.1.0.sql` on the server.
+- Confirm the migration creates the `training_exercises`, `training_exercise_tags`, `training_sessions`, `training_attempts` and `training_generation_runs` tables.
+- Confirm `config/version.php` displays `1.1.0`.
+- Confirm the service worker cache name is `chess-coach-v1.1.0`.
 - Confirm no real credentials were committed.
