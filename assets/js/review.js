@@ -233,6 +233,19 @@ function renderBoard(fen, uci) {
   }
   board.innerHTML = html;
   board.dataset.orientation = boardOrientation;
+  renderBoardCoordinates();
+}
+
+function renderBoardCoordinates() {
+  const ranksEl = document.getElementById('reviewBoardRanks');
+  const filesEl = document.getElementById('reviewBoardFiles');
+  const frame = document.getElementById('reviewBoardFrame');
+  if (!ranksEl || !filesEl) return;
+  const ranks = boardOrientation === 'black' ? [1,2,3,4,5,6,7,8] : [8,7,6,5,4,3,2,1];
+  const files = boardOrientation === 'black' ? ['h','g','f','e','d','c','b','a'] : ['a','b','c','d','e','f','g','h'];
+  ranksEl.innerHTML = ranks.map(rank => `<span>${rank}</span>`).join('');
+  filesEl.innerHTML = files.map(file => `<span>${file}</span>`).join('');
+  if (frame) frame.dataset.orientation = boardOrientation;
 }
 
 function boardGridFromPlacement(placement) {

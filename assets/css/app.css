@@ -1351,6 +1351,48 @@ label {
   place-items:center;
   width:100%
 }
+.board-coordinate-frame {
+  width:min(100%,552px);
+  display:grid;
+  grid-template-columns:24px minmax(0,520px);
+  grid-template-rows:minmax(0,1fr) 24px;
+  align-items:stretch;
+  justify-content:center
+}
+.board-coordinate-frame .chess-board {
+  width:100%;
+  grid-column:2;
+  grid-row:1
+}
+.board-rank-labels {
+  grid-column:1;
+  grid-row:1;
+  display:grid;
+  grid-template-rows:repeat(8,1fr);
+  color:#a9b1ba;
+  font-size:13px;
+  font-weight:800;
+  line-height:1
+}
+.board-rank-labels span {
+  display:grid;
+  place-items:center
+}
+.board-file-labels {
+  grid-column:2;
+  grid-row:2;
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  color:#a9b1ba;
+  font-size:13px;
+  font-weight:800;
+  line-height:1;
+  text-transform:uppercase
+}
+.board-file-labels span {
+  display:grid;
+  place-items:center
+}
 .chess-board {
   width:min(100%,520px);
   aspect-ratio:1/1;
@@ -1477,6 +1519,9 @@ label {
   .chess-board {
     width:100%
   }
+  .board-coordinate-frame {
+    width:100%
+  }
 }
 @media(max-width:640px) {
   .review-summary-grid {
@@ -1505,6 +1550,13 @@ label {
   }
   .chess-board {
     width:100%
+  }
+  .board-coordinate-frame {
+    grid-template-columns:20px minmax(0,1fr);
+    grid-template-rows:minmax(0,1fr) 20px
+  }
+  .board-rank-labels,.board-file-labels {
+    font-size:11px
   }
 }
 /* v0.9.0 Smart Tags UI */ .home-grid {
