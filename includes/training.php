@@ -229,3 +229,286 @@ function training_stats_for_user(int $userId): array {
     ],
   ];
 }
+
+function training_analysis_game(int $analysisId, int $userId): ?array {
+  $st = db()->prepare('SELECT a.id AS analysis_id, a.game_id, a.user_id, a.status,
+                              g.white_player, g.black_player, g.user_result, g.result_raw,
+                              u.username
+                       FROM game_analysis a
+                       JOIN games g ON g.id=a.game_id
+                       JOIN users u ON u.id=a.user_id
+                       WHERE a.id=? AND a.user_id=? AND a.status IN ("running","done")');
+  $st->execute([$analysisId, $userId]);
+  $row = $st->fetch();
+  return $row ?: null;
+}
+
+function training_tags_for_analysis(int $analysisId, int $userId): array {
+  $gameSt = db()->prepare('SELECT gt.tag_code, d.label, d.category, d.severity
+                           FROM game_tags gt
+                           JOIN smart_tag_definitions d ON d.code=gt.tag_code
+                           WHERE gt.analysis_id=? AND gt.user_id=?');
+  $gameSt->execute([$analysisId, $userId]);
+  $gameTags = $gameSt->fetchAll();
+
+  $moveSt = db()->prepare('SELECT mt.move_analysis_id, mt.tag_code, d.label, d.category, mt.severity
+                           FROM move_tags mt
+                           JOIN smart_tag_definitions d ON d.code=mt.tag_code
+                           WHERE mt.analysis_id=? AND mt.user_id=?');
+  $moveSt->execute([$analysisId, $userId]);
+  $moveTags = [];
+  foreach ($moveSt->fetchAll() as $tag) {
+    $moveTags[(int)$tag['move_analysis_id']][] = $tag;
+  }
+
+  return ['game_tags' => $gameTags, 'move_tags' => $moveTags];
+}
+
+function training_candidate_is_useful(array $move, array $moveTags, array $gameTags, string $sourceSide): bool {
+  if (!training_valid_solution($move['bestmove'] ?? null)) return false;
+
+  $classification = (string)($move['classification'] ?? 'ok');
+  $loss = (int)($move['centipawn_loss'] ?? 0);
+  if ($sourceSide === 'opponent') return true;
+  if ($classification !== 'ok' || $loss >= 70) return true;
+
+  $codes = array_merge(training_tag_codes($moveTags), training_tag_codes($gameTags));
+  $usefulTags = [
+    'missed_mate',
+    'allowed_mate',
+    'lost_winning_position',
+    'endgame_mistake',
+    'opening_issue',
+    'blunder_own',
+    'mistake_own',
+    'inaccuracy_own',
+  ];
+  return (bool)array_intersect($codes, $usefulTags);
+}
+
+function training_insert_exercise_tags(int $exerciseId, array $tags, string $source): void {
+  if (!$tags) return;
+  $st = db()->prepare('INSERT INTO training_exercise_tags (exercise_id,tag_code,source,created_at)
+                       VALUES (?,?,?,NOW())
+                       ON DUPLICATE KEY UPDATE tag_code=tag_code');
+  foreach (training_tag_codes($tags) as $code) {
+    $st->execute([$exerciseId, $code, $source]);
+  }
+}
+
+function training_insert_exercise(int $userId, array $game, array $move, array $moveTags, array $gameTags, ?string $focusCode = null): array {
+  $sourceSide = training_source_side($move, training_user_side($game, (string)($game['username'] ?? '')));
+  if (!training_candidate_is_useful($move, $moveTags, $gameTags, $sourceSide)) {
+    return ['ok' => true, 'created' => false, 'skipped' => true, 'reason' => 'not-useful'];
+  }
+
+  $type = training_exercise_type_for_candidate($move, $moveTags, $gameTags, $sourceSide);
+  $difficulty = training_difficulty_for_candidate($move, $moveTags);
+  $priority = training_priority_score($move, $moveTags, $gameTags, $sourceSide, $focusCode);
+  $fen = (string)($move['fen_before'] ?? '');
+  $sideToMove = training_fen_side_to_move($fen);
+  $solution = strtolower(trim((string)($move['bestmove'] ?? '')));
+
+  $exists = db()->prepare('SELECT id FROM training_exercises WHERE user_id=? AND move_analysis_id=? AND exercise_type=? LIMIT 1');
+  $exists->execute([$userId, (int)$move['id'], $type]);
+  $existingId = (int)($exists->fetchColumn() ?: 0);
+
+  $sql = 'INSERT INTO training_exercises
+            (user_id,game_id,analysis_id,move_analysis_id,ply,source_side,exercise_type,fen,solution_uci,solution_san,
+             played_uci,played_san,centipawn_loss,classification,difficulty,priority_score,source_focus_code,prompt,
+             feedback_success,feedback_failure,status,created_at)
+          VALUES
+            (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, \'active\', NOW())
+          ON DUPLICATE KEY UPDATE
+            id=LAST_INSERT_ID(id),
+            fen=VALUES(fen),
+            solution_uci=VALUES(solution_uci),
+            solution_san=VALUES(solution_san),
+            played_uci=VALUES(played_uci),
+            played_san=VALUES(played_san),
+            centipawn_loss=VALUES(centipawn_loss),
+            classification=VALUES(classification),
+            difficulty=VALUES(difficulty),
+            priority_score=VALUES(priority_score),
+            source_focus_code=VALUES(source_focus_code),
+            prompt=VALUES(prompt),
+            feedback_success=VALUES(feedback_success),
+            feedback_failure=VALUES(feedback_failure)';
+  $st = db()->prepare($sql);
+  $st->execute([
+    $userId,
+    (int)$game['game_id'],
+    (int)$game['analysis_id'],
+    (int)$move['id'],
+    (int)$move['ply'],
+    $sourceSide,
+    $type,
+    $fen,
+    $solution,
+    null,
+    strtolower(trim((string)($move['uci'] ?? ''))),
+    (string)($move['san'] ?? ''),
+    (int)($move['centipawn_loss'] ?? 0),
+    (string)($move['classification'] ?? 'ok'),
+    $difficulty,
+    $priority,
+    $focusCode,
+    training_prompt_for_type($type, $sideToMove),
+    training_feedback_success($type),
+    training_feedback_failure($type),
+  ]);
+
+  $exerciseId = (int)db()->lastInsertId();
+  training_insert_exercise_tags($exerciseId, $moveTags, 'move');
+  training_insert_exercise_tags($exerciseId, $gameTags, 'game');
+
+  return [
+    'ok' => true,
+    'exercise_id' => $exerciseId,
+    'created' => $existingId === 0,
+    'skipped' => $existingId !== 0,
+    'type' => $type,
+    'source_side' => $sourceSide,
+  ];
+}
+
+function training_generate_for_analysis(int $analysisId, int $userId, ?string $focusCode = null): array {
+  $game = training_analysis_game($analysisId, $userId);
+  if (!$game) return ['ok' => false, 'error' => 'Análisis no encontrado o no completado.'];
+
+  $movesSt = db()->prepare('SELECT * FROM game_move_analysis WHERE analysis_id=? ORDER BY ply');
+  $movesSt->execute([$analysisId]);
+  $moves = $movesSt->fetchAll();
+  if (!$moves) {
+    return ['ok' => true, 'processed_moves' => 0, 'created_exercises' => 0, 'skipped_existing' => 0, 'message' => 'No hay jugadas analizadas.'];
+  }
+
+  $tags = training_tags_for_analysis($analysisId, $userId);
+  $created = 0;
+  $skipped = 0;
+  $processed = 0;
+  $errors = [];
+
+  foreach ($moves as $move) {
+    $processed++;
+    try {
+      $moveTags = $tags['move_tags'][(int)$move['id']] ?? [];
+      $result = training_insert_exercise($userId, $game, $move, $moveTags, $tags['game_tags'], $focusCode);
+      if (!empty($result['created'])) $created++;
+      elseif (!empty($result['skipped'])) $skipped++;
+    } catch (Throwable $e) {
+      $errors[] = $e->getMessage();
+    }
+  }
+
+  return [
+    'ok' => !$errors,
+    'processed_moves' => $processed,
+    'created_exercises' => $created,
+    'skipped_existing' => $skipped,
+    'error_count' => count($errors),
+    'errors' => $errors,
+    'message' => $errors ? 'Generación de ejercicios completada con errores parciales.' : 'Ejercicios generados correctamente.',
+  ];
+}
+
+function training_backfill_pending_count(int $userId): int {
+  $sql = 'SELECT COUNT(*)
+          FROM game_analysis a
+          WHERE a.user_id=?
+            AND a.status="done"
+            AND a.id=(SELECT id FROM game_analysis WHERE game_id=a.game_id AND user_id=? AND status="done" ORDER BY id DESC LIMIT 1)
+            AND NOT EXISTS (SELECT 1 FROM training_exercises te WHERE te.analysis_id=a.id AND te.user_id=?)';
+  $st = db()->prepare($sql);
+  $st->execute([$userId, $userId, $userId]);
+  return (int)$st->fetchColumn();
+}
+
+function training_backfill_batch(int $userId, int $limit = 10, string $trigger = 'profile-page'): array {
+  $limit = max(1, min(50, $limit));
+  $started = microtime(true);
+  $pendingBefore = training_backfill_pending_count($userId);
+  $runId = null;
+
+  try {
+    $run = db()->prepare('INSERT INTO training_generation_runs (user_id,trigger_source,status,started_at) VALUES (?,?,"running",NOW())');
+    $run->execute([$userId, $trigger]);
+    $runId = (int)db()->lastInsertId();
+  } catch (Throwable $e) {
+    $runId = null;
+  }
+
+  $sql = 'SELECT a.id
+          FROM game_analysis a
+          WHERE a.user_id=?
+            AND a.status="done"
+            AND a.id=(SELECT id FROM game_analysis WHERE game_id=a.game_id AND user_id=? AND status="done" ORDER BY id DESC LIMIT 1)
+            AND NOT EXISTS (SELECT 1 FROM training_exercises te WHERE te.analysis_id=a.id AND te.user_id=?)
+          ORDER BY COALESCE(a.completed_at,a.updated_at,a.created_at) DESC, a.id DESC
+          LIMIT ' . (int)$limit;
+  $st = db()->prepare($sql);
+  $st->execute([$userId, $userId, $userId]);
+  $analysisIds = array_map('intval', array_column($st->fetchAll(), 'id'));
+
+  $processedMoves = 0;
+  $created = 0;
+  $skipped = 0;
+  $errors = [];
+
+  foreach ($analysisIds as $analysisId) {
+    try {
+      $result = training_generate_for_analysis($analysisId, $userId);
+      $processedMoves += (int)($result['processed_moves'] ?? 0);
+      $created += (int)($result['created_exercises'] ?? 0);
+      $skipped += (int)($result['skipped_existing'] ?? 0);
+      foreach (($result['errors'] ?? []) as $error) $errors[] = $error;
+      if (empty($result['ok']) && !empty($result['error'])) $errors[] = $result['error'];
+    } catch (Throwable $e) {
+      $errors[] = $e->getMessage();
+    }
+  }
+
+  $pendingAfter = training_backfill_pending_count($userId);
+  $durationMs = (int)round((microtime(true) - $started) * 1000);
+  $message = $analysisIds
+    ? 'Backfill de ejercicios ejecutado correctamente.'
+    : 'No hay análisis pendientes de convertir en ejercicios.';
+  if ($errors) $message = 'Backfill de ejercicios completado con errores parciales.';
+
+  if ($runId) {
+    try {
+      $up = db()->prepare('UPDATE training_generation_runs
+                           SET status=?, processed_moves=?, created_exercises=?, skipped_existing=?,
+                               error_count=?, duration_ms=?, message=?, error_message=?, completed_at=NOW()
+                           WHERE id=?');
+      $up->execute([
+        $errors ? 'error' : 'done',
+        $processedMoves,
+        $created,
+        $skipped,
+        count($errors),
+        $durationMs,
+        $message,
+        $errors ? implode(' | ', array_slice($errors, 0, 5)) : null,
+        $runId,
+      ]);
+    } catch (Throwable $e) {
+      // The backfill result should still be returned if run logging fails.
+    }
+  }
+
+  return [
+    'ok' => !$errors,
+    'run_id' => $runId,
+    'processed_analyses' => count($analysisIds),
+    'processed_moves' => $processedMoves,
+    'created_exercises' => $created,
+    'skipped_existing' => $skipped,
+    'error_count' => count($errors),
+    'pending_before' => $pendingBefore,
+    'pending_after' => $pendingAfter,
+    'duration_ms' => $durationMs,
+    'message' => $message,
+    'errors' => $errors,
+  ];
+}

@@ -8,13 +8,17 @@
 - Added `includes/training.php` with shared exercise type, difficulty, priority, prompt and feedback helpers.
 - Added support in the data model for exercises generated from both player moves and opponent moves.
 - Added fields to keep resolved exercises out of the recommended queue while pending exercises remain available.
+- Added automatic Training Center exercise generation after completed Stockfish analysis.
+- Added a manual Training Center exercise backfill process to `profile.php`.
+- Added authenticated backfill/status endpoints for Training Center exercise generation.
 - Bumped `config/version.php` to `1.1.0`.
 - Updated the service worker cache name to `chess-coach-v1.1.0`.
 
 ### Notes
 
-- PR1 adds the Training Center backend foundation only.
-- Exercise generation, profile backfill UI, the Training Center page and interactive solving are planned for later v1.1.0 PRs.
+- PR1 adds the Training Center backend foundation.
+- PR2 adds exercise generation and profile backfill.
+- The Training Center page and interactive solving are planned for later v1.1.0 PRs.
 
 ### Database
 
