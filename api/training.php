@@ -19,6 +19,7 @@ if ($action === 'list' || $action === 'dashboard') {
     'types' => training_exercise_types(),
     'type_counts' => training_type_counts_for_user($userId),
     'stats' => training_stats_for_user($userId),
+    'session' => training_active_session($userId),
     'exercises' => $list['items'],
     'pagination' => $list['pagination'],
     'filters' => $list['filters'],
@@ -31,7 +32,23 @@ if ($action === 'stats') {
     'types' => training_exercise_types(),
     'type_counts' => training_type_counts_for_user($userId),
     'stats' => training_stats_for_user($userId),
+    'session' => training_active_session($userId),
   ]);
+}
+
+if ($action === 'session_start') {
+  $body = json_decode(file_get_contents('php://input'), true) ?: [];
+  $type = (string)($body['type'] ?? 'recommended');
+  json_response(training_start_session($userId, $type, 'manual'));
+}
+
+if ($action === 'session_end') {
+  $body = json_decode(file_get_contents('php://input'), true) ?: [];
+  $sessionId = (int)($body['session_id'] ?? 0);
+  $status = (string)($body['status'] ?? 'completed');
+  json_response($sessionId > 0
+    ? training_end_session($userId, $sessionId, $status)
+    : ['ok' => false, 'error' => 'Sesión no indicada.']);
 }
 
 if ($action === 'get') {
@@ -50,11 +67,25 @@ if ($action === 'attempt') {
   $moves = is_array($body['moves'] ?? null) ? $body['moves'] : [];
   $durationMs = (int)($body['duration_ms'] ?? 0);
   $usedHint = !empty($body['used_hint']);
+  $sessionId = (int)($body['session_id'] ?? 0);
   $result = $id > 0
-    ? training_record_attempt($userId, $id, $moves, $durationMs, $usedHint)
+    ? training_record_attempt($userId, $id, $moves, $durationMs, $usedHint, $sessionId ?: null)
     : ['ok' => false, 'error' => 'Ejercicio no indicado.'];
   if (!empty($result['exercise']) && is_array($result['exercise'])) {
     $result['exercise'] = training_public_exercise($result['exercise'], !empty($result['solved']) || !empty($result['solution_uci']));
+  }
+  json_response($result);
+}
+
+if ($action === 'skip') {
+  $body = json_decode(file_get_contents('php://input'), true) ?: [];
+  $id = (int)($body['id'] ?? 0);
+  $sessionId = (int)($body['session_id'] ?? 0);
+  $result = $id > 0
+    ? training_record_skip($userId, $id, $sessionId ?: null)
+    : ['ok' => false, 'error' => 'Ejercicio no indicado.'];
+  if (!empty($result['exercise']) && is_array($result['exercise'])) {
+    $result['exercise'] = training_public_exercise($result['exercise'], !empty($result['exercise']['resolved_at']));
   }
   json_response($result);
 }

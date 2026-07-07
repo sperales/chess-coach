@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v0.9.0**
+Current stable baseline: **v1.1.1**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,13 +32,13 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v0.9.0
+## Current baseline — v1.1.1
 
-v0.9.0 adds Smart Tags.
+v1.1.1 completes the first Training Center release line.
 
-It detects, stores and displays reliable Spanish tags for analyzed games and moves. It also adds a profile batch process to backfill tags for games that were analyzed before Smart Tags existed.
+It generates exercises from analyzed games, stores them in dedicated Training Center tables, shows them in `training.php`, lets the player solve positions on an interactive board, records attempts, tracks training sessions and links exercises back to the original review.
 
-The feature is intentionally limited to pattern detection and tagging. Training recommendations and generated exercises remain planned for later versions.
+Smart Tags, the Personal Trainer Dashboard and Training Center exercise generation are now part of the stable product baseline.
 
 ### v0.8.8 review chart baseline
 
@@ -83,7 +83,7 @@ It adds the deployment structure that should be tracked in Git:
 - Dashboard with recent games and stats.
 - Review page with:
   - board reconstruction
-  - Unicode pieces
+  - local PNG pieces
   - move-by-move review
   - evaluation graph
   - move classification
@@ -92,7 +92,7 @@ It adds the deployment structure that should be tracked in Git:
 
 ### Current technical decisions
 
-- Use Unicode pieces for board stability.
+- Use local transparent PNG pieces for the review and training boards.
 - Keep app compatible with shared hosting.
 - Keep Stockfish server-side.
 - Keep background analysis based on queue + cron.
