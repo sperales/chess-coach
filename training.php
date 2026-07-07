@@ -52,6 +52,43 @@ $trainingJsVersion = (string)filemtime(__DIR__.'/assets/js/training.js');
     </div>
   </section>
 
+  <section class="panel training-solver-panel" id="trainingSolverPanel" hidden>
+    <div class="panel-head">
+      <h2 id="trainingSolverTitle">Resolver ejercicio</h2>
+      <div class="review-board-actions">
+        <button class="secondary small" type="button" onclick="flipTrainingBoard()">Girar tablero</button>
+        <button class="secondary small" type="button" onclick="closeTrainingSolver()">Cerrar</button>
+      </div>
+    </div>
+    <div class="training-solver-grid">
+      <div class="board-wrap">
+        <div class="chess-board training-board" id="trainingBoard" aria-label="Tablero de entrenamiento"></div>
+      </div>
+      <div class="training-solver-info">
+        <p class="trainer-summary-text" id="trainingSolverPrompt">Selecciona un ejercicio para empezar.</p>
+        <div class="smart-tag-list training-tags" id="trainingSolverTags"></div>
+        <div class="training-meta" id="trainingSolverMeta"></div>
+        <p class="muted" id="trainingMoveDraft">Selecciona origen y destino en el tablero.</p>
+        <label class="training-promotion" id="trainingPromotionWrap" hidden>Promoción
+          <select id="trainingPromotionPiece">
+            <option value="q">Dama</option>
+            <option value="r">Torre</option>
+            <option value="b">Alfil</option>
+            <option value="n">Caballo</option>
+          </select>
+        </label>
+        <p id="trainingFeedback" class="training-feedback"></p>
+        <div class="training-attempts" id="trainingAttempts"></div>
+        <div class="review-controls training-controls">
+          <button type="button" onclick="submitTrainingMove()" id="trainingSubmitBtn" disabled>Comprobar</button>
+          <button type="button" onclick="clearTrainingSelection()">Reintentar selección</button>
+          <button type="button" onclick="skipTrainingExercise()">Saltar</button>
+          <a class="btn secondary" href="#" id="trainingReviewLink">Ver partida</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="panel">
     <div class="panel-head">
       <h2>Ejercicios</h2>

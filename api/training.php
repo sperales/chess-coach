@@ -34,4 +34,29 @@ if ($action === 'stats') {
   ]);
 }
 
+if ($action === 'get') {
+  $id = (int)($_GET['id'] ?? 0);
+  $exercise = $id > 0 ? training_exercise_for_user($id, $userId) : null;
+  if (!$exercise) json_response(['ok' => false, 'error' => 'Ejercicio no encontrado.']);
+  json_response([
+    'ok' => true,
+    'exercise' => training_public_exercise($exercise, !empty($exercise['resolved_at'])),
+  ]);
+}
+
+if ($action === 'attempt') {
+  $body = json_decode(file_get_contents('php://input'), true) ?: [];
+  $id = (int)($body['id'] ?? 0);
+  $moves = is_array($body['moves'] ?? null) ? $body['moves'] : [];
+  $durationMs = (int)($body['duration_ms'] ?? 0);
+  $usedHint = !empty($body['used_hint']);
+  $result = $id > 0
+    ? training_record_attempt($userId, $id, $moves, $durationMs, $usedHint)
+    : ['ok' => false, 'error' => 'Ejercicio no indicado.'];
+  if (!empty($result['exercise']) && is_array($result['exercise'])) {
+    $result['exercise'] = training_public_exercise($result['exercise'], !empty($result['solved']) || !empty($result['solution_uci']));
+  }
+  json_response($result);
+}
+
 json_response(['ok' => false, 'error' => 'Acción no soportada.']);
