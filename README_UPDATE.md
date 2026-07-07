@@ -10,8 +10,11 @@ This PR starts v1.1.0 by adding the database model and backend helper layer need
 
 - `CHANGELOG.md`
 - `README_UPDATE.md`
+- `api/analyze.php`
 - `config/version.php`
+- `includes/analysis_queue.php`
 - `includes/training.php`
+- `profile.php`
 - `service-worker.js`
 - `sql/install.sql`
 - `sql/migrations/020_changes_1.1.0.sql`
@@ -19,6 +22,7 @@ This PR starts v1.1.0 by adding the database model and backend helper layer need
 ## User-facing changes
 
 - No new Training Center screen is exposed yet in this PR.
+- `profile.php` adds a manual Training Center exercise backfill action under `Procesos batch`.
 - The app version is bumped to `1.1.0`.
 - The PWA service worker cache name is bumped to `chess-coach-v1.1.0`.
 
@@ -34,6 +38,9 @@ This PR starts v1.1.0 by adding the database model and backend helper layer need
 - The model supports exercises from both the player's moves and opponent moves.
 - Opponent-derived exercises are designed as low-priority `other` exercises.
 - Resolved exercises can be kept out of the recommended queue while unresolved exercises remain available.
+- Completed Stockfish analyses now try to generate Training Center exercises automatically.
+- Training exercise generation is derived metadata: if it fails, the analysis remains valid and generation can be retried from the profile backfill.
+- Adds authenticated `api/analyze.php` actions for Training Center backfill and backfill status.
 
 ## Deployment notes
 
@@ -59,6 +66,8 @@ sql/migrations/020_changes_1.1.0.sql
 
 The migration creates the Training Center foundation tables and registers version `1.1.0` in `app_migrations`.
 
+No additional SQL migration is added by the exercise generation PR.
+
 ## Service worker
 
 The service worker cache name is now:
@@ -80,6 +89,8 @@ node --check service-worker.js
 
 - Run `sql/migrations/020_changes_1.1.0.sql` on the server.
 - Confirm the migration creates the `training_exercises`, `training_exercise_tags`, `training_sessions`, `training_attempts` and `training_generation_runs` tables.
+- Run the Training Center backfill from `profile.php` and confirm it creates exercises from already analyzed games.
+- Analyze or reanalyze one game and confirm exercises are generated automatically.
 - Confirm `config/version.php` displays `1.1.0`.
 - Confirm the service worker cache name is `chess-coach-v1.1.0`.
 - Confirm no real credentials were committed.

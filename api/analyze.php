@@ -98,6 +98,23 @@ if ($action === 'smart_tags_backfill_status') {
   ]);
 }
 
+if ($action === 'training_backfill') {
+  ignore_user_abort(true);
+  @set_time_limit(300);
+  $body = json_decode(file_get_contents('php://input'), true) ?: [];
+  $limit = max(1, min(50, (int)($body['limit'] ?? 10)));
+  if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
+  json_response(training_backfill_batch($userId, $limit, 'profile-page'));
+}
+
+if ($action === 'training_backfill_status') {
+  json_response([
+    'ok' => true,
+    'pending' => training_backfill_pending_count($userId),
+    'stats' => training_stats_for_user($userId),
+  ]);
+}
+
 if ($action === 'process') {
   ignore_user_abort(true);
   @set_time_limit(300);

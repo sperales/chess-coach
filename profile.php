@@ -2,6 +2,7 @@
 require_once __DIR__.'/includes/auth.php';
 require_once __DIR__.'/includes/helpers.php';
 require_once __DIR__.'/includes/smart_tags.php';
+require_once __DIR__.'/includes/training.php';
 
 $u = require_login();
 $msg = '';
@@ -9,6 +10,7 @@ $err = '';
 $assetVersion = (string)filemtime(__DIR__.'/assets/css/app.css');
 $layoutJsVersion = (string)filemtime(__DIR__.'/assets/js/layout.js');
 $pendingSmartTags = smart_tag_backfill_pending_count((int)$u['id']);
+$pendingTrainingExercises = training_backfill_pending_count((int)$u['id']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') === 'change_password') {
   $cur = $_POST['current_password'] ?? '';
@@ -71,6 +73,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
         <button type="button" onclick="runSmartTagBackfill()" id="smartTagBackfillBtn">Ejecutar backfill</button>
       </div>
       <p class="muted" id="smartTagBackfillResult"></p>
+      <div class="batch-row">
+        <div>
+          <strong>Backfill de ejercicios</strong>
+          <p class="muted">Genera ejercicios de entrenamiento desde partidas ya analizadas. Procesa hasta 10 análisis por ejecución.</p>
+          <p class="muted" id="trainingBackfillPending">Pendientes: <?= (int)$pendingTrainingExercises ?></p>
+        </div>
+        <button type="button" onclick="runTrainingBackfill()" id="trainingBackfillBtn">Generar ejercicios</button>
+      </div>
+      <p class="muted" id="trainingBackfillResult"></p>
     </section>
   </main>
 </div>
@@ -94,6 +105,29 @@ async function runSmartTagBackfill() {
     if (pending) pending.textContent = `Pendientes: ${data.pending_after || 0}`;
   } catch (e) {
     if (result) result.textContent = e.message || 'No se pudo ejecutar el backfill.';
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function runTrainingBackfill() {
+  const btn = document.getElementById('trainingBackfillBtn');
+  const result = document.getElementById('trainingBackfillResult');
+  const pending = document.getElementById('trainingBackfillPending');
+  if (btn) btn.disabled = true;
+  if (result) result.textContent = 'Generando ejercicios de entrenamiento...';
+  try {
+    const r = await fetch('api/analyze.php?action=training_backfill', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ limit: 10 })
+    });
+    const data = await r.json();
+    if (!data.ok && Number(data.error_count || 0) > 0) throw new Error(data.message || 'Backfill completado con errores.');
+    if (result) result.textContent = `${data.message || 'Backfill ejecutado.'} Análisis: ${data.processed_analyses || 0}. Ejercicios nuevos: ${data.created_exercises || 0}. Existentes/omitidos: ${data.skipped_existing || 0}. Pendientes: ${data.pending_after || 0}.`;
+    if (pending) pending.textContent = `Pendientes: ${data.pending_after || 0}`;
+  } catch (e) {
+    if (result) result.textContent = e.message || 'No se pudo ejecutar el backfill de ejercicios.';
   } finally {
     if (btn) btn.disabled = false;
   }
