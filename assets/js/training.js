@@ -2,6 +2,7 @@ let trainingExercises = [];
 let trainingTypes = {};
 let trainingTypeCounts = {};
 let trainingStats = {};
+let activeTrainingSession = null;
 let trainingPagination = { page: 1, per_page: (window.CHESS_COACH_CONFIG && window.CHESS_COACH_CONFIG.trainingPerPage) || 20, total: 0, pages: 1 };
 let currentTrainingPage = 1;
 let activeExercise = null;
@@ -49,10 +50,12 @@ async function loadTraining(page = currentTrainingPage) {
   trainingTypes = data.types || {};
   trainingTypeCounts = data.type_counts || {};
   trainingStats = data.stats || {};
+  activeTrainingSession = data.session || null;
   trainingPagination = data.pagination || trainingPagination;
   currentTrainingPage = trainingPagination.page || currentTrainingPage;
   renderTrainingTypeOptions();
   renderTrainingStats();
+  renderTrainingSession();
   renderTrainingExercises();
   renderTrainingPagination();
   renderTrainingStatus();
@@ -92,6 +95,42 @@ function renderTrainingStats() {
   el.innerHTML = cards.map(card => `<article class="metric-card ${card[0]}"><div class="metric-icon">${trainingIconFor(card[0])}</div><div><span>${escapeHtml(card[1])}</span><b>${escapeHtml(card[2])}</b><small>${escapeHtml(card[3])}</small></div></article>`).join('');
 }
 
+function renderTrainingSession() {
+  const summary = document.getElementById('trainingSessionSummary');
+  const kpis = document.getElementById('trainingSessionKpis');
+  const startBtn = document.getElementById('trainingStartSessionBtn');
+  const endBtn = document.getElementById('trainingEndSessionBtn');
+  if (startBtn) startBtn.hidden = !!activeTrainingSession;
+  if (endBtn) endBtn.hidden = !activeTrainingSession;
+  if (!summary || !kpis) return;
+
+  if (!activeTrainingSession) {
+    summary.innerHTML = '<span>No hay una sesión activa.</span><strong>Inicia una sesión para medir este bloque de entrenamiento.</strong>';
+    kpis.innerHTML = '';
+    return;
+  }
+
+  const started = activeTrainingSession.started_at ? activeTrainingSession.started_at.toString().slice(0, 16) : '';
+  summary.innerHTML = `<span>Sesión activa${started ? ` · ${escapeHtml(started)}` : ''}</span><strong>${escapeHtml(trainingSessionTypeLabel(activeTrainingSession.selected_type))}</strong>`;
+  const attempts = Number(activeTrainingSession.total_attempts || 0);
+  const solved = Number(activeTrainingSession.solved_count || 0);
+  const exerciseCount = Number(activeTrainingSession.exercise_count || 0);
+  const avgSeconds = activeTrainingSession.avg_time_ms === null || typeof activeTrainingSession.avg_time_ms === 'undefined'
+    ? '--'
+    : `${Math.round(Number(activeTrainingSession.avg_time_ms) / 1000)}s`;
+  kpis.innerHTML = [
+    ['Ejercicios', exerciseCount],
+    ['Resueltos', solved],
+    ['Fallados/saltados', `${Number(activeTrainingSession.failed_count || 0)}/${Number(activeTrainingSession.skipped_count || 0)}`],
+    ['Intentos', attempts],
+    ['Tiempo medio', avgSeconds],
+  ].map(([label, value]) => `<div><span>${escapeHtml(label)}</span><b>${escapeHtml(value)}</b></div>`).join('');
+}
+
+function trainingSessionTypeLabel(type) {
+  return trainingTypes[type] ? trainingTypes[type].label : 'Recomendado para mí';
+}
+
 function trainingIconFor(kind) {
   return kind === 'pulse' ? '◎' : kind === 'target' ? '●' : kind === 'star' ? '★' : '▷';
 }
@@ -100,11 +139,12 @@ function renderTrainingExercises() {
   const el = document.getElementById('trainingExerciseList');
   if (!el) return;
   if (!trainingExercises.length) {
+    const hasAnyExercises = Number(trainingStats.total || 0) > 0;
     el.innerHTML = `
       <div class="empty-state">
-        <strong>No hay ejercicios con estos filtros.</strong>
-        <span>Genera ejercicios desde Ajustes / Mi Perfil o analiza nuevas partidas para alimentar el Training Center.</span>
-        <a href="profile.php">Ir a procesos batch</a>
+        <strong>${hasAnyExercises ? 'No hay ejercicios con estos filtros.' : 'Todavía no hay ejercicios.'}</strong>
+        <span>${hasAnyExercises ? 'Prueba otro tipo de ejercicio o cambia el estado del filtro.' : 'Genera ejercicios desde Ajustes / Mi Perfil o analiza nuevas partidas para alimentar el Training Center.'}</span>
+        ${hasAnyExercises ? '<button class="secondary small" type="button" onclick="clearTrainingFilters()">Limpiar filtros</button>' : '<a href="profile.php">Ir a procesos batch</a>'}
       </div>
     `;
     return;
@@ -195,6 +235,7 @@ function clearTrainingFilters() {
 }
 
 async function openTrainingExercise(id) {
+  await ensureTrainingSession();
   const response = await fetch(`api/training.php?action=get&id=${Number(id)}`, { cache: 'no-store' });
   const data = await response.json();
   if (!data.ok) throw new Error(data.error || 'No se pudo cargar el ejercicio.');
@@ -210,6 +251,39 @@ async function openTrainingExercise(id) {
     panel.hidden = false;
     panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+}
+
+async function startTrainingSession() {
+  const filters = selectedTrainingFilters();
+  const response = await fetch('api/training.php?action=session_start', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: filters.type || 'recommended' })
+  });
+  const data = await response.json();
+  if (!data.ok) throw new Error(data.error || 'No se pudo iniciar la sesión.');
+  activeTrainingSession = data.session || null;
+  renderTrainingSession();
+  return activeTrainingSession;
+}
+
+async function ensureTrainingSession() {
+  if (activeTrainingSession) return activeTrainingSession;
+  return startTrainingSession();
+}
+
+async function endTrainingSession(status = 'completed') {
+  if (!activeTrainingSession) return;
+  const response = await fetch('api/training.php?action=session_end', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id: activeTrainingSession.id, status })
+  });
+  const data = await response.json();
+  if (!data.ok) throw new Error(data.error || 'No se pudo cerrar la sesión.');
+  activeTrainingSession = null;
+  closeTrainingSolver();
+  await loadTraining(currentTrainingPage);
 }
 
 function closeTrainingSolver() {
@@ -370,6 +444,7 @@ async function submitTrainingMove() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       id: activeExercise.id,
+      session_id: activeTrainingSession ? activeTrainingSession.id : 0,
       moves: attemptedTrainingMoves,
       duration_ms: Date.now() - trainingStartedAt,
       used_hint: trainingUsedHint
@@ -378,11 +453,13 @@ async function submitTrainingMove() {
   const data = await response.json();
   if (!data.ok) throw new Error(data.error || 'No se pudo registrar el intento.');
   if (data.exercise) activeExercise = data.exercise;
+  if (data.session) activeTrainingSession = data.session;
   showTrainingFeedback(data);
   renderTrainingAttempts();
   renderTrainingBoard();
   updateTrainingDraft();
   renderTrainingStatsFromResponse(data);
+  renderTrainingSession();
   if (data.solved || data.solution_uci) {
     await loadTraining(currentTrainingPage);
   }
@@ -391,7 +468,11 @@ async function submitTrainingMove() {
 function showTrainingFeedback(data) {
   const feedback = document.getElementById('trainingFeedback');
   if (!feedback) return;
+  const remaining = Number(data.remaining_attempts || 0);
   feedback.textContent = data.feedback || (data.solved ? 'Correcto.' : 'Todavía no.');
+  if (!data.solved && remaining > 0 && !data.solution_uci) {
+    feedback.textContent += ` Te quedan ${remaining} intento(s).`;
+  }
   feedback.className = `training-feedback ${data.solved ? 'ok' : 'warn'}`;
   if (!data.solved && data.solution_uci) {
     feedback.textContent += ` Solución: ${data.solution_uci}.`;
@@ -409,10 +490,22 @@ function renderTrainingAttempts() {
 function renderTrainingStatsFromResponse(data) {
   if (!data.stats) return;
   trainingStats = data.stats;
+  if (data.session) activeTrainingSession = data.session;
   renderTrainingStats();
 }
 
-function skipTrainingExercise() {
+async function skipTrainingExercise() {
+  if (activeExercise && activeTrainingSession) {
+    const response = await fetch('api/training.php?action=skip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: activeExercise.id, session_id: activeTrainingSession.id })
+    });
+    const data = await response.json();
+    if (data.ok && data.session) activeTrainingSession = data.session;
+    if (data.stats) renderTrainingStatsFromResponse(data);
+    renderTrainingSession();
+  }
   closeTrainingSolver();
 }
 

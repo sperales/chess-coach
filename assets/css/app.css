@@ -1958,6 +1958,24 @@ select {
   gap:20px;
   align-items:start
 }
+.training-session-panel {
+  display:grid;
+  gap:14px
+}
+.training-session-summary {
+  display:grid;
+  gap:4px;
+  color:#d6dde3
+}
+.training-session-summary span {
+  color:#a9b1ba
+}
+.training-session-summary strong {
+  font-size:18px
+}
+.training-session-kpis {
+  grid-template-columns:repeat(5,minmax(0,1fr))
+}
 .training-board .sq {
   border:0;
   border-radius:0;
@@ -2039,6 +2057,9 @@ select {
   }
   .training-solver-grid {
     grid-template-columns:minmax(0,1fr)
+  }
+  .training-session-kpis {
+    grid-template-columns:repeat(2,minmax(0,1fr))
   }
   .training-controls {
     grid-template-columns:repeat(2,minmax(0,1fr))

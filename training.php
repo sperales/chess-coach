@@ -31,6 +31,21 @@ $trainingJsVersion = (string)filemtime(__DIR__.'/assets/js/training.js');
 
   <section class="metric-grid" id="trainingStats"></section>
 
+  <section class="panel training-session-panel" id="trainingSessionPanel">
+    <div class="panel-head">
+      <h2>Sesión de entrenamiento</h2>
+      <div class="review-board-actions">
+        <button class="secondary small" type="button" id="trainingStartSessionBtn" onclick="startTrainingSession()">Iniciar sesión</button>
+        <button class="secondary small" type="button" id="trainingEndSessionBtn" onclick="endTrainingSession()" hidden>Cerrar sesión</button>
+      </div>
+    </div>
+    <div class="training-session-summary" id="trainingSessionSummary">
+      <span>No hay una sesión activa.</span>
+      <strong>Inicia una sesión para medir este bloque de entrenamiento.</strong>
+    </div>
+    <div class="trainer-mini-kpis training-session-kpis" id="trainingSessionKpis"></div>
+  </section>
+
   <section class="panel games-filter-panel">
     <div class="panel-head">
       <h2>Qué entrenar</h2>

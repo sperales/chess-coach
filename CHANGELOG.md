@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## v1.1.1 - Training sessions and polish
+
+### Added
+
+- Added start/end controls for Training Center sessions.
+- Added per-session metrics for exercises trained, solved, failed, skipped, attempts and average time.
+- Linked exercise attempts and skipped exercises to the active training session.
+- Improved Training Center feedback and empty states.
+- Bumped `config/version.php` to `1.1.1`.
+- Updated the service worker cache name to `chess-coach-v1.1.1-training-sessions-polish`.
+
+### Database
+
+- No SQL migration required; this release uses the Training Center tables added in `v1.1.0`.
+
 ## v1.1.0 - Training Center
 
 ### Added
