@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chess-coach-v1.1.1-training-sessions-polish';
+const CACHE_NAME = 'chess-coach-v1.1.2-board-highlights';
 const ASSETS = [
   './',
   './app.php',

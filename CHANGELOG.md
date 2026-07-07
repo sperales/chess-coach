@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## v1.1.2 - Board highlights
+
+### Changed
+
+- Changed review and training board move highlights to color the full origin and destination squares.
+- Added a light-blue selected-move highlight in Training Center.
+- Added Training Center move preview so the selected piece appears on the destination square before submitting.
+- Bumped `config/version.php` to `1.1.2`.
+- Updated the service worker cache name to `chess-coach-v1.1.2-board-highlights`.
+
+### Database
+
+- No SQL migration required.
+
 ## v1.1.1 - Training sessions and polish
 
 ### Added

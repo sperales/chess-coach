@@ -330,6 +330,7 @@ function renderTrainingBoard() {
   if (!board || !activeExercise) return;
   const [placement] = (activeExercise.fen || '').split(' ');
   const grid = trainingBoardGridFromPlacement(placement || '');
+  const displayGrid = trainingPreviewGrid(grid);
   const previousMove = (activeExercise.previous_uci || '').toString().toLowerCase();
   const previousFrom = previousMove.length >= 4 ? previousMove.slice(0, 2) : '';
   const previousTo = previousMove.length >= 4 ? previousMove.slice(2, 4) : '';
@@ -344,11 +345,35 @@ function renderTrainingBoard() {
       const selectedTo = selectedTrainingSquare.slice(2, 4);
       const selected = sq === selectedFrom || sq === selectedTo ? ' selected' : '';
       const previous = sq === previousFrom ? ' from' : sq === previousTo ? ' to' : '';
-      html += `<button class="sq ${dark ? 'dark' : 'light'}${previous}${selected}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(grid[r][file] || '')}</button>`;
+      html += `<button class="sq ${dark ? 'dark' : 'light'}${previous}${selected}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(displayGrid[r][file] || '')}</button>`;
     }
   }
   board.innerHTML = html;
   board.dataset.orientation = trainingBoardOrientation;
+}
+
+function trainingPreviewGrid(grid) {
+  const preview = grid.map(row => row.slice());
+  if (!selectedTrainingSquare || selectedTrainingSquare.length < 4) return preview;
+  const from = selectedTrainingSquare.slice(0, 2);
+  const to = selectedTrainingSquare.slice(2, 4);
+  const fromCoords = trainingSquareToGrid(from);
+  const toCoords = trainingSquareToGrid(to);
+  if (!fromCoords || !toCoords) return preview;
+  const piece = preview[fromCoords.row][fromCoords.file];
+  if (!piece) return preview;
+  preview[fromCoords.row][fromCoords.file] = '';
+  preview[toCoords.row][toCoords.file] = piece;
+  return preview;
+}
+
+function trainingSquareToGrid(square) {
+  if (!square || square.length < 2) return null;
+  const file = square.charCodeAt(0) - 97;
+  const rank = Number(square[1]);
+  const row = 8 - rank;
+  if (row < 0 || row > 7 || file < 0 || file > 7) return null;
+  return { row, file };
 }
 
 function trainingBoardGridFromPlacement(placement) {
@@ -377,6 +402,8 @@ function selectTrainingSquare(square) {
     selectedTrainingSquare = square;
   } else if (selectedTrainingSquare === square) {
     selectedTrainingSquare = '';
+  } else if (selectedTrainingSquare.length >= 4) {
+    selectedTrainingSquare = square;
   } else {
     selectedTrainingSquare += square;
   }
@@ -418,11 +445,9 @@ function trainingPieceAtSquare(square) {
   if (!activeExercise || !square || square.length < 2) return '';
   const [placement] = (activeExercise.fen || '').split(' ');
   const grid = trainingBoardGridFromPlacement(placement || '');
-  const file = square.charCodeAt(0) - 97;
-  const rank = Number(square[1]);
-  const row = 8 - rank;
-  if (row < 0 || row > 7 || file < 0 || file > 7) return '';
-  return grid[row][file] || '';
+  const coords = trainingSquareToGrid(square);
+  if (!coords) return '';
+  return grid[coords.row][coords.file] || '';
 }
 
 function clearTrainingSelection() {

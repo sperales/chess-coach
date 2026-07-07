@@ -1,70 +1,53 @@
-﻿# Chess Coach v1.1.1 Update Notes
+﻿# Chess Coach v1.1.2 Update Notes
 
 ## Release type
 
-Training Center sessions and polish release.
+Board highlight and Training Center selection polish release.
 
-This release finishes the Training Center v1.1.x workflow by adding measurable training sessions, session-level metrics and final UI/documentation polish.
+This release improves board readability in review and training by highlighting moves directly through square colors instead of overlay markers.
 
 ## Changed files
 
 - `AGENTS.md`
 - `CHANGELOG.md`
 - `README_UPDATE.md`
-- `ROADMAP.md`
-- `api/training.php`
 - `assets/css/app.css`
 - `assets/js/training.js`
 - `config/version.php`
-- `includes/training.php`
 - `service-worker.js`
-- `training.php`
 
 ## User-facing changes
 
-- `training.php` now includes a `Sesion de entrenamiento` block.
-- Training sessions can be started and closed from the Training Center.
-- Opening an exercise starts a session automatically if none is active.
-- Session metrics show exercises trained, solved, failed/skipped, attempts and average time.
-- The `Saltar` action is now persisted when there is an active session.
-- Empty states explain whether there are no exercises at all or only no results for the current filters.
-- Exercise feedback now shows remaining attempts before revealing the solution.
-- The app version is bumped to `1.1.1`.
-- The PWA service worker cache name is bumped to `chess-coach-v1.1.1-training-sessions-polish`.
+- `review.php` now highlights the played move by changing the color of the origin and destination squares.
+- `training.php` uses the same square-color highlight for the previous move.
+- `training.php` highlights the user's selected origin and destination squares in light blue.
+- `training.php` previews the selected move by rendering the piece on the destination square before submitting.
+- The app version is bumped to `1.1.2`.
+- The PWA service worker cache name is bumped to `chess-coach-v1.1.2-board-highlights`.
 
 ## Technical changes
 
-- Adds Training Center session helpers in `includes/training.php`.
-- Adds authenticated `api/training.php` actions for:
-  - `session_start`
-  - `session_end`
-  - `skip`
-- Associates exercise attempts with the active `training_sessions` row when a session is active.
-- Recalculates session metrics from `training_attempts` after attempts and skips.
-- Keeps compatibility with shared hosting and the existing HTTP/PHP architecture.
+- Replaces board highlight pseudo-element overlays with square background colors in `assets/css/app.css`.
+- Adds a Training Center board preview grid in `assets/js/training.js` without mutating the stored FEN or server-side move validation.
+- Keeps review analysis, exercise solving and server-side validation unchanged.
 
 ## SQL migration
 
-No new SQL migration is required.
-
-This release uses the `training_sessions` and `training_attempts` tables added by:
-
-```text
-sql/migrations/020_changes_1.1.0.sql
-```
+No SQL migration is required.
 
 ## Service worker
 
 The service worker cache name is now:
 
 ```text
-chess-coach-v1.1.1-training-sessions-polish
+chess-coach-v1.1.2-board-highlights
 ```
 
 ## Local verification commands
 
 ```powershell
 Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
+node --check assets\js\review.js
 node --check assets\js\training.js
 node --check service-worker.js
 git diff --check
@@ -72,14 +55,13 @@ git diff --check
 
 ## Manual verification checklist
 
-- Open `training.php`.
-- Confirm the `Sesion de entrenamiento` block appears.
-- Start a session manually.
-- Open a pending exercise and submit a wrong move.
-- Confirm feedback shows remaining attempts.
-- Submit the correct move and confirm session metrics update.
-- Open another exercise and click `Saltar`; confirm skipped count updates.
-- Close the session and confirm the active-session block resets.
-- Reload `training.php` and confirm no stale UI appears after the service worker update.
-- Confirm `config/version.php` displays `1.1.1`.
+- Open `review.php` for an analyzed game.
+- Confirm the played move is highlighted by full square color.
+- Open `training.php` and start an exercise.
+- Confirm the previous move is highlighted by full square color.
+- Select an origin and destination square.
+- Confirm both selected squares are highlighted in light blue.
+- Confirm the selected piece is previewed on the destination square before submitting.
+- Submit a move and confirm solving/feedback still works.
+- Confirm `config/version.php` displays `1.1.2`.
 - Confirm no real credentials were committed.
