@@ -100,7 +100,7 @@ $greeting = $hour < 12 ? 'Buenos días' : ($hour < 21 ? 'Buenas tardes' : 'Buena
         <a class="quick-card green" href="import-chesscom.php"><span>⇩</span><strong>Importar partidas</strong><small>PGN o desde Chess.com</small></a>
         <button class="quick-card blue" type="button" onclick="analyzePendingVisible()"><span>▶</span><strong>Analizar pendientes</strong><small>Ver cola de análisis</small></button>
         <button class="quick-card purple" type="button" onclick="reviewLastGame()"><span>⌕</span><strong>Revisar última partida</strong><small>Ver análisis completo</small></button>
-        <a class="quick-card amber disabled" href="#"><span>◎</span><strong>Entrenamiento</strong><small>Ejercicios personalizados</small></a>
+        <a class="quick-card amber" href="training.php"><span>◎</span><strong>Entrenamiento</strong><small>Ejercicios personalizados</small></a>
       </div>
     </section>
   </section>

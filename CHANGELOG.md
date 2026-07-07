@@ -11,14 +11,18 @@
 - Added automatic Training Center exercise generation after completed Stockfish analysis.
 - Added a manual Training Center exercise backfill process to `profile.php`.
 - Added authenticated backfill/status endpoints for Training Center exercise generation.
+- Added the first Training Center page with exercise stats, filters and a paginated exercise list.
+- Enabled the `Entrenamiento` menu item and home quick action.
+- Added `assets/js/training.js` and cached the Training Center page/assets in the service worker.
 - Bumped `config/version.php` to `1.1.0`.
-- Updated the service worker cache name to `chess-coach-v1.1.0`.
+- Updated the service worker cache name to `chess-coach-v1.1.0-training-page`.
 
 ### Notes
 
 - PR1 adds the Training Center backend foundation.
 - PR2 adds exercise generation and profile backfill.
-- The Training Center page and interactive solving are planned for later v1.1.0 PRs.
+- PR3 adds the Training Center page and exercise browsing.
+- Interactive solving is planned for later v1.1.0 PRs.
 
 ### Database
 
