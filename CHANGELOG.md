@@ -7,6 +7,7 @@
 - Added automatic review board orientation based on the player's color.
 - Added a manual `Girar tablero` control to flip the review board.
 - Kept move highlights tied to real board coordinates after orientation changes.
+- Replaced raw UCI best-move hints in review with a minimal human-readable notation.
 - Bumped `config/version.php` to `1.0.4`.
 - Updated the service worker cache name to `chess-coach-v1.0.4`.
 
