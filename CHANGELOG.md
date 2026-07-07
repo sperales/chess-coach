@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## v1.0.4 - Review player perspective and UX
+
+### Changed
+
+- Added automatic review board orientation based on the player's color.
+- Added a manual `Girar tablero` control to flip the review board.
+- Kept move highlights tied to real board coordinates after orientation changes.
+- Bumped `config/version.php` to `1.0.4`.
+- Updated the service worker cache name to `chess-coach-v1.0.4`.
+
+### Database
+
+- No SQL migration required.
+
 ## v1.0.3 - Stockfish runner performance
 
 ### Changed

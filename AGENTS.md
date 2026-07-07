@@ -10,7 +10,7 @@ This file defines the working rules for Codex and other coding agents. Follow th
 
 ## Current stable baseline
 
-Current stable version: **1.0.3**
+Current stable version: **1.0.4**
 
 The app is deployed manually to shared hosting and must remain compatible with that environment.
 
