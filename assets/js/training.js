@@ -10,7 +10,9 @@ let trainingBoardOrientation = 'white';
 let selectedTrainingSquare = '';
 let attemptedTrainingMoves = [];
 let trainingStartedAt = 0;
+let trainingTimerInterval = null;
 let trainingUsedHint = false;
+let revealedTrainingSolution = '';
 
 const TRAINING_PIECE_IMAGES = {
   P: 'wp.png', N: 'wn.png', B: 'wb.png', R: 'wr.png', Q: 'wq.png', K: 'wk.png',
@@ -242,8 +244,10 @@ async function openTrainingExercise(id) {
   activeExercise = data.exercise;
   attemptedTrainingMoves = [];
   selectedTrainingSquare = '';
+  revealedTrainingSolution = '';
   trainingUsedHint = false;
   trainingStartedAt = Date.now();
+  startTrainingExerciseTimer();
   trainingBoardOrientation = trainingFenSideToMove(activeExercise.fen) === 'b' ? 'black' : 'white';
   renderTrainingSolver();
   const panel = document.getElementById('trainingSolverPanel');
@@ -289,9 +293,11 @@ async function endTrainingSession(status = 'completed') {
 function closeTrainingSolver() {
   const panel = document.getElementById('trainingSolverPanel');
   if (panel) panel.hidden = true;
+  stopTrainingExerciseTimer();
   activeExercise = null;
   attemptedTrainingMoves = [];
   selectedTrainingSquare = '';
+  revealedTrainingSolution = '';
 }
 
 function renderTrainingSolver() {
@@ -320,9 +326,32 @@ function renderTrainingSolver() {
     feedback.textContent = '';
     feedback.className = 'training-feedback';
   }
+  updateTrainingExerciseTimer();
   renderTrainingAttempts();
   renderTrainingBoard();
   updateTrainingDraft();
+}
+
+function startTrainingExerciseTimer() {
+  stopTrainingExerciseTimer();
+  updateTrainingExerciseTimer();
+  trainingTimerInterval = window.setInterval(updateTrainingExerciseTimer, 1000);
+}
+
+function stopTrainingExerciseTimer() {
+  if (trainingTimerInterval) {
+    window.clearInterval(trainingTimerInterval);
+    trainingTimerInterval = null;
+  }
+}
+
+function updateTrainingExerciseTimer() {
+  const el = document.getElementById('trainingExerciseTimer');
+  if (!el) return;
+  const elapsedSeconds = trainingStartedAt ? Math.max(0, Math.floor((Date.now() - trainingStartedAt) / 1000)) : 0;
+  const minutes = Math.floor(elapsedSeconds / 60);
+  const seconds = elapsedSeconds % 60;
+  el.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
 function trainingPromptHtml(text) {
@@ -346,6 +375,9 @@ function renderTrainingBoard() {
   const previousMove = (activeExercise.previous_uci || '').toString().toLowerCase();
   const previousFrom = previousMove.length >= 4 ? previousMove.slice(0, 2) : '';
   const previousTo = previousMove.length >= 4 ? previousMove.slice(2, 4) : '';
+  const solutionMove = (revealedTrainingSolution || '').toString().toLowerCase();
+  const solutionFrom = solutionMove.length >= 4 ? solutionMove.slice(0, 2) : '';
+  const solutionTo = solutionMove.length >= 4 ? solutionMove.slice(2, 4) : '';
   let html = '';
   const ranks = trainingBoardOrientation === 'black' ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
   const files = trainingBoardOrientation === 'black' ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
@@ -357,7 +389,8 @@ function renderTrainingBoard() {
       const selectedTo = selectedTrainingSquare.slice(2, 4);
       const selected = sq === selectedFrom || sq === selectedTo ? ' selected' : '';
       const previous = sq === previousFrom ? ' from' : sq === previousTo ? ' to' : '';
-      html += `<button class="sq ${dark ? 'dark' : 'light'}${previous}${selected}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(displayGrid[r][file] || '')}</button>`;
+      const solution = sq === solutionFrom || sq === solutionTo ? ' solution' : '';
+      html += `<button class="sq ${dark ? 'dark' : 'light'}${previous}${selected}${solution}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(displayGrid[r][file] || '')}</button>`;
     }
   }
   board.innerHTML = html;
@@ -492,6 +525,7 @@ async function submitTrainingMove() {
   if (data.exercise) activeExercise = data.exercise;
   if (data.session) activeTrainingSession = data.session;
   showTrainingFeedback(data);
+  if (data.solved || data.solution_uci) stopTrainingExerciseTimer();
   renderTrainingAttempts();
   renderTrainingBoard();
   updateTrainingDraft();
@@ -512,6 +546,7 @@ function showTrainingFeedback(data) {
   }
   feedback.className = `training-feedback ${data.solved ? 'ok' : 'warn'}`;
   if (!data.solved && data.solution_uci) {
+    revealedTrainingSolution = data.solution_uci;
     feedback.textContent += ` Solución: ${data.solution_uci}.`;
   }
 }

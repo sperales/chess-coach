@@ -2061,9 +2061,27 @@ select {
 .training-board .sq.from.selected,.training-board .sq.to.selected {
   background:#9bd8ff
 }
+.training-board .sq.solution {
+  background:#f56f6f
+}
+.training-board .sq.solution.from,.training-board .sq.solution.to,.training-board .sq.solution.selected {
+  background:#f56f6f
+}
 .training-solver-info {
   display:grid;
   gap:12px
+}
+.training-exercise-timer {
+  justify-self:start;
+  background:#f7f7f3;
+  color:#111;
+  border:1px solid #fff;
+  border-radius:8px;
+  padding:7px 12px;
+  font-weight:900;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:.04em;
+  box-shadow:0 8px 22px #0005
 }
 .training-promotion {
   display:grid;
