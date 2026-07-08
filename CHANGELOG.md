@@ -11,9 +11,10 @@
 - Added legal destination hints when selecting a piece in Training Center exercises.
 - Marked Training Center exercises as closed after 5 failed attempts so they no longer appear as pending recommendations.
 - Made Training Center session failed/skipped counters refresh consistently after exhausted or skipped exercises.
+- Replaced manual Training Center start/end session controls with automatic active sessions and a single `Nueva sesión` action.
 - Changed the review move list to show White and Black moves side by side in one row per full move.
 - Bumped `config/version.php` to `1.1.4`.
-- Updated the service worker cache name to `chess-coach-v1.1.4-training-legal-targets`.
+- Updated the service worker cache name to `chess-coach-v1.1.4-training-auto-session`.
 
 ### Database
 

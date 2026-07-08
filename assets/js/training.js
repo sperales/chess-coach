@@ -100,14 +100,10 @@ function renderTrainingStats() {
 function renderTrainingSession() {
   const summary = document.getElementById('trainingSessionSummary');
   const kpis = document.getElementById('trainingSessionKpis');
-  const startBtn = document.getElementById('trainingStartSessionBtn');
-  const endBtn = document.getElementById('trainingEndSessionBtn');
-  if (startBtn) startBtn.hidden = !!activeTrainingSession;
-  if (endBtn) endBtn.hidden = !activeTrainingSession;
   if (!summary || !kpis) return;
 
   if (!activeTrainingSession) {
-    summary.innerHTML = '<span>No hay una sesión activa.</span><strong>Inicia una sesión para medir este bloque de entrenamiento.</strong>';
+    summary.innerHTML = '<span>Preparando sesión...</span><strong>Tu entrenamiento quedará medido automáticamente.</strong>';
     kpis.innerHTML = '';
     return;
   }
@@ -269,6 +265,26 @@ async function startTrainingSession() {
   activeTrainingSession = data.session || null;
   renderTrainingSession();
   return activeTrainingSession;
+}
+
+async function newTrainingSession() {
+  const button = document.getElementById('trainingNewSessionBtn');
+  if (button) button.disabled = true;
+  try {
+    const filters = selectedTrainingFilters();
+    const response = await fetch('api/training.php?action=session_start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: filters.type || 'recommended', force_new: true })
+    });
+    const data = await response.json();
+    if (!data.ok) throw new Error(data.error || 'No se pudo crear una nueva sesión.');
+    activeTrainingSession = data.session || null;
+    closeTrainingSolver();
+    await loadTraining(currentTrainingPage);
+  } finally {
+    if (button) button.disabled = false;
+  }
 }
 
 async function ensureTrainingSession() {
@@ -802,7 +818,8 @@ function renderTrainingStatsFromResponse(data) {
 }
 
 async function skipTrainingExercise() {
-  if (activeExercise && activeTrainingSession) {
+  if (activeExercise) {
+    await ensureTrainingSession();
     const response = await fetch('api/training.php?action=skip', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

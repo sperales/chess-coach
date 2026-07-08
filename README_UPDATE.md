@@ -27,10 +27,11 @@ This release makes the side to move easier to identify while solving Training Ce
 - When selecting a piece in `training.php`, legal destination squares are shown with subtle grey dots.
 - Training exercises are closed after 5 failed attempts so they stop appearing as pending recommendations.
 - Session metrics now count exhausted exercises explicitly as failed exercises.
+- `training.php` now keeps a valid active training session automatically and replaces start/end buttons with a single `Nueva sesión` action.
 - `review.php` now shows the move list as one row per full move, with White on the left and Black on the right.
 - Exercise prompts that do not include a side-to-move phrase continue rendering normally.
 - The app version is bumped to `1.1.4`.
-- The PWA service worker cache name is bumped to `chess-coach-v1.1.4-training-legal-targets`.
+- The PWA service worker cache name is bumped to `chess-coach-v1.1.4-training-auto-session`.
 
 ## Technical changes
 
@@ -40,6 +41,8 @@ This release makes the side to move easier to identify while solving Training Ce
 - Adds client-side legal move generation for Training Center board hints.
 - Marks exhausted Training Center exercises as no longer pending while keeping the attempt result as failed.
 - Refreshes the Training Center list after skipped exercises so session counters stay visible immediately.
+- Expires active training sessions older than 24 hours and creates a fresh session automatically.
+- Adds a `Nueva sesión` action that closes the current session and starts another one.
 - Groups review moves by full move number in `assets/js/review.js`.
 - Reuses local piece images from `assets/pieces/`.
 - Adds compact side-to-move prompt styles in `assets/css/app.css`.
@@ -54,7 +57,7 @@ No SQL migration is required.
 The service worker cache name is now:
 
 ```text
-chess-coach-v1.1.4-training-legal-targets
+chess-coach-v1.1.4-training-auto-session
 ```
 
 ## Local verification commands
@@ -81,6 +84,8 @@ git diff --check
 - Fail an exercise 5 times, return to the training list and confirm it no longer appears as pending/recommended.
 - With a session active, fail an exercise 5 times and confirm `Fallados/saltados` increments the failed side.
 - With a session active, skip an exercise and confirm `Fallados/saltados` increments the skipped side.
+- Open `training.php` and confirm a session is available without pressing `Iniciar sesión`.
+- Click `Nueva sesión` and confirm the counters reset for the new active session.
 - Confirm the exercise title, tags, board and move submission still work.
 - Open `review.php` for an analyzed game.
 - Confirm the move list shows each full move in one row, with White and Black side by side.
