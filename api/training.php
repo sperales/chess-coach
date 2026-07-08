@@ -13,13 +13,14 @@ if ($action === 'list' || $action === 'dashboard') {
   $page = max(1, (int)($_GET['page'] ?? 1));
   $perPage = max(1, min(100, (int)($_GET['per_page'] ?? 20)));
   $list = training_list_exercises($userId, $type, $status, $page, $perPage);
+  $session = training_ensure_active_session($userId, $type, 'manual');
 
   json_response([
     'ok' => true,
     'types' => training_exercise_types(),
     'type_counts' => training_type_counts_for_user($userId),
     'stats' => training_stats_for_user($userId),
-    'session' => training_active_session($userId),
+    'session' => $session['session'] ?? null,
     'exercises' => $list['items'],
     'pagination' => $list['pagination'],
     'filters' => $list['filters'],
@@ -27,19 +28,23 @@ if ($action === 'list' || $action === 'dashboard') {
 }
 
 if ($action === 'stats') {
+  $session = training_ensure_active_session($userId, 'recommended', 'manual');
   json_response([
     'ok' => true,
     'types' => training_exercise_types(),
     'type_counts' => training_type_counts_for_user($userId),
     'stats' => training_stats_for_user($userId),
-    'session' => training_active_session($userId),
+    'session' => $session['session'] ?? null,
   ]);
 }
 
 if ($action === 'session_start') {
   $body = json_decode(file_get_contents('php://input'), true) ?: [];
   $type = (string)($body['type'] ?? 'recommended');
-  json_response(training_start_session($userId, $type, 'manual'));
+  $forceNew = !empty($body['force_new']);
+  json_response($forceNew
+    ? training_new_session($userId, $type, 'manual')
+    : training_ensure_active_session($userId, $type, 'manual'));
 }
 
 if ($action === 'session_end') {

@@ -181,14 +181,36 @@ function renderMoveList() {
   const el = document.getElementById('moveList');
   const moves = (reviewData && reviewData.moves) || [];
   if (!el) return;
-  el.innerHTML = moves.map((m,i) => `
-    <button class="move-list-item ${i===currentMoveIndex?'active':''}" onclick="goMove(${i})">
-      <span>${Math.floor((Number(m.ply)-1)/2)+1}${Number(m.ply)%2===1?'.':'...'}</span>
+  const rows = [];
+  moves.forEach((move, index) => {
+    const moveNo = Math.floor((Number(move.ply) - 1) / 2) + 1;
+    if (!rows[moveNo - 1]) rows[moveNo - 1] = { moveNo, white: null, black: null };
+    if (Number(move.ply) % 2 === 1) {
+      rows[moveNo - 1].white = { move, index };
+    } else {
+      rows[moveNo - 1].black = { move, index };
+    }
+  });
+
+  el.innerHTML = rows.map(row => `
+    <div class="move-list-row">
+      <span class="move-list-number">${row.moveNo}.</span>
+      ${moveListCell(row.white, 'white')}
+      ${moveListCell(row.black, 'black')}
+    </div>
+  `).join('');
+}
+
+function moveListCell(item, side) {
+  if (!item) return `<div class="move-list-cell ${side} empty" aria-hidden="true"></div>`;
+  const m = item.move;
+  return `
+    <button class="move-list-cell ${side} ${item.index===currentMoveIndex?'active':''}" onclick="goMove(${item.index})">
       <strong>${rEscape(m.san || m.uci || '-')}</strong>
       <em class="${m.review_bucket}">${bucketIcon(m.review_bucket)} ${rEscape(m.review_label)}</em>
       ${moveTagsSummary(m)}
     </button>
-  `).join('');
+  `;
 }
 
 function moveTagsSummary(move) {

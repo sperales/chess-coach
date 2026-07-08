@@ -100,14 +100,10 @@ function renderTrainingStats() {
 function renderTrainingSession() {
   const summary = document.getElementById('trainingSessionSummary');
   const kpis = document.getElementById('trainingSessionKpis');
-  const startBtn = document.getElementById('trainingStartSessionBtn');
-  const endBtn = document.getElementById('trainingEndSessionBtn');
-  if (startBtn) startBtn.hidden = !!activeTrainingSession;
-  if (endBtn) endBtn.hidden = !activeTrainingSession;
   if (!summary || !kpis) return;
 
   if (!activeTrainingSession) {
-    summary.innerHTML = '<span>No hay una sesión activa.</span><strong>Inicia una sesión para medir este bloque de entrenamiento.</strong>';
+    summary.innerHTML = '<span>Preparando sesión...</span><strong>Tu entrenamiento quedará medido automáticamente.</strong>';
     kpis.innerHTML = '';
     return;
   }
@@ -271,6 +267,26 @@ async function startTrainingSession() {
   return activeTrainingSession;
 }
 
+async function newTrainingSession() {
+  const button = document.getElementById('trainingNewSessionBtn');
+  if (button) button.disabled = true;
+  try {
+    const filters = selectedTrainingFilters();
+    const response = await fetch('api/training.php?action=session_start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: filters.type || 'recommended', force_new: true })
+    });
+    const data = await response.json();
+    if (!data.ok) throw new Error(data.error || 'No se pudo crear una nueva sesión.');
+    activeTrainingSession = data.session || null;
+    closeTrainingSolver();
+    await loadTraining(currentTrainingPage);
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
 async function ensureTrainingSession() {
   if (activeTrainingSession) return activeTrainingSession;
   return startTrainingSession();
@@ -372,6 +388,7 @@ function renderTrainingBoard() {
   const [placement] = (activeExercise.fen || '').split(' ');
   const grid = trainingBoardGridFromPlacement(placement || '');
   const displayGrid = trainingPreviewGrid(grid);
+  const legalTargets = trainingLegalTargetSet(grid);
   const previousMove = (activeExercise.previous_uci || '').toString().toLowerCase();
   const previousFrom = previousMove.length >= 4 ? previousMove.slice(0, 2) : '';
   const previousTo = previousMove.length >= 4 ? previousMove.slice(2, 4) : '';
@@ -390,7 +407,8 @@ function renderTrainingBoard() {
       const selected = sq === selectedFrom || sq === selectedTo ? ' selected' : '';
       const previous = sq === previousFrom ? ' from' : sq === previousTo ? ' to' : '';
       const solution = sq === solutionFrom || sq === solutionTo ? ' solution' : '';
-      html += `<button class="sq ${dark ? 'dark' : 'light'}${previous}${selected}${solution}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(displayGrid[r][file] || '')}</button>`;
+      const legal = legalTargets.has(sq) ? ' legal-target' : '';
+      html += `<button class="sq ${dark ? 'dark' : 'light'}${previous}${selected}${solution}${legal}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(displayGrid[r][file] || '')}</button>`;
     }
   }
   board.innerHTML = html;
@@ -432,6 +450,239 @@ function trainingBoardGridFromPlacement(placement) {
     }
   }
   return grid;
+}
+
+function trainingLegalTargetSet(grid) {
+  const targets = new Set();
+  if (!activeExercise || selectedTrainingSquare.length !== 2) return targets;
+  if (attemptedTrainingMoves.length >= 5 || activeExercise.resolved_at) return targets;
+
+  const state = trainingFenState(activeExercise.fen);
+  const from = trainingSquareToGrid(selectedTrainingSquare);
+  if (!from) return targets;
+  const piece = grid[from.row][from.file] || '';
+  if (!piece || trainingPieceColor(piece) !== state.turn) return targets;
+
+  trainingLegalMovesForState({ ...state, grid }, selectedTrainingSquare).forEach(move => targets.add(move.to));
+  return targets;
+}
+
+function trainingFenState(fen) {
+  const parts = (fen || '').trim().split(/\s+/);
+  return {
+    placement: parts[0] || '',
+    turn: parts[1] === 'b' ? 'b' : 'w',
+    castling: parts[2] || '-',
+    ep: parts[3] || '-',
+  };
+}
+
+function trainingLegalMovesForState(state, onlyFrom = '') {
+  const pseudoMoves = trainingPseudoMovesForState(state, onlyFrom);
+  return pseudoMoves.filter(move => {
+    const next = trainingApplyMove(state, move);
+    return !trainingKingInCheck(next, state.turn);
+  });
+}
+
+function trainingPseudoMovesForState(state, onlyFrom = '') {
+  const moves = [];
+  for (let row = 0; row < 8; row++) {
+    for (let file = 0; file < 8; file++) {
+      const piece = state.grid[row][file] || '';
+      if (!piece || trainingPieceColor(piece) !== state.turn) continue;
+      const from = trainingGridToSquare(row, file);
+      if (onlyFrom && from !== onlyFrom) continue;
+      trainingPiecePseudoMoves(state, row, file, piece).forEach(move => moves.push(move));
+    }
+  }
+  return moves;
+}
+
+function trainingPiecePseudoMoves(state, row, file, piece) {
+  const moves = [];
+  const color = trainingPieceColor(piece);
+  const kind = piece.toLowerCase();
+  const from = trainingGridToSquare(row, file);
+  const add = (toRow, toFile, extra = {}) => {
+    if (!trainingInBounds(toRow, toFile)) return;
+    const target = state.grid[toRow][toFile] || '';
+    if (target && trainingPieceColor(target) === color) return;
+    moves.push({ from, to: trainingGridToSquare(toRow, toFile), piece, ...extra });
+  };
+
+  if (kind === 'p') {
+    const dir = color === 'w' ? -1 : 1;
+    const startRow = color === 'w' ? 6 : 1;
+    const promotionRow = color === 'w' ? 0 : 7;
+    const forwardRow = row + dir;
+    if (trainingInBounds(forwardRow, file) && !state.grid[forwardRow][file]) {
+      add(forwardRow, file, forwardRow === promotionRow ? { promotion: color === 'w' ? 'Q' : 'q' } : {});
+      const doubleRow = row + dir * 2;
+      if (row === startRow && trainingInBounds(doubleRow, file) && !state.grid[doubleRow][file]) {
+        add(doubleRow, file);
+      }
+    }
+    [-1, 1].forEach(fileOffset => {
+      const toRow = row + dir;
+      const toFile = file + fileOffset;
+      if (!trainingInBounds(toRow, toFile)) return;
+      const target = state.grid[toRow][toFile] || '';
+      const to = trainingGridToSquare(toRow, toFile);
+      const isEp = state.ep !== '-' && to === state.ep;
+      if ((target && trainingPieceColor(target) !== color) || isEp) {
+        add(toRow, toFile, {
+          ...(toRow === promotionRow ? { promotion: color === 'w' ? 'Q' : 'q' } : {}),
+          ...(isEp ? { ep: true } : {}),
+        });
+      }
+    });
+    return moves;
+  }
+
+  if (kind === 'n') {
+    [[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]].forEach(([dr, df]) => add(row + dr, file + df));
+    return moves;
+  }
+
+  if (['b', 'r', 'q'].includes(kind)) {
+    const dirs = [];
+    if (kind !== 'r') dirs.push([1,1], [1,-1], [-1,1], [-1,-1]);
+    if (kind !== 'b') dirs.push([1,0], [-1,0], [0,1], [0,-1]);
+    dirs.forEach(([dr, df]) => {
+      let toRow = row + dr;
+      let toFile = file + df;
+      while (trainingInBounds(toRow, toFile)) {
+        const target = state.grid[toRow][toFile] || '';
+        if (!target) {
+          add(toRow, toFile);
+        } else {
+          if (trainingPieceColor(target) !== color) add(toRow, toFile);
+          break;
+        }
+        toRow += dr;
+        toFile += df;
+      }
+    });
+    return moves;
+  }
+
+  if (kind === 'k') {
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let df = -1; df <= 1; df++) {
+        if (dr || df) add(row + dr, file + df);
+      }
+    }
+    if (!trainingKingInCheck(state, color)) {
+      if (color === 'w' && row === 7 && file === 4) {
+        if (state.castling.includes('K') && state.grid[7][7] === 'R' && !state.grid[7][5] && !state.grid[7][6] && !trainingSquareAttacked(state, 7, 5, 'b') && !trainingSquareAttacked(state, 7, 6, 'b')) add(7, 6, { castle: true });
+        if (state.castling.includes('Q') && state.grid[7][0] === 'R' && !state.grid[7][1] && !state.grid[7][2] && !state.grid[7][3] && !trainingSquareAttacked(state, 7, 3, 'b') && !trainingSquareAttacked(state, 7, 2, 'b')) add(7, 2, { castle: true });
+      }
+      if (color === 'b' && row === 0 && file === 4) {
+        if (state.castling.includes('k') && state.grid[0][7] === 'r' && !state.grid[0][5] && !state.grid[0][6] && !trainingSquareAttacked(state, 0, 5, 'w') && !trainingSquareAttacked(state, 0, 6, 'w')) add(0, 6, { castle: true });
+        if (state.castling.includes('q') && state.grid[0][0] === 'r' && !state.grid[0][1] && !state.grid[0][2] && !state.grid[0][3] && !trainingSquareAttacked(state, 0, 3, 'w') && !trainingSquareAttacked(state, 0, 2, 'w')) add(0, 2, { castle: true });
+      }
+    }
+  }
+
+  return moves;
+}
+
+function trainingApplyMove(state, move) {
+  const grid = state.grid.map(row => row.slice());
+  const from = trainingSquareToGrid(move.from);
+  const to = trainingSquareToGrid(move.to);
+  if (!from || !to) return { ...state, grid };
+  const piece = grid[from.row][from.file] || move.piece;
+  grid[from.row][from.file] = '';
+  if (move.ep) grid[from.row][to.file] = '';
+  if (move.castle) {
+    if (to.file === 6) {
+      grid[to.row][5] = grid[to.row][7];
+      grid[to.row][7] = '';
+    } else if (to.file === 2) {
+      grid[to.row][3] = grid[to.row][0];
+      grid[to.row][0] = '';
+    }
+  }
+  grid[to.row][to.file] = move.promotion || piece;
+  return { ...state, grid, turn: state.turn === 'w' ? 'b' : 'w', ep: '-' };
+}
+
+function trainingKingInCheck(state, color) {
+  const king = trainingFindKing(state.grid, color);
+  if (!king) return false;
+  return trainingSquareAttacked(state, king.row, king.file, color === 'w' ? 'b' : 'w');
+}
+
+function trainingFindKing(grid, color) {
+  const king = color === 'w' ? 'K' : 'k';
+  for (let row = 0; row < 8; row++) {
+    for (let file = 0; file < 8; file++) {
+      if (grid[row][file] === king) return { row, file };
+    }
+  }
+  return null;
+}
+
+function trainingSquareAttacked(state, row, file, byColor) {
+  const grid = state.grid;
+  const pawn = byColor === 'w' ? 'P' : 'p';
+  const pawnDir = byColor === 'w' ? -1 : 1;
+  for (const fileOffset of [-1, 1]) {
+    const attackRow = row - pawnDir;
+    const attackFile = file + fileOffset;
+    if (trainingInBounds(attackRow, attackFile) && grid[attackRow][attackFile] === pawn) return true;
+  }
+
+  const knight = byColor === 'w' ? 'N' : 'n';
+  for (const [dr, df] of [[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]]) {
+    const r = row + dr;
+    const f = file + df;
+    if (trainingInBounds(r, f) && grid[r][f] === knight) return true;
+  }
+
+  if (trainingRayAttacked(grid, row, file, byColor, [[1,1],[1,-1],[-1,1],[-1,-1]], ['b', 'q'])) return true;
+  if (trainingRayAttacked(grid, row, file, byColor, [[1,0],[-1,0],[0,1],[0,-1]], ['r', 'q'])) return true;
+
+  const king = byColor === 'w' ? 'K' : 'k';
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let df = -1; df <= 1; df++) {
+      if (!dr && !df) continue;
+      const r = row + dr;
+      const f = file + df;
+      if (trainingInBounds(r, f) && grid[r][f] === king) return true;
+    }
+  }
+  return false;
+}
+
+function trainingRayAttacked(grid, row, file, byColor, dirs, attackers) {
+  const pieces = attackers.map(piece => byColor === 'w' ? piece.toUpperCase() : piece);
+  for (const [dr, df] of dirs) {
+    let r = row + dr;
+    let f = file + df;
+    while (trainingInBounds(r, f)) {
+      const piece = grid[r][f] || '';
+      if (piece) return pieces.includes(piece);
+      r += dr;
+      f += df;
+    }
+  }
+  return false;
+}
+
+function trainingGridToSquare(row, file) {
+  return String.fromCharCode(97 + file) + (8 - row);
+}
+
+function trainingInBounds(row, file) {
+  return row >= 0 && row < 8 && file >= 0 && file < 8;
+}
+
+function trainingPieceColor(piece) {
+  if (!piece) return '';
+  return piece === piece.toUpperCase() ? 'w' : 'b';
 }
 
 function trainingPieceImageHtml(pieceCode) {
@@ -567,7 +818,8 @@ function renderTrainingStatsFromResponse(data) {
 }
 
 async function skipTrainingExercise() {
-  if (activeExercise && activeTrainingSession) {
+  if (activeExercise) {
+    await ensureTrainingSession();
     const response = await fetch('api/training.php?action=skip', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -577,6 +829,7 @@ async function skipTrainingExercise() {
     if (data.ok && data.session) activeTrainingSession = data.session;
     if (data.stats) renderTrainingStatsFromResponse(data);
     renderTrainingSession();
+    await loadTraining(currentTrainingPage);
   }
   closeTrainingSolver();
 }

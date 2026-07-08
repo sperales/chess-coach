@@ -242,7 +242,7 @@ function training_session_metrics(int $sessionId, int $userId): array {
       SELECT exercise_id,
              MAX(is_solved) AS exercise_solved,
              MAX(result="skipped") AS exercise_skipped,
-             IF(MAX(is_solved)=0 AND MAX(result="skipped")=0 AND MAX(attempts_count)>=5,1,0) AS exercise_failed,
+             MAX(CASE WHEN result="failed" AND attempts_count>=5 THEN 1 ELSE 0 END) AS exercise_failed,
              MAX(attempts_count) AS max_attempts,
              MAX(duration_ms) AS max_duration_ms
       FROM training_attempts
@@ -290,7 +290,17 @@ function training_session_for_user(int $sessionId, int $userId): ?array {
   return training_public_session($session);
 }
 
+function training_expire_stale_sessions(int $userId): void {
+  db()->prepare('UPDATE training_sessions
+                 SET status="abandoned", completed_at=NOW(),
+                     duration_ms=GREATEST(0, TIMESTAMPDIFF(SECOND, started_at, NOW()) * 1000),
+                     updated_at=NOW()
+                 WHERE user_id=? AND status="active" AND started_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)')
+    ->execute([$userId]);
+}
+
 function training_active_session(int $userId): ?array {
+  training_expire_stale_sessions($userId);
   $st = db()->prepare('SELECT * FROM training_sessions WHERE user_id=? AND status="active" ORDER BY started_at DESC, id DESC LIMIT 1');
   $st->execute([$userId]);
   $session = $st->fetch();
@@ -324,6 +334,18 @@ function training_start_session(int $userId, string $selectedType = 'recommended
   $st->execute([$userId, $selectedType, $source]);
   $sessionId = (int)db()->lastInsertId();
   return ['ok' => true, 'session' => training_session_for_user($sessionId, $userId)];
+}
+
+function training_ensure_active_session(int $userId, string $selectedType = 'recommended', string $source = 'manual'): array {
+  $active = training_active_session($userId);
+  if ($active) return ['ok' => true, 'session' => $active, 'already_active' => true];
+  return training_start_session($userId, $selectedType, $source);
+}
+
+function training_new_session(int $userId, string $selectedType = 'recommended', string $source = 'manual'): array {
+  $active = training_active_session($userId);
+  if ($active) training_end_session($userId, (int)$active['id'], 'completed');
+  return training_start_session($userId, $selectedType, $source);
 }
 
 function training_end_session(int $userId, int $sessionId, string $status = 'completed'): array {
@@ -531,9 +553,14 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
   $solution = strtolower(trim((string)($exercise['solution_uci'] ?? '')));
   $finalMove = end($moves);
   $isSolved = in_array($solution, $moves, true);
+  $isExhausted = count($moves) >= 5;
   $result = $isSolved ? 'solved' : 'failed';
   $durationMs = max(0, min(86400000, $durationMs));
   $sessionId = $sessionId && training_session_is_active($sessionId, $userId) ? $sessionId : null;
+  if (!$sessionId) {
+    $sessionResult = training_ensure_active_session($userId, 'recommended', 'manual');
+    $sessionId = !empty($sessionResult['session']['id']) ? (int)$sessionResult['session']['id'] : null;
+  }
 
   $ins = db()->prepare('INSERT INTO training_attempts
       (session_id,exercise_id,user_id,started_at,completed_at,duration_ms,attempts_count,first_move_uci,final_move_uci,
@@ -554,7 +581,7 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
     $exercise['difficulty'] ?? null,
   ]);
 
-  if ($isSolved) {
+  if ($isSolved || $isExhausted) {
     db()->prepare('UPDATE training_exercises SET resolved_at=COALESCE(resolved_at,NOW()), last_attempt_at=NOW(), updated_at=NOW() WHERE id=? AND user_id=?')->execute([$exerciseId, $userId]);
   } else {
     db()->prepare('UPDATE training_exercises SET last_attempt_at=NOW(), updated_at=NOW() WHERE id=? AND user_id=?')->execute([$exerciseId, $userId]);
@@ -565,9 +592,10 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
   return [
     'ok' => true,
     'solved' => $isSolved,
+    'exhausted' => $isExhausted && !$isSolved,
     'attempts_count' => count($moves),
     'remaining_attempts' => max(0, 5 - count($moves)),
-    'solution_uci' => $isSolved || count($moves) >= 5 ? $solution : null,
+    'solution_uci' => $isSolved || $isExhausted ? $solution : null,
     'feedback' => $isSolved ? ($exercise['feedback_success'] ?? training_feedback_success((string)$exercise['exercise_type'])) : ($exercise['feedback_failure'] ?? training_feedback_failure((string)$exercise['exercise_type'])),
     'exercise' => $updated,
     'stats' => training_stats_for_user($userId),
@@ -576,6 +604,7 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
 }
 
 function training_session_is_active(int $sessionId, int $userId): bool {
+  training_expire_stale_sessions($userId);
   $st = db()->prepare('SELECT COUNT(*) FROM training_sessions WHERE id=? AND user_id=? AND status="active"');
   $st->execute([$sessionId, $userId]);
   return (int)$st->fetchColumn() > 0;
@@ -585,7 +614,11 @@ function training_record_skip(int $userId, int $exerciseId, ?int $sessionId = nu
   $exercise = training_exercise_for_user($exerciseId, $userId);
   if (!$exercise) return ['ok' => false, 'error' => 'Ejercicio no encontrado.'];
   $sessionId = $sessionId && training_session_is_active($sessionId, $userId) ? $sessionId : null;
-  if (!$sessionId) return ['ok' => true, 'skipped' => true, 'exercise' => $exercise, 'session' => null];
+  if (!$sessionId) {
+    $sessionResult = training_ensure_active_session($userId, 'recommended', 'manual');
+    $sessionId = !empty($sessionResult['session']['id']) ? (int)$sessionResult['session']['id'] : null;
+  }
+  if (!$sessionId) return ['ok' => false, 'error' => 'No se pudo registrar la sesión de entrenamiento.'];
 
   $ins = db()->prepare('INSERT INTO training_attempts
       (session_id,exercise_id,user_id,started_at,completed_at,duration_ms,attempts_count,
@@ -598,11 +631,13 @@ function training_record_skip(int $userId, int $exerciseId, ?int $sessionId = nu
     json_encode([], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
     $exercise['difficulty'] ?? null,
   ]);
+  db()->prepare('UPDATE training_exercises SET resolved_at=COALESCE(resolved_at,NOW()), last_attempt_at=NOW(), updated_at=NOW() WHERE id=? AND user_id=?')->execute([$exerciseId, $userId]);
+  $updated = training_exercise_for_user($exerciseId, $userId);
   $session = training_update_session_metrics($sessionId, $userId);
   return [
     'ok' => true,
     'skipped' => true,
-    'exercise' => $exercise,
+    'exercise' => $updated ?: $exercise,
     'stats' => training_stats_for_user($userId),
     'session' => $session,
   ];
