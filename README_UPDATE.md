@@ -1,105 +1,59 @@
-# Chess Coach v1.1.5 Update Notes
+# Chess Coach v1.1.6 Update Notes
 
 ## Release type
 
-Training Center solving UX polish release.
+Security, documentation, encoding and architecture hardening release.
 
-This release improves the exercise-solving flow in `training.php` with a hint action and clearer post-exercise actions.
-It also lets the player choose the board piece set from the profile page.
-It also includes small dashboard label fixes.
+This release does not add new product features. It stabilizes the v1.1.x Training Center line before starting v1.2.0 Openings Lab.
+
+## Planned scope
+
+- Align project documentation with the current v1.1.5 stable baseline and the v1.1.6 hardening release.
+- Audit and clean up encoding/mojibake issues where real UTF-8 file content is affected.
+- Review authenticated API endpoints and ownership checks.
+- Add CSRF protection to authenticated mutating actions.
+- Review output escaping, JSON responses and sensitive data exposure.
+- Apply only small architecture cleanups that reduce security or maintenance risk.
+- Bump the application version and service worker cache at release readiness.
 
 ## Changed files
 
+This PR starts the v1.1.6 release documentation.
+
+- `AGENTS.md`
 - `CHANGELOG.md`
+- `README.md`
 - `README_UPDATE.md`
-- `assets/css/app.css`
-- `assets/js/dashboard.js`
-- `assets/js/review.js`
-- `assets/js/training.js`
-- `assets/pieces/Set 1/*`
-- `assets/pieces/Set 2/*`
-- `app.php`
-- `config/version.php`
-- `includes/auth.php`
-- `includes/pieces.php`
-- `includes/training.php`
-- `profile.php`
-- `review.php`
-- `service-worker.js`
-- `sql/install.sql`
-- `sql/migrations/021_changes_1.1.5.sql`
-- `training.php`
-
-## User-facing changes
-
-- Adds a `Pista` button in Training Center exercises.
-- The hint highlights/selects the origin square of the correct move without revealing the destination.
-- Removes the `Reintentar selección` button from the exercise controls.
-- After solving an exercise or exhausting all attempts, hides `Comprobar`, `Pista` and `Saltar`.
-- After finishing an exercise, shows `Siguiente`, `Cerrar` and `Ver partida`.
-- Adds piece set selection in `Ajustes / Mi Perfil`.
-- Moves the current pieces to `assets/pieces/Set 1`.
-- Adds the new pieces as `assets/pieces/Set 2`.
-- Applies the selected piece set in `review.php` and `training.php`.
-- Changes the dashboard recent-summary error label from `B/M/I` to `B/E/I`.
-- Changes the recommended-games table third column from `Ritmo` to `Accuracy`.
-- Changes the home games block title between `Últimas partidas` and `Partidas recomendadas`.
-- The app version is bumped to `1.1.5`.
-- The PWA service worker cache name is bumped to `chess-coach-v1.1.5-dashboard-labels`.
-
-## Technical changes
-
-- Exposes only `hint_from` for pending Training Center exercises instead of exposing the full solution.
-- Reuses the existing `used_hint` attempt field so hinted attempts remain tracked.
-- Adds Training Center control state rendering for active and completed exercise states.
-- Adds a next-exercise action that reloads the current training list and opens the next pending item.
-- Adds `users.piece_set` to store each user's selected piece set.
-- Discovers available piece sets from valid folders inside `assets/pieces`.
+- `ROADMAP.md`
 
 ## SQL migration
 
-Run this migration after uploading the release:
-
-```text
-sql/migrations/021_changes_1.1.5.sql
-```
+No SQL migration is required for the documentation alignment PR.
 
 ## Service worker
 
-The service worker cache name is now:
+No service worker cache change is required for this documentation-only PR.
 
-```text
-chess-coach-v1.1.5-dashboard-labels
-```
+The final v1.1.6 release readiness PR will update `service-worker.js`.
 
 ## Local verification commands
 
 ```powershell
-Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
-node --check assets\js\training.js
-node --check assets\js\dashboard.js
-node --check service-worker.js
 git diff --check
+```
+
+For later v1.1.6 PRs that touch PHP or JavaScript, also run:
+
+```powershell
+Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
+node --check assets\js\changed-file.js
+node --check service-worker.js
 ```
 
 ## Manual verification checklist
 
-- Open `training.php`.
-- Open a pending exercise.
-- Click `Pista` and confirm the origin square of the correct move is highlighted/selected.
-- Confirm `Pista` does not reveal the destination square.
-- Confirm the attempt stores `used_hint` when a move is submitted after using a hint.
-- Confirm `Reintentar selección` is no longer shown.
-- Solve an exercise and confirm `Comprobar`, `Pista` and `Saltar` are hidden.
-- Exhaust 5 attempts and confirm `Comprobar`, `Pista` and `Saltar` are hidden.
-- Confirm `Siguiente`, `Cerrar` and `Ver partida` are shown after solving or exhausting attempts.
-- Click `Siguiente` and confirm the next pending exercise opens.
-- Confirm `Cerrar` closes the solver panel.
-- Confirm `Ver partida` opens the related review page.
-- Run `sql/migrations/021_changes_1.1.5.sql`.
-- Open `profile.php` and select `Set 2`.
-- Open `review.php` and confirm the board uses `Set 2`.
-- Open `training.php` and confirm the board uses `Set 2`.
-- Switch back to `Set 1` and confirm both boards update.
-- Confirm `config/version.php` displays `1.1.5`.
-- Confirm no real credentials were committed.
+- Confirm README, AGENTS and ROADMAP agree on the current v1.1.5 stable baseline.
+- Confirm README_UPDATE describes v1.1.6 as a hardening release.
+- Confirm CHANGELOG contains a v1.1.6 entry.
+- Confirm v1.2.0 Openings Lab remains the next major product line.
+- Confirm no production config files or credentials were changed.

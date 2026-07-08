@@ -10,7 +10,7 @@ This file defines the working rules for Codex and other coding agents. Follow th
 
 ## Current stable baseline
 
-Current stable version: **1.1.4**
+Current stable version: **1.1.5**
 
 The app is deployed manually to shared hosting and must remain compatible with that environment.
 
@@ -197,12 +197,12 @@ This is especially important for:
 
 ## Chess board rendering rules
 
-Current stable approach in v0.8.5:
+Current stable approach since v1.0.2 and expanded in v1.1.5:
 
-- Use Unicode chess pieces in the review board.
-- Do not reintroduce SVG/PNG chess piece sets unless the user explicitly asks.
-
-Previous attempts using custom SVG/PNG pieces caused visual inconsistencies and should not be restored accidentally.
+- Use local transparent PNG chess pieces in the review and training boards.
+- Keep piece assets under `assets/pieces/`.
+- Piece sets may be selected from `profile.php` and must remain compatible with responsive boards.
+- Do not switch the boards back to Unicode pieces unless the user explicitly asks.
 
 ---
 
@@ -431,9 +431,9 @@ Do not implement roadmap items unless the user explicitly asks.
 
 The current likely roadmap direction is:
 
-- v1.0.0 — Personal Trainer
-- v1.1.0 — Training Center
-- v1.2.0 — Openings Lab
+- v1.0.0 — Personal Trainer (completed)
+- v1.1.x — Training Center (completed and being hardened)
+- v1.2.0 — Openings Lab (next major product line)
 - v1.3.0 — Player DNA
 - v1.4.0 — Chess.com Sync
 - v1.5.0+ — Coach AI

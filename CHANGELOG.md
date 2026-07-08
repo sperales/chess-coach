@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## v1.1.6 - Security and documentation hardening
+
+### Changed
+
+- Started the v1.1.6 hardening release notes.
+- Aligned README, AGENTS and ROADMAP with the v1.1.5 stable baseline.
+- Documented that v1.1.6 is a hardening release before v1.2.0 Openings Lab.
+- Updated chess board documentation to reflect local PNG piece sets in review and training boards.
+
+### Database
+
+- No SQL migration required for the documentation alignment PR.
+
 ## v1.1.5 - Training Center hints
 
 ### Changed
