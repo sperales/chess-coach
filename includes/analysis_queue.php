@@ -246,8 +246,9 @@ function process_analysis_job(int $analysisId, int $userId): array {
     db()->prepare('UPDATE game_analysis SET status="done", completed_at=NOW(), updated_at=NOW(), blunders=?, mistakes=?, inaccuracies=?, current_ply=?, total_ply=? WHERE id=?')->execute([$counts['blunder'],$counts['mistake'],$counts['inaccuracy'],$total,$total,$analysisId]);
     return ['ok' => true, 'processed' => true, 'analysis_id' => $analysisId, 'status' => 'done', 'summary' => $counts];
   } catch (Throwable $e) {
-    db()->prepare('UPDATE game_analysis SET status="error", error_message=?, completed_at=NOW(), updated_at=NOW() WHERE id=?')->execute([$e->getMessage(), $analysisId]);
-    return ['ok' => false, 'processed' => true, 'error' => $e->getMessage(), 'analysis_id' => $analysisId, 'status' => 'error'];
+    $publicMessage = public_error_message($e);
+    db()->prepare('UPDATE game_analysis SET status="error", error_message=?, completed_at=NOW(), updated_at=NOW() WHERE id=?')->execute([$publicMessage, $analysisId]);
+    return ['ok' => false, 'processed' => true, 'error' => $publicMessage, 'analysis_id' => $analysisId, 'status' => 'error'];
   }
 }
 
@@ -379,7 +380,6 @@ function worker_summary(int $userId): array {
     'consecutive_errors' => $consecutive,
     'cron_protected' => $token !== '',
     'masked_token' => $maskedToken,
-    'token' => $token,
     'expected_interval_minutes' => $expectedMinutes,
     'next_run_estimated_at' => $nextRun,
     'worker_path' => 'worker/analyze_queue.php',

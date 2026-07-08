@@ -107,7 +107,7 @@ function renderEngine(data) {
   el.innerHTML = `
     <div class="engine-line"><strong>Stockfish</strong> ${s.ok ? '<span class="ok-mini">Disponible</span>' : '<span class="bad-mini">No disponible</span>'}</div>
     <div class="muted">proc_open: ${s.proc_open ? 'sí' : 'no'}</div>
-    <div class="muted engine-path">${qEscape(s.path || 'Sin ruta configurada')}</div>
+    <div class="muted engine-path">${s.path_configured ? 'Ruta configurada' : 'Sin ruta configurada'}</div>
   `;
 }
 
@@ -129,7 +129,7 @@ function renderWorkerSummary(data) {
   const endpoint = document.getElementById('workerEndpoint');
   if (endpoint) {
     const origin = window.location.origin + window.location.pathname.replace(/analysis-pending\.php.*$/, '');
-    endpoint.textContent = `${origin}${worker.worker_path || 'worker/analyze_queue.php'}?token=${worker.token || '***'}`;
+    endpoint.textContent = `${origin}${worker.worker_path || 'worker/analyze_queue.php'}?token=***`;
   }
 }
 

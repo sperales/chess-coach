@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/helpers.php';
 
 function smart_tag_fen_side_to_move(?string $fen): string {
   $parts = preg_split('/\s+/', trim((string)$fen));
@@ -278,7 +279,7 @@ function smart_tag_backfill_batch(int $userId, int $limit = 10, string $trigger 
     } catch (Throwable $e) {
       $processed++;
       $errors++;
-      $messages[] = $e->getMessage();
+      $messages[] = public_error_message($e);
     }
   }
 

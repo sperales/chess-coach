@@ -4,9 +4,10 @@ require_once __DIR__.'/config.php';
 function stockfish_available(): array {
   $cfg = engine_config();
   $path = $cfg['stockfish_path'] ?? '';
+  $pathConfigured = is_string($path) && $path !== '';
   return [
-    'ok' => function_exists('proc_open') && is_string($path) && $path !== '' && is_file($path) && is_executable($path),
-    'path' => $path,
+    'ok' => function_exists('proc_open') && $pathConfigured && is_file($path) && is_executable($path),
+    'path_configured' => $pathConfigured,
     'proc_open' => function_exists('proc_open')
   ];
 }

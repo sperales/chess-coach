@@ -23,6 +23,7 @@ try{
   $st=db()->prepare('INSERT INTO chesscom_imports (user_id,chesscom_username,requested_limit,imported_count,skipped_count,status,created_at) VALUES (?,?,?,?,?,?,NOW())'); $st->execute([$u['id'],$username,$limit,$added,$skipped,'done']);
   json_response(['ok'=>true,'added'=>$added,'skipped'=>$skipped,'found'=>count($pgns)]);
 }catch(Throwable $e){
-  try{ $st=db()->prepare('INSERT INTO chesscom_imports (user_id,chesscom_username,requested_limit,status,error_message,created_at) VALUES (?,?,?,?,?,NOW())'); $st->execute([$u['id'],$username,$limit,'error',$e->getMessage()]); }catch(Throwable $x){}
-  json_response(['ok'=>false,'error'=>$e->getMessage()]);
+  $publicError = public_error_message($e, 'No se pudo completar la importación desde Chess.com.');
+  try{ $st=db()->prepare('INSERT INTO chesscom_imports (user_id,chesscom_username,requested_limit,status,error_message,created_at) VALUES (?,?,?,?,?,NOW())'); $st->execute([$u['id'],$username,$limit,'error',$publicError]); }catch(Throwable $x){}
+  json_response(['ok'=>false,'error'=>$publicError]);
 }
