@@ -8,10 +8,12 @@
 - Aligned README, AGENTS and ROADMAP with the v1.1.5 stable baseline.
 - Documented that v1.1.6 is a hardening release before v1.2.0 Openings Lab.
 - Updated chess board documentation to reflect local PNG piece sets in review and training boards.
+- Added an encoding audit covering repository Markdown, PHP, JavaScript, CSS and SQL text files.
+- Confirmed repository text files are valid UTF-8 and no real mojibake cleanup is required.
 
 ### Database
 
-- No SQL migration required for the documentation alignment PR.
+- No SQL migration required for the documentation alignment or encoding audit PRs.
 
 ## v1.1.5 - Training Center hints
 
