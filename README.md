@@ -14,9 +14,11 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v0.9.0**
+Current stable baseline: **v1.1.5**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
+
+The next maintenance release is **v1.1.6**, focused on security, documentation, encoding and architecture hardening before starting the v1.2.0 Openings Lab line.
 
 ---
 
@@ -124,7 +126,18 @@ Includes:
 - ACPL
 - Move classification
 - Best move hint
-- Unicode chess pieces restored in v0.8.5 for stability
+- Local transparent PNG pieces with selectable piece sets
+
+### Training Center
+
+- Exercises generated from analyzed games
+- Recommended and type-based exercise lists
+- Interactive board solver
+- Hints that reveal only the origin square
+- Legal move indicators
+- Attempts, skip/fail/solve tracking
+- Automatic active training sessions
+- Link back to the original review position
 
 ### Smart Tags
 
@@ -623,11 +636,12 @@ Current planned direction:
 - Recommended games to review
 - Strengths and detected patterns
 
-### v1.1.0 — Training Center
+### Completed in v1.1.x — Training Center
 
 - Exercises generated from personal games
 - Pattern-based practice
 - Training history
+- Interactive solver, hints, sessions and selectable board pieces
 
 ### v1.2.0 — Openings Lab
 
@@ -682,7 +696,7 @@ Suggested purpose:
 - The app is deployed manually to shared hosting.
 - The worker is executed through HTTP GET cron.
 - Stockfish runs server-side.
-- The app currently uses Unicode chess pieces in the review board for stability.
+- The app currently uses local transparent PNG chess pieces in the review and training boards, with selectable piece sets from the profile page.
 - The repository tracks `config/.htaccess` for config protection.
 - The repository does not track `worker/.htaccess`; the HTTP cron worker must remain reachable and is protected by token.
 - The repository tracks `storage/logs/.gitkeep`; real log files remain ignored.
