@@ -531,6 +531,7 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
   $solution = strtolower(trim((string)($exercise['solution_uci'] ?? '')));
   $finalMove = end($moves);
   $isSolved = in_array($solution, $moves, true);
+  $isExhausted = count($moves) >= 5;
   $result = $isSolved ? 'solved' : 'failed';
   $durationMs = max(0, min(86400000, $durationMs));
   $sessionId = $sessionId && training_session_is_active($sessionId, $userId) ? $sessionId : null;
@@ -554,7 +555,7 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
     $exercise['difficulty'] ?? null,
   ]);
 
-  if ($isSolved) {
+  if ($isSolved || $isExhausted) {
     db()->prepare('UPDATE training_exercises SET resolved_at=COALESCE(resolved_at,NOW()), last_attempt_at=NOW(), updated_at=NOW() WHERE id=? AND user_id=?')->execute([$exerciseId, $userId]);
   } else {
     db()->prepare('UPDATE training_exercises SET last_attempt_at=NOW(), updated_at=NOW() WHERE id=? AND user_id=?')->execute([$exerciseId, $userId]);
@@ -567,7 +568,7 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
     'solved' => $isSolved,
     'attempts_count' => count($moves),
     'remaining_attempts' => max(0, 5 - count($moves)),
-    'solution_uci' => $isSolved || count($moves) >= 5 ? $solution : null,
+    'solution_uci' => $isSolved || $isExhausted ? $solution : null,
     'feedback' => $isSolved ? ($exercise['feedback_success'] ?? training_feedback_success((string)$exercise['exercise_type'])) : ($exercise['feedback_failure'] ?? training_feedback_failure((string)$exercise['exercise_type'])),
     'exercise' => $updated,
     'stats' => training_stats_for_user($userId),

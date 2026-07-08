@@ -9,6 +9,7 @@
 - Added a visible per-exercise timer in the Training Center solver.
 - Added red origin/destination highlights when the solution is revealed after 5 failed attempts.
 - Added legal destination hints when selecting a piece in Training Center exercises.
+- Marked Training Center exercises as closed after 5 failed attempts so they no longer appear as pending recommendations.
 - Changed the review move list to show White and Black moves side by side in one row per full move.
 - Bumped `config/version.php` to `1.1.4`.
 - Updated the service worker cache name to `chess-coach-v1.1.4-training-legal-targets`.
