@@ -1,4 +1,4 @@
-﻿# Chess Coach v1.2.3 Update Notes
+# Chess Coach v1.1.3 Update Notes
 
 ## Release type
 
@@ -22,8 +22,8 @@ This release adds rank and file coordinates around the review board while preser
 - `review.php` now shows board coordinates next to the board.
 - Files are shown below the board and ranks are shown on the left side.
 - Coordinates update when the board orientation changes.
-- The app version is bumped to `1.2.3`.
-- The PWA service worker cache name is bumped to `chess-coach-v1.2.3-review-board-coordinates`.
+- The app version is bumped to `1.1.3`.
+- The PWA service worker cache name is bumped to `chess-coach-v1.1.3-review-board-coordinates`.
 
 ## Technical changes
 
@@ -41,7 +41,7 @@ No SQL migration is required.
 The service worker cache name is now:
 
 ```text
-chess-coach-v1.2.3-review-board-coordinates
+chess-coach-v1.1.3-review-board-coordinates
 ```
 
 ## Local verification commands
@@ -62,5 +62,5 @@ git diff --check
 - Click `Girar tablero` and confirm file/rank coordinates reverse correctly.
 - Navigate between moves and confirm coordinates remain visible and stable.
 - Confirm board highlights and piece rendering still work.
-- Confirm `config/version.php` displays `1.2.3`.
+- Confirm `config/version.php` displays `1.1.3`.
 - Confirm no real credentials were committed.
