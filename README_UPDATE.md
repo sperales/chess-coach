@@ -43,6 +43,7 @@ It also includes small dashboard label fixes.
 - Applies the selected piece set in `review.php` and `training.php`.
 - Changes the dashboard recent-summary error label from `B/M/I` to `B/E/I`.
 - Changes the recommended-games table third column from `Ritmo` to `Accuracy`.
+- Changes the home games block title between `Últimas partidas` and `Partidas recomendadas`.
 - The app version is bumped to `1.1.5`.
 - The PWA service worker cache name is bumped to `chess-coach-v1.1.5-dashboard-labels`.
 

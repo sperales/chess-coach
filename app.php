@@ -65,7 +65,7 @@ $greeting = $hour < 12 ? 'Buenos días' : ($hour < 21 ? 'Buenas tardes' : 'Buena
   <section class="home-grid">
     <section class="panel" id="partidas">
       <div class="panel-head">
-        <h2>Partidas</h2>
+        <h2 id="gamesPanelTitle">Últimas partidas</h2>
         <div class="panel-actions">
           <button class="secondary small active" type="button" id="latestTab" onclick="setGamesPanelMode('latest')">Últimas</button>
           <button class="secondary small" type="button" id="recommendedTab" onclick="setGamesPanelMode('recommended')">Recomendadas</button>

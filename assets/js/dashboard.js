@@ -197,6 +197,10 @@ function renderStrengths() {
 function renderRows() {
   const el = document.getElementById('rows');
   if (!el) return;
+  const panelTitle = document.getElementById('gamesPanelTitle');
+  if (panelTitle) {
+    panelTitle.textContent = gamesPanelMode === 'recommended' ? 'Partidas recomendadas' : 'Últimas partidas';
+  }
   const thirdColumnHeader = document.getElementById('gamesThirdColumnHeader');
   if (thirdColumnHeader) {
     thirdColumnHeader.textContent = gamesPanelMode === 'recommended' ? 'Accuracy' : 'Ritmo';
