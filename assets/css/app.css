@@ -2139,6 +2139,9 @@ select {
   background:#3f5136aa;
   pointer-events:none
 }
+.training-board .sq.hint {
+  box-shadow:inset 0 0 0 4px #ffd45a
+}
 .training-board .sq.solution {
   background:#f56f6f
 }
@@ -2196,6 +2199,15 @@ select {
 }
 .training-controls {
   grid-template-columns:repeat(4,minmax(0,1fr))
+}
+.training-controls[hidden] {
+  display:none
+}
+.training-controls .btn {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center
 }
 @media(max-width:980px) {
   .trainer-grid {

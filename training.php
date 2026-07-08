@@ -94,10 +94,14 @@ $trainingJsVersion = (string)filemtime(__DIR__.'/assets/js/training.js');
         </label>
         <p id="trainingFeedback" class="training-feedback"></p>
         <div class="training-attempts" id="trainingAttempts"></div>
-        <div class="review-controls training-controls">
+        <div class="review-controls training-controls" id="trainingActiveControls">
           <button type="button" onclick="submitTrainingMove()" id="trainingSubmitBtn" disabled>Comprobar</button>
-          <button type="button" onclick="clearTrainingSelection()">Reintentar selección</button>
-          <button type="button" onclick="skipTrainingExercise()">Saltar</button>
+          <button type="button" onclick="showTrainingHint()" id="trainingHintBtn">Pista</button>
+          <button type="button" onclick="skipTrainingExercise()" id="trainingSkipBtn">Saltar</button>
+        </div>
+        <div class="review-controls training-controls" id="trainingDoneControls" hidden>
+          <button type="button" onclick="openNextTrainingExercise()">Siguiente</button>
+          <button class="secondary" type="button" onclick="closeTrainingSolver()">Cerrar</button>
           <a class="btn secondary" href="#" id="trainingReviewLink">Ver partida</a>
         </div>
       </div>
