@@ -18,7 +18,7 @@ This release does not add new product features. It stabilizes the v1.1.x Trainin
 
 ## Changed files
 
-The v1.1.6 documentation and encoding-audit PRs have touched:
+The v1.1.6 documentation, encoding-audit and API-ownership PRs have touched:
 
 - `AGENTS.md`
 - `CHANGELOG.md`
@@ -26,6 +26,8 @@ The v1.1.6 documentation and encoding-audit PRs have touched:
 - `README.md`
 - `README_UPDATE.md`
 - `ROADMAP.md`
+- `includes/analysis_queue.php`
+- `includes/training.php`
 
 ## Encoding audit
 
@@ -39,9 +41,17 @@ Result:
 
 See `ENCODING_AUDIT.md` for the audit scope and database-data note.
 
+## API ownership review
+
+The v1.1.6 API ownership review tightened derived-resource checks without changing visible product behavior:
+
+- Training exercise tags are now fetched through `training_exercises.user_id`, not only by exercise IDs already scoped elsewhere.
+- Analysis queue "missing games" checks now scope the latest-analysis subquery by the current user.
+- Worker history can still show global worker runs, but game details are joined only when the related analysis belongs to the current user.
+
 ## SQL migration
 
-No SQL migration is required for the documentation alignment or encoding audit PRs.
+No SQL migration is required for the documentation alignment, encoding audit or API ownership PRs.
 
 ## Service worker
 

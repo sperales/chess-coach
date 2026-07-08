@@ -384,17 +384,18 @@ function training_type_counts_for_user(int $userId): array {
   return $counts;
 }
 
-function training_exercise_tags_for_ids(array $exerciseIds): array {
+function training_exercise_tags_for_ids(array $exerciseIds, int $userId): array {
   $exerciseIds = array_values(array_unique(array_map('intval', $exerciseIds)));
   if (!$exerciseIds) return [];
   $placeholders = implode(',', array_fill(0, count($exerciseIds), '?'));
   $sql = "SELECT tet.exercise_id, tet.tag_code, tet.source, d.label, d.category, d.severity
           FROM training_exercise_tags tet
+          JOIN training_exercises te ON te.id=tet.exercise_id
           JOIN smart_tag_definitions d ON d.code=tet.tag_code
-          WHERE tet.exercise_id IN ($placeholders)
+          WHERE te.user_id=? AND tet.exercise_id IN ($placeholders)
           ORDER BY FIELD(d.severity,'critical','high','medium','low','info'), d.label ASC";
   $st = db()->prepare($sql);
-  $st->execute($exerciseIds);
+  $st->execute(array_merge([$userId], $exerciseIds));
   $byExercise = [];
   foreach ($st->fetchAll() as $tag) {
     $byExercise[(int)$tag['exercise_id']][] = $tag;
@@ -464,7 +465,7 @@ function training_list_exercises(int $userId, string $type = 'recommended', stri
   $st->execute(array_merge([$userId], $params));
   $items = $st->fetchAll();
 
-  $tagsByExercise = training_exercise_tags_for_ids(array_column($items, 'id'));
+  $tagsByExercise = training_exercise_tags_for_ids(array_column($items, 'id'), $userId);
   foreach ($items as &$item) {
     $item['id'] = (int)$item['id'];
     $item['game_id'] = (int)$item['game_id'];
@@ -518,7 +519,7 @@ function training_exercise_for_user(int $exerciseId, int $userId): ?array {
   $item = $st->fetch();
   if (!$item) return null;
 
-  $tagsByExercise = training_exercise_tags_for_ids([(int)$item['id']]);
+  $tagsByExercise = training_exercise_tags_for_ids([(int)$item['id']], $userId);
   $item['id'] = (int)$item['id'];
   $item['game_id'] = (int)$item['game_id'];
   $item['analysis_id'] = (int)$item['analysis_id'];

@@ -10,10 +10,12 @@
 - Updated chess board documentation to reflect local PNG piece sets in review and training boards.
 - Added an encoding audit covering repository Markdown, PHP, JavaScript, CSS and SQL text files.
 - Confirmed repository text files are valid UTF-8 and no real mojibake cleanup is required.
+- Tightened Training Center exercise-tag loading so tags are scoped through the current user's exercises.
+- Tightened analysis queue ownership checks for missing-game detection and worker history game details.
 
 ### Database
 
-- No SQL migration required for the documentation alignment or encoding audit PRs.
+- No SQL migration required for the documentation alignment, encoding audit or API ownership PRs.
 
 ## v1.1.5 - Training Center hints
 
