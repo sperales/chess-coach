@@ -1,3 +1,11 @@
+window.chessCoachCsrfHeaders = function(headers) {
+  const nextHeaders = Object.assign({}, headers || {});
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  const token = window.CHESS_COACH_CSRF || (meta ? meta.getAttribute('content') : '');
+  if (token) nextHeaders['X-CSRF-Token'] = token;
+  return nextHeaders;
+};
+
 document.addEventListener('click', (ev) => {
   const btn = document.getElementById('menuBtn');
   const menu = document.getElementById('userMenu');

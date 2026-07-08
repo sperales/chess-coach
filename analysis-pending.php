@@ -104,7 +104,7 @@
   </section>
 </main>
 </div>
-<script>window.CHESS_COACH_CONFIG = Object.assign(window.CHESS_COACH_CONFIG || {}, { analysisPerPage: <?php echo (int)(app_config()['analysis_per_page'] ?? 50); ?> });</script>
+<script>window.CHESS_COACH_CONFIG = Object.assign(window.CHESS_COACH_CONFIG || {}, { analysisPerPage: <?php echo (int)(app_config()['analysis_per_page'] ?? 50); ?> }); window.CHESS_COACH_CSRF = <?= json_encode(csrf_token(), JSON_UNESCAPED_SLASHES) ?>;</script>
 <script src="assets/js/layout.js?v=<?=e($layoutJsVersion)?>"></script>
 <script src="assets/js/analysis_queue.js?v=<?=e($analysisJsVersion)?>"></script>
 </body>

@@ -18,7 +18,7 @@ This release does not add new product features. It stabilizes the v1.1.x Trainin
 
 ## Changed files
 
-The v1.1.6 documentation, encoding-audit and API-ownership PRs have touched:
+The v1.1.6 documentation, encoding-audit, API-ownership and CSRF-hardening PRs have touched:
 
 - `AGENTS.md`
 - `CHANGELOG.md`
@@ -26,8 +26,27 @@ The v1.1.6 documentation, encoding-audit and API-ownership PRs have touched:
 - `README.md`
 - `README_UPDATE.md`
 - `ROADMAP.md`
+- `analysis-pending.php`
+- `api/analyze.php`
+- `api/chesscom.php`
+- `api/games.php`
+- `api/training.php`
+- `app.php`
+- `assets/js/analysis_queue.js`
+- `assets/js/app.js`
+- `assets/js/chesscom.js`
+- `assets/js/dashboard.js`
+- `assets/js/games.js`
+- `assets/js/layout.js`
+- `assets/js/training.js`
+- `games.php`
 - `includes/analysis_queue.php`
+- `includes/helpers.php`
 - `includes/training.php`
+- `import-chesscom.php`
+- `profile.php`
+- `service-worker.js`
+- `training.php`
 
 ## Encoding audit
 
@@ -49,6 +68,22 @@ The v1.1.6 API ownership review tightened derived-resource checks without changi
 - Analysis queue "missing games" checks now scope the latest-analysis subquery by the current user.
 - Worker history can still show global worker runs, but game details are joined only when the related analysis belongs to the current user.
 
+## CSRF hardening
+
+Authenticated mutating actions now require a session CSRF token.
+
+Covered in this PR:
+
+- Training Center session, attempt and skip actions.
+- Analysis queue mutations, manual worker actions and backfills.
+- Manual PGN import.
+- Chess.com import.
+- Profile password and piece-set forms.
+
+The login form is intentionally not covered in v1.1.6, and the HTTP GET cron worker remains protected by its existing secret token.
+
+Training Center GET endpoints now only read the current active session. Creating or renewing a training session happens through POST actions protected by CSRF.
+
 ## SQL migration
 
 No SQL migration is required for the documentation alignment, encoding audit or API ownership PRs.
@@ -57,7 +92,13 @@ No SQL migration is required for the documentation alignment, encoding audit or 
 
 No service worker cache change is required for documentation-only or audit-only PRs.
 
-The final v1.1.6 release readiness PR will update `service-worker.js`.
+The CSRF hardening PR updates the cache name to:
+
+```text
+chess-coach-v1.1.6-csrf-hardening
+```
+
+The final v1.1.6 release readiness PR may update `service-worker.js` again for the final release cache name.
 
 ## Local verification commands
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chess-coach-v1.1.5-dashboard-labels';
+const CACHE_NAME = 'chess-coach-v1.1.6-csrf-hardening';
 const ASSETS = [
   './',
   './app.php',

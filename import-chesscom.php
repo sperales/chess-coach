@@ -8,4 +8,4 @@
   </section>
 </main>
 </div>
-<script src="assets/js/layout.js"></script><script src="assets/js/app.js"></script><script src="assets/js/chesscom.js"></script></body></html>
+<?= csrf_script() ?><script src="assets/js/layout.js"></script><script src="assets/js/app.js"></script><script src="assets/js/chesscom.js"></script></body></html>

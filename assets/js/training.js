@@ -260,7 +260,7 @@ async function startTrainingSession() {
   const filters = selectedTrainingFilters();
   const response = await fetch('api/training.php?action=session_start', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ type: filters.type || 'recommended' })
   });
   const data = await response.json();
@@ -277,7 +277,7 @@ async function newTrainingSession() {
     const filters = selectedTrainingFilters();
     const response = await fetch('api/training.php?action=session_start', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ type: filters.type || 'recommended', force_new: true })
     });
     const data = await response.json();
@@ -299,7 +299,7 @@ async function endTrainingSession(status = 'completed') {
   if (!activeTrainingSession) return;
   const response = await fetch('api/training.php?action=session_end', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ session_id: activeTrainingSession.id, status })
   });
   const data = await response.json();
@@ -806,7 +806,7 @@ async function submitTrainingMove() {
   selectedTrainingSquare = '';
   const response = await fetch('api/training.php?action=attempt', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({
       id: activeExercise.id,
       session_id: activeTrainingSession ? activeTrainingSession.id : 0,
@@ -866,7 +866,7 @@ async function skipTrainingExercise() {
     await ensureTrainingSession();
     const response = await fetch('api/training.php?action=skip', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ id: activeExercise.id, session_id: activeTrainingSession.id })
     });
     const data = await response.json();

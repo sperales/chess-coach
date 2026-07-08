@@ -6,6 +6,10 @@ require_once __DIR__.'/../includes/training.php';
 $u = require_login();
 $userId = (int)$u['id'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
+$mutatingActions = ['session_start', 'session_end', 'attempt', 'skip'];
+if (in_array($action, $mutatingActions, true)) {
+  require_post_csrf();
+}
 
 if ($action === 'list' || $action === 'dashboard') {
   $type = (string)($_GET['type'] ?? 'recommended');
@@ -13,14 +17,14 @@ if ($action === 'list' || $action === 'dashboard') {
   $page = max(1, (int)($_GET['page'] ?? 1));
   $perPage = max(1, min(100, (int)($_GET['per_page'] ?? 20)));
   $list = training_list_exercises($userId, $type, $status, $page, $perPage);
-  $session = training_ensure_active_session($userId, $type, 'manual');
+  $session = training_active_session($userId, false);
 
   json_response([
     'ok' => true,
     'types' => training_exercise_types(),
     'type_counts' => training_type_counts_for_user($userId),
     'stats' => training_stats_for_user($userId),
-    'session' => $session['session'] ?? null,
+    'session' => $session,
     'exercises' => $list['items'],
     'pagination' => $list['pagination'],
     'filters' => $list['filters'],
@@ -28,13 +32,13 @@ if ($action === 'list' || $action === 'dashboard') {
 }
 
 if ($action === 'stats') {
-  $session = training_ensure_active_session($userId, 'recommended', 'manual');
+  $session = training_active_session($userId, false);
   json_response([
     'ok' => true,
     'types' => training_exercise_types(),
     'type_counts' => training_type_counts_for_user($userId),
     'stats' => training_stats_for_user($userId),
-    'session' => $session['session'] ?? null,
+    'session' => $session,
   ]);
 }
 

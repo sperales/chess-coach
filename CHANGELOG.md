@@ -12,6 +12,11 @@
 - Confirmed repository text files are valid UTF-8 and no real mojibake cleanup is required.
 - Tightened Training Center exercise-tag loading so tags are scoped through the current user's exercises.
 - Tightened analysis queue ownership checks for missing-game detection and worker history game details.
+- Added session-based CSRF protection for authenticated mutating actions.
+- Added CSRF tokens to profile forms and JavaScript POST requests.
+- Kept the login form and HTTP GET cron worker out of CSRF scope for this hardening pass.
+- Kept Training Center GET endpoints read-only for session creation; session changes now go through CSRF-protected POST actions.
+- Updated the service worker cache name to `chess-coach-v1.1.6-csrf-hardening`.
 
 ### Database
 

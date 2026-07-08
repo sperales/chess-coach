@@ -15,6 +15,10 @@ $pendingTrainingExercises = training_backfill_pending_count((int)$u['id']);
 $pieceSets = available_piece_sets();
 $currentPieceSet = normalize_piece_set($u['piece_set'] ?? null);
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  require_csrf_token();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') === 'change_password') {
   $cur = $_POST['current_password'] ?? '';
   $new = $_POST['new_password'] ?? '';
@@ -69,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
       <?php if ($err): ?><p class="error"><?=e($err)?></p><?php endif; ?>
       <form method="post">
         <input type="hidden" name="profile_action" value="change_password">
+        <?= csrf_field() ?>
         <p><input type="password" name="current_password" placeholder="Contraseña actual" required></p>
         <p><input type="password" name="new_password" placeholder="Nueva contraseña" required></p>
         <p><input type="password" name="new_password2" placeholder="Repetir nueva contraseña" required></p>
@@ -82,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
       <p class="muted">Elige el set de piezas que se usará en revisión y entrenamiento.</p>
       <form method="post">
         <input type="hidden" name="profile_action" value="change_piece_set">
+        <?= csrf_field() ?>
         <div class="piece-set-options">
           <?php foreach ($pieceSets as $set): ?>
             <label class="piece-set-option">
@@ -121,6 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
     </section>
   </main>
 </div>
+<?= csrf_script() ?>
 <script src="assets/js/layout.js?v=<?=e($layoutJsVersion)?>"></script>
 <script>
 async function runSmartTagBackfill() {
@@ -132,7 +139,7 @@ async function runSmartTagBackfill() {
   try {
     const r = await fetch('api/analyze.php?action=smart_tags_backfill', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ limit: 20 })
     });
     const data = await r.json();
@@ -155,7 +162,7 @@ async function runTrainingBackfill() {
   try {
     const r = await fetch('api/analyze.php?action=training_backfill', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ limit: 10 })
     });
     const data = await r.json();

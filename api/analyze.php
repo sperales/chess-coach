@@ -6,6 +6,21 @@ require_once __DIR__.'/../includes/analysis_queue.php';
 $u = require_login();
 $userId = (int)$u['id'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
+$mutatingActions = [
+  'queue',
+  'queue_missing',
+  'retry_errors',
+  'cancel_waiting',
+  'cancel',
+  'process_next',
+  'run_worker',
+  'smart_tags_backfill',
+  'training_backfill',
+  'process',
+];
+if (in_array($action, $mutatingActions, true)) {
+  require_post_csrf();
+}
 
 function queue_payload(int $userId, int $page = 1, int $perPage = 50): array {
   $perPage = max(1, min(200, $perPage));

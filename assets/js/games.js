@@ -172,7 +172,7 @@ function gameTagsCell(g) {
 }
 
 async function analyzeGame(id, force = false) {
-  const r = await fetch('api/analyze.php?action=queue', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: Number(id), force }) });
+  const r = await fetch('api/analyze.php?action=queue', { method: 'POST', headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ id: Number(id), force }) });
   const j = await r.json();
   if (j.ok) location.href = 'analysis-pending.php';
 }

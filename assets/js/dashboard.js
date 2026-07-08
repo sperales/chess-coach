@@ -350,7 +350,7 @@ async function analyzeGame(id, force = false) {
   try {
     const response = await fetch('api/analyze.php?action=queue', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ id, force })
     });
     const data = await response.json();
