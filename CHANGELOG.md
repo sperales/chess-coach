@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## v1.2.3 - Review board coordinates
+
+### Added
+
+- Added rank and file coordinates next to the review board.
+- Kept coordinates synchronized with board orientation and the manual board flip control.
+- Bumped `config/version.php` to `1.2.3`.
+- Updated the service worker cache name to `chess-coach-v1.2.3-review-board-coordinates`.
+
+### Database
+
+- No SQL migration required.
+
 ## v1.1.2 - Board highlights
 
 ### Changed

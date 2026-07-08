@@ -1,10 +1,10 @@
-﻿# Chess Coach v1.1.2 Update Notes
+﻿# Chess Coach v1.2.3 Update Notes
 
 ## Release type
 
-Board highlight and Training Center selection polish release.
+Review board coordinate polish release.
 
-This release improves board readability in review and training by highlighting moves directly through square colors instead of overlay markers.
+This release adds rank and file coordinates around the review board while preserving the current board rendering and orientation behavior.
 
 ## Changed files
 
@@ -12,24 +12,25 @@ This release improves board readability in review and training by highlighting m
 - `CHANGELOG.md`
 - `README_UPDATE.md`
 - `assets/css/app.css`
-- `assets/js/training.js`
+- `assets/js/review.js`
 - `config/version.php`
+- `review.php`
 - `service-worker.js`
 
 ## User-facing changes
 
-- `review.php` now highlights the played move by changing the color of the origin and destination squares.
-- `training.php` uses the same square-color highlight for the previous move.
-- `training.php` highlights the user's selected origin and destination squares in light blue.
-- `training.php` previews the selected move by rendering the piece on the destination square before submitting.
-- The app version is bumped to `1.1.2`.
-- The PWA service worker cache name is bumped to `chess-coach-v1.1.2-board-highlights`.
+- `review.php` now shows board coordinates next to the board.
+- Files are shown below the board and ranks are shown on the left side.
+- Coordinates update when the board orientation changes.
+- The app version is bumped to `1.2.3`.
+- The PWA service worker cache name is bumped to `chess-coach-v1.2.3-review-board-coordinates`.
 
 ## Technical changes
 
-- Replaces board highlight pseudo-element overlays with square background colors in `assets/css/app.css`.
-- Adds a Training Center board preview grid in `assets/js/training.js` without mutating the stored FEN or server-side move validation.
-- Keeps review analysis, exercise solving and server-side validation unchanged.
+- Wraps the review board in a coordinate frame without changing the 8x8 board grid.
+- Adds coordinate rendering to `assets/js/review.js` based on `boardOrientation`.
+- Adds responsive coordinate styles in `assets/css/app.css`.
+- Keeps move rendering, highlights, FEN reconstruction and review data unchanged.
 
 ## SQL migration
 
@@ -40,7 +41,7 @@ No SQL migration is required.
 The service worker cache name is now:
 
 ```text
-chess-coach-v1.1.2-board-highlights
+chess-coach-v1.2.3-review-board-coordinates
 ```
 
 ## Local verification commands
@@ -48,7 +49,6 @@ chess-coach-v1.1.2-board-highlights
 ```powershell
 Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
 node --check assets\js\review.js
-node --check assets\js\training.js
 node --check service-worker.js
 git diff --check
 ```
@@ -56,12 +56,11 @@ git diff --check
 ## Manual verification checklist
 
 - Open `review.php` for an analyzed game.
-- Confirm the played move is highlighted by full square color.
-- Open `training.php` and start an exercise.
-- Confirm the previous move is highlighted by full square color.
-- Select an origin and destination square.
-- Confirm both selected squares are highlighted in light blue.
-- Confirm the selected piece is previewed on the destination square before submitting.
-- Submit a move and confirm solving/feedback still works.
-- Confirm `config/version.php` displays `1.1.2`.
+- Confirm file letters appear below the board.
+- Confirm rank numbers appear on the left side of the board.
+- Confirm coordinates match white orientation when the board is shown from White's side.
+- Click `Girar tablero` and confirm file/rank coordinates reverse correctly.
+- Navigate between moves and confirm coordinates remain visible and stable.
+- Confirm board highlights and piece rendering still work.
+- Confirm `config/version.php` displays `1.2.3`.
 - Confirm no real credentials were committed.

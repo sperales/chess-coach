@@ -70,7 +70,11 @@
         <div class="smart-tag-list move-tags" id="moveSmartTags"></div>
       </div>
       <div class="board-wrap">
-        <div class="chess-board" id="reviewBoard"></div>
+        <div class="board-coordinate-frame" id="reviewBoardFrame">
+          <div class="board-rank-labels" id="reviewBoardRanks" aria-hidden="true"></div>
+          <div class="chess-board" id="reviewBoard"></div>
+          <div class="board-file-labels" id="reviewBoardFiles" aria-hidden="true"></div>
+        </div>
       </div>
       <div class="review-controls">
         <button class="secondary" onclick="prevMove()">‹ Anterior</button>
