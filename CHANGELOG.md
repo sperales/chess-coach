@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## v1.1.5 - Training Center hints
+
+### Changed
+
+- Added a `Pista` button that highlights/selects the origin square of the correct move.
+- Removed the `Reintentar selección` button from Training Center exercise controls.
+- Added post-exercise actions: `Siguiente`, `Cerrar` and `Ver partida`.
+- Hid `Comprobar`, `Pista` and `Saltar` after solving or exhausting an exercise.
+- Exposed only `hint_from` for pending exercises so hints do not reveal the full solution.
+- Bumped `config/version.php` to `1.1.5`.
+- Updated the service worker cache name to `chess-coach-v1.1.5-training-hints`.
+
+### Database
+
+- No SQL migration required.
+
 ## v1.1.4 - Training Center polish
 
 ### Changed

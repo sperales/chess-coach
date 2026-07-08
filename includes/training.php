@@ -403,6 +403,8 @@ function training_exercise_tags_for_ids(array $exerciseIds): array {
 }
 
 function training_public_exercise(array $item, bool $includeSolution = false): array {
+  $solution = strtolower(trim((string)($item['solution_uci'] ?? '')));
+  $item['hint_from'] = preg_match('/^[a-h][1-8]/', $solution) ? substr($solution, 0, 2) : null;
   if (!$includeSolution) {
     unset($item['solution_uci'], $item['solution_san']);
   }

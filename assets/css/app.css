@@ -2139,6 +2139,9 @@ select {
   background:#3f5136aa;
   pointer-events:none
 }
+.training-board .sq.hint {
+  box-shadow:inset 0 0 0 4px #ffd45a
+}
 .training-board .sq.solution {
   background:#f56f6f
 }

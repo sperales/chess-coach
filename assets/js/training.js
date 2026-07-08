@@ -12,6 +12,7 @@ let attemptedTrainingMoves = [];
 let trainingStartedAt = 0;
 let trainingTimerInterval = null;
 let trainingUsedHint = false;
+let trainingHintFrom = '';
 let revealedTrainingSolution = '';
 
 const TRAINING_PIECE_IMAGES = {
@@ -241,6 +242,7 @@ async function openTrainingExercise(id) {
   attemptedTrainingMoves = [];
   selectedTrainingSquare = '';
   revealedTrainingSolution = '';
+  trainingHintFrom = '';
   trainingUsedHint = false;
   trainingStartedAt = Date.now();
   startTrainingExerciseTimer();
@@ -313,6 +315,7 @@ function closeTrainingSolver() {
   activeExercise = null;
   attemptedTrainingMoves = [];
   selectedTrainingSquare = '';
+  trainingHintFrom = '';
   revealedTrainingSolution = '';
 }
 
@@ -346,6 +349,7 @@ function renderTrainingSolver() {
   renderTrainingAttempts();
   renderTrainingBoard();
   updateTrainingDraft();
+  renderTrainingControls();
 }
 
 function startTrainingExerciseTimer() {
@@ -408,7 +412,8 @@ function renderTrainingBoard() {
       const previous = sq === previousFrom ? ' from' : sq === previousTo ? ' to' : '';
       const solution = sq === solutionFrom || sq === solutionTo ? ' solution' : '';
       const legal = legalTargets.has(sq) ? ' legal-target' : '';
-      html += `<button class="sq ${dark ? 'dark' : 'light'}${previous}${selected}${solution}${legal}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(displayGrid[r][file] || '')}</button>`;
+      const hint = sq === trainingHintFrom ? ' hint' : '';
+      html += `<button class="sq ${dark ? 'dark' : 'light'}${previous}${selected}${solution}${legal}${hint}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(displayGrid[r][file] || '')}</button>`;
     }
   }
   board.innerHTML = html;
@@ -719,7 +724,8 @@ function updateTrainingDraft() {
     else if (!complete) draft.textContent = `Origen seleccionado: ${selectedTrainingSquare}. Ahora elige destino.`;
     else draft.textContent = `Jugada seleccionada: ${trainingSelectedMoveText()}.`;
   }
-  if (submit) submit.disabled = !complete || attemptedTrainingMoves.length >= 5 || !!(activeExercise && activeExercise.resolved_at);
+  if (submit) submit.disabled = !complete || trainingExerciseFinished();
+  renderTrainingControls();
 }
 
 function trainingSelectedMoveText() {
@@ -750,6 +756,43 @@ function clearTrainingSelection() {
   selectedTrainingSquare = '';
   renderTrainingBoard();
   updateTrainingDraft();
+}
+
+function trainingExerciseFinished() {
+  return !!(activeExercise && (activeExercise.resolved_at || revealedTrainingSolution || attemptedTrainingMoves.length >= 5));
+}
+
+function showTrainingHint() {
+  if (!activeExercise || trainingExerciseFinished()) return;
+  const from = (activeExercise.hint_from || '').toString().toLowerCase();
+  if (from.length !== 2) return;
+  trainingUsedHint = true;
+  trainingHintFrom = from;
+  selectedTrainingSquare = trainingHintFrom;
+  renderTrainingBoard();
+  updateTrainingDraft();
+  renderTrainingControls();
+}
+
+function renderTrainingControls() {
+  const active = document.getElementById('trainingActiveControls');
+  const done = document.getElementById('trainingDoneControls');
+  const hint = document.getElementById('trainingHintBtn');
+  const finished = trainingExerciseFinished();
+  if (active) active.hidden = finished;
+  if (done) done.hidden = !finished;
+  if (hint) hint.disabled = finished || trainingUsedHint || !activeExercise || !(activeExercise.hint_from || '').toString();
+}
+
+async function openNextTrainingExercise() {
+  await loadTraining(currentTrainingPage);
+  const currentId = activeExercise ? Number(activeExercise.id || 0) : 0;
+  const next = trainingExercises.find(item => !item.resolved_at && Number(item.id || 0) !== currentId);
+  if (!next) {
+    closeTrainingSolver();
+    return;
+  }
+  await openTrainingExercise(next.id);
 }
 
 async function submitTrainingMove() {
