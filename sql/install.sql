@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   username VARCHAR(80) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
+  piece_set VARCHAR(80) NOT NULL DEFAULT 'Set 1',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
@@ -419,5 +420,6 @@ INSERT INTO app_migrations (version, description) VALUES
 ('0.8.5', 'Return to Unicode pieces and fix migration SQL'),
 ('0.9.0', 'Smart Tags schema and initial tag catalog'),
 ('0.9.2', 'Home motivational quotes catalog'),
-('1.1.0', 'Training Center foundation schema')
+('1.1.0', 'Training Center foundation schema'),
+('1.1.5', 'User-selectable chess piece sets')
 ON DUPLICATE KEY UPDATE version = version;

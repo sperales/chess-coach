@@ -2,6 +2,7 @@ let reviewData = null;
 let currentMoveIndex = 0;
 let showingBest = false;
 let boardOrientation = 'white';
+const PIECE_ASSET_PATH = (window.CHESS_COACH_PIECE_PATH || 'assets/pieces/Set%201/').toString();
 
 const PIECE_IMAGES = {
   P: 'wp.png', N: 'wn.png', B: 'wb.png', R: 'wr.png', Q: 'wq.png', K: 'wk.png',
@@ -297,7 +298,7 @@ function pieceImageHtml(pieceCode) {
   const file = PIECE_IMAGES[pieceCode];
   if (!file) return '';
   const colorClass = pieceCode === pieceCode.toUpperCase() ? 'white-piece' : 'black-piece';
-  return `<img class="board-piece ${colorClass}" src="assets/pieces/${file}" alt="${rEscape(PIECE_LABELS[pieceCode] || 'pieza')}" draggable="false">`;
+  return `<img class="board-piece ${colorClass}" src="${PIECE_ASSET_PATH}${file}" alt="${rEscape(PIECE_LABELS[pieceCode] || 'pieza')}" draggable="false">`;
 }
 
 function bindBoardControls() {

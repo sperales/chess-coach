@@ -4,7 +4,7 @@ require_once __DIR__ . '/db.php';
 start_app_session();
 function current_user(): ?array {
   if (empty($_SESSION['uid'])) return null;
-  $st = db()->prepare('SELECT id, username, created_at, updated_at FROM users WHERE id=?');
+  $st = db()->prepare('SELECT * FROM users WHERE id=?');
   $st->execute([$_SESSION['uid']]);
   $u = $st->fetch();
   return $u ?: null;

@@ -3,6 +3,7 @@ require_once __DIR__.'/includes/auth.php';
 require_once __DIR__.'/includes/helpers.php';
 require_once __DIR__.'/includes/smart_tags.php';
 require_once __DIR__.'/includes/training.php';
+require_once __DIR__.'/includes/pieces.php';
 
 $u = require_login();
 $msg = '';
@@ -11,6 +12,8 @@ $assetVersion = (string)filemtime(__DIR__.'/assets/css/app.css');
 $layoutJsVersion = (string)filemtime(__DIR__.'/assets/js/layout.js');
 $pendingSmartTags = smart_tag_backfill_pending_count((int)$u['id']);
 $pendingTrainingExercises = training_backfill_pending_count((int)$u['id']);
+$pieceSets = available_piece_sets();
+$currentPieceSet = normalize_piece_set($u['piece_set'] ?? null);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') === 'change_password') {
   $cur = $_POST['current_password'] ?? '';
@@ -29,6 +32,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
     $st = db()->prepare('UPDATE users SET password_hash=?, updated_at=NOW() WHERE id=?');
     $st->execute([password_hash($new, PASSWORD_DEFAULT), $u['id']]);
     $msg = 'Contraseña actualizada.';
+  }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') === 'change_piece_set') {
+  $selectedPieceSet = normalize_piece_set($_POST['piece_set'] ?? '');
+  if (!$selectedPieceSet) {
+    $err = 'No hay sets de piezas disponibles.';
+  } else {
+    $st = db()->prepare('UPDATE users SET piece_set=?, updated_at=NOW() WHERE id=?');
+    $st->execute([$selectedPieceSet, $u['id']]);
+    $u['piece_set'] = $selectedPieceSet;
+    $currentPieceSet = $selectedPieceSet;
+    $msg = 'Set de piezas actualizado.';
   }
 }
 ?>
@@ -58,6 +74,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
         <p><input type="password" name="new_password2" placeholder="Repetir nueva contraseña" required></p>
         <button>Cambiar contraseña</button>
         <a class="btn secondary" href="app.php">Volver</a>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Tablero</h2>
+      <p class="muted">Elige el set de piezas que se usará en revisión y entrenamiento.</p>
+      <form method="post">
+        <input type="hidden" name="profile_action" value="change_piece_set">
+        <div class="piece-set-options">
+          <?php foreach ($pieceSets as $set): ?>
+            <label class="piece-set-option">
+              <input type="radio" name="piece_set" value="<?=e($set)?>" <?= $set === $currentPieceSet ? 'checked' : '' ?>>
+              <span>
+                <strong><?=e($set)?></strong>
+                <img src="<?=e(piece_set_asset_path($set))?>wk.png" alt="<?=e($set)?>" draggable="false">
+              </span>
+            </label>
+          <?php endforeach; ?>
+        </div>
+        <button>Guardar set de piezas</button>
       </form>
     </section>
 
