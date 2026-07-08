@@ -77,7 +77,7 @@ $greeting = $hour < 12 ? 'Buenos días' : ($hour < 21 ? 'Buenas tardes' : 'Buena
           <tr>
             <th>Rival</th>
             <th>Resultado</th>
-            <th>Ritmo</th>
+            <th id="gamesThirdColumnHeader">Ritmo</th>
             <th class="hide-sm">Fecha</th>
             <th>Análisis</th>
           </tr>

@@ -6,16 +6,19 @@ Training Center solving UX polish release.
 
 This release improves the exercise-solving flow in `training.php` with a hint action and clearer post-exercise actions.
 It also lets the player choose the board piece set from the profile page.
+It also includes small dashboard label fixes.
 
 ## Changed files
 
 - `CHANGELOG.md`
 - `README_UPDATE.md`
 - `assets/css/app.css`
+- `assets/js/dashboard.js`
 - `assets/js/review.js`
 - `assets/js/training.js`
 - `assets/pieces/Set 1/*`
 - `assets/pieces/Set 2/*`
+- `app.php`
 - `config/version.php`
 - `includes/auth.php`
 - `includes/pieces.php`
@@ -38,8 +41,10 @@ It also lets the player choose the board piece set from the profile page.
 - Moves the current pieces to `assets/pieces/Set 1`.
 - Adds the new pieces as `assets/pieces/Set 2`.
 - Applies the selected piece set in `review.php` and `training.php`.
+- Changes the dashboard recent-summary error label from `B/M/I` to `B/E/I`.
+- Changes the recommended-games table third column from `Ritmo` to `Accuracy`.
 - The app version is bumped to `1.1.5`.
-- The PWA service worker cache name is bumped to `chess-coach-v1.1.5-piece-sets`.
+- The PWA service worker cache name is bumped to `chess-coach-v1.1.5-dashboard-labels`.
 
 ## Technical changes
 
@@ -63,7 +68,7 @@ sql/migrations/021_changes_1.1.5.sql
 The service worker cache name is now:
 
 ```text
-chess-coach-v1.1.5-piece-sets
+chess-coach-v1.1.5-dashboard-labels
 ```
 
 ## Local verification commands
@@ -71,6 +76,7 @@ chess-coach-v1.1.5-piece-sets
 ```powershell
 Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
 node --check assets\js\training.js
+node --check assets\js\dashboard.js
 node --check service-worker.js
 git diff --check
 ```
