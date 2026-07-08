@@ -83,6 +83,7 @@ $trainingJsVersion = (string)filemtime(__DIR__.'/assets/js/training.js');
         <p class="trainer-summary-text" id="trainingSolverPrompt">Selecciona un ejercicio para empezar.</p>
         <div class="smart-tag-list training-tags" id="trainingSolverTags"></div>
         <div class="training-meta" id="trainingSolverMeta"></div>
+        <div class="training-exercise-timer" id="trainingExerciseTimer">00:00</div>
         <p class="muted" id="trainingMoveDraft">Selecciona origen y destino en el tablero.</p>
         <label class="training-promotion" id="trainingPromotionWrap" hidden>Promoción
           <select id="trainingPromotionPiece">

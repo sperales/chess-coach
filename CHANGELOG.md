@@ -6,6 +6,8 @@
 
 - Highlighted the side to move in Training Center exercise prompts.
 - Added a white or black pawn icon next to the side-to-move text.
+- Added a visible per-exercise timer in the Training Center solver.
+- Added red origin/destination highlights when the solution is revealed after 5 failed attempts.
 - Bumped `config/version.php` to `1.1.4`.
 - Updated the service worker cache name to `chess-coach-v1.1.4-training-center-polish`.
 
