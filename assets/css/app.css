@@ -1849,6 +1849,22 @@ select {
   line-height:1.55;
   font-size:17px
 }
+.training-side-to-move {
+  display:inline-flex;
+  align-items:baseline;
+  gap:5px;
+  color:#fff;
+  font-weight:900;
+  line-height:1;
+  white-space:nowrap
+}
+.training-side-to-move img {
+  width:20px;
+  height:20px;
+  object-fit:contain;
+  transform:translateY(3px);
+  filter:drop-shadow(0 1px 1px #0008)
+}
 .trainer-mini-kpis {
   display:grid;
   grid-template-columns:repeat(5,minmax(0,1fr));
