@@ -303,7 +303,7 @@ function renderTrainingSolver() {
   const review = document.getElementById('trainingReviewLink');
   const feedback = document.getElementById('trainingFeedback');
   if (title) title.textContent = activeExercise.type_label || 'Resolver ejercicio';
-  if (prompt) prompt.textContent = activeExercise.prompt || 'Encuentra la mejor jugada.';
+  if (prompt) prompt.innerHTML = trainingPromptHtml(activeExercise.prompt || 'Encuentra la mejor jugada.');
   if (meta) {
     const source = activeExercise.source_side === 'opponent' ? 'Rival' : 'Propia';
     const previousMove = activeExercise.previous_san || activeExercise.previous_uci || '';
@@ -323,6 +323,18 @@ function renderTrainingSolver() {
   renderTrainingAttempts();
   renderTrainingBoard();
   updateTrainingDraft();
+}
+
+function trainingPromptHtml(text) {
+  const value = (text || '').toString();
+  const match = value.match(/^(.*?)(Juegan\s+(blancas|negras)\.?)/i);
+  if (!match) return escapeHtml(value);
+  const intro = match[1].trim();
+  const turnText = match[2].replace(/\.$/, '');
+  const side = match[3].toLowerCase() === 'negras' ? 'black' : 'white';
+  const pieceFile = side === 'black' ? 'bp.png' : 'wp.png';
+  const pieceAlt = side === 'black' ? 'peón negro' : 'peón blanco';
+  return `${intro ? `${escapeHtml(intro)} ` : ''}<strong class="training-side-to-move"><img src="assets/pieces/${pieceFile}" alt="${escapeAttr(pieceAlt)}" draggable="false">${escapeHtml(turnText)}.</strong>`;
 }
 
 function renderTrainingBoard() {

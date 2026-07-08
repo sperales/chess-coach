@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## v1.1.4 - Training Center polish
+
+### Changed
+
+- Highlighted the side to move in Training Center exercise prompts.
+- Added a white or black pawn icon next to the side-to-move text.
+- Bumped `config/version.php` to `1.1.4`.
+- Updated the service worker cache name to `chess-coach-v1.1.4-training-center-polish`.
+
+### Database
+
+- No SQL migration required.
+
 ## v1.1.3 - Review board coordinates
 
 ### Added
