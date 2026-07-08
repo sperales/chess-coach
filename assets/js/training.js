@@ -14,6 +14,7 @@ let trainingTimerInterval = null;
 let trainingUsedHint = false;
 let trainingHintFrom = '';
 let revealedTrainingSolution = '';
+const TRAINING_PIECE_ASSET_PATH = (window.CHESS_COACH_PIECE_PATH || 'assets/pieces/Set%201/').toString();
 
 const TRAINING_PIECE_IMAGES = {
   P: 'wp.png', N: 'wn.png', B: 'wb.png', R: 'wr.png', Q: 'wq.png', K: 'wk.png',
@@ -383,7 +384,7 @@ function trainingPromptHtml(text) {
   const side = match[3].toLowerCase() === 'negras' ? 'black' : 'white';
   const pieceFile = side === 'black' ? 'bp.png' : 'wp.png';
   const pieceAlt = side === 'black' ? 'peón negro' : 'peón blanco';
-  return `${intro ? `${escapeHtml(intro)} ` : ''}<strong class="training-side-to-move"><img src="assets/pieces/${pieceFile}" alt="${escapeAttr(pieceAlt)}" draggable="false">${escapeHtml(turnText)}.</strong>`;
+  return `${intro ? `${escapeHtml(intro)} ` : ''}<strong class="training-side-to-move"><img src="${TRAINING_PIECE_ASSET_PATH}${pieceFile}" alt="${escapeAttr(pieceAlt)}" draggable="false">${escapeHtml(turnText)}.</strong>`;
 }
 
 function renderTrainingBoard() {
@@ -694,7 +695,7 @@ function trainingPieceImageHtml(pieceCode) {
   const file = TRAINING_PIECE_IMAGES[pieceCode];
   if (!file) return '';
   const colorClass = pieceCode === pieceCode.toUpperCase() ? 'white-piece' : 'black-piece';
-  return `<img class="board-piece ${colorClass}" src="assets/pieces/${file}" alt="${escapeAttr(TRAINING_PIECE_LABELS[pieceCode] || 'pieza')}" draggable="false">`;
+  return `<img class="board-piece ${colorClass}" src="${TRAINING_PIECE_ASSET_PATH}${file}" alt="${escapeAttr(TRAINING_PIECE_LABELS[pieceCode] || 'pieza')}" draggable="false">`;
 }
 
 function selectTrainingSquare(square) {

@@ -2209,6 +2209,40 @@ select {
   justify-content:center;
   text-align:center
 }
+.piece-set-options {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:12px;
+  margin:14px 0
+}
+.piece-set-option {
+  display:block
+}
+.piece-set-option input {
+  position:absolute;
+  opacity:0;
+  pointer-events:none
+}
+.piece-set-option span {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#0d171d;
+  cursor:pointer
+}
+.piece-set-option img {
+  width:42px;
+  height:42px;
+  object-fit:contain
+}
+.piece-set-option input:checked + span {
+  border-color:#69c44e;
+  background:#14251a
+}
 @media(max-width:980px) {
   .trainer-grid {
     grid-template-columns:minmax(0,1fr)

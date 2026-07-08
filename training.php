@@ -1,11 +1,13 @@
 <?php
 require_once __DIR__.'/includes/auth.php';
 require_once __DIR__.'/includes/helpers.php';
+require_once __DIR__.'/includes/pieces.php';
 
 $u = require_login();
 $assetVersion = (string)filemtime(__DIR__.'/assets/css/app.css');
 $layoutJsVersion = (string)filemtime(__DIR__.'/assets/js/layout.js');
 $trainingJsVersion = (string)filemtime(__DIR__.'/assets/js/training.js');
+$pieceSetAssetPath = piece_set_asset_path($u['piece_set'] ?? null);
 ?>
 <!doctype html>
 <html lang="es">
@@ -119,7 +121,10 @@ $trainingJsVersion = (string)filemtime(__DIR__.'/assets/js/training.js');
   </section>
 </main>
 </div>
-<script>window.CHESS_COACH_CONFIG = { trainingPerPage: 20 };</script>
+<script>
+window.CHESS_COACH_CONFIG = { trainingPerPage: 20 };
+window.CHESS_COACH_PIECE_PATH = <?= json_encode($pieceSetAssetPath, JSON_UNESCAPED_SLASHES) ?>;
+</script>
 <script src="assets/js/layout.js?v=<?=e($layoutJsVersion)?>"></script>
 <script src="assets/js/training.js?v=<?=e($trainingJsVersion)?>"></script>
 </body>

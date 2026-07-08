@@ -9,12 +9,14 @@
 - Added post-exercise actions: `Siguiente`, `Cerrar` and `Ver partida`.
 - Hid `Comprobar`, `Pista` and `Saltar` after solving or exhausting an exercise.
 - Exposed only `hint_from` for pending exercises so hints do not reveal the full solution.
+- Added selectable chess piece sets from `Ajustes / Mi Perfil`.
+- Moved piece assets into `assets/pieces/Set 1` and added `assets/pieces/Set 2`.
 - Bumped `config/version.php` to `1.1.5`.
-- Updated the service worker cache name to `chess-coach-v1.1.5-training-hints`.
+- Updated the service worker cache name to `chess-coach-v1.1.5-piece-sets`.
 
 ### Database
 
-- No SQL migration required.
+- Added `sql/migrations/021_changes_1.1.5.sql` to store the selected piece set per user.
 
 ## v1.1.4 - Training Center polish
 

@@ -1,4 +1,15 @@
-<?php require_once __DIR__.'/includes/auth.php'; require_once __DIR__.'/includes/helpers.php'; $u=require_login(); $gameId=(int)($_GET['id']??0); $assetVersion=(string)filemtime(__DIR__.'/assets/css/app.css'); $reviewJsVersion=(string)filemtime(__DIR__.'/assets/js/review.js'); $layoutJsVersion=(string)filemtime(__DIR__.'/assets/js/layout.js'); ?>
+<?php
+require_once __DIR__.'/includes/auth.php';
+require_once __DIR__.'/includes/helpers.php';
+require_once __DIR__.'/includes/pieces.php';
+
+$u = require_login();
+$gameId = (int)($_GET['id'] ?? 0);
+$assetVersion = (string)filemtime(__DIR__.'/assets/css/app.css');
+$reviewJsVersion = (string)filemtime(__DIR__.'/assets/js/review.js');
+$layoutJsVersion = (string)filemtime(__DIR__.'/assets/js/layout.js');
+$pieceSetAssetPath = piece_set_asset_path($u['piece_set'] ?? null);
+?>
 <!doctype html>
 <html lang="es">
 <head>
@@ -94,7 +105,10 @@
   </section>
 </main>
 </div>
-<script>window.CHESS_REVIEW_GAME_ID = <?= (int)$gameId ?>;</script>
+<script>
+window.CHESS_REVIEW_GAME_ID = <?= (int)$gameId ?>;
+window.CHESS_COACH_PIECE_PATH = <?= json_encode($pieceSetAssetPath, JSON_UNESCAPED_SLASHES) ?>;
+</script>
 <script src="assets/js/layout.js?v=<?=e($layoutJsVersion)?>"></script>
 <script src="assets/js/review.js?v=<?=e($reviewJsVersion)?>"></script>
 </body>
