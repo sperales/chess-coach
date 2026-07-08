@@ -26,6 +26,7 @@ This release makes the side to move easier to identify while solving Training Ce
 - When an exercise reaches 5 failed attempts and reveals the solution, the solution origin and destination squares are highlighted in red.
 - When selecting a piece in `training.php`, legal destination squares are shown with subtle grey dots.
 - Training exercises are closed after 5 failed attempts so they stop appearing as pending recommendations.
+- Session metrics now count exhausted exercises explicitly as failed exercises.
 - `review.php` now shows the move list as one row per full move, with White on the left and Black on the right.
 - Exercise prompts that do not include a side-to-move phrase continue rendering normally.
 - The app version is bumped to `1.1.4`.
@@ -38,6 +39,7 @@ This release makes the side to move easier to identify while solving Training Ce
 - Stores the revealed solution move client-side only when the API exposes it after failed attempts.
 - Adds client-side legal move generation for Training Center board hints.
 - Marks exhausted Training Center exercises as no longer pending while keeping the attempt result as failed.
+- Refreshes the Training Center list after skipped exercises so session counters stay visible immediately.
 - Groups review moves by full move number in `assets/js/review.js`.
 - Reuses local piece images from `assets/pieces/`.
 - Adds compact side-to-move prompt styles in `assets/css/app.css`.
@@ -77,6 +79,8 @@ git diff --check
 - Select a movable piece in `training.php` and confirm legal destinations are shown with grey dots.
 - Select an empty square or an opponent piece and confirm no legal destinations are shown.
 - Fail an exercise 5 times, return to the training list and confirm it no longer appears as pending/recommended.
+- With a session active, fail an exercise 5 times and confirm `Fallados/saltados` increments the failed side.
+- With a session active, skip an exercise and confirm `Fallados/saltados` increments the skipped side.
 - Confirm the exercise title, tags, board and move submission still work.
 - Open `review.php` for an analyzed game.
 - Confirm the move list shows each full move in one row, with White and Black side by side.

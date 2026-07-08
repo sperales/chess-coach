@@ -242,7 +242,7 @@ function training_session_metrics(int $sessionId, int $userId): array {
       SELECT exercise_id,
              MAX(is_solved) AS exercise_solved,
              MAX(result="skipped") AS exercise_skipped,
-             IF(MAX(is_solved)=0 AND MAX(result="skipped")=0 AND MAX(attempts_count)>=5,1,0) AS exercise_failed,
+             MAX(CASE WHEN result="failed" AND attempts_count>=5 THEN 1 ELSE 0 END) AS exercise_failed,
              MAX(attempts_count) AS max_attempts,
              MAX(duration_ms) AS max_duration_ms
       FROM training_attempts
@@ -566,6 +566,7 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
   return [
     'ok' => true,
     'solved' => $isSolved,
+    'exhausted' => $isExhausted && !$isSolved,
     'attempts_count' => count($moves),
     'remaining_attempts' => max(0, 5 - count($moves)),
     'solution_uci' => $isSolved || $isExhausted ? $solution : null,

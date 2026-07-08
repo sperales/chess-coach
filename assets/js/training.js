@@ -812,6 +812,7 @@ async function skipTrainingExercise() {
     if (data.ok && data.session) activeTrainingSession = data.session;
     if (data.stats) renderTrainingStatsFromResponse(data);
     renderTrainingSession();
+    await loadTraining(currentTrainingPage);
   }
   closeTrainingSolver();
 }
