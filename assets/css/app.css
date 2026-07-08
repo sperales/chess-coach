@@ -2200,6 +2200,15 @@ select {
 .training-controls {
   grid-template-columns:repeat(4,minmax(0,1fr))
 }
+.training-controls[hidden] {
+  display:none
+}
+.training-controls .btn {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center
+}
 @media(max-width:980px) {
   .trainer-grid {
     grid-template-columns:minmax(0,1fr)
