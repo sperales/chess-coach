@@ -4,7 +4,7 @@
 
 Training Center prompt clarity release.
 
-This release makes the side to move easier to identify while solving Training Center exercises and improves the review move list layout.
+This release makes the side to move easier to identify while solving Training Center exercises, improves the review move list layout and adds legal move hints while solving exercises.
 
 ## Changed files
 
@@ -24,16 +24,18 @@ This release makes the side to move easier to identify while solving Training Ce
 - A white or black pawn icon is displayed next to `Juegan blancas` or `Juegan negras`.
 - The Training Center solver now shows a clear per-exercise timer above the move selection text.
 - When an exercise reaches 5 failed attempts and reveals the solution, the solution origin and destination squares are highlighted in red.
+- When selecting a piece in `training.php`, legal destination squares are shown with subtle grey dots.
 - `review.php` now shows the move list as one row per full move, with White on the left and Black on the right.
 - Exercise prompts that do not include a side-to-move phrase continue rendering normally.
 - The app version is bumped to `1.1.4`.
-- The PWA service worker cache name is bumped to `chess-coach-v1.1.4-review-move-list`.
+- The PWA service worker cache name is bumped to `chess-coach-v1.1.4-training-legal-targets`.
 
 ## Technical changes
 
 - Adds prompt formatting in `assets/js/training.js` without changing stored exercise prompts.
 - Adds client-side exercise timer state in `assets/js/training.js`.
 - Stores the revealed solution move client-side only when the API exposes it after failed attempts.
+- Adds client-side legal move generation for Training Center board hints.
 - Groups review moves by full move number in `assets/js/review.js`.
 - Reuses local piece images from `assets/pieces/`.
 - Adds compact side-to-move prompt styles in `assets/css/app.css`.
@@ -48,7 +50,7 @@ No SQL migration is required.
 The service worker cache name is now:
 
 ```text
-chess-coach-v1.1.4-review-move-list
+chess-coach-v1.1.4-training-legal-targets
 ```
 
 ## Local verification commands
@@ -70,6 +72,8 @@ git diff --check
 - Confirm `Juegan negras` is bold and shows a black pawn.
 - Confirm the timer starts when the exercise opens and stops when the exercise is solved or exhausted.
 - Fail 5 attempts and confirm the revealed solution squares are highlighted in red.
+- Select a movable piece in `training.php` and confirm legal destinations are shown with grey dots.
+- Select an empty square or an opponent piece and confirm no legal destinations are shown.
 - Confirm the exercise title, tags, board and move submission still work.
 - Open `review.php` for an analyzed game.
 - Confirm the move list shows each full move in one row, with White and Black side by side.

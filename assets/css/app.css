@@ -2129,6 +2129,16 @@ select {
 .training-board .sq.from.selected,.training-board .sq.to.selected {
   background:#9bd8ff
 }
+.training-board .sq.legal-target::after {
+  content:"";
+  position:absolute;
+  z-index:2;
+  width:28%;
+  height:28%;
+  border-radius:999px;
+  background:#3f5136aa;
+  pointer-events:none
+}
 .training-board .sq.solution {
   background:#f56f6f
 }
