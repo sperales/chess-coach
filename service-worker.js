@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chess-coach-v1.1.5-piece-sets';
+const CACHE_NAME = 'chess-coach-v1.1.5-dashboard-labels';
 const ASSETS = [
   './',
   './app.php',

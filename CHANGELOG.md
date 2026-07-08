@@ -11,8 +11,11 @@
 - Exposed only `hint_from` for pending exercises so hints do not reveal the full solution.
 - Added selectable chess piece sets from `Ajustes / Mi Perfil`.
 - Moved piece assets into `assets/pieces/Set 1` and added `assets/pieces/Set 2`.
+- Changed the dashboard recent-summary error label from `B/M/I` to `B/E/I`.
+- Changed the recommended-games table third column label from `Ritmo` to `Accuracy`.
+- Changed the home games block title between `Últimas partidas` and `Partidas recomendadas`.
 - Bumped `config/version.php` to `1.1.5`.
-- Updated the service worker cache name to `chess-coach-v1.1.5-piece-sets`.
+- Updated the service worker cache name to `chess-coach-v1.1.5-dashboard-labels`.
 
 ### Database
 

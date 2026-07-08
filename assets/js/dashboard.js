@@ -156,7 +156,7 @@ function renderSummary() {
     ['Win rate', typeof overview.score_rate === 'number' ? `${overview.score_rate}%` : '--'],
     ['Accuracy', overview.avg_accuracy === null || typeof overview.avg_accuracy === 'undefined' ? '--' : `${Number(overview.avg_accuracy).toFixed(1)}%`],
     ['ACPL', overview.avg_acpl === null || typeof overview.avg_acpl === 'undefined' ? '--' : Number(overview.avg_acpl).toFixed(1)],
-    ['Errores', `B:${overview.own_blunders || 0}/M:${overview.own_mistakes || 0}/I:${overview.own_inaccuracies || 0}`],
+    ['Errores', `B:${overview.own_blunders || 0}/E:${overview.own_mistakes || 0}/I:${overview.own_inaccuracies || 0}`],
     ['Color', colorNote(overview)]
   ];
   kpis.innerHTML = values.map(item => `<div><span>${escapeHtml(item[0])}</span><b>${escapeHtml(item[1])}</b></div>`).join('');
@@ -197,6 +197,14 @@ function renderStrengths() {
 function renderRows() {
   const el = document.getElementById('rows');
   if (!el) return;
+  const panelTitle = document.getElementById('gamesPanelTitle');
+  if (panelTitle) {
+    panelTitle.textContent = gamesPanelMode === 'recommended' ? 'Partidas recomendadas' : 'Últimas partidas';
+  }
+  const thirdColumnHeader = document.getElementById('gamesThirdColumnHeader');
+  if (thirdColumnHeader) {
+    thirdColumnHeader.textContent = gamesPanelMode === 'recommended' ? 'Accuracy' : 'Ritmo';
+  }
   if (gamesPanelMode === 'recommended') {
     const recommended = dashboardData ? (dashboardData.recommended_reviews || []) : [];
     el.innerHTML = recommended.map(recommendedRow).join('') || `
