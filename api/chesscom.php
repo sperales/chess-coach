@@ -5,6 +5,7 @@ require_once __DIR__.'/../includes/pgn.php';
 require_once __DIR__.'/../includes/chesscom.php';
 require_once __DIR__.'/../includes/analysis_queue.php';
 $u=require_login();
+require_post_csrf();
 $body=json_decode(file_get_contents('php://input'),true) ?: [];
 $username=trim($body['username']??$u['username']); $limit=max(1,min(100,(int)($body['limit']??20)));
 try{

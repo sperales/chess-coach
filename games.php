@@ -75,7 +75,7 @@
   </section>
 </main>
 </div>
-<script>window.CHESS_COACH_USERNAME = <?=json_encode($u['username'])?>; window.CHESS_COACH_CONFIG = { gamesPerPage: <?php echo (int)(app_config()['games_per_page'] ?? 50); ?> };</script>
+<script>window.CHESS_COACH_USERNAME = <?=json_encode($u['username'])?>; window.CHESS_COACH_CONFIG = { gamesPerPage: <?php echo (int)(app_config()['games_per_page'] ?? 50); ?> }; window.CHESS_COACH_CSRF = <?= json_encode(csrf_token(), JSON_UNESCAPED_SLASHES) ?>;</script>
 <script src="assets/js/layout.js?v=<?=e($layoutJsVersion)?>"></script>
 <script src="assets/js/games.js?v=<?=e($gamesJsVersion)?>"></script>
 </body>

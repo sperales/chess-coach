@@ -5,6 +5,9 @@ require_once __DIR__.'/../includes/pgn.php';
 require_once __DIR__.'/../includes/analysis_queue.php';
 $u=require_login();
 $action=$_GET['action']??$_POST['action']??'';
+if (in_array($action, ['import', 'delete'], true)) {
+  require_post_csrf();
+}
 if($action==='list'){
   $cfg = app_config();
   $defaultPerPage = max(1, (int)($cfg['games_per_page'] ?? 50));

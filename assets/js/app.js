@@ -164,7 +164,7 @@ async function analyzeGame(id, force = false) {
   if (analyzing.has(id)) return;
   analyzing.add(id); render();
   try {
-    const r = await fetch('api/analyze.php?action=queue', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, force }) });
+    const r = await fetch('api/analyze.php?action=queue', { method: 'POST', headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ id, force }) });
     const j = await r.json();
     if (!j.ok) throw new Error(j.error || 'No se pudo añadir a la cola.');
     location.href = 'analysis-pending.php';
@@ -196,7 +196,7 @@ function toggleImport() {
 async function importPgn() {
   const pgnEl = document.getElementById('pgn'); if (!pgnEl) return;
   const pgn = pgnEl.value;
-  const r = await fetch('api/games.php?action=import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pgn }) });
+  const r = await fetch('api/games.php?action=import', { method: 'POST', headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ pgn }) });
   const j = await r.json();
   setMessage(j.ok ? `Importadas: ${j.added}. Duplicadas: ${j.skipped}. Encoladas automáticamente para análisis.` : j.error);
   if (j.ok) { pgnEl.value = ''; }

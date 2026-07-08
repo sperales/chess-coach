@@ -12,7 +12,7 @@ async function apiGet(url) {
 async function apiPost(url, body = {}) {
   const r = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(body)
   });
   return await r.json();

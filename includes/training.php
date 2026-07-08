@@ -299,8 +299,8 @@ function training_expire_stale_sessions(int $userId): void {
     ->execute([$userId]);
 }
 
-function training_active_session(int $userId): ?array {
-  training_expire_stale_sessions($userId);
+function training_active_session(int $userId, bool $expireStale = true): ?array {
+  if ($expireStale) training_expire_stale_sessions($userId);
   $st = db()->prepare('SELECT * FROM training_sessions WHERE user_id=? AND status="active" ORDER BY started_at DESC, id DESC LIMIT 1');
   $st->execute([$userId]);
   $session = $st->fetch();

@@ -123,6 +123,7 @@ $pieceSetAssetPath = piece_set_asset_path($u['piece_set'] ?? null);
 </div>
 <script>
 window.CHESS_COACH_CONFIG = { trainingPerPage: 20 };
+window.CHESS_COACH_CSRF = <?= json_encode(csrf_token(), JSON_UNESCAPED_SLASHES) ?>;
 window.CHESS_COACH_PIECE_PATH = <?= json_encode($pieceSetAssetPath, JSON_UNESCAPED_SLASHES) ?>;
 </script>
 <script src="assets/js/layout.js?v=<?=e($layoutJsVersion)?>"></script>
