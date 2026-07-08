@@ -61,11 +61,11 @@ function queue_game_analysis(int $gameId, int $userId, bool $force = false): arr
 
 function queue_missing_games(int $userId): array {
   $sql = 'SELECT g.id FROM games g
-          LEFT JOIN game_analysis a ON a.id=(SELECT id FROM game_analysis WHERE game_id=g.id ORDER BY id DESC LIMIT 1)
+          LEFT JOIN game_analysis a ON a.id=(SELECT id FROM game_analysis WHERE game_id=g.id AND user_id=? ORDER BY id DESC LIMIT 1)
           WHERE g.user_id=? AND (a.id IS NULL OR a.status IN ("error","cancelled"))
           ORDER BY COALESCE(g.played_at, g.imported_at) DESC, g.id DESC';
   $st = db()->prepare($sql);
-  $st->execute([$userId]);
+  $st->execute([$userId, $userId]);
   $added = 0; $existing = 0;
   foreach ($st->fetchAll() as $row) {
     $r = queue_game_analysis((int)$row['id'], $userId, false);
@@ -333,13 +333,13 @@ function worker_history(int $userId, int $limit = 20): array {
   $limit = max(1, min(100, $limit));
   $sql = 'SELECT wr.*, ga.game_id, g.white_player, g.black_player, g.played_at, g.result_raw
           FROM analysis_worker_runs wr
-          LEFT JOIN game_analysis ga ON ga.id = wr.last_analysis_id
+          LEFT JOIN game_analysis ga ON ga.id = wr.last_analysis_id AND ga.user_id=?
           LEFT JOIN games g ON g.id = ga.game_id
           WHERE wr.user_id IS NULL OR wr.user_id=?
           ORDER BY wr.created_at DESC, wr.id DESC
           LIMIT '.(int)$limit;
   $st = db()->prepare($sql);
-  $st->execute([$userId]);
+  $st->execute([$userId, $userId]);
   return $st->fetchAll();
 }
 
