@@ -75,7 +75,7 @@ function coach_menu_items(): array {
     ['import-chesscom.php', '⇩', 'Importar partidas', false],
     ['analysis-pending.php', '◷', 'Análisis pendientes', false],
     ['training.php', '◎', 'Entrenamiento', false],
-    ['#', '▤', 'Aperturas', true],
+    ['openings-lab.php', '▤', 'Lab de Aperturas', false],
     ['#', '▥', 'Estadísticas', true],
     ['#', '◇', 'Etiquetas', true],
     ['profile.php', '⚙', 'Ajustes / Mi Perfil', false],

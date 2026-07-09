@@ -3,6 +3,7 @@ require_once __DIR__.'/includes/auth.php';
 require_once __DIR__.'/includes/helpers.php';
 require_once __DIR__.'/includes/smart_tags.php';
 require_once __DIR__.'/includes/training.php';
+require_once __DIR__.'/includes/openings.php';
 require_once __DIR__.'/includes/pieces.php';
 
 $u = require_login();
@@ -12,6 +13,7 @@ $assetVersion = (string)filemtime(__DIR__.'/assets/css/app.css');
 $layoutJsVersion = (string)filemtime(__DIR__.'/assets/js/layout.js');
 $pendingSmartTags = smart_tag_backfill_pending_count((int)$u['id']);
 $pendingTrainingExercises = training_backfill_pending_count((int)$u['id']);
+$pendingOpeningProfiles = openings_profile_pending_count((int)$u['id']);
 $pieceSets = available_piece_sets();
 $currentPieceSet = normalize_piece_set($u['piece_set'] ?? null);
 
@@ -124,6 +126,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
         <button type="button" onclick="runTrainingBackfill()" id="trainingBackfillBtn">Generar ejercicios</button>
       </div>
       <p class="muted" id="trainingBackfillResult"></p>
+      <div class="batch-row">
+        <div>
+          <strong>Backfill de aperturas</strong>
+          <p class="muted">Genera perfiles de apertura para partidas importadas o analizadas antes del Lab de Aperturas. Procesa hasta 25 partidas por ejecucion.</p>
+          <p class="muted" id="openingsBackfillPending">Pendientes: <?= (int)$pendingOpeningProfiles ?></p>
+        </div>
+        <button type="button" onclick="runOpeningsBackfill()" id="openingsBackfillBtn">Perfilar aperturas</button>
+      </div>
+      <p class="muted" id="openingsBackfillResult"></p>
     </section>
   </main>
 </div>
@@ -171,6 +182,29 @@ async function runTrainingBackfill() {
     if (pending) pending.textContent = `Pendientes: ${data.pending_after || 0}`;
   } catch (e) {
     if (result) result.textContent = e.message || 'No se pudo ejecutar el backfill de ejercicios.';
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function runOpeningsBackfill() {
+  const btn = document.getElementById('openingsBackfillBtn');
+  const result = document.getElementById('openingsBackfillResult');
+  const pending = document.getElementById('openingsBackfillPending');
+  if (btn) btn.disabled = true;
+  if (result) result.textContent = 'Generando perfiles de apertura...';
+  try {
+    const r = await fetch('api/openings.php?action=backfill', {
+      method: 'POST',
+      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ limit: 25 })
+    });
+    const data = await r.json();
+    if (!data.ok && Number(data.error_count || 0) > 0) throw new Error(data.message || 'Backfill completado con errores.');
+    if (result) result.textContent = `${data.message || 'Backfill ejecutado.'} Partidas: ${data.processed_games || 0}. Perfiles actualizados: ${data.updated_profiles || 0}. Pendientes: ${data.pending_after || 0}.`;
+    if (pending) pending.textContent = `Pendientes: ${data.pending_after || 0}`;
+  } catch (e) {
+    if (result) result.textContent = e.message || 'No se pudo ejecutar el backfill de aperturas.';
   } finally {
     if (btn) btn.disabled = false;
   }
