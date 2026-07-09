@@ -15,6 +15,9 @@
 - Added `assets/js/openings_lab.js` for Openings Lab API rendering.
 - Enabled the hamburger menu entry as `Lab de Aperturas`.
 - Added the Openings Lab manual backfill action to `profile.php`.
+- Added recommended review games to the opening detail view.
+- Added opening-key filtering support for `games.php`.
+- Added optional `review.php?id=X&ply=Y` deep links for safe opening review moments.
 
 ### Notes
 

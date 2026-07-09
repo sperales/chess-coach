@@ -3,6 +3,7 @@ let currentMoveIndex = 0;
 let showingBest = false;
 let boardOrientation = 'white';
 const PIECE_ASSET_PATH = (window.CHESS_COACH_PIECE_PATH || 'assets/pieces/Set%201/').toString();
+const INITIAL_REVIEW_PARAMS = new URLSearchParams(window.location.search);
 
 const PIECE_IMAGES = {
   P: 'wp.png', N: 'wn.png', B: 'wb.png', R: 'wr.png', Q: 'wq.png', K: 'wk.png',
@@ -62,7 +63,7 @@ async function loadReview() {
     const data = await r.json();
     if (!data.ok) throw new Error(data.error || 'No se pudo cargar la revisión.');
     reviewData = data;
-    currentMoveIndex = 0;
+    currentMoveIndex = initialReviewMoveIndex(data.moves || []);
     boardOrientation = data.user_side === 'b' ? 'black' : 'white';
     bindBoardControls();
     renderSummary();
@@ -76,6 +77,13 @@ async function loadReview() {
     const comment = document.getElementById('reviewComment');
     if (comment) comment.textContent = 'Asegúrate de que la partida ya está analizada.';
   }
+}
+
+function initialReviewMoveIndex(moves) {
+  const requestedPly = Number(INITIAL_REVIEW_PARAMS.get('ply') || 0);
+  if (!Number.isInteger(requestedPly) || requestedPly <= 0) return 0;
+  const index = moves.findIndex(move => Number(move.ply || 0) === requestedPly);
+  return index >= 0 ? index : 0;
 }
 
 function renderSummary() {

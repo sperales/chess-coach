@@ -3,12 +3,14 @@ let currentPage = 1;
 let pagination = { page: 1, per_page: (window.CHESS_COACH_CONFIG && window.CHESS_COACH_CONFIG.gamesPerPage) || 50, total: 0, pages: 1 };
 let availableTags = [];
 const initialGameFilters = new URLSearchParams(window.location.search);
+let openingKeyFilter = (initialGameFilters.get('opening_key') || '').toString();
 
 function selectedFilters() {
   return {
     color: document.getElementById('colorFilter')?.value || '',
     result: document.getElementById('resultFilter')?.value || '',
     tag: document.getElementById('tagFilter')?.value || '',
+    opening_key: openingKeyFilter,
   };
 }
 
@@ -22,6 +24,7 @@ function queryString(page = currentPage) {
   if (filters.color) params.set('color', filters.color);
   if (filters.result) params.set('result', filters.result);
   if (filters.tag) params.set('tag', filters.tag);
+  if (filters.opening_key) params.set('opening_key', filters.opening_key);
   return params.toString();
 }
 
@@ -86,6 +89,7 @@ function clearGameFilters() {
   document.getElementById('colorFilter').value = '';
   document.getElementById('resultFilter').value = '';
   document.getElementById('tagFilter').value = '';
+  openingKeyFilter = '';
   loadGames(1);
 }
 
