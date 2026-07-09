@@ -4,6 +4,7 @@ require_once __DIR__ . '/chess_server.php';
 require_once __DIR__ . '/stockfish.php';
 require_once __DIR__ . '/smart_tags.php';
 require_once __DIR__ . '/training.php';
+require_once __DIR__ . '/openings.php';
 
 function analysis_status_values(): array {
   return ['queued', 'running', 'done', 'error', 'cancelled'];
@@ -237,6 +238,11 @@ function process_analysis_job(int $analysisId, int $userId): array {
       smart_tag_generate_for_analysis($analysisId, $userId);
     } catch (Throwable $tagError) {
       // Smart Tags are derived metadata; a tagging failure must not invalidate a completed Stockfish analysis.
+    }
+    try {
+      openings_refresh_analysis_profile($analysisId, $userId);
+    } catch (Throwable $openingError) {
+      // Opening profiles are derived metadata; generation can be retried from the profile backfill.
     }
     try {
       training_generate_for_analysis($analysisId, $userId);

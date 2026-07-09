@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## v1.2.0 - Openings Lab
+
+### Added
+
+- Added `game_opening_profiles` to store one opening profile per user game.
+- Added `opening_profile_runs` to log opening-profile backfills.
+- Added `includes/openings.php` with helpers for opening identity, fallback signatures, profile refresh and batch backfill.
+- Connected completed Stockfish analyses to refresh opening profiles as derived metadata.
+- Added `sql/migrations/022_changes_1.2.0.sql` for the Openings Lab data foundation.
+
+### Notes
+
+- No Openings Lab UI is included in PR1.
+- No Training Center exercise generation changes are included in PR1.
+
 ## v1.1.6 - Security and documentation hardening
 
 ### Changed
