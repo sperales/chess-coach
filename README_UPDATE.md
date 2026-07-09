@@ -60,6 +60,45 @@ Profiles are grouped by `eco_code + opening_name` when that data exists. If not,
 
 New completed analyses now try to refresh the opening profile as derived metadata. A failure in opening profiling does not invalidate the Stockfish analysis.
 
+## PR2 - Openings metrics API
+
+The second v1.2.0 PR adds the backend/API layer for Openings Lab metrics. It does not add the Openings Lab page, menu entry or profile UI.
+
+Changed files:
+
+- `CHANGELOG.md`
+- `README_UPDATE.md`
+- `api/openings.php`
+- `includes/openings.php`
+
+### API endpoints
+
+`api/openings.php` exposes authenticated JSON endpoints:
+
+- `GET api/openings.php?action=dashboard`
+- `GET api/openings.php?action=list`
+- `GET api/openings.php?action=detail&opening_key=...`
+- `GET api/openings.php?action=pending_count`
+- `POST api/openings.php?action=backfill`
+
+The `backfill` action requires a valid CSRF token. Read-only endpoints are GET-only.
+
+### Metrics available
+
+The Openings Lab backend now calculates:
+
+- games by opening
+- wins/draws/losses and score rate
+- color split
+- opening accuracy from the user's own moves in the first 16 plies
+- average centipawn loss in the opening window
+- average evaluation after move 10 when centipawn data is available
+- blunders, mistakes and inaccuracies by the user in the first 10 full moves
+- best/worst example games by opening accuracy
+- a simple practical recommendation for each opening
+
+The recommended minimum sample size is 3 games per opening.
+
 ## SQL migration
 
 Run:
@@ -77,7 +116,7 @@ It also registers version `1.2.0` in `app_migrations`.
 
 ## Service worker
 
-No service worker cache change is required in PR1 because no browser assets or pages are added yet.
+No service worker cache change is required in PR1 or PR2 because no browser assets or pages are added yet.
 
 The final v1.2.0 release readiness PR must update `service-worker.js`.
 
@@ -97,3 +136,6 @@ When JavaScript is added in later PRs, run `node --check` on changed JS files.
 - Confirm existing analysis still completes normally.
 - Confirm Smart Tags and Training Center generation still run after analysis.
 - Confirm no UI change is expected from PR1.
+- Call `api/openings.php?action=dashboard` after login and confirm it returns opening metrics JSON.
+- Call `api/openings.php?action=detail&opening_key=...` with a returned opening key and confirm it returns the related games.
+- Confirm no UI change is expected from PR2.

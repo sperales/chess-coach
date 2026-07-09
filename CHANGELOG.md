@@ -9,11 +9,13 @@
 - Added `includes/openings.php` with helpers for opening identity, fallback signatures, profile refresh and batch backfill.
 - Connected completed Stockfish analyses to refresh opening profiles as derived metadata.
 - Added `sql/migrations/022_changes_1.2.0.sql` for the Openings Lab data foundation.
+- Added `api/openings.php` with authenticated Openings Lab JSON endpoints.
+- Added backend metrics for games, results, opening accuracy, early mistakes, move-10 evaluation, example games and practical opening recommendations.
 
 ### Notes
 
-- No Openings Lab UI is included in PR1.
-- No Training Center exercise generation changes are included in PR1.
+- No Openings Lab UI is included in PR1 or PR2.
+- No Training Center exercise generation changes are included in PR1 or PR2.
 
 ## v1.1.6 - Security and documentation hardening
 
