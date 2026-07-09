@@ -5,7 +5,7 @@
 ### Changed
 
 - Started the v1.1.6 hardening release notes.
-- Aligned README, AGENTS and ROADMAP with the v1.1.5 stable baseline.
+- Aligned README, AGENTS and ROADMAP during the v1.1.6 hardening pass.
 - Documented that v1.1.6 is a hardening release before v1.2.0 Openings Lab.
 - Updated chess board documentation to reflect local PNG piece sets in review and training boards.
 - Added an encoding audit covering repository Markdown, PHP, JavaScript, CSS and SQL text files.
@@ -20,7 +20,9 @@
 - Stopped exposing the configured Stockfish filesystem path in engine status responses.
 - Sanitized analysis, Chess.com import, Smart Tags backfill and Training Center backfill errors before storing or returning them.
 - Centralized JSON request-body parsing and GET-only request validation in shared helpers.
-- Updated the service worker cache name to `chess-coach-v1.1.6-output-json-safety`.
+- Bumped `config/version.php` to `1.1.6`.
+- Updated README, AGENTS and ROADMAP to make v1.1.6 the stable baseline.
+- Updated the final service worker cache name to `chess-coach-v1.1.6`.
 
 ### Database
 

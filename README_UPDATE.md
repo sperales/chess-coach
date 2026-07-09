@@ -8,13 +8,13 @@ This release does not add new product features. It stabilizes the v1.1.x Trainin
 
 ## Planned scope
 
-- Align project documentation with the current v1.1.5 stable baseline and the v1.1.6 hardening release.
+- Align project documentation with the current v1.1.6 stable baseline.
 - Audit encoding/mojibake issues where real UTF-8 file content is affected.
 - Review authenticated API endpoints and ownership checks.
 - Add CSRF protection to authenticated mutating actions.
 - Review output escaping, JSON responses and sensitive data exposure.
 - Apply only small architecture cleanups that reduce security or maintenance risk.
-- Bump the application version and service worker cache at release readiness.
+- Bump the application version and service worker cache for release readiness.
 
 ## Changed files
 
@@ -40,6 +40,7 @@ The v1.1.6 documentation, encoding-audit, API-ownership, CSRF-hardening, output-
 - `assets/js/games.js`
 - `assets/js/layout.js`
 - `assets/js/training.js`
+- `config/version.php`
 - `games.php`
 - `includes/analysis_queue.php`
 - `includes/helpers.php`
@@ -120,7 +121,13 @@ The output-safety PR updates the cache name to:
 chess-coach-v1.1.6-output-json-safety
 ```
 
-The final v1.1.6 release readiness PR may update `service-worker.js` again for the final release cache name.
+The final v1.1.6 release readiness PR updates the cache name to:
+
+```text
+chess-coach-v1.1.6
+```
+
+The version in `config/version.php` is now `1.1.6`.
 
 ## Local verification commands
 
@@ -143,9 +150,10 @@ node --check service-worker.js
 
 ## Manual verification checklist
 
-- Confirm README, AGENTS and ROADMAP agree on the current v1.1.5 stable baseline.
+- Confirm README, AGENTS and ROADMAP agree on the current v1.1.6 stable baseline.
 - Confirm README_UPDATE describes v1.1.6 as a hardening release.
 - Confirm CHANGELOG contains a v1.1.6 entry.
 - Confirm ENCODING_AUDIT documents the mojibake audit result.
 - Confirm v1.2.0 Openings Lab remains the next major product line.
 - Confirm no production config files or credentials were changed.
+- Confirm `config/version.php` and `service-worker.js` match v1.1.6.

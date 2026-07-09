@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v1.1.5**
+Current stable baseline: **v1.1.6**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,15 +32,15 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v1.1.5
+## Current baseline — v1.1.6
 
-v1.1.5 completes the first Training Center release line and its initial UX refinements.
+v1.1.6 completes the first Training Center release line and its initial hardening pass.
 
 It generates exercises from analyzed games, stores them in dedicated Training Center tables, shows them in `training.php`, lets the player solve positions on an interactive board, records attempts, tracks training sessions and links exercises back to the original review.
 
 Smart Tags, the Personal Trainer Dashboard, Training Center exercise generation, the interactive solver, hints, session tracking and selectable board piece sets are now part of the stable product baseline.
 
-v1.1.6 is planned as a hardening release before starting v1.2.0 Openings Lab.
+The v1.1.6 hardening pass tightened documentation, encoding checks, ownership checks, CSRF coverage, output safety and shared API request helpers before starting v1.2.0 Openings Lab.
 
 ### v0.8.8 review chart baseline
 
