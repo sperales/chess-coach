@@ -8,6 +8,35 @@ function openings_profile_plies(): int {
   return 16;
 }
 
+function openings_lab_min_games(): int {
+  return 3;
+}
+
+function openings_accuracy_from_acpl(float $acpl): float {
+  if ($acpl <= 0) return 100.0;
+  return round(max(0, min(100, 100 * exp(-$acpl / 220))), 1);
+}
+
+function openings_move_side(int $ply): string {
+  return $ply % 2 === 1 ? 'white' : 'black';
+}
+
+function openings_fen_side_to_move(?string $fen): string {
+  $parts = preg_split('/\s+/', trim((string)$fen));
+  return ($parts[1] ?? 'w') === 'b' ? 'black' : 'white';
+}
+
+function openings_score_after_for_user(array $move, string $userColor): ?int {
+  if (($move['score_after_type'] ?? 'cp') !== 'cp') return null;
+  if ($userColor !== 'white' && $userColor !== 'black') return null;
+  if ($move['score_after'] === null || $move['score_after'] === '') return null;
+
+  $score = (int)$move['score_after'];
+  $sideToMove = openings_fen_side_to_move($move['fen_after'] ?? '');
+  $scoreForWhite = $sideToMove === 'white' ? $score : -$score;
+  return $userColor === 'white' ? $scoreForWhite : -$scoreForWhite;
+}
+
 function openings_user_color(array $game, string $username): string {
   $user = strtolower(trim($username));
   if ($user !== '' && $user === strtolower(trim((string)($game['white_player'] ?? '')))) return 'white';
@@ -219,6 +248,318 @@ function openings_profile_pending_count(int $userId): int {
   $st = db()->prepare($sql);
   $st->execute([$userId, $userId]);
   return (int)$st->fetchColumn();
+}
+
+function openings_lab_game_rows(int $userId, ?string $openingKey = null): array {
+  $where = ['op.user_id=?'];
+  $params = [$userId];
+  if ($openingKey !== null && $openingKey !== '') {
+    $where[] = 'op.opening_key=?';
+    $params[] = $openingKey;
+  }
+
+  $sql = 'SELECT op.id AS profile_id, op.game_id, op.analysis_id, op.user_color, op.opening_key,
+                 op.display_name, op.eco_code, op.opening_name, op.eco_url, op.opening_source,
+                 op.opening_signature, op.first_moves_san, op.first_moves_uci, op.plies_count,
+                 g.white_player, g.black_player, g.user_result, g.played_at, g.imported_at,
+                 g.event_name, g.site, a.status AS analysis_status
+          FROM game_opening_profiles op
+          JOIN games g ON g.id=op.game_id AND g.user_id=op.user_id
+          LEFT JOIN game_analysis a ON a.id=op.analysis_id AND a.user_id=op.user_id
+          WHERE ' . implode(' AND ', $where) . '
+          ORDER BY COALESCE(g.played_at, DATE(g.imported_at)) DESC, g.id DESC';
+  $st = db()->prepare($sql);
+  $st->execute($params);
+  return $st->fetchAll();
+}
+
+function openings_lab_moves_by_analysis(array $analysisIds): array {
+  $analysisIds = array_values(array_unique(array_filter(array_map('intval', $analysisIds))));
+  if (!$analysisIds) return [];
+
+  $placeholders = implode(',', array_fill(0, count($analysisIds), '?'));
+  $sql = 'SELECT analysis_id, ply, san, uci, fen_after, score_after, score_after_type,
+                 centipawn_loss, classification
+          FROM game_move_analysis
+          WHERE analysis_id IN (' . $placeholders . ')
+            AND ply <= 20
+          ORDER BY analysis_id ASC, ply ASC';
+  $st = db()->prepare($sql);
+  $st->execute($analysisIds);
+
+  $grouped = [];
+  foreach ($st->fetchAll() as $move) {
+    $analysisId = (int)$move['analysis_id'];
+    $grouped[$analysisId][] = $move;
+  }
+  return $grouped;
+}
+
+function openings_lab_decode_moves(?string $json): array {
+  if (!is_string($json) || trim($json) === '') return [];
+  $decoded = json_decode($json, true);
+  if (!is_array($decoded)) return [];
+  return array_values(array_filter(array_map('strval', $decoded), fn($move) => trim($move) !== ''));
+}
+
+function openings_lab_game_metrics(array $row, array $moves): array {
+  $userColor = (string)($row['user_color'] ?? 'unknown');
+  $openingLimit = openings_profile_plies();
+  $ownOpeningLosses = [];
+  $earlyErrors = ['blunder' => 0, 'mistake' => 0, 'inaccuracy' => 0];
+  $evalAfterMove10 = null;
+
+  foreach ($moves as $move) {
+    $ply = (int)($move['ply'] ?? 0);
+    $isOwnMove = $userColor !== 'unknown' && openings_move_side($ply) === $userColor;
+
+    if ($isOwnMove && $ply <= $openingLimit) {
+      $ownOpeningLosses[] = min(max(0, (int)($move['centipawn_loss'] ?? 0)), 1000);
+    }
+
+    if ($isOwnMove && $ply <= 20) {
+      $class = (string)($move['classification'] ?? 'ok');
+      if (isset($earlyErrors[$class])) $earlyErrors[$class]++;
+    }
+
+    if ($ply === 20) {
+      $evalAfterMove10 = openings_score_after_for_user($move, $userColor);
+    }
+  }
+
+  $acpl = $ownOpeningLosses ? round(array_sum($ownOpeningLosses) / count($ownOpeningLosses), 1) : null;
+  $accuracy = $acpl === null ? null : openings_accuracy_from_acpl($acpl);
+
+  return [
+    'opening_acpl' => $acpl,
+    'opening_accuracy' => $accuracy,
+    'eval_after_move_10' => $evalAfterMove10,
+    'opening_blunders' => $earlyErrors['blunder'],
+    'opening_mistakes' => $earlyErrors['mistake'],
+    'opening_inaccuracies' => $earlyErrors['inaccuracy'],
+    'opening_error_count' => array_sum($earlyErrors),
+  ];
+}
+
+function openings_lab_public_game(array $row, array $metrics): array {
+  $white = trim((string)($row['white_player'] ?? ''));
+  $black = trim((string)($row['black_player'] ?? ''));
+  return [
+    'game_id' => (int)$row['game_id'],
+    'analysis_id' => $row['analysis_id'] === null ? null : (int)$row['analysis_id'],
+    'title' => trim($white . ' vs ' . $black),
+    'white_player' => $white,
+    'black_player' => $black,
+    'user_color' => (string)($row['user_color'] ?? 'unknown'),
+    'result' => (string)($row['user_result'] ?? 'unknown'),
+    'played_at' => $row['played_at'] ?: ($row['imported_at'] ? substr((string)$row['imported_at'], 0, 10) : null),
+    'opening_accuracy' => $metrics['opening_accuracy'],
+    'opening_acpl' => $metrics['opening_acpl'],
+    'eval_after_move_10' => $metrics['eval_after_move_10'],
+    'opening_errors' => [
+      'blunders' => $metrics['opening_blunders'],
+      'mistakes' => $metrics['opening_mistakes'],
+      'inaccuracies' => $metrics['opening_inaccuracies'],
+      'total' => $metrics['opening_error_count'],
+    ],
+    'review_url' => 'review.php?id=' . (int)$row['game_id'],
+  ];
+}
+
+function openings_lab_recommendation(array $opening): string {
+  $games = (int)($opening['games'] ?? 0);
+  if ($games < openings_lab_min_games()) return 'Aún faltan partidas para sacar una conclusión fiable.';
+  if (($opening['opening_blunders'] ?? 0) > 0) return 'Revisa las primeras jugadas críticas y busca el patrón común antes de memorizar variantes.';
+  if (($opening['opening_mistakes'] ?? 0) > 0) return 'Trabaja los planes típicos y comprueba dónde empieza a caer la evaluación.';
+  if (($opening['score_rate'] ?? 0) >= 65) return 'Esta apertura está funcionando: conserva el repertorio y revisa partidas modelo propias.';
+  if (($opening['avg_opening_accuracy'] ?? 100) < 75) return 'Prioriza principios básicos: desarrollo, rey seguro y control del centro.';
+  return 'Mantener en observación: los resultados aún no muestran un problema claro.';
+}
+
+function openings_lab_common_issue(array $opening): ?array {
+  $issues = [
+    'blunder' => ['label' => 'Omisiones graves en apertura', 'count' => (int)($opening['opening_blunders'] ?? 0)],
+    'mistake' => ['label' => 'Errores importantes en apertura', 'count' => (int)($opening['opening_mistakes'] ?? 0)],
+    'inaccuracy' => ['label' => 'Imprecisiones repetidas en apertura', 'count' => (int)($opening['opening_inaccuracies'] ?? 0)],
+  ];
+  usort($issues, fn($a, $b) => $b['count'] <=> $a['count']);
+  return $issues[0]['count'] > 0 ? $issues[0] : null;
+}
+
+function openings_lab_build_openings(array $rows, array $movesByAnalysis): array {
+  $openings = [];
+
+  foreach ($rows as $row) {
+    $analysisId = (int)($row['analysis_id'] ?? 0);
+    $metrics = openings_lab_game_metrics($row, $analysisId > 0 ? ($movesByAnalysis[$analysisId] ?? []) : []);
+    $key = (string)$row['opening_key'];
+
+    if (!isset($openings[$key])) {
+      $openings[$key] = [
+        'opening_key' => $key,
+        'display_name' => (string)$row['display_name'],
+        'eco_code' => $row['eco_code'],
+        'opening_name' => $row['opening_name'],
+        'eco_url' => $row['eco_url'],
+        'opening_source' => (string)$row['opening_source'],
+        'opening_signature' => $row['opening_signature'],
+        'first_moves_san' => openings_lab_decode_moves($row['first_moves_san'] ?? null),
+        'first_moves_uci' => openings_lab_decode_moves($row['first_moves_uci'] ?? null),
+        'plies_count' => (int)($row['plies_count'] ?? 0),
+        'games' => 0,
+        'wins' => 0,
+        'draws' => 0,
+        'losses' => 0,
+        'unknown_results' => 0,
+        'white_games' => 0,
+        'black_games' => 0,
+        'opening_blunders' => 0,
+        'opening_mistakes' => 0,
+        'opening_inaccuracies' => 0,
+        'opening_error_count' => 0,
+        'accuracy_sum' => 0.0,
+        'accuracy_games' => 0,
+        'acpl_sum' => 0.0,
+        'eval_sum' => 0,
+        'eval_games' => 0,
+        'recent_games' => [],
+        'best_game' => null,
+        'worst_game' => null,
+      ];
+    }
+
+    $game = openings_lab_public_game($row, $metrics);
+    $result = (string)($row['user_result'] ?? 'unknown');
+    $openings[$key]['games']++;
+    if ($result === 'win') $openings[$key]['wins']++;
+    elseif ($result === 'draw') $openings[$key]['draws']++;
+    elseif ($result === 'loss') $openings[$key]['losses']++;
+    else $openings[$key]['unknown_results']++;
+
+    if (($row['user_color'] ?? '') === 'white') $openings[$key]['white_games']++;
+    if (($row['user_color'] ?? '') === 'black') $openings[$key]['black_games']++;
+
+    $openings[$key]['opening_blunders'] += $metrics['opening_blunders'];
+    $openings[$key]['opening_mistakes'] += $metrics['opening_mistakes'];
+    $openings[$key]['opening_inaccuracies'] += $metrics['opening_inaccuracies'];
+    $openings[$key]['opening_error_count'] += $metrics['opening_error_count'];
+
+    if ($metrics['opening_accuracy'] !== null) {
+      $openings[$key]['accuracy_sum'] += (float)$metrics['opening_accuracy'];
+      $openings[$key]['accuracy_games']++;
+    }
+    if ($metrics['opening_acpl'] !== null) {
+      $openings[$key]['acpl_sum'] += (float)$metrics['opening_acpl'];
+    }
+    if ($metrics['eval_after_move_10'] !== null) {
+      $openings[$key]['eval_sum'] += (int)$metrics['eval_after_move_10'];
+      $openings[$key]['eval_games']++;
+    }
+
+    if (count($openings[$key]['recent_games']) < 5) $openings[$key]['recent_games'][] = $game;
+    if ($metrics['opening_accuracy'] !== null) {
+      if ($openings[$key]['best_game'] === null || $metrics['opening_accuracy'] > $openings[$key]['best_game']['opening_accuracy']) {
+        $openings[$key]['best_game'] = $game;
+      }
+      if ($openings[$key]['worst_game'] === null || $metrics['opening_accuracy'] < $openings[$key]['worst_game']['opening_accuracy']) {
+        $openings[$key]['worst_game'] = $game;
+      }
+    }
+  }
+
+  foreach ($openings as &$opening) {
+    $games = max(1, (int)$opening['games']);
+    $opening['score_rate'] = round(((int)$opening['wins'] + ((int)$opening['draws'] * 0.5)) / $games * 100);
+    $opening['avg_opening_accuracy'] = $opening['accuracy_games'] ? round($opening['accuracy_sum'] / $opening['accuracy_games'], 1) : null;
+    $opening['avg_opening_acpl'] = $opening['accuracy_games'] ? round($opening['acpl_sum'] / $opening['accuracy_games'], 1) : null;
+    $opening['avg_eval_after_move_10'] = $opening['eval_games'] ? round($opening['eval_sum'] / $opening['eval_games']) : null;
+    $opening['common_issue'] = openings_lab_common_issue($opening);
+    $opening['recommendation'] = openings_lab_recommendation($opening);
+    unset($opening['accuracy_sum'], $opening['accuracy_games'], $opening['acpl_sum'], $opening['eval_sum'], $opening['eval_games']);
+  }
+  unset($opening);
+
+  $items = array_values($openings);
+  usort($items, fn($a, $b) =>
+    ((int)$b['games'] <=> (int)$a['games'])
+    ?: ((int)$b['opening_error_count'] <=> (int)$a['opening_error_count'])
+    ?: strcmp((string)$a['display_name'], (string)$b['display_name'])
+  );
+  return $items;
+}
+
+function openings_lab_summary(array $openings, int $pendingProfiles): array {
+  $totalGames = array_sum(array_map(fn($opening) => (int)$opening['games'], $openings));
+  $readyOpenings = array_values(array_filter($openings, fn($opening) => (int)$opening['games'] >= openings_lab_min_games()));
+  $best = $readyOpenings;
+  usort($best, fn($a, $b) =>
+    ((int)$b['score_rate'] <=> (int)$a['score_rate'])
+    ?: ((float)($b['avg_opening_accuracy'] ?? -1) <=> (float)($a['avg_opening_accuracy'] ?? -1))
+  );
+  $worst = $readyOpenings;
+  usort($worst, fn($a, $b) =>
+    ((int)$b['opening_error_count'] <=> (int)$a['opening_error_count'])
+    ?: ((int)$a['score_rate'] <=> (int)$b['score_rate'])
+  );
+
+  return [
+    'total_profiled_games' => $totalGames,
+    'total_openings' => count($openings),
+    'openings_with_minimum_games' => count($readyOpenings),
+    'minimum_games' => openings_lab_min_games(),
+    'profile_plies' => openings_profile_plies(),
+    'pending_profiles' => $pendingProfiles,
+    'best_opening' => $best[0] ?? null,
+    'main_issue_opening' => $worst[0] ?? null,
+  ];
+}
+
+function openings_lab_payload(int $userId, int $limit = 50, int $minGames = 1): array {
+  $limit = max(1, min(100, $limit));
+  $minGames = max(1, min(50, $minGames));
+  $rows = openings_lab_game_rows($userId);
+  $movesByAnalysis = openings_lab_moves_by_analysis(array_column($rows, 'analysis_id'));
+  $openings = openings_lab_build_openings($rows, $movesByAnalysis);
+  $summary = openings_lab_summary($openings, openings_profile_pending_count($userId));
+  $filtered = array_values(array_filter($openings, fn($opening) => (int)$opening['games'] >= $minGames));
+
+  return [
+    'ok' => true,
+    'summary' => $summary,
+    'openings' => array_slice($filtered, 0, $limit),
+    'filters' => [
+      'minimum_games' => $minGames,
+      'recommended_minimum_games' => openings_lab_min_games(),
+      'limit' => $limit,
+    ],
+  ];
+}
+
+function openings_lab_detail_payload(int $userId, string $openingKey): array {
+  $openingKey = trim($openingKey);
+  if ($openingKey === '') return ['ok' => false, 'error' => 'Apertura no indicada.'];
+
+  $rows = openings_lab_game_rows($userId, $openingKey);
+  if (!$rows) return ['ok' => false, 'error' => 'Apertura no encontrada.'];
+
+  $movesByAnalysis = openings_lab_moves_by_analysis(array_column($rows, 'analysis_id'));
+  $openings = openings_lab_build_openings($rows, $movesByAnalysis);
+  $opening = $openings[0] ?? null;
+  if (!$opening) return ['ok' => false, 'error' => 'Apertura no encontrada.'];
+
+  $games = [];
+  foreach ($rows as $row) {
+    $analysisId = (int)($row['analysis_id'] ?? 0);
+    $metrics = openings_lab_game_metrics($row, $analysisId > 0 ? ($movesByAnalysis[$analysisId] ?? []) : []);
+    $games[] = openings_lab_public_game($row, $metrics);
+  }
+
+  return [
+    'ok' => true,
+    'opening' => $opening,
+    'games' => $games,
+    'minimum_games' => openings_lab_min_games(),
+  ];
 }
 
 function openings_backfill_batch(int $userId, int $limit = 25, string $trigger = 'profile-page'): array {
