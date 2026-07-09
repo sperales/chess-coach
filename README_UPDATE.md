@@ -18,7 +18,7 @@ This release does not add new product features. It stabilizes the v1.1.x Trainin
 
 ## Changed files
 
-The v1.1.6 documentation, encoding-audit, API-ownership and CSRF-hardening PRs have touched:
+The v1.1.6 documentation, encoding-audit, API-ownership, CSRF-hardening and output-safety PRs have touched:
 
 - `AGENTS.md`
 - `CHANGELOG.md`
@@ -42,6 +42,8 @@ The v1.1.6 documentation, encoding-audit, API-ownership and CSRF-hardening PRs h
 - `games.php`
 - `includes/analysis_queue.php`
 - `includes/helpers.php`
+- `includes/smart_tags.php`
+- `includes/stockfish.php`
 - `includes/training.php`
 - `import-chesscom.php`
 - `profile.php`
@@ -84,18 +86,28 @@ The login form is intentionally not covered in v1.1.6, and the HTTP GET cron wor
 
 Training Center GET endpoints now only read the current active session. Creating or renewing a training session happens through POST actions protected by CSRF.
 
+## Output and JSON safety
+
+The v1.1.6 output-safety pass reduces accidental exposure of internal details:
+
+- Worker summaries no longer return the raw cron token.
+- The analysis queue UI displays the worker endpoint with `token=***`.
+- Stockfish status no longer returns the configured filesystem path.
+- Stockfish status now reports whether the path is configured without exposing it.
+- Analysis, Chess.com import, Smart Tags backfill and Training Center backfill errors use public error messages before being stored or returned.
+
 ## SQL migration
 
-No SQL migration is required for the documentation alignment, encoding audit or API ownership PRs.
+No SQL migration is required for the documentation alignment, encoding audit, API ownership, CSRF hardening or output-safety PRs.
 
 ## Service worker
 
 No service worker cache change is required for documentation-only or audit-only PRs.
 
-The CSRF hardening PR updates the cache name to:
+The output-safety PR updates the cache name to:
 
 ```text
-chess-coach-v1.1.6-csrf-hardening
+chess-coach-v1.1.6-output-json-safety
 ```
 
 The final v1.1.6 release readiness PR may update `service-worker.js` again for the final release cache name.

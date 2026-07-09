@@ -92,3 +92,20 @@ function json_response(array $data): void {
   echo json_encode($data, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
   exit;
 }
+function public_error_message(Throwable $e, string $fallback = 'Se ha producido un error interno.'): string {
+  $message = trim($e->getMessage());
+  if ($message === '') return $fallback;
+
+  $sensitivePatterns = [
+    '/[A-Za-z]:\\\\/',
+    '#/(home|var|usr|etc|tmp|opt|srv|www)/#i',
+    '/config\/(database|engine|cron)\.php/i',
+    '/password|token|secret|api[_-]?key/i',
+    '/SQLSTATE\[[^\]]+\]/i',
+  ];
+  foreach ($sensitivePatterns as $pattern) {
+    if (preg_match($pattern, $message)) return $fallback;
+  }
+
+  return substr($message, 0, 240);
+}

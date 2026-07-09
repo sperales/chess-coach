@@ -16,7 +16,10 @@
 - Added CSRF tokens to profile forms and JavaScript POST requests.
 - Kept the login form and HTTP GET cron worker out of CSRF scope for this hardening pass.
 - Kept Training Center GET endpoints read-only for session creation; session changes now go through CSRF-protected POST actions.
-- Updated the service worker cache name to `chess-coach-v1.1.6-csrf-hardening`.
+- Removed the raw cron worker token from authenticated worker summary responses.
+- Stopped exposing the configured Stockfish filesystem path in engine status responses.
+- Sanitized analysis, Chess.com import, Smart Tags backfill and Training Center backfill errors before storing or returning them.
+- Updated the service worker cache name to `chess-coach-v1.1.6-output-json-safety`.
 
 ### Database
 

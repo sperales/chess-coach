@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/helpers.php';
 
 function training_exercise_types(): array {
   return [
@@ -813,7 +814,7 @@ function training_generate_for_analysis(int $analysisId, int $userId, ?string $f
       if (!empty($result['created'])) $created++;
       elseif (!empty($result['skipped'])) $skipped++;
     } catch (Throwable $e) {
-      $errors[] = $e->getMessage();
+      $errors[] = public_error_message($e);
     }
   }
 
@@ -880,7 +881,7 @@ function training_backfill_batch(int $userId, int $limit = 10, string $trigger =
       foreach (($result['errors'] ?? []) as $error) $errors[] = $error;
       if (empty($result['ok']) && !empty($result['error'])) $errors[] = $result['error'];
     } catch (Throwable $e) {
-      $errors[] = $e->getMessage();
+      $errors[] = public_error_message($e);
     }
   }
 
