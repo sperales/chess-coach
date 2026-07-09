@@ -44,9 +44,29 @@ function require_post_request(): void {
     json_response(['ok' => false, 'error' => 'Método no permitido.']);
   }
 }
+function require_get_request(): void {
+  if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
+    http_response_code(405);
+    json_response(['ok' => false, 'error' => 'Método no permitido.']);
+  }
+}
 function require_post_csrf(): void {
   require_post_request();
   require_csrf_token();
+}
+function request_json_body(): array {
+  static $body = null;
+  if ($body !== null) return $body;
+
+  $raw = file_get_contents('php://input');
+  if (!is_string($raw) || trim($raw) === '') {
+    $body = [];
+    return $body;
+  }
+
+  $decoded = json_decode($raw, true);
+  $body = is_array($decoded) ? $decoded : [];
+  return $body;
 }
 function coach_menu_items(): array {
   return [
