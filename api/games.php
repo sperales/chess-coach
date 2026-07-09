@@ -231,7 +231,7 @@ function game_stats_for_user(int $userId, bool $recent): array {
   return ['total'=>$total,'wins'=>$wins,'losses'=>$losses,'draws'=>$draws,'avg_per_day'=>number_format($total / $days, 2, '.', '')];
 }
 if($action==='import'){
-  $body=json_decode(file_get_contents('php://input'),true) ?: [];
+  $body=request_json_body();
   $pgns=split_pgns($body['pgn']??''); $added=0; $skipped=0;
   foreach($pgns as $pgn){
     $uid=hash('sha256',$pgn);

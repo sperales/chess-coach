@@ -43,7 +43,7 @@ if ($action === 'stats') {
 }
 
 if ($action === 'session_start') {
-  $body = json_decode(file_get_contents('php://input'), true) ?: [];
+  $body = request_json_body();
   $type = (string)($body['type'] ?? 'recommended');
   $forceNew = !empty($body['force_new']);
   json_response($forceNew
@@ -52,7 +52,7 @@ if ($action === 'session_start') {
 }
 
 if ($action === 'session_end') {
-  $body = json_decode(file_get_contents('php://input'), true) ?: [];
+  $body = request_json_body();
   $sessionId = (int)($body['session_id'] ?? 0);
   $status = (string)($body['status'] ?? 'completed');
   json_response($sessionId > 0
@@ -71,7 +71,7 @@ if ($action === 'get') {
 }
 
 if ($action === 'attempt') {
-  $body = json_decode(file_get_contents('php://input'), true) ?: [];
+  $body = request_json_body();
   $id = (int)($body['id'] ?? 0);
   $moves = is_array($body['moves'] ?? null) ? $body['moves'] : [];
   $durationMs = (int)($body['duration_ms'] ?? 0);
@@ -87,7 +87,7 @@ if ($action === 'attempt') {
 }
 
 if ($action === 'skip') {
-  $body = json_decode(file_get_contents('php://input'), true) ?: [];
+  $body = request_json_body();
   $id = (int)($body['id'] ?? 0);
   $sessionId = (int)($body['session_id'] ?? 0);
   $result = $id > 0

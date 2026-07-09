@@ -57,7 +57,7 @@ if ($action === 'queue_list' || $action === 'dashboard') {
 }
 
 if ($action === 'queue') {
-  $body = json_decode(file_get_contents('php://input'), true) ?: [];
+  $body = request_json_body();
   $id = (int)($body['id'] ?? 0);
   $force = !empty($body['force']);
   json_response(queue_game_analysis($id, $userId, $force));
@@ -76,7 +76,7 @@ if ($action === 'cancel_waiting') {
 }
 
 if ($action === 'cancel') {
-  $body = json_decode(file_get_contents('php://input'), true) ?: [];
+  $body = request_json_body();
   $analysisId = (int)($body['analysis_id'] ?? 0);
   json_response(queue_request_cancel($analysisId, $userId));
 }
@@ -91,7 +91,7 @@ if ($action === 'process_next') {
 if ($action === 'run_worker') {
   ignore_user_abort(true);
   @set_time_limit(300);
-  $body = json_decode(file_get_contents('php://input'), true) ?: [];
+  $body = request_json_body();
   $batch = max(1, min(20, (int)($body['batch'] ?? 1)));
   if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
   json_response(worker_run_batch($userId, $batch, 'manual-page'));
@@ -100,7 +100,7 @@ if ($action === 'run_worker') {
 if ($action === 'smart_tags_backfill') {
   ignore_user_abort(true);
   @set_time_limit(300);
-  $body = json_decode(file_get_contents('php://input'), true) ?: [];
+  $body = request_json_body();
   $limit = max(1, min(50, (int)($body['limit'] ?? 10)));
   if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
   json_response(smart_tag_backfill_batch($userId, $limit, 'profile-page'));
@@ -116,7 +116,7 @@ if ($action === 'smart_tags_backfill_status') {
 if ($action === 'training_backfill') {
   ignore_user_abort(true);
   @set_time_limit(300);
-  $body = json_decode(file_get_contents('php://input'), true) ?: [];
+  $body = request_json_body();
   $limit = max(1, min(50, (int)($body['limit'] ?? 10)));
   if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
   json_response(training_backfill_batch($userId, $limit, 'profile-page'));
@@ -133,7 +133,7 @@ if ($action === 'training_backfill_status') {
 if ($action === 'process') {
   ignore_user_abort(true);
   @set_time_limit(300);
-  $body = json_decode(file_get_contents('php://input'), true) ?: [];
+  $body = request_json_body();
   $analysisId = (int)($body['analysis_id'] ?? 0);
   if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
   json_response(process_analysis_job($analysisId, $userId));

@@ -18,7 +18,7 @@ This release does not add new product features. It stabilizes the v1.1.x Trainin
 
 ## Changed files
 
-The v1.1.6 documentation, encoding-audit, API-ownership, CSRF-hardening and output-safety PRs have touched:
+The v1.1.6 documentation, encoding-audit, API-ownership, CSRF-hardening, output-safety and light architecture cleanup PRs have touched:
 
 - `AGENTS.md`
 - `CHANGELOG.md`
@@ -29,6 +29,7 @@ The v1.1.6 documentation, encoding-audit, API-ownership, CSRF-hardening and outp
 - `analysis-pending.php`
 - `api/analyze.php`
 - `api/chesscom.php`
+- `api/dashboard.php`
 - `api/games.php`
 - `api/training.php`
 - `app.php`
@@ -96,9 +97,18 @@ The v1.1.6 output-safety pass reduces accidental exposure of internal details:
 - Stockfish status now reports whether the path is configured without exposing it.
 - Analysis, Chess.com import, Smart Tags backfill and Training Center backfill errors use public error messages before being stored or returned.
 
+## Light architecture cleanup
+
+The v1.1.6 light architecture cleanup keeps behavior unchanged while reducing duplicated request handling:
+
+- JSON request bodies are now read through `request_json_body()`.
+- `request_json_body()` caches the decoded payload per request so multiple action handlers do not re-read `php://input`.
+- GET-only endpoints can use `require_get_request()` with the same JSON error shape as POST-only helpers.
+- API endpoints for analysis, Chess.com import, manual PGN import, dashboard and Training Center now use those helpers.
+
 ## SQL migration
 
-No SQL migration is required for the documentation alignment, encoding audit, API ownership, CSRF hardening or output-safety PRs.
+No SQL migration is required for the documentation alignment, encoding audit, API ownership, CSRF hardening, output-safety or light architecture cleanup PRs.
 
 ## Service worker
 

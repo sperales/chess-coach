@@ -19,11 +19,12 @@
 - Removed the raw cron worker token from authenticated worker summary responses.
 - Stopped exposing the configured Stockfish filesystem path in engine status responses.
 - Sanitized analysis, Chess.com import, Smart Tags backfill and Training Center backfill errors before storing or returning them.
+- Centralized JSON request-body parsing and GET-only request validation in shared helpers.
 - Updated the service worker cache name to `chess-coach-v1.1.6-output-json-safety`.
 
 ### Database
 
-- No SQL migration required for the documentation alignment, encoding audit or API ownership PRs.
+- No SQL migration required for the documentation alignment, encoding audit, API ownership, CSRF hardening, output-safety or light architecture cleanup PRs.
 
 ## v1.1.5 - Training Center hints
 
