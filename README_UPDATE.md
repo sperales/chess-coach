@@ -99,6 +99,59 @@ The Openings Lab backend now calculates:
 
 The recommended minimum sample size is 3 games per opening.
 
+## PR3 - Lab de Aperturas UI
+
+The third v1.2.0 PR adds the first user-facing Openings Lab page and navigation entry.
+
+Changed files:
+
+- `CHANGELOG.md`
+- `README_UPDATE.md`
+- `assets/css/app.css`
+- `assets/js/openings_lab.js`
+- `includes/helpers.php`
+- `openings-lab.php`
+- `profile.php`
+- `service-worker.js`
+
+### Page and navigation
+
+The hamburger menu entry previously shown as a disabled Aperturas placeholder now opens:
+
+```text
+openings-lab.php
+```
+
+The menu label is:
+
+```text
+Lab de Aperturas
+```
+
+### UI included
+
+`openings-lab.php` shows:
+
+- summary KPI cards
+- detected openings list
+- minimum-games selector
+- detail panel for the selected opening
+- score rate, opening accuracy, opening ACPL and move-10 evaluation
+- practical diagnosis and recommendation
+- example games with direct links to `review.php`
+
+This PR consumes `api/openings.php` from PR2. It does not add training exercises from openings and does not add a full opening-repertoire editor.
+
+### Profile backfill
+
+The profile page now exposes a manual Openings Lab backfill in the existing Procesos batch block. It calls:
+
+```text
+POST api/openings.php?action=backfill
+```
+
+The action requires CSRF and processes up to 25 games per execution.
+
 ## SQL migration
 
 Run:
@@ -118,7 +171,12 @@ It also registers version `1.2.0` in `app_migrations`.
 
 No service worker cache change is required in PR1 or PR2 because no browser assets or pages are added yet.
 
-The final v1.2.0 release readiness PR must update `service-worker.js`.
+PR3 adds a new page and JavaScript file, so `service-worker.js` now includes:
+
+- `./openings-lab.php`
+- `./assets/js/openings_lab.js`
+
+The final v1.2.0 release readiness PR must set the final cache name.
 
 ## Local verification commands
 
@@ -139,3 +197,9 @@ When JavaScript is added in later PRs, run `node --check` on changed JS files.
 - Call `api/openings.php?action=dashboard` after login and confirm it returns opening metrics JSON.
 - Call `api/openings.php?action=detail&opening_key=...` with a returned opening key and confirm it returns the related games.
 - Confirm no UI change is expected from PR2.
+- Open `openings-lab.php` from the hamburger menu.
+- Confirm the page renders summary cards, opening list and detail panel.
+- Confirm changing the minimum-games selector reloads the list.
+- Confirm example-game links open `review.php`.
+- Open `profile.php` and confirm the Procesos batch block shows Backfill de aperturas.
+- Run the Openings Lab backfill and confirm the pending counter updates.
