@@ -105,6 +105,18 @@ $greeting = $hour < 12 ? 'Buenos días' : ($hour < 21 ? 'Buenas tardes' : 'Buena
     </section>
   </section>
 
+  <section class="home-review-grid">
+    <section class="panel home-review-card" id="latestReviewCard">
+      <h2>Revisión de última partida</h2>
+      <p class="muted">Cargando última revisión...</p>
+    </section>
+
+    <section class="panel home-review-counts-card" id="latestReviewCountsCard">
+      <h2>Resumen</h2>
+      <p class="muted">Cargando resumen...</p>
+    </section>
+  </section>
+
   <section class="quick-panel-wrap">
     <section class="panel quick-panel">
       <h2>Acciones rápidas</h2>

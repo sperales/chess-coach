@@ -1,5 +1,6 @@
 let games = [];
 let dashboardData = null;
+let latestReviewData = null;
 let currentPage = 1;
 let pagination = { page: 1, per_page: (window.CHESS_COACH_CONFIG && window.CHESS_COACH_CONFIG.gamesPerPage) || 50, total: 0, pages: 1 };
 let stats = { recent10: { total: 0, wins: 0, losses: 0, draws: 0 }, analysis_accuracy: { average: null, analyzed_games: 0 }, queue: { pending_total: 0 } };
@@ -27,6 +28,7 @@ async function load(page = currentPage) {
   currentPage = pagination.page || currentPage;
   stats = gamesPayload.stats || stats;
   dashboardData = trainerPayload;
+  latestReviewData = await loadLatestReview();
 
   render();
   schedulePollingIfNeeded();
@@ -38,7 +40,19 @@ function render() {
   renderRows();
   renderPagination();
   renderPatterns();
+  renderLatestReview();
   updateGamesPanelTabs();
+}
+
+async function loadLatestReview() {
+  const latestDone = games.find(game => game.analysis_status === 'done');
+  if (!latestDone || !latestDone.id) return null;
+  try {
+    return await dashboardGet(`api/review.php?id=${Number(latestDone.id)}`);
+  } catch (error) {
+    console.warn(error);
+    return null;
+  }
 }
 
 function renderStats() {
@@ -216,12 +230,12 @@ function renderFocus() {
 function focusIconSvg(focus, index) {
   const title = ((focus && focus.title) || '').toLowerCase();
   if (title.indexOf('táct') !== -1 || title.indexOf('tact') !== -1 || index === 0) {
-    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="3"/></svg>';
+    return '<img src="assets/images/focus/ojo.png" alt="" loading="lazy">';
   }
   if (title.indexOf('final') !== -1 || index === 2) {
-    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"/><path d="M5 5h12l-3 4 3 4H5"/></svg>';
+    return '<img src="assets/images/focus/bandera.png" alt="" loading="lazy">';
   }
-  return '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>';
+  return '<img src="assets/images/focus/diana.png" alt="" loading="lazy">';
 }
 
 function focusLinkLabel(url) {
@@ -475,6 +489,93 @@ function renderPatterns() {
       ${tags.map(tag => `<div><span>${smartTagChip(tag)}</span><strong>${Number(tag.total || 0)}</strong></div>`).join('')}
     </div>
   `;
+}
+
+function renderLatestReview() {
+  const card = document.getElementById('latestReviewCard');
+  const countsCard = document.getElementById('latestReviewCountsCard');
+  if (!card || !countsCard) return;
+  if (!latestReviewData || !latestReviewData.ok) {
+    const empty = `
+      <div class="empty-state compact">
+        <strong>Sin revisiones todavía.</strong>
+        <span>Analiza una partida para ver aquí el resumen de la última revisión.</span>
+        <a href="analysis-pending.php">Ver cola de análisis</a>
+      </div>
+    `;
+    card.innerHTML = `<h2>Revisión de última partida</h2>${empty}`;
+    countsCard.innerHTML = `<h2>Resumen</h2>${empty}`;
+    return;
+  }
+  const game = latestReviewData.game || {};
+  const summary = latestReviewData.summary || {};
+  const gameId = Number(game.id || 0);
+  const tags = (summary.smart_tags || []).slice(0, 2);
+  card.innerHTML = `
+    <div class="home-review-head">
+      <div>
+        <h2>Revisión de última partida</h2>
+        <p>${escapeHtml(latestReviewMeta(game))}</p>
+      </div>
+      ${gameId ? `<a class="home-review-piece" href="review.php?id=${gameId}" aria-label="Abrir revisión">♞</a>` : '<span class="home-review-piece">♞</span>'}
+    </div>
+    <div class="home-review-coach">
+      <div class="coach-avatar">♞</div>
+      <div>
+        <h3>${escapeHtml(summary.headline || 'Revisión de partida')}</h3>
+        <p>${escapeHtml(summary.comment || 'Vamos a revisar los momentos importantes.')}</p>
+        ${tags.length ? `<div class="smart-tag-list review-tags">${tags.map(smartTagChip).join('')}</div>` : ''}
+      </div>
+    </div>
+    <div class="review-kpis home-review-kpis">
+      <div><span>Accuracy</span><b>${formatReviewNumber(summary.accuracy)}</b></div>
+      <div><span>ACPL</span><b>${formatReviewNumber(summary.acpl)}</b></div>
+      <div><span>Jugadas</span><b>${Number(summary.moves || 0)}</b></div>
+    </div>
+  `;
+  const labels = [
+    ['best', 'Mejor'],
+    ['excellent', 'Excelente'],
+    ['good', 'Buena'],
+    ['inaccuracy', 'Imprecisión'],
+    ['mistake', 'Error'],
+    ['blunder', 'Decisión grave']
+  ];
+  const counts = summary.counts || {};
+  countsCard.innerHTML = `
+    <h2>Resumen</h2>
+    <div class="review-counts home-review-counts">
+      ${labels.map(([key, label]) => `
+        <div class="review-count ${key}">
+          <span>${homeBucketIcon(key)}</span>
+          <strong>${Number(counts[key] || 0)}</strong>
+          <small>${escapeHtml(label)}</small>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function latestReviewMeta(game) {
+  const white = game.white_player || 'Blancas';
+  const black = game.black_player || 'Negras';
+  const result = game.result_raw || '-';
+  const date = game.played_at || (game.imported_at || '').slice(0, 10) || '-';
+  return `${white} vs ${black} • ${result} • ${date}`;
+}
+
+function formatReviewNumber(value) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num.toFixed(1).replace(/\.0$/, '') : '--';
+}
+
+function homeBucketIcon(bucket) {
+  if (bucket === 'best' || bucket === 'good') return '↑';
+  if (bucket === 'excellent') return '★';
+  if (bucket === 'inaccuracy') return '?!';
+  if (bucket === 'mistake') return '↓';
+  if (bucket === 'blunder') return '??';
+  return '•';
 }
 
 function setGamesPanelMode(mode) {

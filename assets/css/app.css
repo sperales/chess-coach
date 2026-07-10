@@ -818,7 +818,7 @@ label {
   .topbar .brand {
     display:flex
   }
-  .metric-grid,.quick-grid,.home-grid,.home-middle-grid,.import-grid {
+  .metric-grid,.quick-grid,.home-grid,.home-middle-grid,.home-review-grid,.import-grid {
     grid-template-columns:1fr
   }
   .dashboard {
@@ -1314,7 +1314,7 @@ body.login-page::before {
   min-width:0;
   overflow:visible
 }
-.app-area,.dashboard,.hero-card,.panel,.metric-card,.quick-card,.home-grid,.home-middle-grid,.metric-grid,.quick-grid {
+.app-area,.dashboard,.hero-card,.panel,.metric-card,.quick-card,.home-grid,.home-middle-grid,.home-review-grid,.metric-grid,.quick-grid {
   min-width:0;
   max-width:100%
 }
@@ -1341,7 +1341,7 @@ body.login-page::before {
     height:58px!important;
     max-width:52vw!important
   }
-  .metric-grid,.quick-grid,.home-grid,.home-middle-grid,.import-grid {
+  .metric-grid,.quick-grid,.home-grid,.home-middle-grid,.home-review-grid,.import-grid {
     grid-template-columns:minmax(0,1fr)!important
   }
   .dashboard {
@@ -1691,6 +1691,84 @@ body.login-page::before {
   color:var(--muted);
   display:block
 }
+.home-review-grid {
+  display:grid;
+  grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr);
+  gap:20px;
+  margin-top:20px
+}
+.home-review-card,
+.home-review-counts-card {
+  background:
+    radial-gradient(circle at 90% 14%, rgba(47,202,90,.12), transparent 28%),
+    linear-gradient(180deg,rgba(19,42,38,.96),rgba(13,22,27,.96))
+}
+.home-review-head {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+  padding-bottom:14px;
+  margin-bottom:16px;
+  border-bottom:1px solid rgba(255,255,255,.08)
+}
+.home-review-head h2 {
+  margin-bottom:8px
+}
+.home-review-head p {
+  margin:0;
+  color:#a9b1ba;
+  font-weight:800
+}
+.home-review-piece {
+  color:rgba(255,255,255,.12);
+  font-size:58px;
+  line-height:1;
+  text-decoration:none
+}
+.home-review-coach {
+  display:grid;
+  grid-template-columns:76px minmax(0,1fr);
+  gap:18px;
+  align-items:start
+}
+.home-review-coach .coach-avatar {
+  border-radius:18px;
+  border-color:#2c4a35;
+  box-shadow:none
+}
+.home-review-coach h3 {
+  margin:0 0 8px;
+  font-size:21px
+}
+.home-review-coach p {
+  margin:0;
+  color:#cbd5df;
+  line-height:1.45
+}
+.home-review-kpis {
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  margin-top:22px
+}
+.home-review-kpis div {
+  background:rgba(7,16,20,.46)
+}
+.home-review-counts {
+  height:calc(100% - 42px);
+  align-content:start
+}
+.home-review-counts .review-count {
+  background:rgba(7,16,20,.46)
+}
+.home-review-counts .review-count span {
+  flex:0 0 38px;
+  width:38px;
+  height:38px
+}
+.home-review-counts .review-count strong {
+  min-width:32px;
+  color:#fff
+}
 .review-chart-panel canvas {
   width:100%;
   height:220px;
@@ -1947,7 +2025,7 @@ body.login-page::before {
   flex-wrap:wrap
 }
 @media(max-width:980px) {
-  .review-summary-grid,.review-board-grid {
+  .review-summary-grid,.review-board-grid,.home-review-grid {
     grid-template-columns:minmax(0,1fr)!important
   }
   .review-kpis {
@@ -1969,6 +2047,12 @@ body.login-page::before {
 @media(max-width:640px) {
   .review-summary-grid {
     gap:14px
+  }
+  .home-review-coach {
+    grid-template-columns:minmax(0,1fr)
+  }
+  .home-review-piece {
+    display:none
   }
   .coach-comment {
     flex-direction:column
@@ -2270,21 +2354,16 @@ select {
   border-top:1px solid rgba(255,255,255,.07)
 }
 .trainer-focus-icon {
-  height:42px;
+  height:58px;
   display:grid;
   place-items:center;
-  margin:18px auto 2px;
+  margin:22px auto 12px;
   color:#c9d0d6
 }
-.trainer-focus-icon svg {
-  width:38px;
-  height:38px;
-  fill:none;
-  stroke:currentColor;
-  stroke-width:1.9;
-  stroke-linecap:round;
-  stroke-linejoin:round;
-  filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))
+.trainer-focus-icon img {
+  width:64px;
+  height:64px;
+  object-fit:contain
 }
 .trainer-focus-card a,.trainer-strength a {
   color:#78d95e;
