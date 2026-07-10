@@ -1432,6 +1432,9 @@ label {
 .sq.from,.sq.to {
   background:#b8d343
 }
+.sq.best-from,.sq.best-to {
+  background:#9bd8ff
+}
 .review-controls {
   display:grid;
   grid-template-columns:repeat(4,1fr);
@@ -2051,17 +2054,26 @@ select {
 }
 .opening-card-kpis {
   display:grid;
-  grid-template-columns:repeat(3,minmax(64px,auto));
-  gap:4px 10px;
-  align-items:end;
+  grid-template-columns:repeat(3,minmax(74px,1fr));
+  gap:4px 14px;
+  align-items:start;
   text-align:right
 }
+.opening-card-kpis span {
+  display:grid;
+  gap:4px;
+  justify-items:end
+}
 .opening-card-kpis b {
-  font-size:18px
+  display:block;
+  font-size:18px;
+  line-height:1.1
 }
 .opening-card-kpis small {
+  display:block;
   color:#a9b1ba;
-  font-size:12px
+  font-size:12px;
+  line-height:1.1
 }
 .opening-card-note {
   grid-column:1/-1;

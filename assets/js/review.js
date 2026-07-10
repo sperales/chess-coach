@@ -1,6 +1,6 @@
 let reviewData = null;
 let currentMoveIndex = 0;
-let showingBest = false;
+let bestMoveHighlight = '';
 let boardOrientation = 'white';
 const PIECE_ASSET_PATH = (window.CHESS_COACH_PIECE_PATH || 'assets/pieces/Set%201/').toString();
 const INITIAL_REVIEW_PARAMS = new URLSearchParams(window.location.search);
@@ -232,7 +232,7 @@ function renderMove() {
   const moves = (reviewData && reviewData.moves) || [];
   const m = moves[currentMoveIndex];
   if (!m) return;
-  showingBest = false;
+  bestMoveHighlight = '';
   const moveNo = Math.floor((Number(m.ply)-1)/2)+1;
   const side = Number(m.ply)%2===1 ? 'Blancas' : 'Negras';
   document.getElementById('moveTitle').textContent = `Movimiento ${moveNo} · ${side}`;
@@ -247,19 +247,21 @@ function renderMove() {
   renderMoveList();
 }
 
-function renderBoard(fen, uci) {
+function renderBoard(fen, uci, bestUci = '') {
   const board = document.getElementById('reviewBoard');
   if (!board) return;
   const [placement] = (fen || '').split(' ');
   const grid = boardGridFromPlacement(placement || '');
   const from = uci ? uci.slice(0,2) : '';
   const to = uci ? uci.slice(2,4) : '';
+  const bestFrom = bestUci ? bestUci.slice(0,2) : '';
+  const bestTo = bestUci ? bestUci.slice(2,4) : '';
   let html = '';
   const ranks = boardOrientation === 'black' ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
   const files = boardOrientation === 'black' ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
   for (const r of ranks) {
     for (const file of files) {
-      html += squareHtml(r, file, '', from, to, grid[r][file] || '');
+      html += squareHtml(r, file, '', from, to, grid[r][file] || '', bestFrom, bestTo);
     }
   }
   board.innerHTML = html;
@@ -295,11 +297,12 @@ function boardGridFromPlacement(placement) {
   return grid;
 }
 
-function squareHtml(r,file,piece,from,to,pieceCode='') {
+function squareHtml(r,file,piece,from,to,pieceCode='',bestFrom='',bestTo='') {
   const sq = String.fromCharCode(97+file) + (8-r);
   const dark = (r+file)%2===1;
   const hl = sq === from ? ' from' : sq === to ? ' to' : '';
-  return `<div class="sq ${dark?'dark':'light'}${hl}" data-sq="${sq}">${pieceImageHtml(pieceCode)}</div>`;
+  const best = sq === bestFrom ? ' best-from' : sq === bestTo ? ' best-to' : '';
+  return `<div class="sq ${dark?'dark':'light'}${hl}${best}" data-sq="${sq}">${pieceImageHtml(pieceCode)}</div>`;
 }
 
 function pieceImageHtml(pieceCode) {
@@ -334,6 +337,8 @@ function showBestMove(){
   if (!m) return;
   const explanation = document.getElementById('moveExplanation');
   const best = m.bestmove_human || 'no disponible';
+  bestMoveHighlight = (m.bestmove || '').toString().toLowerCase();
+  if (bestMoveHighlight.length >= 4) renderBoard(m.fen_before || m.fen_after, '', bestMoveHighlight);
   explanation.textContent = `Mejor alternativa según Stockfish: ${best}. Úsalo como pista, no como una línea para memorizar.`;
 }
 

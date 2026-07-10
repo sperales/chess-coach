@@ -14,11 +14,11 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v1.2.0**
+Current stable baseline: **v1.2.1**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
-v1.2.0 is the current stable Openings Lab baseline.
+v1.2.1 is the current stable Openings Lab polish baseline.
 
 ---
 
