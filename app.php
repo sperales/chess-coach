@@ -30,15 +30,27 @@ $greeting = $hour < 12 ? 'Buenos días' : ($hour < 21 ? 'Buenas tardes' : 'Buena
       <h1><?=e($greeting)?>, <?=e($u['username'])?></h1>
       <p id="trainerHeroText">Preparando tu panel de entrenamiento...</p>
     </div>
-    <div class="hero-piece">♛</div>
+    <div class="trainer-hero-focus" id="trainerHeroFocus" hidden>
+      <strong id="trainerHeroFocusLabel">Foco</strong>
+    </div>
   </section>
 
   <section class="metric-grid" id="stats"></section>
 
   <section class="panel trainer-summary-panel">
-    <h2>Resumen de últimas partidas</h2>
-    <p class="trainer-summary-text" id="trainerSummary">Cargando resumen...</p>
-    <div class="trainer-mini-kpis" id="trainerMiniKpis"></div>
+    <div class="trainer-summary-content">
+      <div class="trainer-summary-main">
+        <h2>Resumen de rendimiento</h2>
+        <p class="trainer-summary-text" id="trainerSummary">Cargando resumen...</p>
+        <div class="trainer-mini-kpis" id="trainerMiniKpis"></div>
+      </div>
+      <div class="trainer-accuracy-ring" id="trainerAccuracyRing" aria-label="Accuracy media reciente">
+        <div>
+          <strong id="trainerAccuracyRingValue">--</strong>
+          <span>Accuracy media</span>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section class="trainer-grid">

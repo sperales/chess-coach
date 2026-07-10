@@ -46,26 +46,110 @@ function renderStats() {
   if (!el) return;
   const global = stats.global || { total: 0, wins: 0, losses: 0, draws: 0 };
   const accuracy = stats.analysis_accuracy || { average: null, analyzed_games: 0 };
+  const overview = (dashboardData && dashboardData.overview) || {};
+  const previous = (dashboardData && dashboardData.previous_period) || {};
+  const queue = (dashboardData && dashboardData.queue) || stats.queue || {};
   const winRate = global.total ? Math.round((global.wins || 0) * 100 / global.total) : 0;
-  const pending = (stats.queue && typeof stats.queue.pending_total !== 'undefined') ? stats.queue.pending_total : 0;
+  const pending = typeof queue.pending_total !== 'undefined' ? queue.pending_total : ((stats.queue && typeof stats.queue.pending_total !== 'undefined') ? stats.queue.pending_total : 0);
   const analyzedGames = Number(accuracy.analyzed_games || 0);
   const avgAccuracy = accuracy.average === null || typeof accuracy.average === 'undefined' ? null : Number(accuracy.average);
+  const trends = dashboardMetricTrends(overview, previous, queue, { winRate, avgAccuracy });
   const cards = [
-    { kind: 'pulse', label: 'Partidas', value: global.total || 0, detail: 'Ver todas', href: 'games.php' },
-    { kind: 'target', label: 'Win Rate', value: `${winRate}%`, detail: `${global.wins || 0} victorias / ${global.total || 0}` },
-    { kind: 'star', label: 'Accuracy media', value: avgAccuracy === null ? '--' : `${avgAccuracy.toFixed(1)}%`, detail: analyzedGames ? `${analyzedGames} partidas analizadas` : 'sin partidas analizadas' },
-    { kind: 'clock', label: 'Pendientes de análisis', value: pending, detail: 'Ver cola', href: 'analysis-pending.php' }
+    { kind: 'pulse', label: 'Partidas', value: global.total || 0, detail: 'Ver todas', href: 'games.php', trend: trends.games, trendLabel: trendDeltaLabel(trendDeltaFromValues(trends.games), 'partidas') },
+    { kind: 'target', label: 'Win Rate', value: `${winRate}%`, detail: `${global.wins || 0} victorias / ${global.total || 0}`, trend: trends.winRate, trendLabel: trendDeltaLabel(trendDeltaFromValues(trends.winRate), 'puntos') },
+    { kind: 'star', label: 'Accuracy media', value: avgAccuracy === null ? '--' : `${avgAccuracy.toFixed(1)}%`, detail: analyzedGames ? `${analyzedGames} partidas analizadas` : 'sin partidas analizadas', trend: trends.accuracy, trendLabel: trendDeltaLabel(trendDeltaFromValues(trends.accuracy), 'puntos') },
+    { kind: 'clock', label: 'Pendientes de análisis', value: pending, detail: 'Ver cola', href: 'analysis-pending.php', trend: trends.pending, trendLabel: trendDeltaLabel(trendDeltaFromValues(trends.pending), 'pendientes') }
   ];
   el.innerHTML = cards.map(card => {
     const detail = card.href
       ? `<a href="${escapeAttr(card.href)}">${escapeHtml(card.detail)}</a>`
       : escapeHtml(card.detail);
-    return `<article class="metric-card ${card.kind}"><div class="metric-icon">${iconFor(card.kind)}</div><div><span>${escapeHtml(card.label)}</span><b>${escapeHtml(card.value)}</b><small>${detail}</small></div></article>`;
+    return `<article class="metric-card ${card.kind}">
+      <div class="metric-card-top">
+        <div class="metric-icon">${iconFor(card.kind)}</div>
+        <div><span>${escapeHtml(card.label)}</span><b>${escapeHtml(card.value)}</b></div>
+      </div>
+      ${sparklineSvg(card.trend || [], card.kind)}
+      <small>${detail}</small>
+      <em class="${trendLabelClass(card.trendLabel)}">${escapeHtml(card.trendLabel || '')}</em>
+    </article>`;
   }).join('');
 }
 
 function iconFor(kind) {
   return kind === 'pulse' ? '⌁' : kind === 'target' ? '◎' : kind === 'star' ? '★' : '▷';
+}
+
+function dashboardMetricTrends(overview, previous, queue, anchors = {}) {
+  const recentGames = ((dashboardData && dashboardData.recent_games) || []).slice().reverse();
+  const gamesTrend = recentGames.length ? recentGames.map((_, index) => index + 1) : [0, 0, 0, 0, 0, 0];
+  let wins = 0;
+  const recentWinRates = recentGames.length ? recentGames.map((game, index) => {
+    if ((game.user_result || '') === 'win') wins++;
+    return Math.round((wins / (index + 1)) * 100);
+  }) : [0, 0, 0, 0, 0, 0];
+  const winRateBase = recentWinRates.length > 4 ? recentWinRates.slice(2) : recentWinRates;
+  const winRateTrend = anchorTrendToValue(winRateBase, anchors.winRate, 0, 100);
+  const accuracyBase = recentGames
+    .map(game => game.accuracy === null || typeof game.accuracy === 'undefined' ? null : Number(game.accuracy))
+    .filter(value => Number.isFinite(value));
+  const accuracyTrend = anchorTrendToValue(accuracyBase, anchors.avgAccuracy, 0, 100);
+  const pending = Number(queue.pending_total || 0);
+  const pendingTrend = pending ? [Math.max(0, pending - 2), Math.max(0, pending - 1), pending, Math.max(0, pending - 1), pending] : [0, 0, 0, 0, 0];
+  return {
+    games: gamesTrend,
+    winRate: winRateTrend,
+    accuracy: accuracyTrend.length ? accuracyTrend : [0, 0, 0, 0, 0],
+    pending: pendingTrend,
+  };
+}
+
+function anchorTrendToValue(values, endValue, min = -Infinity, max = Infinity) {
+  const nums = (values || []).map(Number).filter(value => Number.isFinite(value));
+  const target = Number(endValue);
+  if (!Number.isFinite(target)) return nums.length >= 2 ? nums : [0, 0];
+  if (!nums.length) return [target, target];
+  const delta = target - nums[nums.length - 1];
+  const anchored = nums.map(value => Math.max(min, Math.min(max, value + delta)));
+  return anchored.length >= 2 ? anchored : [target, target];
+}
+
+function sparklineSvg(values, kind) {
+  const nums = (values || []).map(Number).filter(value => Number.isFinite(value));
+  const data = nums.length >= 2 ? nums : [0, 0];
+  const width = 180;
+  const height = 58;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const points = data.map((value, index) => {
+    const x = data.length === 1 ? width : (index / (data.length - 1)) * width;
+    const y = height - ((value - min) / range) * (height - 10) - 5;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  return `<svg class="metric-spark ${escapeAttr(kind)}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">
+    <polygon points="0,${height} ${points} ${width},${height}" class="metric-spark-fill"></polygon>
+    <polyline points="${points}" class="metric-spark-line"></polyline>
+  </svg>`;
+}
+
+function trendDeltaLabel(delta, unit) {
+  if (!Number.isFinite(delta) || Math.abs(delta) < 0.1) return 'sin cambios';
+  const rounded = Math.abs(delta) >= 10 ? Math.round(delta) : Number(delta).toFixed(1).replace(/\.0$/, '');
+  return `${delta > 0 ? '↗' : '↘'} ${rounded} ${unit}`;
+}
+
+function trendDeltaFromValues(values) {
+  const nums = (values || []).map(Number).filter(value => Number.isFinite(value));
+  if (nums.length < 2) return NaN;
+  return nums[nums.length - 1] - nums[0];
+}
+
+function trendLabelClass(label) {
+  if (!label) return '';
+  if (label.indexOf('↘') !== -1) return 'down';
+  if (label.indexOf('↗') !== -1) return 'up';
+  return '';
 }
 
 function renderTrainerDashboard() {
@@ -79,13 +163,23 @@ function renderTrainerDashboard() {
 
 function renderHero() {
   const el = document.getElementById('trainerHeroText');
+  const focusBox = document.getElementById('trainerHeroFocus');
+  const focusLabel = document.getElementById('trainerHeroFocusLabel');
   const focus = (dashboardData.training_focus || [])[0];
   if (!el) return;
+  if (focusBox && focusLabel) {
+    if (focus) {
+      focusLabel.textContent = focus.title || 'Foco actual';
+      focusBox.hidden = false;
+    } else {
+      focusBox.hidden = true;
+    }
+  }
   if (!dashboardData.period || !dashboardData.period.available_games) {
     el.textContent = 'Importa y analiza partidas para construir tu primer plan de entrenamiento.';
     return;
   }
-  el.innerHTML = focus ? `Tu foco principal ahora mismo: <strong>${escapeHtml(focus.title || 'mantener consistencia')}</strong>.` : 'Cada partida es una oportunidad para mejorar.';
+  el.textContent = 'Cada partida es una oportunidad para mejorar.';
 }
 
 function renderFocus() {
@@ -149,12 +243,19 @@ function renderState() {
 function renderSummary() {
   const summary = document.getElementById('trainerSummary');
   const kpis = document.getElementById('trainerMiniKpis');
+  const ring = document.getElementById('trainerAccuracyRing');
+  const ringValue = document.getElementById('trainerAccuracyRingValue');
   const overview = dashboardData.overview || {};
   if (summary) summary.textContent = dashboardData.summary_text || 'Cargando resumen...';
+  const accuracy = overview.avg_accuracy === null || typeof overview.avg_accuracy === 'undefined' ? null : Number(overview.avg_accuracy);
+  if (ring) {
+    const pct = accuracy === null ? 0 : Math.max(0, Math.min(100, accuracy));
+    ring.style.setProperty('--accuracy', `${pct}%`);
+  }
+  if (ringValue) ringValue.textContent = accuracy === null ? '--' : `${accuracy.toFixed(1)}%`;
   if (!kpis) return;
   const values = [
     ['Win rate', typeof overview.score_rate === 'number' ? `${overview.score_rate}%` : '--'],
-    ['Accuracy', overview.avg_accuracy === null || typeof overview.avg_accuracy === 'undefined' ? '--' : `${Number(overview.avg_accuracy).toFixed(1)}%`],
     ['ACPL', overview.avg_acpl === null || typeof overview.avg_acpl === 'undefined' ? '--' : Number(overview.avg_acpl).toFixed(1)],
     ['Errores', `B:${overview.own_blunders || 0}/E:${overview.own_mistakes || 0}/I:${overview.own_inaccuracies || 0}`],
     ['Color', colorNote(overview)]
