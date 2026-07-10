@@ -1,3 +1,32 @@
+# Chess Coach v1.2.3 Update Notes
+
+## Release type
+
+Home UI polish release.
+
+## PR1 - Home top refresh
+
+- Added `assets/images/home_greeting_background.jpg` as the greeting-card background.
+- Refreshed the home greeting block while keeping the main header unchanged.
+- Added compact trend sparklines to the top KPI cards.
+- Added a visual accuracy ring to the recent performance summary.
+- Bumped `config/version.php` to `1.2.3`.
+- Updated the service worker cache to `chess-coach-v1.2.3`.
+
+## SQL migration
+
+No SQL migration required.
+
+## Verification
+
+- Run PHP syntax checks.
+- Run JavaScript syntax checks for changed files.
+- Confirm the home header remains unchanged.
+- Confirm the greeting block uses the new background image.
+- Confirm KPI cards and the recent summary remain responsive on mobile.
+
+---
+
 # Chess Coach v1.2.2 Update Notes
 
 ## Release type

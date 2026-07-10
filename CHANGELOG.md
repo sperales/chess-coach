@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## v1.2.3 - Home UI polish
+
+### Changed
+
+- Refreshed the top home greeting block with a local chess background image.
+- Added compact trend sparklines to the home KPI cards.
+- Added a visual accuracy ring to the recent performance summary block.
+- Bumped `config/version.php` to `1.2.3`.
+- Updated the service worker cache name to `chess-coach-v1.2.3`.
+
+### Database
+
+- No SQL migration required.
+
 ## v1.2.2 - Login UI refresh
 
 ### Changed
