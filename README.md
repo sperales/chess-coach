@@ -14,11 +14,11 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v1.1.6**
+Current stable baseline: **v1.2.0**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
-v1.1.6 is the current hardening baseline before the v1.2.0 Openings Lab line.
+v1.2.0 is the current stable Openings Lab baseline.
 
 ---
 
@@ -149,6 +149,17 @@ Includes:
 - Tags visible in review
 - Profile batch process for backfilling tags on existing analyzed games
 
+### Openings Lab
+
+- Opening profiles generated from analyzed games
+- Grouping by ECO code and opening name when available
+- Fallback opening signatures from the first 16 plies
+- Lab de Aperturas page
+- Opening score, accuracy, ACPL and early-error metrics
+- Recommended opening review links
+- Games filtered by opening
+- Connections to frequent Smart Tags and existing Training Center exercises
+
 ### Repository / deployment hygiene
 
 - Correct `.gitignore` filename
@@ -175,7 +186,9 @@ chess-coach/
     chesscom.php
     dashboard.php
     games.php
+    openings.php
     review.php
+    training.php
 
   assets/
     css/
@@ -190,8 +203,11 @@ chess-coach/
       app.js
       chesscom.js
       dashboard.js
+      games.js
       layout.js
+      openings_lab.js
       review.js
+      training.js
 
   config/
     .htaccess
@@ -211,9 +227,13 @@ chess-coach/
     dashboard.php
     db.php
     helpers.php
+    openings.php
     pgn.php
+    pieces.php
     session.php
+    smart_tags.php
     stockfish.php
+    training.php
 
   sql/
     install.sql
@@ -228,9 +248,12 @@ chess-coach/
 
   index.php
   app.php
+  games.php
   import-chesscom.php
   analysis-pending.php
+  openings-lab.php
   review.php
+  training.php
   profile.php
   logout.php
   manifest.webmanifest
@@ -643,11 +666,13 @@ Current planned direction:
 - Training history
 - Interactive solver, hints, sessions and selectable board pieces
 
-### v1.2.0 — Openings Lab
+### Completed in v1.2.0 — Openings Lab
 
 - Opening stats
 - Win rate by opening
 - Common mistakes by opening
+- Practical opening guidance
+- Links to review, games and existing training exercises
 
 ### v1.3.0 — Player DNA
 
