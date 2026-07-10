@@ -411,6 +411,56 @@ function openings_lab_common_issue(array $opening): ?array {
   return $issues[0]['count'] > 0 ? $issues[0] : null;
 }
 
+function openings_lab_principle(array $opening): array {
+  $games = (int)($opening['games'] ?? 0);
+  if ($games < openings_lab_min_games()) {
+    return [
+      'code' => 'sample_size',
+      'title' => 'Reune mas muestra',
+      'summary' => 'Todavia hay pocas partidas para diagnosticar esta apertura con confianza.',
+      'checklist' => ['Analiza mas partidas de esta linea', 'Compara al menos 3 partidas antes de cambiar repertorio'],
+    ];
+  }
+  if ((int)($opening['opening_blunders'] ?? 0) > 0) {
+    return [
+      'code' => 'avoid_tactical_collapse',
+      'title' => 'Evita el colapso tactico temprano',
+      'summary' => 'Antes de memorizar variantes, localiza que amenaza o pieza queda sin defender en las primeras jugadas.',
+      'checklist' => ['Revisa capturas y amenazas del rival', 'Comprueba piezas indefensas antes de mover', 'No aceleres el plan si el rey sigue expuesto'],
+    ];
+  }
+  if ((int)($opening['opening_mistakes'] ?? 0) > 0) {
+    return [
+      'code' => 'typical_plan',
+      'title' => 'Entiende el plan tipico',
+      'summary' => 'La apertura no pide mas memoria, pide reconocer donde empieza a cambiar la evaluacion.',
+      'checklist' => ['Desarrolla piezas antes de buscar ataques', 'Identifica el mejor plan para el centro', 'Revisa la primera jugada donde cae la precision'],
+    ];
+  }
+  if ((float)($opening['avg_opening_accuracy'] ?? 100) < 75) {
+    return [
+      'code' => 'opening_principles',
+      'title' => 'Refuerza principios basicos',
+      'summary' => 'Tu precision baja sin un unico error claro: vuelve a desarrollo, rey seguro y centro.',
+      'checklist' => ['Saca piezas menores pronto', 'Evita mover la misma pieza varias veces', 'Enroca o asegura el rey cuando la posicion lo pida'],
+    ];
+  }
+  if ((int)($opening['score_rate'] ?? 0) >= 65) {
+    return [
+      'code' => 'keep_and_model',
+      'title' => 'Conserva esta estructura',
+      'summary' => 'Esta apertura esta funcionando. Usa tus mejores partidas como modelo practico.',
+      'checklist' => ['Revisa la mejor partida de ejemplo', 'Detecta que plan se repite cuando ganas', 'Mantén la linea mientras siga dando posiciones jugables'],
+    ];
+  }
+  return [
+    'code' => 'observe',
+    'title' => 'Observa el patron',
+    'summary' => 'No hay una senal dominante. Sigue comparando partidas y revisa los momentos tempranos recomendados.',
+    'checklist' => ['Busca errores repetidos antes de cambiar la linea', 'Compara partidas ganadas y perdidas', 'Prioriza posiciones que entiendas'],
+  ];
+}
+
 function openings_lab_build_openings(array $rows, array $movesByAnalysis): array {
   $openings = [];
 
@@ -500,6 +550,7 @@ function openings_lab_build_openings(array $rows, array $movesByAnalysis): array
     $opening['avg_eval_after_move_10'] = $opening['eval_games'] ? round($opening['eval_sum'] / $opening['eval_games']) : null;
     $opening['common_issue'] = openings_lab_common_issue($opening);
     $opening['recommendation'] = openings_lab_recommendation($opening);
+    $opening['recommended_principle'] = openings_lab_principle($opening);
     unset($opening['accuracy_sum'], $opening['accuracy_games'], $opening['acpl_sum'], $opening['eval_sum'], $opening['eval_games']);
   }
   unset($opening);
@@ -537,6 +588,128 @@ function openings_lab_summary(array $openings, int $pendingProfiles): array {
     'best_opening' => $best[0] ?? null,
     'main_issue_opening' => $worst[0] ?? null,
   ];
+}
+
+function openings_lab_frequent_tags(int $userId, array $gameIds, array $analysisIds, int $limit = 8): array {
+  $gameIds = array_values(array_unique(array_filter(array_map('intval', $gameIds))));
+  $analysisIds = array_values(array_unique(array_filter(array_map('intval', $analysisIds))));
+  if (!$gameIds || !$analysisIds) return [];
+
+  $gamePlaceholders = implode(',', array_fill(0, count($gameIds), '?'));
+  $analysisPlaceholders = implode(',', array_fill(0, count($analysisIds), '?'));
+  $params = array_merge([$userId], $gameIds, $analysisIds, [$userId], $gameIds, $analysisIds);
+  $sql = "SELECT tag_code, label, category, severity, SUM(total) AS total
+          FROM (
+            SELECT gt.tag_code, d.label, d.category, d.severity, COUNT(*) AS total
+            FROM game_tags gt
+            JOIN smart_tag_definitions d ON d.code=gt.tag_code
+            WHERE gt.user_id=?
+              AND gt.game_id IN ($gamePlaceholders)
+              AND gt.analysis_id IN ($analysisPlaceholders)
+            GROUP BY gt.tag_code, d.label, d.category, d.severity
+            UNION ALL
+            SELECT mt.tag_code, d.label, d.category, d.severity, COUNT(*) AS total
+            FROM move_tags mt
+            JOIN smart_tag_definitions d ON d.code=mt.tag_code
+            WHERE mt.user_id=?
+              AND mt.game_id IN ($gamePlaceholders)
+              AND mt.analysis_id IN ($analysisPlaceholders)
+              AND mt.ply <= 20
+            GROUP BY mt.tag_code, d.label, d.category, d.severity
+          ) tag_counts
+          GROUP BY tag_code, label, category, severity
+          ORDER BY total DESC, severity ASC, label ASC
+          LIMIT " . (int)max(1, min(20, $limit));
+  $st = db()->prepare($sql);
+  $st->execute($params);
+  return array_map(fn($tag) => [
+    'tag_code' => (string)$tag['tag_code'],
+    'label' => (string)$tag['label'],
+    'category' => (string)$tag['category'],
+    'severity' => (string)$tag['severity'],
+    'total' => (int)$tag['total'],
+  ], $st->fetchAll());
+}
+
+function openings_lab_early_error_patterns(array $rows, array $movesByAnalysis, int $limit = 5): array {
+  $patterns = [];
+  foreach ($rows as $row) {
+    $analysisId = (int)($row['analysis_id'] ?? 0);
+    $userColor = (string)($row['user_color'] ?? 'unknown');
+    if ($analysisId <= 0 || ($userColor !== 'white' && $userColor !== 'black')) continue;
+    foreach ($movesByAnalysis[$analysisId] ?? [] as $move) {
+      $ply = (int)($move['ply'] ?? 0);
+      $class = (string)($move['classification'] ?? 'ok');
+      if ($ply <= 0 || $ply > 20 || !in_array($class, ['blunder', 'mistake', 'inaccuracy'], true)) continue;
+      if (openings_move_side($ply) !== $userColor) continue;
+      $key = $ply . '|' . $class;
+      if (!isset($patterns[$key])) {
+        $patterns[$key] = [
+          'ply' => $ply,
+          'classification' => $class,
+          'count' => 0,
+          'sample_san' => (string)($move['san'] ?? ''),
+          'sample_uci' => (string)($move['uci'] ?? ''),
+          'review_url' => 'review.php?id=' . (int)$row['game_id'] . '&ply=' . $ply,
+        ];
+      }
+      $patterns[$key]['count']++;
+    }
+  }
+
+  $items = array_values($patterns);
+  usort($items, fn($a, $b) =>
+    ((int)$b['count'] <=> (int)$a['count'])
+    ?: ((int)$a['ply'] <=> (int)$b['ply'])
+    ?: strcmp((string)$a['classification'], (string)$b['classification'])
+  );
+  return array_slice($items, 0, max(1, $limit));
+}
+
+function openings_lab_training_type_label(string $type): string {
+  return [
+    'find_best_move' => 'Encontrar mejor jugada',
+    'avoid_blunder' => 'Evitar omision',
+    'find_mate' => 'Encontrar mate',
+    'spot_threat' => 'Detectar amenaza',
+    'find_tactic' => 'Encontrar tactica',
+    'defend_position' => 'Defender posicion',
+    'convert_advantage' => 'Convertir ventaja',
+    'other' => 'Otros',
+  ][$type] ?? $type;
+}
+
+function openings_lab_related_exercises(int $userId, ?string $ecoCode, int $limit = 6): array {
+  $ecoCode = trim((string)$ecoCode);
+  if ($ecoCode === '') return [];
+
+  $sql = 'SELECT te.id, te.game_id, te.ply, te.exercise_type, te.difficulty, te.priority_score,
+                 te.resolved_at, te.last_attempt_at, g.white_player, g.black_player, g.played_at
+          FROM training_exercises te
+          JOIN game_opening_profiles op ON op.game_id=te.game_id AND op.user_id=te.user_id
+          JOIN games g ON g.id=te.game_id AND g.user_id=te.user_id
+          WHERE te.user_id=?
+            AND te.status="active"
+            AND te.ply <= 16
+            AND op.eco_code=?
+          ORDER BY te.resolved_at IS NOT NULL ASC, te.priority_score DESC, te.created_at DESC, te.id DESC
+          LIMIT ' . (int)max(1, min(20, $limit));
+  $st = db()->prepare($sql);
+  $st->execute([$userId, $ecoCode]);
+  return array_map(fn($row) => [
+    'id' => (int)$row['id'],
+    'game_id' => (int)$row['game_id'],
+    'ply' => (int)$row['ply'],
+    'exercise_type' => (string)$row['exercise_type'],
+    'type_label' => openings_lab_training_type_label((string)$row['exercise_type']),
+    'difficulty' => (string)($row['difficulty'] ?? ''),
+    'priority_score' => (int)($row['priority_score'] ?? 0),
+    'resolved' => !empty($row['resolved_at']),
+    'title' => trim((string)($row['white_player'] ?? '') . ' vs ' . (string)($row['black_player'] ?? '')),
+    'played_at' => $row['played_at'] ?: null,
+    'training_url' => 'training.php?exercise_id=' . (int)$row['id'],
+    'review_url' => 'review.php?id=' . (int)$row['game_id'] . '&ply=' . (int)$row['ply'],
+  ], $st->fetchAll());
 }
 
 function openings_lab_payload(int $userId, int $limit = 50, int $minGames = 1): array {
@@ -578,12 +751,17 @@ function openings_lab_detail_payload(int $userId, string $openingKey): array {
     $metrics = openings_lab_game_metrics($row, $analysisId > 0 ? ($movesByAnalysis[$analysisId] ?? []) : []);
     $games[] = openings_lab_public_game($row, $metrics);
   }
+  $gameIds = array_column($rows, 'game_id');
+  $analysisIds = array_column($rows, 'analysis_id');
 
   return [
     'ok' => true,
     'opening' => $opening,
     'games' => $games,
     'recommended_games' => openings_lab_recommended_games($games),
+    'frequent_tags' => openings_lab_frequent_tags($userId, $gameIds, $analysisIds, 5),
+    'early_error_patterns' => openings_lab_early_error_patterns($rows, $movesByAnalysis),
+    'related_exercises' => openings_lab_related_exercises($userId, $opening['eco_code'] ?? null),
     'games_url' => 'games.php?opening_key=' . rawurlencode($openingKey),
     'minimum_games' => openings_lab_min_games(),
   ];

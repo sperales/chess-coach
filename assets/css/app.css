@@ -2109,6 +2109,72 @@ select {
   color:#cbd5df;
   line-height:1.45
 }
+.opening-principle {
+  display:grid;
+  gap:7px;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#0d171d
+}
+.opening-principle b {
+  color:#f5f7fb
+}
+.opening-principle ul {
+  margin:0;
+  padding-left:18px;
+  color:#a9b1ba;
+  line-height:1.45
+}
+.opening-connections {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:12px
+}
+.opening-connection-card {
+  display:grid;
+  gap:10px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(7,16,20,.42)
+}
+.opening-connection-card h3 {
+  margin:0;
+  font-size:18px
+}
+.opening-tag-summary {
+  gap:8px
+}
+.opening-pattern-list,.opening-exercise-list {
+  display:grid;
+  gap:8px
+}
+.opening-pattern-list article,.opening-exercise-list article {
+  display:grid;
+  gap:10px;
+  padding:10px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#0d171d
+}
+.opening-pattern-list article {
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center
+}
+.opening-pattern-list strong,.opening-exercise-list strong {
+  display:block
+}
+.opening-pattern-list span,.opening-exercise-list span {
+  display:block;
+  color:#a9b1ba;
+  margin-top:4px
+}
+.opening-exercise-actions {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px
+}
 .opening-games {
   display:grid;
   gap:10px
@@ -2377,6 +2443,9 @@ select {
   .opening-detail-kpis {
     grid-template-columns:repeat(2,minmax(0,1fr))
   }
+  .opening-connections {
+    grid-template-columns:minmax(0,1fr)
+  }
   .trainer-grid {
     grid-template-columns:minmax(0,1fr)
   }
@@ -2409,6 +2478,9 @@ select {
     display:grid
   }
   .opening-detail-kpis {
+    grid-template-columns:minmax(0,1fr)
+  }
+  .opening-pattern-list article {
     grid-template-columns:minmax(0,1fr)
   }
   .trainer-focus-card {

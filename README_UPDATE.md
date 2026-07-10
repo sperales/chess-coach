@@ -195,6 +195,43 @@ games.php?opening_key=...
 
 `api/games.php` supports that filter by checking the current user's `game_opening_profiles` rows. This keeps ownership scoped to the authenticated user.
 
+## PR5 - Smart Tags and Training connection
+
+The fifth v1.2.0 PR connects the Openings Lab detail view with existing Smart Tags and Training Center data.
+
+Changed files:
+
+- `CHANGELOG.md`
+- `README_UPDATE.md`
+- `assets/css/app.css`
+- `assets/js/openings_lab.js`
+- `includes/openings.php`
+- `service-worker.js`
+
+### Practical guidance
+
+Each opening now exposes a structured recommended principle:
+
+- sample-size warning when there are too few games
+- tactical-collapse prevention when there are opening blunders
+- typical-plan guidance when there are repeated mistakes
+- basic principles when opening accuracy is low
+- model-game guidance when the opening is working well
+
+The guidance remains practical and non-memorization-heavy.
+
+### Smart Tags connection
+
+Opening details now include the 5 most frequent Smart Tags for that opening. Game tags and opening-window move tags are counted together, scoped to the current user's games and analyses.
+
+### Recurrent early errors
+
+Opening details now include recurrent early error patterns, grouped by ply and error type, with direct review links to examples.
+
+### Existing Training connection
+
+Opening details now show existing Training Center exercises for games with the same ECO code and `ply <= 16`. This PR only reads already-generated exercises and links to review/training. Training links now use `training.php?exercise_id=...` so the selected exercise opens directly. It does not generate new exercises from the Lab.
+
 ## SQL migration
 
 Run:
@@ -249,3 +286,6 @@ When JavaScript is added in later PRs, run `node --check` on changed JS files.
 - From `openings-lab.php`, open an opening detail and confirm recommended games are shown when early opening errors exist.
 - Click a recommended review link and confirm `review.php` opens at the requested move when `ply` is present.
 - Click `Ver partidas` in an opening detail and confirm `games.php` lists games for that opening.
+- Confirm the opening detail shows frequent Smart Tags when tags exist.
+- Confirm recurrent early errors link to `review.php`.
+- Confirm existing related exercises appear when Training Center exercises already exist for games in that opening.

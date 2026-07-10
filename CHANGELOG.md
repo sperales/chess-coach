@@ -18,6 +18,8 @@
 - Added recommended review games to the opening detail view.
 - Added opening-key filtering support for `games.php`.
 - Added optional `review.php?id=X&ply=Y` deep links for safe opening review moments.
+- Added structured practical opening principles to the Openings Lab detail view.
+- Connected opening details with frequent Smart Tags, recurrent early errors and existing related Training Center exercises, including direct links to open a specific exercise.
 
 ### Notes
 
