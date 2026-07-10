@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## v1.2.2 - Login UI refresh
+
+### Changed
+
+- Redesigned the login page with a full-screen Chess Coach background and glass-style login panel.
+- Added local `assets/images/background_login.png` for the login background.
+- Added icon-enhanced username/password inputs and a password visibility toggle.
+- Bumped `config/version.php` to `1.2.2`.
+- Updated the service worker cache name to `chess-coach-v1.2.2`.
+
+### Database
+
+- No SQL migration required.
+
 ## v1.2.1 - Review and Openings Lab polish
 
 ### Changed

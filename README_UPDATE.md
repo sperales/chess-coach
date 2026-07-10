@@ -1,3 +1,32 @@
+# Chess Coach v1.2.2 Update Notes
+
+## Release type
+
+Login UI refresh.
+
+## Changes
+
+- Redesigned `index.php` with a full-screen branded login experience.
+- Added `assets/images/background_login.png` as the local login background.
+- Added icon-enhanced username/password fields and a password visibility toggle.
+- Improved responsive login layout for mobile screens.
+- Bumped `config/version.php` to `1.2.2`.
+- Updated the service worker cache to `chess-coach-v1.2.2`.
+
+## SQL migration
+
+No SQL migration required.
+
+## Verification
+
+- Run PHP syntax checks.
+- Run JavaScript syntax checks for changed files.
+- Confirm the login page loads on desktop and mobile.
+- Confirm login success and invalid-password error still work.
+- Confirm the service worker includes the new background asset.
+
+---
+
 # Chess Coach v1.2.1 Update Notes
 
 ## Release type
