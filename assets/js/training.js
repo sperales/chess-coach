@@ -15,6 +15,8 @@ let trainingUsedHint = false;
 let trainingHintFrom = '';
 let revealedTrainingSolution = '';
 const TRAINING_PIECE_ASSET_PATH = (window.CHESS_COACH_PIECE_PATH || 'assets/pieces/Set%201/').toString();
+const TRAINING_INITIAL_PARAMS = new URLSearchParams(window.location.search);
+const TRAINING_INITIAL_EXERCISE_ID = Number(TRAINING_INITIAL_PARAMS.get('exercise_id') || 0);
 
 const TRAINING_PIECE_IMAGES = {
   P: 'wp.png', N: 'wn.png', B: 'wb.png', R: 'wr.png', Q: 'wq.png', K: 'wk.png',
@@ -928,4 +930,11 @@ function escapeAttr(value) {
 }
 
 bindTrainingFilters();
-loadTraining(1).catch(showTrainingError);
+loadTraining(1)
+  .then(() => {
+    if (Number.isInteger(TRAINING_INITIAL_EXERCISE_ID) && TRAINING_INITIAL_EXERCISE_ID > 0) {
+      return openTrainingExercise(TRAINING_INITIAL_EXERCISE_ID);
+    }
+    return null;
+  })
+  .catch(showTrainingError);
