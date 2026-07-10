@@ -495,6 +495,15 @@ a {
   gap:20px;
   margin-top:22px
 }
+.home-middle-grid {
+  display:grid;
+  grid-template-columns:minmax(0,3fr) minmax(260px,1fr);
+  gap:20px;
+  align-items:stretch
+}
+.home-middle-grid > .panel {
+  min-height:0
+}
 .panel-head {
   display:flex;
   align-items:center;
@@ -512,14 +521,15 @@ a {
   text-align:left;
   border-bottom:1px solid rgba(255,255,255,.08);
   padding:13px 8px;
-  font-size:14px
+  font-size:14px;
+  vertical-align:middle
 }
 .games th {
   color:#9aa5ad;
   font-weight:600
 }
 .opponent {
-  display:flex;
+  display:inline-flex;
   align-items:center;
   gap:12px
 }
@@ -576,6 +586,32 @@ a {
 .status-mini {
   color:#b3bdc5;
   font-size:12px
+}
+.actions-spacer {
+  width:96px
+}
+.games td:nth-last-child(-n+2) {
+  width:96px;
+  text-align:center
+}
+.games td:nth-last-child(-n+2) .btn,
+.games td:nth-last-child(-n+2) button {
+  width:86px;
+  justify-content:center
+}
+.rival-line {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0
+}
+.rival-line .opponent {
+  min-width:0
+}
+.rival-line .opponent span {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap
 }
 .insight-card p {
   color:#d7dce1;
@@ -782,7 +818,7 @@ label {
   .topbar .brand {
     display:flex
   }
-  .metric-grid,.quick-grid,.home-grid,.import-grid {
+  .metric-grid,.quick-grid,.home-grid,.home-middle-grid,.import-grid {
     grid-template-columns:1fr
   }
   .dashboard {
@@ -1278,7 +1314,7 @@ body.login-page::before {
   min-width:0;
   overflow:visible
 }
-.app-area,.dashboard,.hero-card,.panel,.metric-card,.quick-card,.home-grid,.metric-grid,.quick-grid {
+.app-area,.dashboard,.hero-card,.panel,.metric-card,.quick-card,.home-grid,.home-middle-grid,.metric-grid,.quick-grid {
   min-width:0;
   max-width:100%
 }
@@ -1305,7 +1341,7 @@ body.login-page::before {
     height:58px!important;
     max-width:52vw!important
   }
-  .metric-grid,.quick-grid,.home-grid,.import-grid {
+  .metric-grid,.quick-grid,.home-grid,.home-middle-grid,.import-grid {
     grid-template-columns:minmax(0,1fr)!important
   }
   .dashboard {
@@ -2036,8 +2072,29 @@ body.login-page::before {
   color:#a9b1ba;
   border-color:var(--line)
 }
+button.smart-tag.more {
+  min-height:0;
+  min-width:0;
+  width:auto;
+  padding:4px 8px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  cursor:pointer;
+  box-shadow:none
+}
+button.smart-tag.more:hover {
+  background:#17242d;
+  transform:none
+}
 .game-tags {
-  margin-top:7px
+  margin-top:0;
+  flex-wrap:nowrap
+}
+.game-tags-extra:not([hidden]) {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap
 }
 .review-tags {
   margin-top:12px
@@ -2167,42 +2224,76 @@ select {
 .trainer-summary-main {
   min-width:0
 }
+.trainer-focus-panel {
+  display:flex;
+  flex-direction:column
+}
 .trainer-focus-list {
   display:grid;
-  gap:12px
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
+  flex:1;
+  align-items:stretch
 }
 .trainer-focus-card {
-  display:grid;
-  grid-template-columns:42px minmax(0,1fr);
+  position:relative;
+  display:flex;
+  flex-direction:column;
   gap:14px;
-  padding:14px;
+  min-height:100%;
+  padding:16px;
   border:1px solid var(--line);
   border-radius:12px;
-  background:rgba(7,16,20,.42)
+  background:
+    radial-gradient(circle at 10% 10%, rgba(37,185,166,.14), transparent 36%),
+    rgba(7,16,20,.42)
 }
 .trainer-focus-card h3 {
-  margin:0 0 6px;
+  margin:0;
   font-size:18px
 }
 .trainer-focus-card p {
-  margin:0 0 8px;
+  margin:0;
   color:#cbd5df;
   line-height:1.45
 }
 .trainer-focus-card ul {
-  margin:0 0 10px;
+  margin:6px 0 14px;
   padding-left:18px;
   color:#a9b1ba
 }
 .trainer-focus-card strong {
   display:block;
   color:#f5f7fb;
-  margin:0 0 8px
+  margin:auto 0 8px;
+  padding-top:12px;
+  border-top:1px solid rgba(255,255,255,.07)
+}
+.trainer-focus-icon {
+  height:42px;
+  display:grid;
+  place-items:center;
+  margin:18px auto 2px;
+  color:#c9d0d6
+}
+.trainer-focus-icon svg {
+  width:38px;
+  height:38px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.9;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))
 }
 .trainer-focus-card a,.trainer-strength a {
   color:#78d95e;
   text-decoration:none;
   font-weight:700
+}
+.trainer-focus-card > a {
+  align-self:center;
+  text-align:center
 }
 .trainer-focus-card a:hover,.trainer-strength a:hover,.empty-state a:hover,.game-title-link:hover {
   text-decoration:underline
@@ -2231,19 +2322,29 @@ select {
   font-weight:800
 }
 .trainer-rank {
-  width:42px;
-  height:42px;
+  position:absolute;
+  top:16px;
+  left:16px;
+  width:36px;
+  height:36px;
   display:grid;
   place-items:center;
   border-radius:50%;
   background:linear-gradient(135deg,#60a5fa,#18a34a);
   color:#fff;
   font-weight:900;
-  font-size:20px
+  font-size:18px
 }
 .trainer-state {
   display:grid;
   gap:12px
+}
+.trainer-state-panel {
+  display:flex;
+  flex-direction:column
+}
+.trainer-state-panel .trainer-strengths {
+  flex:1
 }
 .trainer-state p {
   margin:0;
@@ -2359,14 +2460,50 @@ select {
 }
 .trainer-strength {
   display:grid;
-  gap:4px;
-  padding:12px;
+  grid-template-columns:44px minmax(0,1fr);
+  gap:12px;
+  align-items:center;
+  padding:10px 12px;
   border:1px solid var(--line);
   border-radius:10px;
   background:rgba(7,16,20,.42)
 }
-.trainer-strength span {
-  color:#a9b1ba
+.trainer-strength-icon {
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:rgba(23,61,35,.9);
+  color:#21e36b;
+  box-shadow:inset 0 0 0 1px rgba(46,207,94,.16)
+}
+.trainer-strength-icon svg {
+  width:22px;
+  height:22px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2.2;
+  stroke-linecap:round;
+  stroke-linejoin:round
+}
+.trainer-strength-copy {
+  display:grid;
+  gap:3px;
+  min-width:0
+}
+.trainer-strength-copy strong {
+  color:#f5f7fb
+}
+.trainer-strength-copy span,
+.trainer-strength-copy a {
+  color:#d5dde5;
+  text-decoration:none;
+  font-weight:800
+}
+.trainer-strength-copy a:hover {
+  color:#78d95e;
+  text-decoration:none
 }
 .panel-actions {
   display:flex;
@@ -2855,6 +2992,9 @@ select {
     grid-template-columns:minmax(0,1fr)
   }
   .trainer-grid {
+    grid-template-columns:minmax(0,1fr)
+  }
+  .trainer-focus-list {
     grid-template-columns:minmax(0,1fr)
   }
   .trainer-hero {

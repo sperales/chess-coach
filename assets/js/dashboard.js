@@ -203,15 +203,25 @@ function renderFocus() {
   list.innerHTML = items.map((focus, index) => `
     <article class="trainer-focus-card">
       <div class="trainer-rank">${index + 1}</div>
-      <div>
-        <h3>${escapeHtml(focus.title || 'Foco')}</h3>
-        <p>${escapeHtml(focus.description || '')}</p>
-        ${focusEvidence(focus)}
-        <strong>${escapeHtml(focus.recommended_action || '')}</strong>
-        ${focus.games_url ? `<a href="${escapeAttr(focus.games_url)}">${focusLinkLabel(focus.games_url)}</a>` : ''}
-      </div>
+      <div class="trainer-focus-icon">${focusIconSvg(focus, index)}</div>
+      <h3>${escapeHtml(focus.title || 'Foco')}</h3>
+      <p>${escapeHtml(focus.description || '')}</p>
+      ${focusEvidence(focus)}
+      <strong>${escapeHtml(focus.recommended_action || '')}</strong>
+      ${focus.games_url ? `<a href="${escapeAttr(focus.games_url)}">${focusLinkLabel(focus.games_url)}</a>` : ''}
     </article>
   `).join('') + (available < minimum ? `<p class="muted small-note">Con ${minimum} partidas analizadas el diagnóstico será más fiable.</p>` : '');
+}
+
+function focusIconSvg(focus, index) {
+  const title = ((focus && focus.title) || '').toLowerCase();
+  if (title.indexOf('táct') !== -1 || title.indexOf('tact') !== -1 || index === 0) {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="3"/></svg>';
+  }
+  if (title.indexOf('final') !== -1 || index === 2) {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"/><path d="M5 5h12l-3 4 3 4H5"/></svg>';
+  }
+  return '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>';
 }
 
 function focusLinkLabel(url) {
@@ -286,13 +296,24 @@ function renderStrengths() {
     `;
     return;
   }
-  el.innerHTML = strengths.map(item => `
+  el.innerHTML = strengths.map((item, index) => `
     <article class="trainer-strength">
-      <strong>${escapeHtml(item.title || 'Fortaleza')}</strong>
-      <span>${escapeHtml(item.evidence || '')}</span>
-      ${item.games_url ? `<a href="${escapeAttr(item.games_url)}">Ver partidas</a>` : ''}
+      <span class="trainer-strength-icon">${strengthIconSvg(index)}</span>
+      <span class="trainer-strength-copy">
+        <strong>${escapeHtml(item.title || 'Fortaleza')}</strong>
+        ${item.games_url ? `<a href="${escapeAttr(item.games_url)}">${escapeHtml(item.evidence || '')}</a>` : `<span>${escapeHtml(item.evidence || '')}</span>`}
+      </span>
     </article>
   `).join('');
+}
+
+function strengthIconSvg(index) {
+  const icons = [
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M4 12h16M7 7l10 10M17 7 7 17"/></svg>',
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.5-.8L12 4Z"/></svg>',
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h10v4a5 5 0 0 1-10 0V5Z"/><path d="M7 7H4v2a4 4 0 0 0 4 4M17 7h3v2a4 4 0 0 1-4 4M12 14v5M9 19h6"/></svg>'
+  ];
+  return icons[index % icons.length];
 }
 
 function renderRows() {
@@ -310,18 +331,19 @@ function renderRows() {
     const recommended = dashboardData ? (dashboardData.recommended_reviews || []) : [];
     el.innerHTML = recommended.map(recommendedRow).join('') || `
       <tr>
-        <td colspan="5" class="muted">
+        <td colspan="7" class="muted">
           No hay recomendaciones todavía. Analiza más partidas para que el entrenador priorice revisiones.
         </td>
       </tr>`;
     return;
   }
   const list = games.slice(0, 5);
-  el.innerHTML = list.map(gameRow).join('') || `<tr><td colspan="5" class="muted">Todavía no hay partidas. Empieza importando tus PGN o desde Chess.com.</td></tr>`;
+  el.innerHTML = list.map(gameRow).join('') || `<tr><td colspan="7" class="muted">Todavía no hay partidas. Empieza importando tus PGN o desde Chess.com.</td></tr>`;
 }
 
 function gameRow(game) {
-  return `<tr><td>${opponentCell(game)}${gameTagsCell(game)}</td><td>${resultBadge(game)}</td><td>${escapeHtml(game.event_name || rhythmFromSite(game.site) || '-')}</td><td class="hide-sm">${game.played_at || (game.imported_at || '').slice(0,10) || '-'}</td><td>${analysisCell(game)}</td></tr>`;
+  const actions = analysisActions(game);
+  return `<tr><td>${rivalCell(game)}</td><td>${resultBadge(game)}</td><td>${escapeHtml(game.event_name || rhythmFromSite(game.site) || '-')}</td><td class="hide-sm">${game.played_at || (game.imported_at || '').slice(0,10) || '-'}</td><td>${actions.meta}</td><td>${actions.primary}</td><td>${actions.secondary}</td></tr>`;
 }
 
 function recommendedRow(item) {
@@ -331,9 +353,15 @@ function recommendedRow(item) {
       <td>${resultBadge(item)}</td>
       <td>${item.accuracy === null || typeof item.accuracy === 'undefined' ? '--' : `${Number(item.accuracy).toFixed(1)}%`}</td>
       <td class="hide-sm">${escapeHtml(item.played_at || '-')}</td>
+      <td></td>
       <td><a class="btn secondary small" href="${escapeAttr(item.review_url || '#')}">Revisar</a></td>
+      <td></td>
     </tr>
   `;
+}
+
+function rivalCell(game) {
+  return `<span class="rival-line">${opponentCell(game)}${gameTagsCell(game)}</span>`;
 }
 
 function opponentCell(game) {
@@ -366,16 +394,27 @@ function resultBadge(game) {
 }
 
 function analysisCell(game) {
+  const actions = analysisActions(game);
+  return `${actions.meta} ${actions.primary} ${actions.secondary}`.trim();
+}
+
+function analysisActions(game) {
   const localBusy = analyzing.has(Number(game.id));
   const status = game.analysis_status || '';
   const gameId = Number(game.id);
-  if (localBusy) return `<button class="secondary small" disabled>Encolando...</button>`;
-  if (status === 'queued') return `<span class="queue-status queued">En cola</span>`;
-  if (status === 'running') return `<span class="queue-status running">Analizando</span>`;
-  if (status === 'done') return `<span class="status-mini">B:${game.blunders || 0} E:${game.mistakes || 0} I:${game.inaccuracies || 0}</span> <a class="btn secondary small" href="review.php?id=${gameId}">Revisar</a> <button class="secondary small" onclick="analyzeGame(${gameId}, true)">Reanalizar</button>`;
-  if (status === 'error') return `<button class="secondary small" onclick="analyzeGame(${gameId}, true)">Reintentar</button>`;
-  if (status === 'cancelled') return `<button class="secondary small" onclick="analyzeGame(${gameId}, true)">Encolar</button>`;
-  return `<button class="secondary small" onclick="analyzeGame(${gameId})">Encolar</button>`;
+  if (localBusy) return { meta: '', primary: '<button class="secondary small" disabled>Encolando...</button>', secondary: '' };
+  if (status === 'queued') return { meta: '', primary: '<span class="queue-status queued">En cola</span>', secondary: '' };
+  if (status === 'running') return { meta: '', primary: '<span class="queue-status running">Analizando</span>', secondary: '' };
+  if (status === 'done') {
+    return {
+      meta: `<span class="status-mini">B:${game.blunders || 0} E:${game.mistakes || 0} I:${game.inaccuracies || 0}</span>`,
+      primary: `<a class="btn secondary small" href="review.php?id=${gameId}">Revisar</a>`,
+      secondary: `<button class="secondary small" onclick="analyzeGame(${gameId}, true)">Reanalizar</button>`
+    };
+  }
+  if (status === 'error') return { meta: '', primary: `<button class="secondary small" onclick="analyzeGame(${gameId}, true)">Reintentar</button>`, secondary: '' };
+  if (status === 'cancelled') return { meta: '', primary: `<button class="secondary small" onclick="analyzeGame(${gameId}, true)">Encolar</button>`, secondary: '' };
+  return { meta: '', primary: `<button class="secondary small" onclick="analyzeGame(${gameId})">Encolar</button>`, secondary: '' };
 }
 
 function smartTagClass(tag) {
@@ -394,10 +433,23 @@ function smartTagChip(tag) {
 }
 
 function gameTagsCell(game) {
-  const tags = (game.smart_tags || []).slice(0, 3);
+  const allTags = game.smart_tags || [];
+  const tags = allTags.slice(0, 1);
   if (!tags.length) return '';
-  const more = (game.smart_tags || []).length > tags.length ? `<span class="smart-tag more">+${(game.smart_tags || []).length - tags.length}</span>` : '';
+  const extraTags = allTags.slice(1);
+  const more = extraTags.length
+    ? `<button class="smart-tag more tag-toggle" type="button" aria-expanded="false" onclick="toggleGameTags(this)">+${extraTags.length}</button><span class="game-tags-extra" hidden>${extraTags.map(smartTagChip).join('')}</span>`
+    : '';
   return `<div class="smart-tag-list game-tags">${tags.map(smartTagChip).join('')}${more}</div>`;
+}
+
+function toggleGameTags(button) {
+  if (!button) return;
+  const extra = button.parentElement ? button.parentElement.querySelector('.game-tags-extra') : null;
+  if (!extra) return;
+  const expanded = button.getAttribute('aria-expanded') === 'true';
+  button.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+  extra.hidden = expanded;
 }
 
 function renderPatterns() {

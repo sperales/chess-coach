@@ -53,7 +53,7 @@ $greeting = $hour < 12 ? 'Buenos días' : ($hour < 21 ? 'Buenas tardes' : 'Buena
     </div>
   </section>
 
-  <section class="trainer-grid">
+  <section class="home-middle-grid">
     <section class="panel trainer-focus-panel">
       <div class="panel-head">
         <h2>Top 3 focos de entrenamiento</h2>
@@ -72,9 +72,7 @@ $greeting = $hour < 12 ? 'Buenos días' : ($hour < 21 ? 'Buenas tardes' : 'Buena
       <h2>Fortalezas recientes</h2>
       <div class="trainer-strengths" id="trainerStrengths"></div>
     </section>
-  </section>
 
-  <section class="home-grid">
     <section class="panel" id="partidas">
       <div class="panel-head">
         <h2 id="gamesPanelTitle">Últimas partidas</h2>
@@ -92,6 +90,8 @@ $greeting = $hour < 12 ? 'Buenos días' : ($hour < 21 ? 'Buenas tardes' : 'Buena
             <th id="gamesThirdColumnHeader">Ritmo</th>
             <th class="hide-sm">Fecha</th>
             <th>Análisis</th>
+            <th class="actions-spacer" aria-label="Acciones"></th>
+            <th class="actions-spacer" aria-label="Acciones"></th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
