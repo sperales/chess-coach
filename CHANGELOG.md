@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## v1.2.1 - Review and Openings Lab polish
+
+### Changed
+
+- Highlighted the Stockfish best-move origin and destination squares in blue when clicking `Mejor` in review.
+- Aligned detected-opening KPI values and labels in the Openings Lab list.
+- Bumped `config/version.php` to `1.2.1`.
+- Updated the service worker cache name to `chess-coach-v1.2.1`.
+
+### Database
+
+- No SQL migration required.
+
 ## v1.2.0 - Openings Lab
 
 ### Added

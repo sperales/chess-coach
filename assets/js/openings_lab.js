@@ -93,9 +93,9 @@ function renderOpeningsList() {
         ${eco ? `<small>${eco}</small>` : ''}
       </span>
       <span class="opening-card-kpis">
-        <b>${Number(opening.games || 0)}</b><small>partidas</small>
-        <b>${Number(opening.score_rate || 0)}%</b><small>score</small>
-        <b>${escapeHtml(accuracy)}</b><small>accuracy</small>
+        <span><b>${Number(opening.games || 0)}</b><small>partidas</small></span>
+        <span><b>${Number(opening.score_rate || 0)}%</b><small>score</small></span>
+        <span><b>${escapeHtml(accuracy)}</b><small>accuracy</small></span>
       </span>
       <span class="opening-card-note">${issue}</span>
     </button>`;

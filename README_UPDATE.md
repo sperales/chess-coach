@@ -1,3 +1,29 @@
+# Chess Coach v1.2.1 Update Notes
+
+## Release type
+
+Small UX polish release.
+
+## Changes
+
+- In `review.php`, clicking `Mejor` now highlights the origin and destination squares of the Stockfish best move in blue.
+- In `openings-lab.php`, the detected-openings KPI values are grouped and aligned consistently.
+- Bumped `config/version.php` to `1.2.1`.
+- Updated the service worker cache to `chess-coach-v1.2.1`.
+
+## SQL migration
+
+No SQL migration required.
+
+## Verification
+
+- Run PHP syntax checks.
+- Run JavaScript syntax checks for changed files.
+- Confirm `review.php` highlights the best-move squares when clicking `Mejor`.
+- Confirm detected-opening cards align `partidas`, `score` and `accuracy` cleanly.
+
+---
+
 # Chess Coach v1.2.0 Update Notes
 
 ## Release type
