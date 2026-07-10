@@ -118,10 +118,10 @@ async function loadOpeningDetail(openingKey) {
     if (detail) detail.innerHTML = `<div class="empty-state compact"><strong>No se pudo cargar.</strong><span>${escapeHtml(payload.error || 'Inténtalo de nuevo.')}</span></div>`;
     return;
   }
-  renderOpeningDetail(payload.opening || {}, payload.games || []);
+  renderOpeningDetail(payload.opening || {}, payload.games || [], payload.recommended_games || [], payload.games_url || '');
 }
 
-function renderOpeningDetail(opening, games) {
+function renderOpeningDetail(opening, games, recommendedGames, gamesUrl) {
   const el = document.getElementById('openingDetail');
   if (!el) return;
   const issue = opening.common_issue ? `${opening.common_issue.label}: ${opening.common_issue.count}` : 'Sin error recurrente claro';
@@ -131,13 +131,14 @@ function renderOpeningDetail(opening, games) {
   const eco = ecoUrl && opening.eco_code
     ? `<a href="${escapeAttr(ecoUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(opening.eco_code)}</a>`
     : escapeHtml(opening.eco_code || '');
+  const filteredGamesUrl = safeLocalUrl(gamesUrl) || `games.php?opening_key=${encodeURIComponent(opening.opening_key || '')}`;
 
   el.innerHTML = `<div class="opening-detail-head">
     <div>
       <h3>${escapeHtml(opening.display_name || 'Apertura no identificada')}</h3>
       ${eco ? `<p class="muted">ECO ${eco}</p>` : ''}
     </div>
-    <a class="btn secondary small" href="games.php">Ver partidas</a>
+    <a class="btn secondary small" href="${escapeAttr(filteredGamesUrl)}">Ver partidas</a>
   </div>
   <div class="trainer-mini-kpis opening-detail-kpis">
     ${miniKpi('Score', `${Number(opening.score_rate || 0)}%`)}
@@ -153,29 +154,53 @@ function renderOpeningDetail(opening, games) {
     ${moves ? `<strong>Primeras jugadas</strong><p>${escapeHtml(moves)}</p>` : ''}
   </div>
   <div class="opening-games">
+    <h3>Partidas recomendadas para revisar</h3>
+    ${renderOpeningGames(recommendedGames, true)}
+  </div>
+  <div class="opening-games">
     <h3>Partidas ejemplo</h3>
-    ${renderOpeningGames(games)}
+    ${renderOpeningGames(games, false)}
   </div>`;
 }
 
-function renderOpeningGames(games) {
+function renderOpeningGames(games, recommended = false) {
   if (!games.length) {
-    return `<div class="empty-state compact"><strong>Sin partidas asociadas.</strong><span>Cuando haya perfiles suficientes aparecerán aquí.</span></div>`;
+    const text = recommended
+      ? 'No hay errores tempranos claros en esta apertura.'
+      : 'Cuando haya perfiles suficientes aparecerán aquí.';
+    return `<div class="empty-state compact"><strong>Sin partidas asociadas.</strong><span>${escapeHtml(text)}</span></div>`;
   }
   return games.slice(0, 8).map(game => {
     const accuracy = game.opening_accuracy === null ? '-' : `${game.opening_accuracy}%`;
+    const reviewUrl = recommended ? (game.review_focus_url || game.review_url || '#') : (game.review_url || '#');
+    const reason = recommendedReason(game);
     return `<article class="opening-game-row">
       <div>
         <strong>${escapeHtml(game.title || 'Partida')}</strong>
-        <span>${escapeHtml(game.played_at || '-')} · ${resultLabel(game.result)} · ${escapeHtml(game.user_color || 'unknown')}</span>
+        <span>${escapeHtml(game.played_at || '-')} · ${resultLabel(game.result)} · ${colorLabel(game.user_color)}</span>
+        ${recommended ? `<span>${escapeHtml(reason)}</span>` : ''}
       </div>
       <div>
         <b>${escapeHtml(accuracy)}</b>
         <small>B:${Number(game.opening_errors?.blunders || 0)} E:${Number(game.opening_errors?.mistakes || 0)} I:${Number(game.opening_errors?.inaccuracies || 0)}</small>
       </div>
-      <a class="btn secondary small" href="${escapeAttr(game.review_url || '#')}">Revisar</a>
+      <a class="btn secondary small" href="${escapeAttr(reviewUrl)}">${recommended ? 'Revisar foco' : 'Revisar'}</a>
     </article>`;
   }).join('');
+}
+
+function recommendedReason(game) {
+  const label = classificationLabel(game.first_error_label || '');
+  if (game.first_error_ply) return `${label} en la jugada ${game.first_error_ply}.`;
+  return `${Number(game.opening_errors?.total || 0)} error(es) tempranos.`;
+}
+
+function classificationLabel(value) {
+  return { blunder: 'Omisión grave', mistake: 'Error', inaccuracy: 'Imprecisión' }[value] || 'Error temprano';
+}
+
+function colorLabel(value) {
+  return { white: 'blancas', black: 'negras', unknown: 'color desconocido' }[value] || 'color desconocido';
 }
 
 function miniKpi(label, value) {
@@ -211,6 +236,11 @@ function escapeAttr(value) {
 function safeUrl(value) {
   const url = (value || '').toString().trim();
   return /^https?:\/\//i.test(url) ? url : '';
+}
+
+function safeLocalUrl(value) {
+  const url = (value || '').toString().trim();
+  return /^[a-z0-9._-]+\.php(\?[^#]*)?$/i.test(url) ? url : '';
 }
 
 document.getElementById('openingsMinGames')?.addEventListener('change', () => {

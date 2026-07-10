@@ -152,6 +152,49 @@ POST api/openings.php?action=backfill
 
 The action requires CSRF and processes up to 25 games per execution.
 
+## PR4 - Opening detail and review links
+
+The fourth v1.2.0 PR improves navigation from the Openings Lab into concrete games and review moments.
+
+Changed files:
+
+- `CHANGELOG.md`
+- `README_UPDATE.md`
+- `api/games.php`
+- `assets/js/games.js`
+- `assets/js/openings_lab.js`
+- `assets/js/review.js`
+- `includes/openings.php`
+- `service-worker.js`
+
+### Opening detail improvements
+
+The opening detail panel now shows a dedicated **Partidas recomendadas para revisar** section. These games are selected from the same opening when the user has early opening blunders, mistakes or inaccuracies.
+
+Recommended review links point to:
+
+```text
+review.php?id=X&ply=Y
+```
+
+when a safe first-error ply is available. If not, they fall back to:
+
+```text
+review.php?id=X
+```
+
+`review.php` now accepts `ply` as an optional read-only query parameter. Invalid or missing values fall back to the first move.
+
+### Games links
+
+The Lab de Aperturas detail button now links to:
+
+```text
+games.php?opening_key=...
+```
+
+`api/games.php` supports that filter by checking the current user's `game_opening_profiles` rows. This keeps ownership scoped to the authenticated user.
+
 ## SQL migration
 
 Run:
@@ -203,3 +246,6 @@ When JavaScript is added in later PRs, run `node --check` on changed JS files.
 - Confirm example-game links open `review.php`.
 - Open `profile.php` and confirm the Procesos batch block shows Backfill de aperturas.
 - Run the Openings Lab backfill and confirm the pending counter updates.
+- From `openings-lab.php`, open an opening detail and confirm recommended games are shown when early opening errors exist.
+- Click a recommended review link and confirm `review.php` opens at the requested move when `ply` is present.
+- Click `Ver partidas` in an opening detail and confirm `games.php` lists games for that opening.

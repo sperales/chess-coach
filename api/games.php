@@ -77,6 +77,19 @@ function game_list_filter_sql(int $userId, string $username): array {
     $params[] = $result;
   }
 
+  $openingKey = trim((string)($_GET['opening_key'] ?? ''));
+  if ($openingKey !== '') {
+    $where[] = 'EXISTS (
+      SELECT 1
+      FROM game_opening_profiles op
+      WHERE op.game_id=g.id
+        AND op.user_id=?
+        AND op.opening_key=?
+    )';
+    $params[] = $userId;
+    $params[] = $openingKey;
+  }
+
   $tag = trim((string)($_GET['tag'] ?? ''));
   if ($tag !== '') {
     $where[] = '(

@@ -308,6 +308,8 @@ function openings_lab_game_metrics(array $row, array $moves): array {
   $ownOpeningLosses = [];
   $earlyErrors = ['blunder' => 0, 'mistake' => 0, 'inaccuracy' => 0];
   $evalAfterMove10 = null;
+  $firstErrorPly = null;
+  $firstErrorLabel = null;
 
   foreach ($moves as $move) {
     $ply = (int)($move['ply'] ?? 0);
@@ -319,7 +321,13 @@ function openings_lab_game_metrics(array $row, array $moves): array {
 
     if ($isOwnMove && $ply <= 20) {
       $class = (string)($move['classification'] ?? 'ok');
-      if (isset($earlyErrors[$class])) $earlyErrors[$class]++;
+      if (isset($earlyErrors[$class])) {
+        $earlyErrors[$class]++;
+        if ($firstErrorPly === null) {
+          $firstErrorPly = $ply;
+          $firstErrorLabel = $class;
+        }
+      }
     }
 
     if ($ply === 20) {
@@ -338,6 +346,8 @@ function openings_lab_game_metrics(array $row, array $moves): array {
     'opening_mistakes' => $earlyErrors['mistake'],
     'opening_inaccuracies' => $earlyErrors['inaccuracy'],
     'opening_error_count' => array_sum($earlyErrors),
+    'first_error_ply' => $firstErrorPly,
+    'first_error_label' => $firstErrorLabel,
   ];
 }
 
@@ -362,8 +372,23 @@ function openings_lab_public_game(array $row, array $metrics): array {
       'inaccuracies' => $metrics['opening_inaccuracies'],
       'total' => $metrics['opening_error_count'],
     ],
+    'first_error_ply' => $metrics['first_error_ply'],
+    'first_error_label' => $metrics['first_error_label'],
     'review_url' => 'review.php?id=' . (int)$row['game_id'],
+    'review_focus_url' => $metrics['first_error_ply'] === null
+      ? 'review.php?id=' . (int)$row['game_id']
+      : 'review.php?id=' . (int)$row['game_id'] . '&ply=' . (int)$metrics['first_error_ply'],
   ];
+}
+
+function openings_lab_recommended_games(array $games, int $limit = 5): array {
+  $recommended = array_values(array_filter($games, fn($game) => (int)($game['opening_errors']['total'] ?? 0) > 0));
+  usort($recommended, fn($a, $b) =>
+    ((int)($b['opening_errors']['total'] ?? 0) <=> (int)($a['opening_errors']['total'] ?? 0))
+    ?: ((float)($a['opening_accuracy'] ?? 101) <=> (float)($b['opening_accuracy'] ?? 101))
+    ?: strcmp((string)($b['played_at'] ?? ''), (string)($a['played_at'] ?? ''))
+  );
+  return array_slice($recommended, 0, max(1, $limit));
 }
 
 function openings_lab_recommendation(array $opening): string {
@@ -558,6 +583,8 @@ function openings_lab_detail_payload(int $userId, string $openingKey): array {
     'ok' => true,
     'opening' => $opening,
     'games' => $games,
+    'recommended_games' => openings_lab_recommended_games($games),
+    'games_url' => 'games.php?opening_key=' . rawurlencode($openingKey),
     'minimum_games' => openings_lab_min_games(),
   ];
 }
