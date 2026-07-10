@@ -20,11 +20,18 @@
 - Added optional `review.php?id=X&ply=Y` deep links for safe opening review moments.
 - Added structured practical opening principles to the Openings Lab detail view.
 - Connected opening details with frequent Smart Tags, recurrent early errors and existing related Training Center exercises, including direct links to open a specific exercise.
+- Bumped `config/version.php` to `1.2.0`.
+- Updated the final service worker cache name to `chess-coach-v1.2.0`.
+- Updated release documentation and roadmap baseline for the completed Openings Lab release.
 
 ### Notes
 
 - No Openings Lab UI is included in PR1 or PR2.
-- No Training Center exercise generation changes are included in PR1, PR2 or PR3.
+- No Training Center exercise generation changes are included in v1.2.0.
+
+### Database
+
+- Added `sql/migrations/022_changes_1.2.0.sql` for `game_opening_profiles` and `opening_profile_runs`.
 
 ## v1.1.6 - Security and documentation hardening
 

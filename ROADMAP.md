@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v1.1.6**
+Current stable baseline: **v1.2.0**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,15 +32,15 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v1.1.6
+## Current baseline — v1.2.0
 
-v1.1.6 completes the first Training Center release line and its initial hardening pass.
+v1.2.0 completes the first Openings Lab release line.
 
-It generates exercises from analyzed games, stores them in dedicated Training Center tables, shows them in `training.php`, lets the player solve positions on an interactive board, records attempts, tracks training sessions and links exercises back to the original review.
+It detects and stores opening profiles from the user's own games, groups openings by ECO code and opening name when available, exposes Openings Lab metrics, shows a dedicated `openings-lab.php` page, links opening diagnostics to review moments, filters games by opening and connects opening details with Smart Tags and existing Training Center exercises.
 
-Smart Tags, the Personal Trainer Dashboard, Training Center exercise generation, the interactive solver, hints, session tracking and selectable board piece sets are now part of the stable product baseline.
+Smart Tags, the Personal Trainer Dashboard, Training Center exercise generation, the interactive solver, hints, session tracking, selectable board piece sets and Openings Lab are now part of the stable product baseline.
 
-The v1.1.6 hardening pass tightened documentation, encoding checks, ownership checks, CSRF coverage, output safety and shared API request helpers before starting v1.2.0 Openings Lab.
+The v1.1.6 hardening pass tightened documentation, encoding checks, ownership checks, CSRF coverage, output safety and shared API request helpers before v1.2.0 Openings Lab.
 
 ### v0.8.8 review chart baseline
 
@@ -357,6 +357,8 @@ Add basic repeat logic:
 ---
 
 ## v1.2.0 — Openings Lab
+
+Status: completed in Chess Coach v1.2.0.
 
 ### Goal
 

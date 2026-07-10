@@ -232,6 +232,36 @@ Opening details now include recurrent early error patterns, grouped by ply and e
 
 Opening details now show existing Training Center exercises for games with the same ECO code and `ply <= 16`. This PR only reads already-generated exercises and links to review/training. Training links now use `training.php?exercise_id=...` so the selected exercise opens directly. It does not generate new exercises from the Lab.
 
+## PR6 - Polish and release readiness
+
+The sixth v1.2.0 PR closes the release by aligning version metadata, the final service worker cache name and release documentation.
+
+Changed files:
+
+- `AGENTS.md`
+- `CHANGELOG.md`
+- `README.md`
+- `README_UPDATE.md`
+- `ROADMAP.md`
+- `config/version.php`
+- `service-worker.js`
+
+### Version and cache
+
+`config/version.php` now reports:
+
+```text
+1.2.0
+```
+
+`service-worker.js` now uses the final release cache:
+
+```text
+chess-coach-v1.2.0
+```
+
+This replaces the intermediate PR cache names used while building the Openings Lab.
+
 ## SQL migration
 
 Run:
@@ -256,7 +286,7 @@ PR3 adds a new page and JavaScript file, so `service-worker.js` now includes:
 - `./openings-lab.php`
 - `./assets/js/openings_lab.js`
 
-The final v1.2.0 release readiness PR must set the final cache name.
+The final v1.2.0 release readiness PR sets the final cache name to `chess-coach-v1.2.0`.
 
 ## Local verification commands
 
@@ -289,3 +319,5 @@ When JavaScript is added in later PRs, run `node --check` on changed JS files.
 - Confirm the opening detail shows frequent Smart Tags when tags exist.
 - Confirm recurrent early errors link to `review.php`.
 - Confirm existing related exercises appear when Training Center exercises already exist for games in that opening.
+- Confirm `config/version.php` reports `1.2.0`.
+- Confirm `service-worker.js` uses `chess-coach-v1.2.0`.
