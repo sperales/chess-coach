@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## v1.2.4 - Review and home UI polish
+
+### Changed
+
+- Changed the `Excelente` review icon from a browser-colored emoji to a green arrow-style symbol.
+- Filtered move Smart Tags in `review.php` when they duplicate the move evaluation label.
+- Reused review summary icons in the home latest-review summary block.
+- Kept detected-pattern rows on one line in the mobile home layout.
+- Improved the home motivational quote mark typography.
+- Bumped `config/version.php` to `1.2.4`.
+- Updated the service worker cache name to `chess-coach-v1.2.4`.
+
+### Database
+
+- No SQL migration required.
+
 ## v1.2.3 - Home UI polish
 
 ### Changed

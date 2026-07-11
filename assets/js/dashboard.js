@@ -570,10 +570,11 @@ function formatReviewNumber(value) {
 }
 
 function homeBucketIcon(bucket) {
-  if (bucket === 'best' || bucket === 'good') return '↑';
-  if (bucket === 'excellent') return '★';
+  if (bucket === 'best') return '★';
+  if (bucket === 'excellent') return '↑';
+  if (bucket === 'good') return '✓';
   if (bucket === 'inaccuracy') return '?!';
-  if (bucket === 'mistake') return '↓';
+  if (bucket === 'mistake') return '?';
   if (bucket === 'blunder') return '??';
   return '•';
 }

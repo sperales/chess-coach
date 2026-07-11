@@ -130,7 +130,7 @@ $greeting = $hour < 12 ? 'Buenos días' : ($hour < 21 ? 'Buenas tardes' : 'Buena
   </section>
 
   <section class="quote-panel panel">
-    <span>"</span>
+    <span>“</span>
     <p><?=e($quote['quote_text'] ?? '')?><br><small>- <?=e($quote['author'] ?? '')?></small></p>
     <b>♞</b>
   </section>
