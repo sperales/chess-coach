@@ -223,7 +223,7 @@ function insightCard(type, title, value, line, note) {
 
 function reviewInsightIcon(type) {
   return {
-    strength: '▮',
+    strength: '↑',
     opportunity: '◎',
     review: '!',
     focus: '♜'
@@ -251,7 +251,7 @@ function renderChart() {
   points.forEach(point => ctx.lineTo(point.x, point.y));
   ctx.lineTo(points[points.length - 1].x, h);
   ctx.closePath();
-  ctx.fillStyle = 'rgba(247,247,243,.62)';
+  ctx.fillStyle = 'rgba(47,202,90,.26)';
   ctx.fill();
   ctx.strokeStyle = '#c8c8c3';
   ctx.lineWidth = 2;

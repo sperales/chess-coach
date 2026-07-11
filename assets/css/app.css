@@ -2048,7 +2048,7 @@ body.login-page::before {
 }
 .review-coach-tip {
   display:grid;
-  grid-template-columns:auto minmax(0,1fr) auto;
+  grid-template-columns:auto minmax(0,1fr);
   align-items:center;
   gap:18px;
   background:
@@ -2076,11 +2076,6 @@ body.login-page::before {
   margin:0;
   color:#d6dde3;
   line-height:1.45
-}
-.review-tip-arrow {
-  color:#7d8993;
-  font-size:34px;
-  line-height:1
 }
 .review-insights-panel {
   display:grid;
@@ -2218,9 +2213,6 @@ body.login-page::before {
   }
   .review-coach-tip {
     grid-template-columns:1fr
-  }
-  .review-tip-arrow {
-    display:none
   }
   .review-insights-grid {
     grid-template-columns:minmax(0,1fr)

@@ -111,7 +111,6 @@ $pieceSetAssetPath = piece_set_asset_path($u['piece_set'] ?? null);
         <h2>Consejo del coach</h2>
         <p id="reviewCoachTip">Cargando consejo...</p>
       </div>
-      <span class="review-tip-arrow" aria-hidden="true">›</span>
     </section>
 
     <section class="review-insights-panel">
