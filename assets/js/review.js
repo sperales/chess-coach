@@ -21,7 +21,7 @@ function rEscape(s) {
 
 function bucketIcon(bucket) {
   return {
-    best: '★', excellent: '👍', good: '✓', inaccuracy: '?!', mistake: '?', blunder: '??'
+    best: '★', excellent: '↑', good: '✓', inaccuracy: '?!', mistake: '?', blunder: '??'
   }[bucket] || '•';
 }
 
@@ -140,6 +140,36 @@ function renderTagList(el, tags, limit = 8) {
   el.innerHTML = visible.map(smartTagChip).join('') + more;
 }
 
+function normalizeTagText(value) {
+  return (value || '').toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function isEvaluationDuplicateTag(tag, move) {
+  const bucket = (move && move.review_bucket ? move.review_bucket : '').toString();
+  const label = normalizeTagText(move && move.review_label);
+  const code = normalizeTagText(tag && tag.tag_code);
+  const tagLabel = normalizeTagText(tag && tag.label);
+  const aliases = {
+    inaccuracy: ['imprecision', 'inaccuracy'],
+    mistake: ['error', 'error importante', 'mistake'],
+    blunder: ['omision grave', 'blunder'],
+    excellent: ['excelente'],
+    good: ['buena'],
+    best: ['mejor']
+  };
+  const values = new Set([label, ...(aliases[bucket] || [])].filter(Boolean));
+  return values.has(tagLabel) || values.has(code);
+}
+
+function filteredMoveTags(move) {
+  return (move.smart_tags || []).filter(tag => !isEvaluationDuplicateTag(tag, move));
+}
+
 function renderChart() {
   const canvas = document.getElementById('evalChart');
   const moves = (reviewData && reviewData.moves) || [];
@@ -223,7 +253,7 @@ function moveListCell(item, side) {
 }
 
 function moveTagsSummary(move) {
-  const tags = (move.smart_tags || []).slice(0, 2);
+  const tags = filteredMoveTags(move).slice(0, 2);
   if (!tags.length) return '';
   return `<div class="smart-tag-list move-list-tags">${tags.map(smartTagChip).join('')}</div>`;
 }
@@ -242,7 +272,7 @@ function renderMove() {
   document.getElementById('moveSan').textContent = `${m.san || m.uci} es ${m.review_label.toLowerCase()}`;
   document.getElementById('moveEval').textContent = evalText(m);
   document.getElementById('moveExplanation').textContent = m.explanation || '';
-  renderTagList(ensureTagList('moveSmartTags', 'moveExplanation', 'move-tags'), m.smart_tags || []);
+  renderTagList(ensureTagList('moveSmartTags', 'moveExplanation', 'move-tags'), filteredMoveTags(m));
   renderBoard(m.fen_after, m.uci);
   renderMoveList();
 }

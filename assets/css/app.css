@@ -664,6 +664,7 @@ a {
   gap:22px
 }
 .quote-panel span {
+  font-family:Georgia,"Times New Roman",serif;
   font-size:70px;
   color:var(--green);
   line-height:.8
@@ -2237,9 +2238,18 @@ button.smart-tag.more:hover {
     grid-column:1 / -1
   }
   .smart-tag-summary div {
-    align-items:flex-start;
-    flex-direction:column;
-    gap:6px
+    align-items:center;
+    flex-direction:row;
+    gap:10px
+  }
+  .smart-tag-summary span {
+    min-width:0
+  }
+  .smart-tag-summary .smart-tag {
+    white-space:nowrap
+  }
+  .smart-tag-summary strong {
+    flex:0 0 auto
   }
   .batch-row {
     align-items:flex-start;
@@ -2357,7 +2367,7 @@ select {
   height:58px;
   display:grid;
   place-items:center;
-  margin:22px auto 12px;
+  margin:34px auto 12px;
   color:#c9d0d6
 }
 .trainer-focus-icon img {

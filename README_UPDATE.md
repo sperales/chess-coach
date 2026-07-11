@@ -1,3 +1,34 @@
+# Chess Coach v1.2.4 Update Notes
+
+## Release type
+
+Review and home UI polish release.
+
+## Changes
+
+- Changed the `Excelente` review icon from an emoji to a green arrow-style symbol.
+- Filtered move Smart Tags in `review.php` so tags identical to the move evaluation are not repeated.
+- Reused the same review summary icons in the home latest-review summary block.
+- Kept detected-pattern rows on one line in the mobile home layout.
+- Improved the quote mark styling in the home motivational quote block.
+- Bumped `config/version.php` to `1.2.4`.
+- Updated the service worker cache to `chess-coach-v1.2.4`.
+
+## SQL migration
+
+No SQL migration required.
+
+## Verification
+
+- Run PHP syntax checks.
+- Run JavaScript syntax checks for changed files.
+- Confirm `Excelente` appears green in `review.php`.
+- Confirm duplicate move Smart Tags no longer appear next to identical move evaluations.
+- Confirm the home latest-review summary uses the same icons as review.
+- Confirm detected-pattern rows stay on one line on mobile.
+
+---
+
 # Chess Coach v1.2.3 Update Notes
 
 ## Release type
