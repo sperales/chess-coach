@@ -70,6 +70,7 @@ async function loadReview() {
     renderChart();
     renderMoveList();
     renderMove();
+    renderBottomInsights();
   } catch (e) {
     if (intro) intro.textContent = e.message;
     const headline = document.getElementById('reviewHeadline');
@@ -170,6 +171,65 @@ function filteredMoveTags(move) {
   return (move.smart_tags || []).filter(tag => !isEvaluationDuplicateTag(tag, move));
 }
 
+function renderBottomInsights() {
+  const tip = document.getElementById('reviewCoachTip');
+  const insights = document.getElementById('reviewInsights');
+  if (!reviewData || !insights) return;
+  const summary = reviewData.summary || {};
+  const counts = summary.counts || {};
+  const smartTags = summary.smart_tags || [];
+  const weaknessCount = Number(counts.mistake || 0) + Number(counts.blunder || 0);
+  const strengthCount = Number(counts.best || 0) + Number(counts.excellent || 0) + Number(counts.good || 0);
+  const opportunityCount = Number(counts.inaccuracy || 0);
+  const endgameTag = smartTags.find(tag => normalizeTagText(tag.label || tag.tag_code).includes('final'));
+  const focusLabel = endgameTag ? 'Finales' : weaknessCount > 0 ? 'Revisión' : opportunityCount > 0 ? 'Precisión' : 'Consolidar';
+  const focusDetail = endgameTag ? 'Errores en las últimas jugadas' : weaknessCount > 0 ? 'Omisiones graves detectadas' : opportunityCount > 0 ? 'Evita pequeñas pérdidas repetidas' : 'Mantén el plan de mejora';
+
+  if (tip) tip.textContent = coachTipText(summary, counts, smartTags);
+  insights.innerHTML = [
+    insightCard('strength', 'Fortalezas', strengthCount, strengthCount > 0 ? 'Jugadas sólidas encontradas' : 'Sin fortalezas claras aún', topPositiveTag(smartTags)),
+    insightCard('opportunity', 'Oportunidades', opportunityCount, opportunityCount > 0 ? 'Evita errores de precisión' : 'No hay imprecisiones relevantes', 'Desarrolla con más ritmo'),
+    insightCard('review', 'A revisar', weaknessCount, weaknessCount > 0 ? 'Errores e imprecisiones' : 'Sin errores graves detectados', weaknessCount > 0 ? 'Omisiones graves detectadas' : 'Partida limpia en lo crítico'),
+    insightCard('focus', 'Enfoque', focusLabel, focusDetail, endgameTag ? 'Finales' : 'Siguiente revisión recomendada')
+  ].join('');
+}
+
+function coachTipText(summary, counts, smartTags) {
+  const hasEndgame = smartTags.some(tag => normalizeTagText(tag.label || tag.tag_code).includes('final'));
+  if (Number(counts.blunder || 0) > 0) return 'Empieza por las omisiones graves: suelen explicar dónde cambió la partida.';
+  if (Number(counts.mistake || 0) > 0) return 'Reduce primero los errores importantes antes de buscar jugadas brillantes.';
+  if (hasEndgame) return 'Revisa los finales: es donde tu ventaja o resistencia necesita más precisión.';
+  if (Number(summary.accuracy || 0) >= 80) return 'Buen trabajo: revisa tus mejores decisiones y conviértelas en hábito.';
+  return 'Controlar el centro desde el inicio te da más opciones y limita las piezas del rival.';
+}
+
+function topPositiveTag(tags) {
+  const positive = (tags || []).find(tag => tag.category === 'positive');
+  return positive ? (positive.label || positive.tag_code || 'Buen recurso') : 'Buen control del centro';
+}
+
+function insightCard(type, title, value, line, note) {
+  return `
+    <article class="review-insight-card ${type}">
+      <div>
+        <strong>${rEscape(title)}</strong>
+        <p><b>${rEscape(String(value))}</b> ${rEscape(line)}</p>
+        <small>${rEscape(note)}</small>
+      </div>
+      <span class="review-insight-icon" aria-hidden="true">${reviewInsightIcon(type)}</span>
+    </article>
+  `;
+}
+
+function reviewInsightIcon(type) {
+  return {
+    strength: '↑',
+    opportunity: '◎',
+    review: '!',
+    focus: '♜'
+  }[type] || '•';
+}
+
 function renderChart() {
   const canvas = document.getElementById('evalChart');
   const moves = (reviewData && reviewData.moves) || [];
@@ -180,18 +240,18 @@ function renderChart() {
   ctx.clearRect(0,0,w,h);
   ctx.fillStyle = '#0d171d';
   ctx.fillRect(0,0,w,h);
-  const pad = 22;
-  const step = moves.length > 1 ? (w - pad*2) / (moves.length - 1) : 0;
+  const verticalPad = 22;
+  const step = moves.length > 1 ? w / (moves.length - 1) : 0;
   const points = moves.map((m,i) => ({
-    x: pad + i*step,
-    y: h/2 - (scoreForChart(m) / 6) * (h/2 - pad)
+    x: i*step,
+    y: h/2 - (scoreForChart(m) / 6) * (h/2 - verticalPad)
   }));
   ctx.beginPath();
   ctx.moveTo(points[0].x, h);
   points.forEach(point => ctx.lineTo(point.x, point.y));
   ctx.lineTo(points[points.length - 1].x, h);
   ctx.closePath();
-  ctx.fillStyle = '#f7f7f3';
+  ctx.fillStyle = 'rgba(47,202,90,.26)';
   ctx.fill();
   ctx.strokeStyle = '#c8c8c3';
   ctx.lineWidth = 2;
@@ -201,7 +261,7 @@ function renderChart() {
   ctx.lineWidth = 3;
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
-  ctx.strokeStyle = '#4f4d49';
+  ctx.strokeStyle = '#ffffff';
   points.forEach((point,i) => {
     if (i === 0) ctx.moveTo(point.x,point.y); else ctx.lineTo(point.x,point.y);
   });

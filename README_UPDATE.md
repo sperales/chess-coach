@@ -1,3 +1,32 @@
+# Chess Coach v1.2.5 Update Notes
+
+## Release type
+
+Review UI refresh release.
+
+## Changes
+
+- Added `assets/images/review_background.jpg` as the local background for the review hero block.
+- Refreshed the review hero card with the new background image.
+- Updated the evaluation chart to use a white evaluation line and a semi-transparent filled area.
+- Added a bottom review section with a coach tip and quick insights based on the current analysis summary.
+- Bumped `config/version.php` to `1.2.5`.
+- Updated the service worker cache to `chess-coach-v1.2.5`.
+
+## SQL migration
+
+No SQL migration required.
+
+## Verification
+
+- Run PHP syntax checks.
+- Run JavaScript syntax checks for changed files.
+- Confirm `review.php` shows the new background in the initial review block.
+- Confirm the evaluation chart line is white and the filled area is slightly transparent.
+- Confirm the bottom coach tip and quick insights appear after the existing review blocks.
+
+---
+
 # Chess Coach v1.2.4 Update Notes
 
 ## Release type
