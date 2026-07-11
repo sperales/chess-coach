@@ -240,11 +240,11 @@ function renderChart() {
   ctx.clearRect(0,0,w,h);
   ctx.fillStyle = '#0d171d';
   ctx.fillRect(0,0,w,h);
-  const pad = 22;
-  const step = moves.length > 1 ? (w - pad*2) / (moves.length - 1) : 0;
+  const verticalPad = 22;
+  const step = moves.length > 1 ? w / (moves.length - 1) : 0;
   const points = moves.map((m,i) => ({
-    x: pad + i*step,
-    y: h/2 - (scoreForChart(m) / 6) * (h/2 - pad)
+    x: i*step,
+    y: h/2 - (scoreForChart(m) / 6) * (h/2 - verticalPad)
   }));
   ctx.beginPath();
   ctx.moveTo(points[0].x, h);
