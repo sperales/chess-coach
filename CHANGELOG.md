@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## v1.2.5 - Review UI refresh
+
+### Added
+
+- Added `assets/images/review_background.jpg` as the review hero background.
+- Added a bottom review section with a coach tip and quick insights.
+
+### Changed
+
+- Refreshed the initial `review.php` hero block with a background-image treatment.
+- Updated the evaluation chart with a white evaluation line and semi-transparent filled area.
+- Bumped `config/version.php` to `1.2.5`.
+- Updated the service worker cache name to `chess-coach-v1.2.5`.
+
+### Database
+
+- No SQL migration required.
+
 ## v1.2.4 - Review and home UI polish
 
 ### Changed

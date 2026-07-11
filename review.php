@@ -103,6 +103,24 @@ $pieceSetAssetPath = piece_set_asset_path($u['piece_set'] ?? null);
       <div class="move-list" id="moveList"></div>
     </section>
   </section>
+
+  <section class="review-bottom-panel">
+    <section class="panel review-coach-tip">
+      <div class="review-tip-icon" aria-hidden="true">!</div>
+      <div>
+        <h2>Consejo del coach</h2>
+        <p id="reviewCoachTip">Cargando consejo...</p>
+      </div>
+      <span class="review-tip-arrow" aria-hidden="true">›</span>
+    </section>
+
+    <section class="review-insights-panel">
+      <div class="review-insights-heading">
+        <h2>Insights rápidos</h2>
+      </div>
+      <div class="review-insights-grid" id="reviewInsights"></div>
+    </section>
+  </section>
 </main>
 </div>
 <script>
