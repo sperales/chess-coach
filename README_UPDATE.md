@@ -1,3 +1,36 @@
+# Chess Coach v1.2.6 Update Notes
+
+## Release type
+
+Home, review and games UI polish release.
+
+## Changes
+
+- Renamed the home summary label from `Decisión grave` to `Omisión grave`.
+- Adjusted the review quick insight `Enfoque` card to show title, focus value and explanation on separate lines.
+- Added `assets/images/games_background.jpg` as the local background for the games page hero block.
+- Refreshed the `games.php` hero card with the new background image.
+- Split games table actions into separate unlabeled columns for review and reanalysis.
+- Styled `Revisar` as a green action in games lists and kept `Reanalizar` with the existing secondary button style.
+- Added B/E/I counts to recommended games in the home games block.
+- Bumped `config/version.php` to `1.2.6`.
+- Updated the service worker cache to `chess-coach-v1.2.6`.
+
+## SQL migration
+
+No SQL migration required.
+
+## Verification
+
+- Run PHP syntax checks.
+- Run JavaScript syntax checks for changed files.
+- Confirm the home summary uses `Omisión grave`.
+- Confirm the review `Enfoque` card uses three lines.
+- Confirm `games.php` shows the new hero background and separated action columns.
+- Confirm the PWA cache includes `assets/images/games_background.jpg`.
+
+---
+
 # Chess Coach v1.2.5 Update Notes
 
 ## Release type

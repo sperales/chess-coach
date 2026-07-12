@@ -54,7 +54,7 @@ function renderTagOptions() {
 function renderRows() {
   const el = document.getElementById('gameRows');
   if (!el) return;
-  el.innerHTML = games.map(g => `<tr><td>${opponentCell(g)}${gameTagsCell(g)}</td><td>${resultBadge(g)}</td><td>${escapeHtml(g.event_name || rhythmFromSite(g.site) || '-')}</td><td class="hide-sm">${openingCell(g)}</td><td class="hide-sm">${g.played_at || (g.imported_at || '').slice(0,10) || '-'}</td><td>${analysisCell(g)}</td></tr>`).join('') || `<tr><td colspan="6" class="muted">No hay partidas con los filtros seleccionados.</td></tr>`;
+  el.innerHTML = games.map(g => `<tr><td>${opponentCell(g)}${gameTagsCell(g)}</td><td>${resultBadge(g)}</td><td>${escapeHtml(g.event_name || rhythmFromSite(g.site) || '-')}</td><td class="hide-sm">${openingCell(g)}</td><td class="hide-sm">${g.played_at || (g.imported_at || '').slice(0,10) || '-'}</td><td>${analysisStatusCell(g)}</td><td class="game-action-cell">${reviewActionCell(g)}</td><td class="game-action-cell">${reanalyzeActionCell(g)}</td></tr>`).join('') || `<tr><td colspan="8" class="muted">No hay partidas con los filtros seleccionados.</td></tr>`;
 }
 
 function renderPagination() {
@@ -143,14 +143,27 @@ function resultBadge(g) {
   return `<span class="result-badge ${cls}" title="${escapeHtml(g.user_result || '')}">${escapeHtml(g.result_raw || '-')}</span>`;
 }
 
-function analysisCell(g) {
+function analysisStatusCell(g) {
   const status = g.analysis_status || '';
   if (status === 'queued') return `<span class="queue-status queued">En cola</span>`;
   if (status === 'running') return `<span class="queue-status running">Analizando</span>`;
-  if (status === 'done') return `<span class="status-mini">B:${g.blunders || 0} E:${g.mistakes || 0} I:${g.inaccuracies || 0}</span> <a class="btn secondary small" href="review.php?id=${g.id}">Revisar</a> <button class="secondary small" onclick="analyzeGame(${g.id}, true)">Reanalizar</button>`;
-  if (status === 'error') return `<button class="secondary small" onclick="analyzeGame(${g.id}, true)">Reintentar</button>`;
-  if (status === 'cancelled') return `<button class="secondary small" onclick="analyzeGame(${g.id}, true)">Encolar</button>`;
-  return `<button class="secondary small" onclick="analyzeGame(${g.id})">Encolar</button>`;
+  if (status === 'done') return `<span class="status-mini">B:${g.blunders || 0} E:${g.mistakes || 0} I:${g.inaccuracies || 0}</span>`;
+  if (status === 'error') return `<span class="queue-status error">Error</span>`;
+  if (status === 'cancelled') return `<span class="queue-status cancelled">Cancelado</span>`;
+  return `<span class="queue-status queued">Pendiente</span>`;
+}
+
+function reviewActionCell(g) {
+  if ((g.analysis_status || '') !== 'done') return '';
+  return `<a class="btn small game-review-btn" href="review.php?id=${g.id}">Revisar</a>`;
+}
+
+function reanalyzeActionCell(g) {
+  const status = g.analysis_status || '';
+  if (status === 'queued' || status === 'running') return '';
+  const force = status === 'done' || status === 'error' || status === 'cancelled';
+  const label = status === 'done' ? 'Reanalizar' : status === 'error' ? 'Reintentar' : 'Encolar';
+  return `<button class="secondary small game-analyze-btn" onclick="analyzeGame(${g.id}, ${force ? 'true' : 'false'})">${label}</button>`;
 }
 
 function smartTagClass(tag) {

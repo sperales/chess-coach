@@ -13,7 +13,7 @@
 <?php header_bar('Chess Coach'); ?>
 <div class="app-area">
 <main class="dashboard games-page">
-  <section class="hero-card compact">
+  <section class="hero-card compact games-hero">
     <div>
       <h1>Partidas</h1>
       <p>Explora tu historial, filtra por color, resultado y etiquetas, y vuelve a revisar cualquier análisis.</p>
@@ -65,6 +65,8 @@
             <th class="hide-sm">Apertura</th>
             <th class="hide-sm">Fecha</th>
             <th>Análisis</th>
+            <th aria-label="Revisar"></th>
+            <th aria-label="Reanalizar"></th>
           </tr>
         </thead>
         <tbody id="gameRows"></tbody>

@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v1.2.5**
+Current stable baseline: **v1.2.6**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,9 +32,9 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v1.2.5
+## Current baseline — v1.2.6
 
-v1.2.5 refreshes the review page hero, evaluation chart and bottom insights while keeping the first Openings Lab release line stable.
+v1.2.6 polishes the home summary, review quick insights and games list UI while keeping the first Openings Lab release line stable.
 
 It detects and stores opening profiles from the user's own games, groups openings by ECO code and opening name when available, exposes Openings Lab metrics, shows a dedicated `openings-lab.php` page, links opening diagnostics to review moments, filters games by opening and connects opening details with Smart Tags and existing Training Center exercises.
 

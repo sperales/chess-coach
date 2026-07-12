@@ -468,6 +468,9 @@ function dashboard_recommended_reviews(array $games, array $tags): array {
       'score' => $score,
       'reason' => implode(', ', array_unique($reasons)),
       'accuracy' => $game['accuracy'],
+      'blunders' => $loss,
+      'mistakes' => $mistakes,
+      'inaccuracies' => $inaccuracies,
       'review_url' => $game['review_url'],
     ];
   }
@@ -490,6 +493,9 @@ function dashboard_recommended_reviews(array $games, array $tags): array {
       'score' => 0,
       'reason' => 'mejor accuracy reciente',
       'accuracy' => $best['accuracy'],
+      'blunders' => (int)($best['own_blunders'] ?? 0),
+      'mistakes' => (int)($best['own_mistakes'] ?? 0),
+      'inaccuracies' => (int)($best['own_inaccuracies'] ?? 0),
       'review_url' => $best['review_url'],
     ]);
   }
