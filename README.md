@@ -14,11 +14,11 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v1.2.6**
+Current stable baseline: **v1.2.7**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
-v1.2.6 is the current stable home, review and games UI polish baseline.
+v1.2.7 is the current stable import and analysis queue UI polish baseline.
 
 ---
 

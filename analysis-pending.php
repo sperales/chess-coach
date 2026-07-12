@@ -13,7 +13,7 @@
 <?php header_bar('Chess Coach'); ?>
 <div class="app-area">
 <main class="dashboard queue-page">
-  <section class="hero-card compact">
+  <section class="hero-card compact analysis-hero">
     <div>
       <h1>Análisis pendientes</h1>
       <p>Controla la cola de análisis, comprueba el estado del worker y revisa el historial de ejecuciones en segundo plano.</p>
