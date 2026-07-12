@@ -619,60 +619,6 @@ a {
 .game-review-btn:hover {
   background:#119447
 }
-.action-icon {
-  position:relative;
-  display:inline-block;
-  box-sizing:border-box;
-  width:15px;
-  height:15px;
-  flex:0 0 15px;
-  line-height:1;
-  vertical-align:middle
-}
-.action-icon-eye {
-  width:16px;
-  height:10px;
-  border:2px solid currentColor;
-  border-radius:999px
-}
-.action-icon-eye:after {
-  content:"";
-  position:absolute;
-  width:5px;
-  height:5px;
-  border-radius:50%;
-  background:currentColor;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%)
-}
-.action-icon-target {
-  border:2px solid currentColor;
-  border-radius:50%
-}
-.action-icon-target:before {
-  content:"";
-  position:absolute;
-  width:7px;
-  height:7px;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  border:2px solid currentColor;
-  border-radius:50%;
-  box-sizing:border-box
-}
-.action-icon-target:after {
-  content:"";
-  position:absolute;
-  width:3px;
-  height:3px;
-  border-radius:50%;
-  background:currentColor;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%)
-}
 .rival-line {
   display:flex;
   align-items:center;

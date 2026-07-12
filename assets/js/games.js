@@ -155,7 +155,7 @@ function analysisStatusCell(g) {
 
 function reviewActionCell(g) {
   if ((g.analysis_status || '') !== 'done') return '';
-  return `<a class="btn small game-review-btn" href="review.php?id=${g.id}"><span class="action-icon action-icon-eye" aria-hidden="true"></span> Revisar</a>`;
+  return `<a class="btn small game-review-btn" href="review.php?id=${g.id}">Revisar</a>`;
 }
 
 function reanalyzeActionCell(g) {
@@ -163,7 +163,7 @@ function reanalyzeActionCell(g) {
   if (status === 'queued' || status === 'running') return '';
   const force = status === 'done' || status === 'error' || status === 'cancelled';
   const label = status === 'done' ? 'Reanalizar' : status === 'error' ? 'Reintentar' : 'Encolar';
-  return `<button class="secondary small game-analyze-btn" onclick="analyzeGame(${g.id}, ${force ? 'true' : 'false'})"><span class="action-icon action-icon-target" aria-hidden="true"></span> ${label}</button>`;
+  return `<button class="secondary small game-analyze-btn" onclick="analyzeGame(${g.id}, ${force ? 'true' : 'false'})">${label}</button>`;
 }
 
 function smartTagClass(tag) {
