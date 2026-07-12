@@ -11,7 +11,8 @@ Home, review and games UI polish release.
 - Added `assets/images/games_background.jpg` as the local background for the games page hero block.
 - Refreshed the `games.php` hero card with the new background image.
 - Split games table actions into separate unlabeled columns for review and reanalysis.
-- Styled `Revisar` as a green action and kept `Reanalizar` with the existing secondary button style.
+- Styled `Revisar` as a green action in games lists and kept `Reanalizar` with the existing secondary button style.
+- Added B/E/I counts to recommended games in the home games block.
 - Bumped `config/version.php` to `1.2.6`.
 - Updated the service worker cache to `chess-coach-v1.2.6`.
 

@@ -12,7 +12,8 @@
 - Adjusted the review `Enfoque` insight card into title, focus value and explanation lines.
 - Refreshed the `games.php` hero block with a background-image treatment.
 - Split games table actions into separate unlabeled columns.
-- Styled `Revisar` as the primary green action while keeping `Reanalizar` as a secondary action.
+- Styled `Revisar` as the primary green action in games lists while keeping `Reanalizar` as a secondary action.
+- Added B/E/I counts to recommended games in the home games block.
 - Bumped `config/version.php` to `1.2.6`.
 - Updated the service worker cache name to `chess-coach-v1.2.6`.
 

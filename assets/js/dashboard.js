@@ -367,8 +367,8 @@ function recommendedRow(item) {
       <td>${resultBadge(item)}</td>
       <td>${item.accuracy === null || typeof item.accuracy === 'undefined' ? '--' : `${Number(item.accuracy).toFixed(1)}%`}</td>
       <td class="hide-sm">${escapeHtml(item.played_at || '-')}</td>
-      <td></td>
-      <td><a class="btn secondary small" href="${escapeAttr(item.review_url || '#')}">Revisar</a></td>
+      <td>${analysisMeta(item)}</td>
+      <td><a class="btn small game-review-btn" href="${escapeAttr(item.review_url || '#')}">Revisar</a></td>
       <td></td>
     </tr>
   `;
@@ -412,6 +412,10 @@ function analysisCell(game) {
   return `${actions.meta} ${actions.primary} ${actions.secondary}`.trim();
 }
 
+function analysisMeta(game) {
+  return `<span class="status-mini">B:${game.blunders || 0} E:${game.mistakes || 0} I:${game.inaccuracies || 0}</span>`;
+}
+
 function analysisActions(game) {
   const localBusy = analyzing.has(Number(game.id));
   const status = game.analysis_status || '';
@@ -421,8 +425,8 @@ function analysisActions(game) {
   if (status === 'running') return { meta: '', primary: '<span class="queue-status running">Analizando</span>', secondary: '' };
   if (status === 'done') {
     return {
-      meta: `<span class="status-mini">B:${game.blunders || 0} E:${game.mistakes || 0} I:${game.inaccuracies || 0}</span>`,
-      primary: `<a class="btn secondary small" href="review.php?id=${gameId}">Revisar</a>`,
+      meta: analysisMeta(game),
+      primary: `<a class="btn small game-review-btn" href="review.php?id=${gameId}">Revisar</a>`,
       secondary: `<button class="secondary small" onclick="analyzeGame(${gameId}, true)">Reanalizar</button>`
     };
   }
