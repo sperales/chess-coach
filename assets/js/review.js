@@ -209,6 +209,18 @@ function topPositiveTag(tags) {
 }
 
 function insightCard(type, title, value, line, note) {
+  if (type === 'focus') {
+    return `
+      <article class="review-insight-card ${type}">
+        <div>
+          <strong>${rEscape(title)}</strong>
+          <p class="review-insight-focus-value"><b>${rEscape(String(value))}</b></p>
+          <small>${rEscape(line)}</small>
+        </div>
+        <span class="review-insight-icon" aria-hidden="true">${reviewInsightIcon(type)}</span>
+      </article>
+    `;
+  }
   return `
     <article class="review-insight-card ${type}">
       <div>

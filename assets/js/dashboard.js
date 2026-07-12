@@ -539,7 +539,7 @@ function renderLatestReview() {
     ['good', 'Buena'],
     ['inaccuracy', 'Imprecisión'],
     ['mistake', 'Error'],
-    ['blunder', 'Decisión grave']
+    ['blunder', 'Omisión grave']
   ];
   const counts = summary.counts || {};
   countsCard.innerHTML = `
