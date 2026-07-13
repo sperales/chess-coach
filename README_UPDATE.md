@@ -1,3 +1,35 @@
+# Chess Coach v1.2.7 Update Notes
+
+## Release type
+
+Import and analysis queue UI polish release.
+
+## Changes
+
+- Added `assets/images/analysis_background.jpg` as the local background for the analysis queue hero block.
+- Added `assets/images/import_background.jpg` as the local background for the import page hero block.
+- Refreshed `analysis-pending.php` with the new analysis hero background.
+- Refreshed `import-chesscom.php` with the new import hero background.
+- Removed the `Volver` button from the import page.
+- Reworked the import page layout with two import cards and a bottom help panel.
+- Bumped `config/version.php` to `1.2.7`.
+- Updated the service worker cache to `chess-coach-v1.2.7`.
+
+## SQL migration
+
+No SQL migration required.
+
+## Verification
+
+- Run PHP syntax checks.
+- Run JavaScript syntax checks for changed files.
+- Confirm `analysis-pending.php` shows the new hero background.
+- Confirm `import-chesscom.php` shows the new hero background and no `Volver` button.
+- Confirm PGN import and Chess.com import controls still use their existing IDs/actions.
+- Confirm the PWA cache includes both new background images.
+
+---
+
 # Chess Coach v1.2.6 Update Notes
 
 ## Release type

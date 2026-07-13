@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## v1.2.7 - Import and analysis queue UI polish
+
+### Added
+
+- Added `assets/images/analysis_background.jpg` as the analysis queue hero background.
+- Added `assets/images/import_background.jpg` as the import page hero background.
+
+### Changed
+
+- Refreshed the `analysis-pending.php` hero block with a background-image treatment.
+- Refreshed the `import-chesscom.php` hero block with a background-image treatment.
+- Reworked the import page into two focused import cards and a bottom help panel.
+- Removed the `Volver` button from the import page.
+- Bumped `config/version.php` to `1.2.7`.
+- Updated the service worker cache name to `chess-coach-v1.2.7`.
+
+### Database
+
+- No SQL migration required.
+
 ## v1.2.6 - Home, review and games UI polish
 
 ### Added

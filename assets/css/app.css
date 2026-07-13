@@ -764,27 +764,121 @@ label {
   gap:20px;
   margin-top:22px
 }
-.section-toggle {
-  width:100%;
+.import-workspace {
+  grid-template-columns:minmax(0,1.08fr) minmax(360px,.92fr);
+  align-items:stretch
+}
+.import-panel {
+  background:
+    radial-gradient(circle at 100% 100%, rgba(95,170,75,.08), transparent 34%),
+    linear-gradient(180deg,rgba(13,23,29,.98),rgba(9,17,22,.98));
+  border-color:rgba(120,217,94,.16)
+}
+.import-panel-head,
+.import-panel-title {
   display:flex;
   align-items:center;
-  gap:10px;
-  background:transparent;
+  gap:14px;
+  margin-bottom:12px
+}
+.import-panel-head {
+  justify-content:flex-start;
+  padding:0 0 10px;
   color:var(--text);
-  padding:0 0 16px;
-  border-radius:0;
-  text-align:left;
-  font-size:22px
+  font-size:22px;
+  font-weight:900
 }
-.section-toggle .arrow {
-  font-size:24px;
-  transition:.15s
+.import-panel-title h2 {
+  margin:0
 }
-.import-card.collapsed .collapsible-body {
-  display:none
+.import-panel-icon {
+  width:42px;
+  height:38px;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(120,217,94,.32);
+  background:rgba(76,175,80,.1);
+  color:#8ee36d;
+  font-size:20px;
+  font-weight:900;
+  flex:0 0 42px
 }
-.import-card.open .arrow {
-  transform:rotate(90deg)
+.import-panel-copy {
+  color:#cbd5df;
+  line-height:1.5;
+  margin:0 0 14px
+}
+.import-page textarea {
+  min-height:290px;
+  border-color:rgba(120,217,94,.28);
+  background:rgba(8,15,20,.76);
+  resize:vertical
+}
+.import-page input {
+  border-color:rgba(120,217,94,.2);
+  background:rgba(8,15,20,.76)
+}
+.import-field {
+  margin-top:20px
+}
+.import-field small {
+  display:block;
+  margin-top:10px
+}
+.import-card-footer {
+  display:flex;
+  align-items:center;
+  gap:18px;
+  margin-top:22px;
+  flex-wrap:wrap
+}
+.import-card-footer button {
+  min-width:260px
+}
+.import-card-footer-stacked {
+  flex-direction:column;
+  align-items:flex-start;
+  gap:10px
+}
+.import-card-footer-stacked #ccMsg {
+  display:block;
+  min-height:20px
+}
+.import-help {
+  color:#a9b1ba;
+  font-size:13px;
+  line-height:1.35
+}
+.import-info-panel {
+  margin-top:20px;
+  display:flex;
+  align-items:center;
+  gap:18px;
+  background:
+    radial-gradient(circle at 98% 50%, rgba(120,217,94,.12), transparent 22%),
+    linear-gradient(180deg,rgba(13,23,29,.98),rgba(9,17,22,.98))
+}
+.import-info-icon {
+  width:46px;
+  height:46px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:#173d23;
+  color:#9af57e;
+  border:1px solid #2c713c;
+  font-size:28px;
+  font-weight:900;
+  flex:0 0 46px
+}
+.import-info-panel h2 {
+  margin:0 0 6px;
+  font-size:18px
+}
+.import-info-panel p {
+  margin:0;
+  color:#cbd5df
 }
 .pagination {
   display:flex;
@@ -841,6 +935,16 @@ label {
   }
   .metric-grid,.quick-grid,.home-grid,.home-middle-grid,.home-review-grid,.import-grid {
     grid-template-columns:1fr
+  }
+  .import-card-footer {
+    align-items:stretch
+  }
+  .import-card-footer button {
+    width:100%;
+    min-width:0
+  }
+  .import-info-panel {
+    align-items:flex-start
   }
   .dashboard {
     padding:18px
@@ -1642,6 +1746,33 @@ body.login-page::before {
   text-shadow:0 2px 10px rgba(0,0,0,.75)
 }
 .games-hero .hero-piece {
+  color:rgba(255,255,255,.16);
+  text-shadow:0 8px 22px rgba(0,0,0,.7)
+}
+.analysis-hero,
+.import-hero {
+  min-height:220px;
+  border-color:rgba(120,217,94,.2);
+  overflow:hidden
+}
+.analysis-hero {
+  background:
+    linear-gradient(90deg,rgba(5,10,14,.92),rgba(5,10,14,.55),rgba(5,10,14,.72)),
+    url("../images/analysis_background.jpg") center/cover no-repeat
+}
+.import-hero {
+  background:
+    linear-gradient(90deg,rgba(5,10,14,.92),rgba(5,10,14,.55),rgba(5,10,14,.72)),
+    url("../images/import_background.jpg") center/cover no-repeat
+}
+.analysis-hero h1,
+.analysis-hero p,
+.import-hero h1,
+.import-hero p {
+  text-shadow:0 2px 10px rgba(0,0,0,.75)
+}
+.analysis-hero .hero-piece,
+.import-hero .hero-piece {
   color:rgba(255,255,255,.16);
   text-shadow:0 8px 22px rgba(0,0,0,.7)
 }

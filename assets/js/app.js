@@ -185,14 +185,6 @@ function schedulePollingIfNeeded() {
 function escapeHtml(s) { return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c])); }
 function setMessage(text){ const msg = document.getElementById('msg'); if (msg) msg.textContent = text; }
 
-function toggleImport() {
-  const card = document.getElementById('importCard'); if (!card) return;
-  const btn = card.querySelector('.section-toggle');
-  const expanded = card.classList.toggle('open');
-  card.classList.toggle('collapsed', !expanded);
-  if (btn) btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-}
-
 async function importPgn() {
   const pgnEl = document.getElementById('pgn'); if (!pgnEl) return;
   const pgn = pgnEl.value;
