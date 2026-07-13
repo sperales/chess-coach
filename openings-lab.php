@@ -38,7 +38,7 @@ $openingsJsVersion = (string)filemtime(__DIR__.'/assets/js/openings_lab.js');
         <span class="muted" id="openingsStatus">Cargando...</span>
         <button class="btn secondary small openings-view-toggle" type="button" id="openingsViewToggle" aria-expanded="false" aria-controls="openingsViewBody">
           <span class="openings-view-toggle-label">Mostrar filtros</span>
-          <span class="openings-view-toggle-icon" aria-hidden="true">⌄</span>
+          <span class="openings-view-toggle-icon" aria-hidden="true">▾</span>
         </button>
       </div>
     </div>

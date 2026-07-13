@@ -3055,7 +3055,14 @@ select {
   white-space:nowrap
 }
 .openings-view-toggle-icon {
-  display:inline-block;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:12px;
+  height:12px;
+  font-size:11px;
+  line-height:1;
+  transform-origin:center;
   transition:transform .18s ease
 }
 .openings-view-panel:not(.is-collapsed) .openings-view-toggle-icon {
