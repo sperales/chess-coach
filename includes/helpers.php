@@ -76,7 +76,7 @@ function coach_menu_items(): array {
     ['analysis-pending.php', '◷', 'Análisis pendientes', false],
     ['training.php', '◎', 'Entrenamiento', false],
     ['openings-lab.php', '▤', 'Lab de Aperturas', false],
-    ['#', '▥', 'Estadísticas', true],
+    ['player-dna.php', '◈', 'ADN del jugador', false],
     ['#', '◇', 'Etiquetas', true],
     ['profile.php', '⚙', 'Ajustes / Mi Perfil', false],
   ];

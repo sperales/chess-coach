@@ -3211,6 +3211,238 @@ select {
 .opening-game-row b {
   font-size:18px
 }
+
+/* v1.3.0 Player DNA */
+.player-dna-page {
+  padding-top:28px
+}
+.player-dna-page > * + * {
+  margin-top:20px
+}
+.player-dna-hero {
+  background:
+    linear-gradient(90deg,rgba(4,10,14,.9),rgba(5,16,20,.58) 52%,rgba(5,14,18,.16)),
+    url("../images/statistics_background.jpg") center/cover no-repeat;
+  min-height:190px;
+  align-items:center;
+  border-color:#21424a;
+  box-shadow:inset 0 0 0 1px rgba(95,170,135,.08),0 16px 44px rgba(0,0,0,.36)
+}
+.player-dna-summary-layout {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(320px,420px);
+  gap:20px;
+  align-items:center
+}
+.player-dna-summary-layout h2 {
+  margin:14px 0 8px;
+  font-size:28px
+}
+.player-dna-summary-layout p {
+  margin:0 0 16px;
+  color:#dbe4ec;
+  line-height:1.55
+}
+.player-dna-kpis {
+  grid-template-columns:repeat(2,minmax(0,1fr))
+}
+.player-dna-grid {
+  display:grid;
+  grid-template-columns:minmax(0,1.4fr) minmax(320px,.6fr);
+  gap:20px;
+  align-items:start
+}
+.player-dna-grid.compact {
+  grid-template-columns:minmax(0,1fr) minmax(320px,.72fr)
+}
+.player-dna-dimensions {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px
+}
+.player-dna-dimension {
+  display:grid;
+  gap:12px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(7,16,20,.42)
+}
+.player-dna-dimension > div:first-child {
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:flex-start
+}
+.player-dna-dimension strong {
+  color:#fff
+}
+.player-dna-dimension span {
+  color:#a9b1ba;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase
+}
+.player-dna-dimension ul {
+  margin:0;
+  padding-left:18px;
+  color:#a9b1ba;
+  line-height:1.45
+}
+.player-dna-score {
+  --score:0%;
+  --score-color:#2fca5a;
+  width:72px;
+  height:72px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at center,#102027 0 56%,transparent 57%),
+    conic-gradient(var(--score-color) var(--score),#27333b 0)
+}
+.player-dna-score.good {
+  --score-color:#2fca5a
+}
+.player-dna-score.warn {
+  --score-color:#f59e0b
+}
+.player-dna-score.bad {
+  --score-color:#ef4444
+}
+.player-dna-score b {
+  font-size:22px
+}
+.player-dna-list {
+  display:grid;
+  gap:10px
+}
+.player-dna-list-item {
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  gap:12px;
+  align-items:center;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(7,16,20,.42)
+}
+.player-dna-list-item > span {
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#063f22;
+  color:#22e167;
+  font-weight:900
+}
+.player-dna-list-item strong,.player-dna-list-item small {
+  display:block
+}
+.player-dna-list-item small {
+  color:#a9b1ba;
+  margin-top:3px
+}
+.player-dna-list-item b {
+  font-size:20px
+}
+.player-dna-style {
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:12px
+}
+.player-dna-style-row {
+  display:grid;
+  gap:10px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(7,16,20,.42)
+}
+.player-dna-style-row > div:first-child {
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  font-size:13px
+}
+.player-dna-style-bar {
+  position:relative;
+  height:8px;
+  border-radius:999px;
+  background:linear-gradient(90deg,#f59e0b,#2fca5a)
+}
+.player-dna-style-bar span {
+  position:absolute;
+  top:50%;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 0 0 3px rgba(47,202,90,.28);
+  transform:translate(-50%,-50%)
+}
+.player-dna-style-row p {
+  margin:0;
+  color:#a9b1ba;
+  line-height:1.45
+}
+.player-dna-comparisons {
+  display:grid;
+  gap:12px
+}
+.player-dna-comparison {
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(7,16,20,.42)
+}
+.player-dna-comparison > div {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin-top:12px
+}
+.player-dna-comparison span {
+  padding:10px;
+  border-radius:10px;
+  background:rgba(255,255,255,.04)
+}
+.player-dna-comparison small,.player-dna-comparison b {
+  display:block
+}
+.player-dna-comparison small {
+  color:#a9b1ba
+}
+.player-dna-comparison b {
+  margin-top:3px;
+  color:#fff
+}
+.player-dna-comparison .up b {
+  color:#33ef74
+}
+.player-dna-comparison .down b {
+  color:#ffb05e
+}
+.player-dna-next-card {
+  display:grid;
+  gap:12px
+}
+.player-dna-next-card > span:not(.smart-tag) {
+  color:#a9b1ba;
+  font-weight:800;
+  text-transform:uppercase;
+  font-size:12px
+}
+.player-dna-next-card h3 {
+  margin:0;
+  font-size:24px
+}
+.player-dna-next-card p {
+  margin:0;
+  color:#dbe4ec;
+  line-height:1.5
+}
 .quick-panel-wrap {
   margin-top:20px
 }
@@ -3706,6 +3938,15 @@ select {
   .trainer-mini-kpis {
     grid-template-columns:repeat(2,minmax(0,1fr))
   }
+  .player-dna-grid,.player-dna-grid.compact,.player-dna-summary-layout {
+    grid-template-columns:minmax(0,1fr)
+  }
+  .player-dna-dimensions {
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+  .player-dna-style {
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
   .training-card {
     grid-template-columns:minmax(0,1fr)
   }
@@ -3792,6 +4033,16 @@ select {
   }
   .trainer-mini-kpis {
     grid-template-columns:minmax(0,1fr)
+  }
+  .player-dna-dimensions,.player-dna-style,.player-dna-comparison > div,.player-dna-kpis {
+    grid-template-columns:minmax(0,1fr)
+  }
+  .player-dna-list-item {
+    grid-template-columns:38px minmax(0,1fr)
+  }
+  .player-dna-list-item b {
+    grid-column:2;
+    justify-self:start
   }
   .panel-actions {
     justify-content:flex-start
