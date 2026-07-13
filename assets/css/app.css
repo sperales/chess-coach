@@ -1741,11 +1741,22 @@ body.login-page::before {
   border-color:rgba(120,217,94,.2);
   overflow:hidden
 }
+.openings-hero {
+  min-height:220px;
+  background:
+    linear-gradient(90deg,rgba(5,10,14,.92),rgba(5,10,14,.55),rgba(5,10,14,.72)),
+    url("../images/lab_background.jpg") center/cover no-repeat;
+  border-color:rgba(120,217,94,.2);
+  overflow:hidden
+}
 .games-hero h1,
-.games-hero p {
+.games-hero p,
+.openings-hero h1,
+.openings-hero p {
   text-shadow:0 2px 10px rgba(0,0,0,.75)
 }
-.games-hero .hero-piece {
+.games-hero .hero-piece,
+.openings-hero .hero-piece {
   color:rgba(255,255,255,.16);
   text-shadow:0 8px 22px rgba(0,0,0,.7)
 }
@@ -3134,6 +3145,10 @@ select {
   border-radius:10px;
   background:#0d171d
 }
+.opening-exercise-list article {
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center
+}
 .opening-pattern-list article {
   grid-template-columns:minmax(0,1fr) auto;
   align-items:center
@@ -3149,7 +3164,28 @@ select {
 .opening-exercise-actions {
   display:flex;
   flex-wrap:wrap;
+  justify-content:flex-end;
   gap:8px
+}
+.action-review {
+  background:#05b94f;
+  border-color:#05b94f;
+  color:#fff
+}
+.action-review:hover {
+  background:#04a846;
+  border-color:#04a846;
+  color:#fff
+}
+.action-train {
+  background:#1677d2;
+  border-color:#1677d2;
+  color:#fff
+}
+.action-train:hover {
+  background:#1269bc;
+  border-color:#1269bc;
+  color:#fff
 }
 .opening-games {
   display:grid;
@@ -3714,6 +3750,12 @@ select {
   }
   .opening-pattern-list article {
     grid-template-columns:minmax(0,1fr)
+  }
+  .opening-exercise-list article {
+    grid-template-columns:minmax(0,1fr)
+  }
+  .opening-exercise-actions {
+    justify-content:flex-start
   }
   .training-solve-board,
   .training-solve-sidebar {

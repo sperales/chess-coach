@@ -1,3 +1,34 @@
+# Chess Coach v1.2.9 Update Notes
+
+## Release type
+
+Openings Lab UI polish release.
+
+## Changes
+
+- Added `assets/images/lab_background.jpg` as the local background for the Openings Lab hero block.
+- Refreshed `openings-lab.php` with the new Lab background image.
+- Aligned `Ejercicios relacionados` action buttons to the right on desktop.
+- Styled `Revisar`, `Revisar foco` and example-game review actions in green.
+- Styled `Entrenar` actions in blue.
+- Bumped `config/version.php` to `1.2.9`.
+- Updated the service worker cache to `chess-coach-v1.2.9`.
+
+## SQL migration
+
+No SQL migration required.
+
+## Verification
+
+- Run PHP syntax checks.
+- Run JavaScript syntax checks for changed files.
+- Confirm `openings-lab.php` shows the new hero background.
+- Confirm related exercise buttons align to the right on desktop.
+- Confirm Openings Lab review buttons are green and training buttons are blue.
+- Confirm the PWA cache includes `assets/images/lab_background.jpg`.
+
+---
+
 # Chess Coach v1.2.8 Update Notes
 
 ## Release type

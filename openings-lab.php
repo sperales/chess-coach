@@ -21,7 +21,7 @@ $openingsJsVersion = (string)filemtime(__DIR__.'/assets/js/openings_lab.js');
 <?php header_bar('Chess Coach'); ?>
 <div class="app-area">
 <main class="dashboard openings-page">
-  <section class="hero-card compact">
+  <section class="hero-card compact openings-hero">
     <div>
       <h1>Lab de Aperturas</h1>
       <p>Entiende qué aperturas te están funcionando y dónde aparecen tus errores tempranos.</p>
