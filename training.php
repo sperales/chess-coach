@@ -23,7 +23,7 @@ $pieceSetAssetPath = piece_set_asset_path($u['piece_set'] ?? null);
 <?php header_bar('Chess Coach'); ?>
 <div class="app-area">
 <main class="dashboard training-page">
-  <section class="hero-card compact">
+  <section class="hero-card compact training-hero">
     <div>
       <h1>Entrenamiento</h1>
       <p>Practica con posiciones reales generadas desde tus propias partidas analizadas.</p>
