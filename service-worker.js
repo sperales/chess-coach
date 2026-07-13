@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chess-coach-v1.3.0';
+const CACHE_NAME = 'chess-coach-v1.3.0-home';
 const ASSETS = [
   './',
   './app.php',
