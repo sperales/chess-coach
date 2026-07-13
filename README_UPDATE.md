@@ -1,3 +1,59 @@
+# Chess Coach v1.3.0 Update Notes
+
+## Release type
+
+Player DNA release.
+
+## Changes
+
+- Added database support for Player DNA snapshots and recalculation runs.
+- Added `includes/player_dna.php` with Player DNA scoring, strengths, weaknesses, style indicators, comparisons and recommendations.
+- Added `api/player-dna.php` for loading the latest snapshot and triggering manual recomputation.
+- Added the `ADN del jugador` page with profile summary, dimensions, strengths, weaknesses, style indicators, historical comparisons and next-step recommendation.
+- Added a manual Player DNA recompute block to `profile.php`.
+- Added `ADN del jugador` to the app menu.
+- Added `assets/images/statistics_background.jpg` as the Player DNA hero background.
+- Added a compact Player DNA summary block to the home dashboard after `Resumen de rendimiento`.
+- Updated Player DNA dimension colors so scores 70+ use green, scores 40-69 use orange and scores below 40 use red.
+- Bumped `config/version.php` to `1.3.0`.
+- Updated the service worker cache to `chess-coach-v1.3.0`.
+
+## SQL migration
+
+Run the new migration before using Player DNA:
+
+```text
+sql/migrations/023_changes_1.3.0.sql
+```
+
+The migration adds:
+
+- `player_dna_snapshots`
+- `player_dna_runs`
+
+## Manual steps
+
+1. Upload the changed files.
+2. Run `sql/migrations/023_changes_1.3.0.sql` if it has not already been applied.
+3. Open `Ajustes / Perfil`.
+4. Use the Player DNA recompute action to generate the first snapshot.
+5. Open `ADN del jugador` from the menu.
+6. Confirm the home dashboard shows the compact Player DNA summary after `Resumen de rendimiento`.
+
+## Verification
+
+- Run PHP syntax checks.
+- Run JavaScript syntax checks for changed files.
+- Confirm `config/version.php` contains `1.3.0`.
+- Confirm `service-worker.js` uses `chess-coach-v1.3.0`.
+- Confirm the PWA cache includes `player-dna.php`, `assets/js/player_dna.js` and `assets/images/statistics_background.jpg`.
+- Confirm the Player DNA page shows an empty state before a snapshot exists.
+- Confirm manual recompute from profile creates a snapshot.
+- Confirm the Player DNA page shows dimensions, strengths, weaknesses, style indicators, comparisons and next-step recommendation.
+- Confirm the home Player DNA block degrades safely if the snapshot API is unavailable.
+
+---
+
 # Chess Coach v1.2.9 Update Notes
 
 ## Release type
