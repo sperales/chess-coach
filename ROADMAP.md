@@ -482,81 +482,123 @@ Compare:
 
 ---
 
-## v1.4.0 — Chess.com Sync
+## v1.4.0 — Training Experience
 
 ### Goal
 
-Move from manual import to automatic recurring synchronization.
+Make training feel continuous, personal and worth returning to.
 
-This version should reduce manual work and keep the training database current.
+This version should build on the existing Training Center and help the user see daily progress, repeat the right exercises and maintain a professional training habit without turning Chess Coach into a game.
+
+The guiding principle is:
+
+```text
+train today → see progress → know what to repeat → come back tomorrow
+```
+
+Gamify the user's progress, not the application.
 
 ### Main features
 
-#### Sync settings
+#### Training goals
 
-Allow configuring:
+Allow the user to configure personal training goals from the profile page.
 
-- Chess.com username.
-- Import frequency.
-- Starting date.
-- Whether to auto-analyze imported games.
-- Maximum games per sync batch.
+Possible goals:
 
-#### Duplicate-safe import
+- Daily exercise target.
+- Daily time target.
+- Weekly training target.
 
-Ensure games are not imported twice.
+Training pages may show a compact link to adjust goals, but the profile page should remain the main settings area.
 
-Use stable identifiers when available.
+#### Training streak
 
-#### Automatic sync
+Show a clear but restrained streak indicator.
 
-Use cron-compatible HTTP GET worker.
+Rules:
 
-Possible endpoint:
+- A day with at least one non-skipped exercise counts as a training day.
+- The main streak should be based on meeting the configured daily goal.
+- Training activity and goal completion should be shown as related but distinct concepts.
+- The home dashboard should show the streak visually.
+- A compact streak indicator may also appear in the header.
 
-```text
-worker/sync_chesscom.php?token=...
-```
+The tone should be encouraging, not punitive. Breaking a streak should invite the user to resume training instead of creating pressure.
 
-#### Sync history
+#### Smart repetition
 
-Track:
+Introduce lightweight repetition logic for exercises.
 
-- sync start time
-- sync end time
-- games found
-- games imported
-- duplicates skipped
-- errors
-- next expected sync
+Rules:
 
-Possible table:
+- Failed exercises should reappear.
+- Only a small number of older failed exercises should be surfaced each day.
+- Skipped exercises should not count as training activity.
+- Solved exercises may reappear, but with very low frequency.
+- Exercises should explain why they are recommended when possible, for example `Fallado el 2026-07-10`.
 
-```text
-chesscom_sync_runs
-```
+The goal is to reinforce learning without flooding the user.
 
-#### Auto-analysis
+#### Training progress
 
-Imported games should optionally enter the analysis queue automatically.
+Show progress by meaningful chess areas.
+
+Possible areas:
+
+- Tactical vision.
+- Defense.
+- Endgames.
+- Opening discipline.
+- Conversion / precision.
+
+Progress should be based on existing exercises, attempts, Smart Tags, Player DNA and recent training results.
+
+#### Training feedback
+
+After solving, failing or exhausting an exercise, provide clear feedback:
+
+- What happened.
+- Whether it counts toward today's goal.
+- Whether the exercise will return later.
+- What the next recommended action is.
+
+The user should not need to manage sessions manually. Sessions may remain an internal data model for grouping activity, but the UI should speak in terms of training, daily progress, streaks and goals.
+
+#### Milestones
+
+Add small professional milestones related to consistency and improvement.
+
+Examples:
+
+- First complete training day.
+- Daily goal completed.
+- Weekly goal completed.
+- Three goal days in a row.
+- A repeated exercise solved after previous failure.
+
+Avoid points, coins, XP, levels, chests, rankings or anything that makes the app feel like a game.
 
 ### Acceptance criteria
 
-- Chess.com games can be imported automatically.
-- Duplicate games are skipped.
-- Sync status is visible.
-- Failed syncs are logged clearly.
-- Auto-analysis can be enabled or disabled.
+- The user can configure a training goal.
+- The home dashboard shows training progress and streak state clearly.
+- The header may show a compact streak indicator.
+- The Training Center shows what to train today.
+- Failed exercises can return in a controlled way.
+- Skipped exercises do not count as daily training activity.
+- The UI no longer requires the user to understand or manage sessions.
+- The implementation remains compatible with shared hosting.
 
 ---
 
-## v1.5.0 — Coach AI Layer
+## v1.5.0 — AI Coach MVP
 
 ### Goal
 
-Add higher-level coaching explanations on top of the engine and stored analysis.
+Add a first AI-assisted coaching layer on top of Stockfish, Smart Tags, Player DNA and the Training Experience data.
 
-This version should be considered only after the data model is mature enough.
+This version should interpret already stored facts. It should not replace Stockfish or invent chess analysis.
 
 ### Main features
 
@@ -573,11 +615,15 @@ Examples:
 
 #### Weekly coaching report
 
-Generate a weekly training report.
+Generate a training report from real stored activity.
 
 Possible sections:
 
 - Games played.
+- Training days.
+- Daily goals completed.
+- Exercises solved.
+- Exercises to repeat.
 - Best game.
 - Worst mistake.
 - Recurring weakness.
@@ -611,7 +657,108 @@ The AI layer should explain, summarize and coach — not invent chess analysis.
 
 ---
 
-# Future ideas beyond v1.5.0
+## v1.5.1 — AI Coach Plus
+
+### Goal
+
+Improve the first AI Coach with better context, richer reports and more useful training guidance.
+
+### Main features
+
+- Better weekly and recent-period summaries.
+- More precise training recommendations.
+- Coach notes based on Player DNA trends.
+- Smarter use of repeated exercises and missed goals.
+- Safer prompt/context construction.
+- Clear distinction between facts, interpretation and advice.
+
+### Acceptance criteria
+
+- Coach advice is more specific than generic encouragement.
+- Recommendations are traceable to games, tags, exercises or training history.
+- The feature remains optional and does not block the non-AI workflow.
+
+---
+
+## v1.6.0 — Conversación con el entrenador
+
+### Goal
+
+Allow the user to ask questions about their own games, training progress and recurring weaknesses.
+
+### Main features
+
+- Chat-style coaching interface.
+- Questions grounded in stored game, review, Player DNA and training data.
+- Links back to relevant games, exercises and openings.
+- Guardrails to avoid unsupported chess claims.
+
+### Acceptance criteria
+
+- The conversation is useful because it knows the user's training history.
+- It does not require changing the core analysis pipeline.
+- It remains compatible with manual deployment and shared hosting constraints.
+
+---
+
+## v1.7.0 — Automation
+
+### Goal
+
+Reduce manual maintenance by adding safe automated processes once the training loop and coaching model are mature.
+
+### Main features
+
+#### Chess.com Sync
+
+Move from manual Chess.com import to automatic recurring synchronization.
+
+Features:
+
+- Chess.com username settings.
+- Import frequency.
+- Starting date.
+- Duplicate-safe import.
+- Optional auto-analysis.
+- Cron-compatible HTTP GET sync worker.
+- Sync history and error logging.
+
+Possible table:
+
+```text
+chesscom_sync_runs
+```
+
+#### Automated maintenance
+
+Possible future processes:
+
+- Scheduled retagging.
+- Training repetition queue maintenance.
+- Opening profile recalculation.
+- Player DNA refresh.
+- AI report generation, if enabled.
+
+### Acceptance criteria
+
+- Chess.com sync does not create duplicates.
+- Automated workers remain token-protected.
+- All automation remains compatible with shared hosting HTTP GET cron.
+- Manual import and manual analysis continue working.
+
+---
+
+# v2.0.0 — Full Personal Chess Coach
+
+## Goal
+
+Bring together analysis, training, repetition, Player DNA, openings, automation and coaching into a cohesive personal chess improvement system.
+
+The product should feel like a lightweight personal trainer for chess, not just a database of analyzed games.
+
+---
+
+# Future ideas beyond v2.0.0
 
 These are not committed versions yet.
 
@@ -695,7 +842,9 @@ game_tags
 move_tags
 training_exercises
 training_attempts
-weekly_reports
+training_goal_settings
+training_milestones
+coach_reports
 opening_stats
 player_profile_snapshots
 chesscom_sync_runs
@@ -714,6 +863,7 @@ Entrenamiento
 Aperturas
 Mi perfil
 Informes
+Entrenador
 Sincronización
 ```
 
