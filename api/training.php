@@ -6,7 +6,7 @@ require_once __DIR__.'/../includes/training.php';
 $u = require_login();
 $userId = (int)$u['id'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
-$mutatingActions = ['session_start', 'session_end', 'attempt', 'skip'];
+$mutatingActions = ['session_start', 'session_end', 'attempt', 'skip', 'goal_settings'];
 if (in_array($action, $mutatingActions, true)) {
   require_post_csrf();
 }
@@ -24,6 +24,7 @@ if ($action === 'list' || $action === 'dashboard') {
     'types' => training_exercise_types(),
     'type_counts' => training_type_counts_for_user($userId),
     'stats' => training_stats_for_user($userId),
+    'experience' => training_experience_summary($userId),
     'session' => $session,
     'exercises' => $list['items'],
     'pagination' => $list['pagination'],
@@ -38,7 +39,24 @@ if ($action === 'stats') {
     'types' => training_exercise_types(),
     'type_counts' => training_type_counts_for_user($userId),
     'stats' => training_stats_for_user($userId),
+    'experience' => training_experience_summary($userId),
     'session' => $session,
+  ]);
+}
+
+if ($action === 'experience') {
+  json_response([
+    'ok' => true,
+    'experience' => training_experience_summary($userId),
+  ]);
+}
+
+if ($action === 'goal_settings') {
+  $body = request_json_body();
+  json_response([
+    'ok' => true,
+    'settings' => training_save_goal_settings($userId, $body),
+    'experience' => training_experience_summary($userId),
   ]);
 }
 

@@ -338,11 +338,17 @@ CREATE TABLE IF NOT EXISTS training_exercises (
   updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   resolved_at TIMESTAMP NULL DEFAULT NULL,
   last_attempt_at TIMESTAMP NULL DEFAULT NULL,
+  next_due_at TIMESTAMP NULL DEFAULT NULL,
+  repeat_count INT UNSIGNED NOT NULL DEFAULT 0,
+  last_training_result ENUM('solved','failed','skipped') DEFAULT NULL,
+  last_completed_at TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_training_exercise_move_type (user_id, move_analysis_id, exercise_type),
   KEY idx_training_exercises_user_status (user_id, status, resolved_at, priority_score),
   KEY idx_training_exercises_user_type (user_id, exercise_type, status),
   KEY idx_training_exercises_source (user_id, source_side, priority_score),
+  KEY idx_training_exercises_due (user_id, status, next_due_at, priority_score),
+  KEY idx_training_exercises_last_result (user_id, last_training_result, last_completed_at),
   KEY idx_training_exercises_game (game_id),
   KEY idx_training_exercises_analysis (analysis_id),
   KEY idx_training_exercises_move (move_analysis_id),
@@ -361,6 +367,19 @@ CREATE TABLE IF NOT EXISTS training_exercise_tags (
   KEY idx_training_exercise_tags_tag (tag_code),
   CONSTRAINT fk_training_exercise_tags_exercise FOREIGN KEY (exercise_id) REFERENCES training_exercises(id) ON DELETE CASCADE,
   CONSTRAINT fk_training_exercise_tags_definition FOREIGN KEY (tag_code) REFERENCES smart_tag_definitions(code) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS training_goal_settings (
+  user_id INT UNSIGNED NOT NULL,
+  daily_goal_mode ENUM('exercises','minutes','both') NOT NULL DEFAULT 'exercises',
+  daily_exercise_goal SMALLINT UNSIGNED NOT NULL DEFAULT 5,
+  daily_minutes_goal SMALLINT UNSIGNED NOT NULL DEFAULT 10,
+  weekly_training_days_goal TINYINT UNSIGNED NOT NULL DEFAULT 4,
+  weekly_exercise_goal SMALLINT UNSIGNED NOT NULL DEFAULT 25,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id),
+  CONSTRAINT fk_training_goal_settings_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS training_sessions (
@@ -530,5 +549,6 @@ INSERT INTO app_migrations (version, description) VALUES
 ('1.1.0', 'Training Center foundation schema'),
 ('1.1.5', 'User-selectable chess piece sets'),
 ('1.2.0', 'Openings Lab data foundation'),
-('1.3.0', 'Player DNA data foundation')
+('1.3.0', 'Player DNA data foundation'),
+('1.4.0', 'Training Experience goals and repetition foundation')
 ON DUPLICATE KEY UPDATE version = version;

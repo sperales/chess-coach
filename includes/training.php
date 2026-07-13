@@ -231,6 +231,267 @@ function training_stats_for_user(int $userId): array {
   ];
 }
 
+function training_goal_defaults(): array {
+  return [
+    'daily_goal_mode' => 'exercises',
+    'daily_exercise_goal' => 5,
+    'daily_minutes_goal' => 10,
+    'weekly_training_days_goal' => 4,
+    'weekly_exercise_goal' => 25,
+  ];
+}
+
+function training_goal_settings_for_user(int $userId): array {
+  $st = db()->prepare('SELECT daily_goal_mode,daily_exercise_goal,daily_minutes_goal,weekly_training_days_goal,weekly_exercise_goal
+                       FROM training_goal_settings
+                       WHERE user_id=?
+                       LIMIT 1');
+  $st->execute([$userId]);
+  $row = $st->fetch();
+  $settings = array_merge(training_goal_defaults(), $row ?: []);
+  $settings['daily_goal_mode'] = in_array((string)$settings['daily_goal_mode'], ['exercises', 'minutes', 'both'], true)
+    ? (string)$settings['daily_goal_mode']
+    : 'exercises';
+  $settings['daily_exercise_goal'] = max(1, min(100, (int)$settings['daily_exercise_goal']));
+  $settings['daily_minutes_goal'] = max(1, min(240, (int)$settings['daily_minutes_goal']));
+  $settings['weekly_training_days_goal'] = max(1, min(7, (int)$settings['weekly_training_days_goal']));
+  $settings['weekly_exercise_goal'] = max(1, min(500, (int)$settings['weekly_exercise_goal']));
+  $settings['is_configured'] = (bool)$row;
+  return $settings;
+}
+
+function training_save_goal_settings(int $userId, array $input): array {
+  $defaults = training_goal_defaults();
+  $mode = (string)($input['daily_goal_mode'] ?? $defaults['daily_goal_mode']);
+  if (!in_array($mode, ['exercises', 'minutes', 'both'], true)) $mode = $defaults['daily_goal_mode'];
+
+  $settings = [
+    'daily_goal_mode' => $mode,
+    'daily_exercise_goal' => max(1, min(100, (int)($input['daily_exercise_goal'] ?? $defaults['daily_exercise_goal']))),
+    'daily_minutes_goal' => max(1, min(240, (int)($input['daily_minutes_goal'] ?? $defaults['daily_minutes_goal']))),
+    'weekly_training_days_goal' => max(1, min(7, (int)($input['weekly_training_days_goal'] ?? $defaults['weekly_training_days_goal']))),
+    'weekly_exercise_goal' => max(1, min(500, (int)($input['weekly_exercise_goal'] ?? $defaults['weekly_exercise_goal']))),
+  ];
+
+  $st = db()->prepare('INSERT INTO training_goal_settings
+      (user_id,daily_goal_mode,daily_exercise_goal,daily_minutes_goal,weekly_training_days_goal,weekly_exercise_goal,created_at)
+      VALUES (?,?,?,?,?,?,NOW())
+      ON DUPLICATE KEY UPDATE
+        daily_goal_mode=VALUES(daily_goal_mode),
+        daily_exercise_goal=VALUES(daily_exercise_goal),
+        daily_minutes_goal=VALUES(daily_minutes_goal),
+        weekly_training_days_goal=VALUES(weekly_training_days_goal),
+        weekly_exercise_goal=VALUES(weekly_exercise_goal),
+        updated_at=NOW()');
+  $st->execute([
+    $userId,
+    $settings['daily_goal_mode'],
+    $settings['daily_exercise_goal'],
+    $settings['daily_minutes_goal'],
+    $settings['weekly_training_days_goal'],
+    $settings['weekly_exercise_goal'],
+  ]);
+
+  return training_goal_settings_for_user($userId);
+}
+
+function training_goal_completed(array $settings, int $exerciseCount, int $durationMs): bool {
+  $minutes = (int)floor($durationMs / 60000);
+  $exerciseDone = $exerciseCount >= (int)$settings['daily_exercise_goal'];
+  $minutesDone = $minutes >= (int)$settings['daily_minutes_goal'];
+  return match ((string)$settings['daily_goal_mode']) {
+    'minutes' => $minutesDone,
+    'both' => $exerciseDone && $minutesDone,
+    default => $exerciseDone,
+  };
+}
+
+function training_activity_rows(int $userId, int $days = 60): array {
+  $days = max(1, min(365, $days));
+  $sql = 'SELECT DATE(created_at) AS activity_date,
+                 COUNT(DISTINCT exercise_id) AS exercises,
+                 SUM(result="solved") AS solved,
+                 SUM(result="failed") AS failed,
+                 SUM(duration_ms) AS duration_ms
+          FROM training_attempts
+          WHERE user_id=?
+            AND result<>"skipped"
+            AND created_at >= DATE_SUB(CURDATE(), INTERVAL ' . (int)($days - 1) . ' DAY)
+          GROUP BY DATE(created_at)
+          ORDER BY activity_date DESC';
+  $st = db()->prepare($sql);
+  $st->execute([$userId]);
+  $rows = [];
+  foreach ($st->fetchAll() as $row) {
+    $date = (string)$row['activity_date'];
+    $rows[$date] = [
+      'date' => $date,
+      'exercises' => (int)($row['exercises'] ?? 0),
+      'solved' => (int)($row['solved'] ?? 0),
+      'failed' => (int)($row['failed'] ?? 0),
+      'duration_ms' => (int)($row['duration_ms'] ?? 0),
+    ];
+  }
+  return $rows;
+}
+
+function training_today_progress(int $userId, array $settings): array {
+  $st = db()->prepare('SELECT COUNT(DISTINCT exercise_id) AS exercises,
+                              SUM(result="solved") AS solved,
+                              SUM(result="failed") AS failed,
+                              SUM(duration_ms) AS duration_ms
+                       FROM training_attempts
+                       WHERE user_id=? AND result<>"skipped" AND DATE(created_at)=CURDATE()');
+  $st->execute([$userId]);
+  $row = $st->fetch() ?: [];
+  $exercises = (int)($row['exercises'] ?? 0);
+  $durationMs = (int)($row['duration_ms'] ?? 0);
+  return [
+    'date' => date('Y-m-d'),
+    'trained' => $exercises > 0,
+    'goal_met' => training_goal_completed($settings, $exercises, $durationMs),
+    'exercises' => $exercises,
+    'solved' => (int)($row['solved'] ?? 0),
+    'failed' => (int)($row['failed'] ?? 0),
+    'duration_ms' => $durationMs,
+    'duration_minutes' => (int)floor($durationMs / 60000),
+  ];
+}
+
+function training_week_progress(int $userId, array $settings): array {
+  $st = db()->prepare('SELECT COUNT(DISTINCT DATE(created_at)) AS training_days,
+                              COUNT(DISTINCT exercise_id) AS exercises,
+                              SUM(result="solved") AS solved,
+                              SUM(result="failed") AS failed,
+                              SUM(duration_ms) AS duration_ms
+                       FROM training_attempts
+                       WHERE user_id=?
+                         AND result<>"skipped"
+                         AND YEARWEEK(created_at, 1)=YEARWEEK(CURDATE(), 1)');
+  $st->execute([$userId]);
+  $row = $st->fetch() ?: [];
+  $trainingDays = (int)($row['training_days'] ?? 0);
+  $exercises = (int)($row['exercises'] ?? 0);
+  return [
+    'training_days' => $trainingDays,
+    'training_days_goal' => (int)$settings['weekly_training_days_goal'],
+    'training_days_goal_met' => $trainingDays >= (int)$settings['weekly_training_days_goal'],
+    'exercises' => $exercises,
+    'exercise_goal' => (int)$settings['weekly_exercise_goal'],
+    'exercise_goal_met' => $exercises >= (int)$settings['weekly_exercise_goal'],
+    'solved' => (int)($row['solved'] ?? 0),
+    'failed' => (int)($row['failed'] ?? 0),
+    'duration_ms' => (int)($row['duration_ms'] ?? 0),
+  ];
+}
+
+function training_goal_streak(int $userId, array $settings): array {
+  $rows = training_activity_rows($userId, 120);
+  $today = new DateTimeImmutable('today');
+  $todayKey = $today->format('Y-m-d');
+  $todayMet = isset($rows[$todayKey]) && training_goal_completed($settings, $rows[$todayKey]['exercises'], $rows[$todayKey]['duration_ms']);
+  $cursor = $todayMet ? $today : $today->modify('-1 day');
+  $days = 0;
+
+  while (true) {
+    $key = $cursor->format('Y-m-d');
+    if (!isset($rows[$key]) || !training_goal_completed($settings, $rows[$key]['exercises'], $rows[$key]['duration_ms'])) {
+      break;
+    }
+    $days++;
+    $cursor = $cursor->modify('-1 day');
+  }
+
+  return [
+    'days' => $days,
+    'today_goal_met' => $todayMet,
+    'continues_if_completed_today' => !$todayMet && $days > 0,
+  ];
+}
+
+function training_repetition_interval_days(string $result, int $attemptsCount = 0, bool $usedHint = false): int {
+  if ($result === 'failed') return 1;
+  if ($result === 'skipped') return 3;
+  if ($usedHint || $attemptsCount > 1) return 14;
+  return 45;
+}
+
+function training_repetition_due_label(?string $lastResult, ?string $lastCompletedAt): ?string {
+  if (!$lastResult || !$lastCompletedAt) return null;
+  $date = substr((string)$lastCompletedAt, 0, 10);
+  return match ($lastResult) {
+    'failed' => "Fallado el {$date}",
+    'skipped' => "Saltado el {$date}",
+    'solved' => "Resuelto el {$date}",
+    default => null,
+  };
+}
+
+function training_due_repetition_count(int $userId): int {
+  $st = db()->prepare('SELECT COUNT(*)
+                       FROM training_exercises
+                       WHERE user_id=? AND status="active" AND resolved_at IS NOT NULL
+                         AND next_due_at IS NOT NULL AND next_due_at <= NOW()');
+  $st->execute([$userId]);
+  return (int)$st->fetchColumn();
+}
+
+function training_due_repetition_sample(int $userId, int $limit = 2): array {
+  $limit = max(1, min(10, $limit));
+  $sql = 'SELECT id, exercise_type, difficulty, priority_score, next_due_at, repeat_count, last_training_result, last_completed_at
+          FROM training_exercises
+          WHERE user_id=? AND status="active" AND resolved_at IS NOT NULL
+            AND next_due_at IS NOT NULL AND next_due_at <= NOW()
+          ORDER BY FIELD(last_training_result,"failed","skipped","solved"), next_due_at ASC, priority_score DESC
+          LIMIT ' . (int)$limit;
+  $st = db()->prepare($sql);
+  $st->execute([$userId]);
+  $items = [];
+  foreach ($st->fetchAll() as $row) {
+    $items[] = [
+      'id' => (int)$row['id'],
+      'exercise_type' => (string)$row['exercise_type'],
+      'type_label' => training_exercise_type_label((string)$row['exercise_type']),
+      'difficulty' => (string)$row['difficulty'],
+      'priority_score' => (int)$row['priority_score'],
+      'next_due_at' => $row['next_due_at'],
+      'repeat_count' => (int)$row['repeat_count'],
+      'last_training_result' => $row['last_training_result'],
+      'reason_label' => training_repetition_due_label($row['last_training_result'] ?? null, $row['last_completed_at'] ?? null),
+    ];
+  }
+  return $items;
+}
+
+function training_experience_summary(int $userId): array {
+  $settings = training_goal_settings_for_user($userId);
+  $today = training_today_progress($userId, $settings);
+  $week = training_week_progress($userId, $settings);
+  return [
+    'settings' => $settings,
+    'today' => $today,
+    'week' => $week,
+    'streak' => training_goal_streak($userId, $settings),
+    'repeat_queue' => [
+      'due_count' => training_due_repetition_count($userId),
+      'sample' => training_due_repetition_sample($userId, 2),
+    ],
+  ];
+}
+
+function training_update_exercise_repetition(int $userId, int $exerciseId, string $result, int $attemptsCount = 0, bool $usedHint = false): void {
+  if (!in_array($result, ['solved', 'failed', 'skipped'], true)) return;
+  $interval = training_repetition_interval_days($result, $attemptsCount, $usedHint);
+  db()->prepare('UPDATE training_exercises
+                 SET last_training_result=?,
+                     last_completed_at=NOW(),
+                     next_due_at=DATE_ADD(NOW(), INTERVAL ' . (int)$interval . ' DAY),
+                     repeat_count=repeat_count+1,
+                     updated_at=NOW()
+                 WHERE id=? AND user_id=?')
+    ->execute([$result, $exerciseId, $userId]);
+}
+
 function training_session_metrics(int $sessionId, int $userId): array {
   $st = db()->prepare('SELECT
       COUNT(*) AS exercise_count,
@@ -407,6 +668,8 @@ function training_exercise_tags_for_ids(array $exerciseIds, int $userId): array 
 function training_public_exercise(array $item, bool $includeSolution = false): array {
   $solution = strtolower(trim((string)($item['solution_uci'] ?? '')));
   $item['hint_from'] = preg_match('/^[a-h][1-8]/', $solution) ? substr($solution, 0, 2) : null;
+  $item['repeat_count'] = (int)($item['repeat_count'] ?? 0);
+  $item['repetition_reason'] = training_repetition_due_label($item['last_training_result'] ?? null, $item['last_completed_at'] ?? null);
   if (!$includeSolution) {
     unset($item['solution_uci'], $item['solution_san']);
   }
@@ -587,8 +850,9 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
 
   if ($isSolved || $isExhausted) {
     db()->prepare('UPDATE training_exercises SET resolved_at=COALESCE(resolved_at,NOW()), last_attempt_at=NOW(), updated_at=NOW() WHERE id=? AND user_id=?')->execute([$exerciseId, $userId]);
+    training_update_exercise_repetition($userId, $exerciseId, $isSolved ? 'solved' : 'failed', count($moves), $usedHint);
   } else {
-    db()->prepare('UPDATE training_exercises SET last_attempt_at=NOW(), updated_at=NOW() WHERE id=? AND user_id=?')->execute([$exerciseId, $userId]);
+    db()->prepare('UPDATE training_exercises SET last_attempt_at=NOW(), last_training_result="failed", updated_at=NOW() WHERE id=? AND user_id=?')->execute([$exerciseId, $userId]);
   }
 
   $updated = training_exercise_for_user($exerciseId, $userId);
@@ -603,6 +867,7 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
     'feedback' => $isSolved ? ($exercise['feedback_success'] ?? training_feedback_success((string)$exercise['exercise_type'])) : ($exercise['feedback_failure'] ?? training_feedback_failure((string)$exercise['exercise_type'])),
     'exercise' => $updated,
     'stats' => training_stats_for_user($userId),
+    'experience' => training_experience_summary($userId),
     'session' => $session,
   ];
 }
@@ -636,6 +901,7 @@ function training_record_skip(int $userId, int $exerciseId, ?int $sessionId = nu
     $exercise['difficulty'] ?? null,
   ]);
   db()->prepare('UPDATE training_exercises SET resolved_at=COALESCE(resolved_at,NOW()), last_attempt_at=NOW(), updated_at=NOW() WHERE id=? AND user_id=?')->execute([$exerciseId, $userId]);
+  training_update_exercise_repetition($userId, $exerciseId, 'skipped', 0, false);
   $updated = training_exercise_for_user($exerciseId, $userId);
   $session = training_update_session_metrics($sessionId, $userId);
   return [
@@ -643,6 +909,7 @@ function training_record_skip(int $userId, int $exerciseId, ?int $sessionId = nu
     'skipped' => true,
     'exercise' => $updated ?: $exercise,
     'stats' => training_stats_for_user($userId),
+    'experience' => training_experience_summary($userId),
     'session' => $session,
   ];
 }
