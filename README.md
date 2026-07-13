@@ -690,17 +690,40 @@ Current planned direction:
 - Strengths and weaknesses
 - Behavioural insights
 
-### v1.4.0 — Chess.com Sync
+### v1.4.0 — Training Experience
 
-- Automatic periodic import
-- Duplicate-safe sync
-- Auto-analysis after import
+- Daily and weekly training goals
+- Training streaks
+- Smart exercise repetition
+- Progress by training area
+- Training milestones without game-like points
 
-### v1.5.0+ — Coach AI
+### v1.5.0 — AI Coach MVP
 
 - Higher-level coaching explanations
-- Weekly training plan
-- Long-term progress interpretation
+- Grounded training summaries
+- Recommendations based on games, tags, exercises and Player DNA
+
+### v1.5.1 — AI Coach Plus
+
+- Better reports
+- More precise training recommendations
+- Richer use of Training Experience data
+
+### v1.6.0 — Conversación con el entrenador
+
+- Ask questions about games, training and weaknesses
+- Coach answers grounded in stored Chess Coach data
+
+### v1.7.0 — Automation
+
+- Automatic Chess.com Sync
+- Duplicate-safe recurring import
+- Scheduled maintenance processes
+
+### v2.0.0 — Full Personal Chess Coach
+
+- Unified analysis, training, repetition, openings, Player DNA, automation and coaching
 
 ---
 
