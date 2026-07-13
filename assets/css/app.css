@@ -783,16 +783,16 @@ label {
 }
 .import-panel-head {
   justify-content:flex-start;
-  padding:0 0 10px
-}
-.import-panel-head .arrow {
-  margin-left:auto
+  padding:0 0 10px;
+  color:var(--text);
+  font-size:22px;
+  font-weight:900
 }
 .import-panel-title h2 {
   margin:0
 }
 .import-panel-icon {
-  width:38px;
+  width:42px;
   height:38px;
   border-radius:10px;
   display:grid;
@@ -800,9 +800,9 @@ label {
   border:1px solid rgba(120,217,94,.32);
   background:rgba(76,175,80,.1);
   color:#8ee36d;
-  font-size:22px;
+  font-size:20px;
   font-weight:900;
-  flex:0 0 38px
+  flex:0 0 42px
 }
 .import-panel-copy {
   color:#cbd5df;
@@ -835,6 +835,15 @@ label {
 }
 .import-card-footer button {
   min-width:260px
+}
+.import-card-footer-stacked {
+  flex-direction:column;
+  align-items:flex-start;
+  gap:10px
+}
+.import-card-footer-stacked #ccMsg {
+  display:block;
+  min-height:20px
 }
 .import-help {
   color:#a9b1ba;
@@ -870,28 +879,6 @@ label {
 .import-info-panel p {
   margin:0;
   color:#cbd5df
-}
-.section-toggle {
-  width:100%;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  background:transparent;
-  color:var(--text);
-  padding:0 0 16px;
-  border-radius:0;
-  text-align:left;
-  font-size:22px
-}
-.section-toggle .arrow {
-  font-size:24px;
-  transition:.15s
-}
-.import-card.collapsed .collapsible-body {
-  display:none
-}
-.import-card.open .arrow {
-  transform:rotate(90deg)
 }
 .pagination {
   display:flex;

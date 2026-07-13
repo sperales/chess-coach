@@ -31,13 +31,12 @@ $chesscomJsVersion = (string)filemtime(__DIR__.'/assets/js/chesscom.js');
   </section>
 
   <section class="import-grid import-workspace">
-    <section class="panel import-panel import-card open" id="importCard">
-      <button class="section-toggle import-panel-head" type="button" onclick="toggleImport()" aria-expanded="true" aria-controls="importBody">
-        <span class="import-panel-icon" aria-hidden="true">□</span>
+    <section class="panel import-panel import-card">
+      <div class="import-panel-head">
+        <span class="import-panel-icon" aria-hidden="true">📄</span>
         <span>Importar PGN</span>
-        <span class="arrow">›</span>
-      </button>
-      <div class="collapsible-body" id="importBody">
+      </div>
+      <div class="import-body">
         <p class="import-panel-copy">Pega aquí uno o varios PGN para añadir tus partidas.</p>
         <textarea id="pgn" maxlength="200000" placeholder="Pega aquí uno o varios PGN..."></textarea>
         <div class="import-card-footer">
@@ -50,7 +49,7 @@ $chesscomJsVersion = (string)filemtime(__DIR__.'/assets/js/chesscom.js');
 
     <section class="panel import-panel">
       <div class="import-panel-title">
-        <span class="import-panel-icon" aria-hidden="true">●</span>
+        <span class="import-panel-icon" aria-hidden="true">☁↓</span>
         <h2>Importar desde Chess.com</h2>
       </div>
       <p class="import-panel-copy">Importa las partidas más recientes desde la API pública de Chess.com. Se evitarán duplicados y las nuevas quedarán en cola de análisis automáticamente.</p>
@@ -63,7 +62,7 @@ $chesscomJsVersion = (string)filemtime(__DIR__.'/assets/js/chesscom.js');
         <input id="ccLimit" type="number" min="1" max="100" value="20">
         <small class="muted">Puedes importar entre 1 y 100 partidas por solicitud.</small>
       </div>
-      <div class="import-card-footer">
+      <div class="import-card-footer import-card-footer-stacked">
         <button onclick="importChessCom()">Importar desde Chess.com</button>
         <span class="muted" id="ccMsg"></span>
       </div>
