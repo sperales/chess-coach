@@ -4,6 +4,7 @@ require_once __DIR__.'/includes/helpers.php';
 require_once __DIR__.'/includes/smart_tags.php';
 require_once __DIR__.'/includes/training.php';
 require_once __DIR__.'/includes/openings.php';
+require_once __DIR__.'/includes/player_dna.php';
 require_once __DIR__.'/includes/pieces.php';
 
 $u = require_login();
@@ -14,6 +15,8 @@ $layoutJsVersion = (string)filemtime(__DIR__.'/assets/js/layout.js');
 $pendingSmartTags = smart_tag_backfill_pending_count((int)$u['id']);
 $pendingTrainingExercises = training_backfill_pending_count((int)$u['id']);
 $pendingOpeningProfiles = openings_profile_pending_count((int)$u['id']);
+$latestPlayerDna = player_dna_latest_snapshot((int)$u['id']);
+$playerDnaConfidenceLabels = ['low' => 'baja', 'medium' => 'media', 'high' => 'alta'];
 $pieceSets = available_piece_sets();
 $currentPieceSet = normalize_piece_set($u['piece_set'] ?? null);
 
@@ -135,6 +138,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
         <button type="button" onclick="runOpeningsBackfill()" id="openingsBackfillBtn">Perfilar aperturas</button>
       </div>
       <p class="muted" id="openingsBackfillResult"></p>
+      <div class="batch-row">
+        <div>
+          <strong>ADN del jugador</strong>
+          <p class="muted">Recalcula el perfil de estilo, fortalezas, debilidades y comparativas usando las partidas ya analizadas.</p>
+          <p class="muted" id="playerDnaStatus">
+            <?php if ($latestPlayerDna): ?>
+              Último snapshot: <?=e((string)$latestPlayerDna['generated_at'])?> · Confianza: <?=e($playerDnaConfidenceLabels[(string)$latestPlayerDna['confidence']] ?? (string)$latestPlayerDna['confidence'])?> · Partidas: <?= (int)$latestPlayerDna['analyzed_games'] ?>
+            <?php else: ?>
+              Sin snapshot generado todavía.
+            <?php endif; ?>
+          </p>
+        </div>
+        <button type="button" onclick="runPlayerDnaRecompute()" id="playerDnaBtn">Recalcular ADN</button>
+      </div>
+      <p class="muted" id="playerDnaResult"></p>
     </section>
   </main>
 </div>
@@ -208,6 +226,34 @@ async function runOpeningsBackfill() {
   } finally {
     if (btn) btn.disabled = false;
   }
+}
+
+async function runPlayerDnaRecompute() {
+  const btn = document.getElementById('playerDnaBtn');
+  const result = document.getElementById('playerDnaResult');
+  const status = document.getElementById('playerDnaStatus');
+  if (btn) btn.disabled = true;
+  if (result) result.textContent = 'Recalculando ADN del jugador...';
+  try {
+    const r = await fetch('api/player-dna.php?action=recompute', {
+      method: 'POST',
+      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({})
+    });
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error || 'No se pudo recalcular el ADN del jugador.');
+    const snapshot = data.snapshot || {};
+    if (result) result.textContent = `${data.message || 'ADN recalculado.'} Partidas procesadas: ${data.processed_games || 0}.`;
+    if (status) status.textContent = `Último snapshot: ${snapshot.generated_at || 'ahora'} · Confianza: ${playerDnaConfidenceLabel(snapshot.confidence || 'low')} · Partidas: ${snapshot.analyzed_games || 0}`;
+  } catch (e) {
+    if (result) result.textContent = e.message || 'No se pudo recalcular el ADN del jugador.';
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function playerDnaConfidenceLabel(value) {
+  return { low: 'baja', medium: 'media', high: 'alta' }[value] || value || 'baja';
 }
 </script>
 </body>
