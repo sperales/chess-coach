@@ -49,7 +49,7 @@ $chesscomJsVersion = (string)filemtime(__DIR__.'/assets/js/chesscom.js');
 
     <section class="panel import-panel">
       <div class="import-panel-title">
-        <span class="import-panel-icon" aria-hidden="true">☁↓</span>
+        <span class="import-panel-icon" aria-hidden="true">☁</span>
         <h2>Importar desde Chess.com</h2>
       </div>
       <p class="import-panel-copy">Importa las partidas más recientes desde la API pública de Chess.com. Se evitarán duplicados y las nuevas quedarán en cola de análisis automáticamente.</p>
