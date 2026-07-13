@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## v1.2.9 - Openings Lab UI polish
+
+### Added
+
+- Added `assets/images/lab_background.jpg` as the Openings Lab hero background.
+
+### Changed
+
+- Refreshed the `openings-lab.php` hero block with a background-image treatment.
+- Aligned related exercise actions to the right on desktop.
+- Styled Openings Lab review actions in green and training actions in blue.
+- Applied the green review action style to recommended games and example games.
+- Bumped `config/version.php` to `1.2.9`.
+- Updated the service worker cache name to `chess-coach-v1.2.9`.
+
+### Database
+
+- No SQL migration required.
+
 ## v1.2.8 - Training solver page refresh
 
 ### Added

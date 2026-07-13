@@ -14,11 +14,11 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v1.2.8**
+Current stable baseline: **v1.2.9**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
-v1.2.8 is the current stable Training Center solver UI baseline.
+v1.2.9 is the current stable Openings Lab UI polish baseline.
 
 ---
 

@@ -218,8 +218,8 @@ function renderRelatedExercises(exercises) {
           <span>${escapeHtml(exercise.title || 'Partida')} · ply ${Number(exercise.ply || 0)} · ${exercise.resolved ? 'resuelto' : 'pendiente'}</span>
         </div>
         <div class="opening-exercise-actions">
-          <a class="btn secondary small" href="${escapeAttr(exercise.review_url || '#')}">Revisar</a>
-          <a class="btn secondary small" href="${escapeAttr(exercise.training_url || 'training.php')}">Entrenar</a>
+          <a class="btn small action-review" href="${escapeAttr(exercise.review_url || '#')}">Revisar</a>
+          <a class="btn small action-train" href="${escapeAttr(exercise.training_url || 'training.php')}">Entrenar</a>
         </div>
       </article>`).join('')}
     </div>` : `<div class="empty-state compact"><strong>Sin ejercicios existentes.</strong><span>No hay ejercicios ya generados antes de la ply 16 para partidas con el mismo ECO. No se crearan nuevos desde el Lab.</span></div>`}
@@ -260,7 +260,7 @@ function renderOpeningGames(games, recommended = false) {
         <b>${escapeHtml(accuracy)}</b>
         <small>B:${Number(game.opening_errors?.blunders || 0)} E:${Number(game.opening_errors?.mistakes || 0)} I:${Number(game.opening_errors?.inaccuracies || 0)}</small>
       </div>
-      <a class="btn secondary small" href="${escapeAttr(reviewUrl)}">${recommended ? 'Revisar foco' : 'Revisar'}</a>
+      <a class="btn small action-review" href="${escapeAttr(reviewUrl)}">${recommended ? 'Revisar foco' : 'Revisar'}</a>
     </article>`;
   }).join('');
 }

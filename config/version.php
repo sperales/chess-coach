@@ -1,2 +1,2 @@
 <?php
-const APP_VERSION = '1.2.8';
+const APP_VERSION = '1.2.9';
