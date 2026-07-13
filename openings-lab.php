@@ -31,12 +31,18 @@ $openingsJsVersion = (string)filemtime(__DIR__.'/assets/js/openings_lab.js');
 
   <section class="metric-grid" id="openingsSummary"></section>
 
-  <section class="panel games-filter-panel">
+  <section class="panel games-filter-panel openings-view-panel is-collapsed" id="openingsViewPanel">
     <div class="panel-head">
       <h2>Vista</h2>
-      <span class="muted" id="openingsStatus">Cargando...</span>
+      <div class="openings-view-head-actions">
+        <span class="muted" id="openingsStatus">Cargando...</span>
+        <button class="btn secondary small openings-view-toggle" type="button" id="openingsViewToggle" aria-expanded="false" aria-controls="openingsViewBody">
+          <span class="openings-view-toggle-label">Mostrar filtros</span>
+          <span class="openings-view-toggle-icon" aria-hidden="true">▾</span>
+        </button>
+      </div>
     </div>
-    <div class="games-filter-grid">
+    <div class="games-filter-grid openings-view-body" id="openingsViewBody">
       <label>Mínimo de partidas
         <select id="openingsMinGames">
           <option value="1">Todas</option>

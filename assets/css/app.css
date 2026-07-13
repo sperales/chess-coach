@@ -3038,6 +3038,39 @@ select {
 .opening-cell a:hover {
   text-decoration:underline
 }
+.openings-view-panel {
+  margin-bottom:20px
+}
+.openings-view-head-actions {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:12px;
+  min-width:0
+}
+.openings-view-toggle {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap
+}
+.openings-view-toggle-icon {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:12px;
+  height:12px;
+  font-size:11px;
+  line-height:1;
+  transform-origin:center;
+  transition:transform .18s ease
+}
+.openings-view-panel:not(.is-collapsed) .openings-view-toggle-icon {
+  transform:rotate(180deg)
+}
+.openings-view-panel.is-collapsed .openings-view-body {
+  display:none
+}
 .openings-layout {
   display:grid;
   grid-template-columns:minmax(0,1.05fr) minmax(360px,.95fr);
@@ -4090,6 +4123,13 @@ select {
   }
   .trainer-mini-kpis {
     grid-template-columns:minmax(0,1fr)
+  }
+  .openings-view-head-actions {
+    width:100%;
+    justify-content:space-between
+  }
+  .openings-view-toggle {
+    flex-shrink:0
   }
   .home-dna-kpis {
     grid-template-columns:minmax(0,1fr)
