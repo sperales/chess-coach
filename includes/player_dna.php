@@ -321,6 +321,7 @@ function player_dna_top_strengths(array $dimensions, array $tags): array {
     if ((int)$dimension['score'] >= 65) {
       $items[] = [
         'code' => $dimension['code'],
+        'source' => 'dimension',
         'title' => $dimension['label'],
         'score' => (int)$dimension['score'],
         'evidence' => $dimension['evidence'][0] ?? 'Buen rendimiento relativo.',
@@ -331,6 +332,9 @@ function player_dna_top_strengths(array $dimensions, array $tags): array {
     if (($tag['category'] ?? '') !== 'positive') continue;
     $items[] = [
       'code' => (string)$tag['tag_code'],
+      'source' => 'tag',
+      'category' => (string)($tag['category'] ?? ''),
+      'severity' => (string)($tag['severity'] ?? 'info'),
       'title' => (string)$tag['label'],
       'score' => 70 + min(20, (int)$tag['total'] * 3),
       'evidence' => (int)$tag['total'] . ' aparición(es) recientes.',
@@ -346,6 +350,7 @@ function player_dna_top_weaknesses(array $dimensions, array $tags): array {
     if ((int)$dimension['score'] < 70) {
       $items[] = [
         'code' => $dimension['code'],
+        'source' => 'dimension',
         'title' => $dimension['label'],
         'score' => (int)$dimension['score'],
         'evidence' => $dimension['evidence'][0] ?? 'Hay margen de mejora.',
@@ -357,6 +362,9 @@ function player_dna_top_weaknesses(array $dimensions, array $tags): array {
     $severityBonus = dashboard_severity_weight((string)($tag['severity'] ?? 'info')) * 4;
     $items[] = [
       'code' => (string)$tag['tag_code'],
+      'source' => 'tag',
+      'category' => (string)($tag['category'] ?? ''),
+      'severity' => (string)($tag['severity'] ?? 'info'),
       'title' => (string)$tag['label'],
       'score' => 100 - min(90, ((int)$tag['total'] * 6) + $severityBonus),
       'evidence' => (int)$tag['total'] . ' aparición(es) recientes.',
@@ -573,6 +581,10 @@ function player_dna_recommendations(array $dimensions, array $tags, array $extra
 
   return [
     'primary' => [
+      'code' => $weakness['code'] ?? null,
+      'source' => $weakness['source'] ?? null,
+      'category' => $weakness['category'] ?? null,
+      'severity' => $weakness['severity'] ?? null,
       'title' => $weakness['title'] ?? 'Mantener consistencia',
       'text' => $weakness ? 'Tu foco principal ahora mismo es ' . $weakness['title'] . '.' : 'No hay un foco dominante con la muestra actual.',
       'action_label' => $primary['label'],
