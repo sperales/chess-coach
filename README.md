@@ -14,11 +14,11 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v1.2.9**
+Current stable baseline: **v1.3.0**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
-v1.2.9 is the current stable Openings Lab UI polish baseline.
+v1.3.0 is the current stable Player DNA baseline.
 
 ---
 
@@ -159,6 +159,16 @@ Includes:
 - Recommended opening review links
 - Games filtered by opening
 - Connections to frequent Smart Tags and existing Training Center exercises
+
+### Player DNA
+
+- Personal player profile generated from analyzed games
+- Tactical, opening, calculation, endgame, risk, conversion, defense, consistency and resilience dimensions
+- Top strengths and weaknesses
+- Style indicators and historical comparisons
+- Manual recompute from profile
+- Dedicated `ADN del jugador` page
+- Compact Player DNA summary on the home dashboard
 
 ### Repository / deployment hygiene
 
@@ -674,7 +684,7 @@ Current planned direction:
 - Practical opening guidance
 - Links to review, games and existing training exercises
 
-### v1.3.0 — Player DNA
+### Completed in v1.3.0 — Player DNA
 
 - Player profile
 - Strengths and weaknesses

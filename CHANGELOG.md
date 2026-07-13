@@ -1,5 +1,29 @@
 # CHANGELOG
 
+## v1.3.0 - Player DNA
+
+### Added
+
+- Added `sql/migrations/023_changes_1.3.0.sql` with `player_dna_snapshots` and `player_dna_runs`.
+- Added Player DNA backend scoring and snapshot generation in `includes/player_dna.php`.
+- Added `api/player-dna.php` for snapshot reads and manual recomputation.
+- Added the `ADN del jugador` page with summary, dimensions, strengths, weaknesses, style indicators, comparisons and next-step recommendation.
+- Added manual Player DNA recompute controls to `profile.php`.
+- Added `ADN del jugador` to the main menu.
+- Added `assets/images/statistics_background.jpg` as the Player DNA hero background.
+- Added a compact Player DNA summary block to the home dashboard.
+
+### Changed
+
+- Updated Player DNA dimension colors to green/orange/red thresholds.
+- Bumped `config/version.php` to `1.3.0`.
+- Updated the service worker cache name to `chess-coach-v1.3.0`.
+- Updated README, release notes, roadmap and agent baseline documentation for v1.3.0.
+
+### Database
+
+- SQL migration required: `sql/migrations/023_changes_1.3.0.sql`.
+
 ## v1.2.9 - Openings Lab UI polish
 
 ### Added

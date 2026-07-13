@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v1.2.9**
+Current stable baseline: **v1.3.0**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,13 +32,13 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v1.2.9
+## Current baseline — v1.3.0
 
-v1.2.9 polishes the Openings Lab UI with a dedicated hero background and clearer review/training actions in opening detail blocks.
+v1.3.0 introduces Player DNA as the current stable baseline.
 
-It detects and stores opening profiles from the user's own games, groups openings by ECO code and opening name when available, exposes Openings Lab metrics, shows a dedicated `openings-lab.php` page, links opening diagnostics to review moments, filters games by opening and connects opening details with Smart Tags and existing Training Center exercises.
+It creates a personal chess profile from analyzed games, stores Player DNA snapshots, shows a dedicated `player-dna.php` page, exposes manual recalculation from profile, adds `ADN del jugador` to the menu and includes a compact Player DNA summary on the home dashboard.
 
-Smart Tags, the Personal Trainer Dashboard, Training Center exercise generation, the interactive solver, hints, session tracking, selectable board piece sets and Openings Lab are now part of the stable product baseline.
+Smart Tags, the Personal Trainer Dashboard, Training Center exercise generation, the interactive solver, hints, session tracking, selectable board piece sets, Openings Lab and Player DNA are now part of the stable product baseline.
 
 The v1.1.6 hardening pass tightened documentation, encoding checks, ownership checks, CSRF coverage, output safety and shared API request helpers before v1.2.0 Openings Lab.
 
@@ -83,6 +83,7 @@ It adds the deployment structure that should be tracked in Git:
 - Token-protected worker endpoint.
 - Worker history.
 - Dashboard with recent games and stats.
+- Player DNA profile, snapshots and home summary.
 - Review page with:
   - board reconstruction
   - local PNG pieces
@@ -419,7 +420,7 @@ Instead of memorized lines, focus on:
 
 ---
 
-## v1.3.0 — Player DNA
+## Completed in v1.3.0 — Player DNA
 
 ### Goal
 
