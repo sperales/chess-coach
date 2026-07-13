@@ -1,3 +1,38 @@
+# Chess Coach v1.2.8 Update Notes
+
+## Release type
+
+Training Center solver UI release.
+
+## Changes
+
+- Added `assets/images/training_background.jpg` as the local background for Training Center hero blocks.
+- Refreshed the `training.php` hero card with the new training background.
+- Added `training-exercise.php` as a dedicated page for solving exercises.
+- Changed pending exercise actions so they navigate to the dedicated solver page instead of opening an inline solver block.
+- Reused the existing Training Center API, sessions, attempts, hints, skips and board logic in the dedicated solver.
+- Added exercise metadata areas for difficulty, priority, source game, Smart Tags, details and attempt history.
+- Added board coordinates, a side-panel objective reminder and a review-style summary for the source game.
+- Updated Openings Lab training links to use the dedicated solver page.
+- Bumped `config/version.php` to `1.2.8`.
+- Updated the service worker cache to `chess-coach-v1.2.8`.
+
+## SQL migration
+
+No SQL migration required.
+
+## Verification
+
+- Run PHP syntax checks.
+- Run JavaScript syntax checks for changed files.
+- Confirm `training.php` shows the new training hero background.
+- Confirm pending exercises open `training-exercise.php?id=...`.
+- Confirm attempts, hints, skips, next exercise and review links still work from the dedicated solver.
+- Confirm Openings Lab `Entrenar` links open the selected exercise in the dedicated solver.
+- Confirm the PWA cache includes `training-exercise.php` and `assets/images/training_background.jpg`.
+
+---
+
 # Chess Coach v1.2.7 Update Notes
 
 ## Release type
@@ -439,7 +474,7 @@ Opening details now include recurrent early error patterns, grouped by ply and e
 
 ### Existing Training connection
 
-Opening details now show existing Training Center exercises for games with the same ECO code and `ply <= 16`. This PR only reads already-generated exercises and links to review/training. Training links now use `training.php?exercise_id=...` so the selected exercise opens directly. It does not generate new exercises from the Lab.
+Opening details now show existing Training Center exercises for games with the same ECO code and `ply <= 16`. This PR only reads already-generated exercises and links to review/training. Training links now use the dedicated solver page so the selected exercise opens directly. It does not generate new exercises from the Lab.
 
 ## PR6 - Polish and release readiness
 

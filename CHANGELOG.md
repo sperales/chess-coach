@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## v1.2.8 - Training solver page refresh
+
+### Added
+
+- Added `assets/images/training_background.jpg` as the Training Center hero background.
+- Added `training-exercise.php` as the dedicated exercise-solving page.
+
+### Changed
+
+- Refreshed the `training.php` hero block with a background-image treatment.
+- Changed Training Center exercise actions so pending exercises open on the dedicated solver page.
+- Reused the existing Training Center API/session/attempt logic in the dedicated solver page.
+- Added exercise metadata blocks for difficulty, priority, source game, details and attempt history.
+- Updated Openings Lab training links to point to the dedicated solver page.
+- Bumped `config/version.php` to `1.2.8`.
+- Updated the service worker cache name to `chess-coach-v1.2.8`.
+
+### Database
+
+- No SQL migration required.
+
 ## v1.2.7 - Import and analysis queue UI polish
 
 ### Added

@@ -14,9 +14,11 @@ let trainingTimerInterval = null;
 let trainingUsedHint = false;
 let trainingHintFrom = '';
 let revealedTrainingSolution = '';
+let trainingOriginReviewLoadedFor = 0;
 const TRAINING_PIECE_ASSET_PATH = (window.CHESS_COACH_PIECE_PATH || 'assets/pieces/Set%201/').toString();
 const TRAINING_INITIAL_PARAMS = new URLSearchParams(window.location.search);
-const TRAINING_INITIAL_EXERCISE_ID = Number(TRAINING_INITIAL_PARAMS.get('exercise_id') || 0);
+const TRAINING_SOLVER_MODE = window.CHESS_TRAINING_SOLVER_MODE === true;
+const TRAINING_INITIAL_EXERCISE_ID = Number(window.CHESS_TRAINING_INITIAL_EXERCISE_ID || TRAINING_INITIAL_PARAMS.get('id') || TRAINING_INITIAL_PARAMS.get('exercise_id') || 0);
 
 const TRAINING_PIECE_IMAGES = {
   P: 'wp.png', N: 'wn.png', B: 'wb.png', R: 'wr.png', Q: 'wq.png', K: 'wk.png',
@@ -163,7 +165,7 @@ function trainingExerciseCard(item) {
   const date = item.played_at || '';
   const primaryAction = item.resolved_at
     ? `<a class="btn secondary small" href="${escapeAttr(item.review_url || '#')}">Ver partida</a>`
-    : `<button class="secondary small" type="button" onclick="openTrainingExercise(${Number(item.id || 0)})">Entrenar</button>`;
+    : `<a class="btn secondary small" href="training-exercise.php?id=${Number(item.id || 0)}">Entrenar</a>`;
   return `
     <article class="training-card">
       <div class="training-card-main">
@@ -251,6 +253,11 @@ async function openTrainingExercise(id) {
   startTrainingExerciseTimer();
   trainingBoardOrientation = trainingFenSideToMove(activeExercise.fen) === 'b' ? 'black' : 'white';
   renderTrainingSolver();
+  if (TRAINING_SOLVER_MODE && activeExercise && activeExercise.id) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('id', activeExercise.id);
+    window.history.replaceState({}, '', url.toString());
+  }
   const panel = document.getElementById('trainingSolverPanel');
   if (panel) {
     panel.hidden = false;
@@ -312,6 +319,10 @@ async function endTrainingSession(status = 'completed') {
 }
 
 function closeTrainingSolver() {
+  if (TRAINING_SOLVER_MODE) {
+    window.location.href = 'training.php';
+    return;
+  }
   const panel = document.getElementById('trainingSolverPanel');
   if (panel) panel.hidden = true;
   stopTrainingExerciseTimer();
@@ -332,6 +343,7 @@ function renderTrainingSolver() {
   const feedback = document.getElementById('trainingFeedback');
   if (title) title.textContent = activeExercise.type_label || 'Resolver ejercicio';
   if (prompt) prompt.innerHTML = trainingPromptHtml(activeExercise.prompt || 'Encuentra la mejor jugada.');
+  renderTrainingSolverChrome();
   if (meta) {
     const source = activeExercise.source_side === 'opponent' ? 'Rival' : 'Propia';
     const previousMove = activeExercise.previous_san || activeExercise.previous_uci || '';
@@ -353,6 +365,7 @@ function renderTrainingSolver() {
   renderTrainingBoard();
   updateTrainingDraft();
   renderTrainingControls();
+  loadTrainingOriginReview();
 }
 
 function startTrainingExerciseTimer() {
@@ -375,6 +388,169 @@ function updateTrainingExerciseTimer() {
   const minutes = Math.floor(elapsedSeconds / 60);
   const seconds = elapsedSeconds % 60;
   el.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function renderTrainingSolverChrome() {
+  if (!activeExercise) return;
+  const typeLabel = activeExercise.type_label || activeExercise.exercise_type || 'Ejercicio';
+  const promptText = activeExercise.prompt || 'Encuentra la mejor jugada.';
+  const side = trainingFenSideToMove(activeExercise.fen) === 'b' ? 'negras' : 'blancas';
+  const gameTitle = `${activeExercise.white_player || 'Blancas'} vs ${activeExercise.black_player || 'Negras'}`;
+  setText('trainingSolverHeroTitle', typeLabel);
+  setText('trainingSolverHeroPrompt', promptText.replace(/\s*Juegan\s+(blancas|negras)\.?/i, '').trim() || promptText);
+  setText('trainingSolverHeroSide', `Juegan ${side}`);
+  const sideObjective = document.getElementById('trainingSideObjective');
+  if (sideObjective) sideObjective.innerHTML = trainingPromptHtml(promptText);
+  setText('trainingSolverStatus', activeExercise.resolved_at ? 'Resuelto' : 'Pendiente');
+  setText('trainingPriorityValue', activeExercise.priority_score || 0);
+  setText('trainingSourceGame', gameTitle);
+  setText('trainingSourceDate', activeExercise.played_at || activeExercise.result_raw || '');
+  setText('trainingSourceMove', trainingMoveLabel(activeExercise));
+  setText('trainingDetailsObjective', promptText);
+  setText('trainingDetailsTheme', trainingThemeForType(activeExercise.exercise_type || ''));
+  setText('trainingDetailsLevel', trainingDifficultyLabel(activeExercise.difficulty || 'medium'));
+  setText('trainingDetailsPriority', activeExercise.priority_score || 0);
+  setText('trainingCorrectMove', revealedTrainingSolution || activeExercise.solution_uci || '-');
+
+  const status = document.getElementById('trainingSolverStatus');
+  if (status) status.className = `queue-status ${activeExercise.resolved_at ? 'done' : 'queued'}`;
+  const difficulty = document.getElementById('trainingDifficultyBars');
+  if (difficulty) difficulty.innerHTML = trainingDifficultyBars(activeExercise.difficulty || 'medium');
+}
+
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value === null || typeof value === 'undefined' ? '' : value.toString();
+}
+
+function trainingMoveLabel(item) {
+  const moveNo = Math.floor((Number(item.ply || 1) - 1) / 2) + 1;
+  const level = trainingDifficultyLabel(item.difficulty || 'medium');
+  return `${moveNo}. ${level}`;
+}
+
+function trainingDifficultyLabel(value) {
+  const normalized = (value || '').toString().toLowerCase();
+  if (normalized === 'easy') return 'Básico';
+  if (normalized === 'hard') return 'Avanzado';
+  return 'Intermedio';
+}
+
+function trainingDifficultyBars(value) {
+  const normalized = (value || '').toString().toLowerCase();
+  const active = normalized === 'hard' ? 4 : normalized === 'easy' ? 1 : 2;
+  return Array.from({ length: 4 }, (_, index) => `<span class="${index < active ? 'active' : ''}"></span>`).join('');
+}
+
+function trainingThemeForType(type) {
+  const themes = {
+    find_best_move: 'Táctica - Mejor jugada',
+    avoid_blunder: 'Táctica - Precisión',
+    find_mate: 'Táctica - Mate',
+    spot_threat: 'Táctica - Defensa',
+    find_tactic: 'Táctica - Recurso',
+    defend_position: 'Defensa',
+    convert_advantage: 'Técnica - Conversión',
+    other: 'Patrón general',
+  };
+  return themes[type] || 'Entrenamiento personalizado';
+}
+
+async function loadTrainingOriginReview() {
+  if (!TRAINING_SOLVER_MODE || !activeExercise || !activeExercise.game_id) return;
+  const gameId = Number(activeExercise.game_id || 0);
+  if (!gameId || trainingOriginReviewLoadedFor === gameId) return;
+  trainingOriginReviewLoadedFor = gameId;
+  const target = document.getElementById('trainingOriginReviewGrid');
+  if (!target) return;
+  try {
+    const response = await fetch(`api/review.php?id=${gameId}`, { cache: 'no-store' });
+    const data = await response.json();
+    renderTrainingOriginReview(data);
+  } catch (error) {
+    target.innerHTML = `<div class="empty-state compact"><strong>No se pudo cargar la partida origen.</strong><span>${escapeHtml(error.message || 'Error inesperado.')}</span></div>`;
+  }
+}
+
+function renderTrainingOriginReview(data) {
+  const target = document.getElementById('trainingOriginReviewGrid');
+  if (!target) return;
+  if (!data || !data.ok) {
+    target.innerHTML = '<div class="empty-state compact"><strong>Sin resumen disponible.</strong><span>Abre la partida para revisar el análisis completo.</span></div>';
+    return;
+  }
+  const game = data.game || {};
+  const summary = data.summary || {};
+  const tags = (summary.smart_tags || []).slice(0, 2);
+  const gameId = Number(game.id || activeExercise.game_id || 0);
+  const labels = [
+    ['best', 'Mejor'],
+    ['excellent', 'Excelente'],
+    ['good', 'Buena'],
+    ['inaccuracy', 'Imprecisión'],
+    ['mistake', 'Error'],
+    ['blunder', 'Omisión grave']
+  ];
+  const counts = summary.counts || {};
+  target.innerHTML = `
+    <section class="home-review-card training-origin-card">
+      <div class="home-review-head">
+        <div>
+          <h2>Revisión de partida origen</h2>
+          <p>${escapeHtml(trainingReviewMeta(game))}</p>
+        </div>
+        ${gameId ? `<a class="home-review-piece" href="review.php?id=${gameId}" aria-label="Abrir revisión">♞</a>` : '<span class="home-review-piece">♞</span>'}
+      </div>
+      <div class="home-review-coach">
+        <div class="coach-avatar">♞</div>
+        <div>
+          <h3>${escapeHtml(summary.headline || 'Revisión de partida')}</h3>
+          <p>${escapeHtml(summary.comment || 'Vamos a revisar los momentos importantes.')}</p>
+          ${tags.length ? `<div class="smart-tag-list review-tags">${tags.map(smartTagChip).join('')}</div>` : ''}
+        </div>
+      </div>
+      <div class="review-kpis home-review-kpis">
+        <div><span>Accuracy</span><b>${formatTrainingReviewNumber(summary.accuracy)}</b></div>
+        <div><span>ACPL</span><b>${formatTrainingReviewNumber(summary.acpl)}</b></div>
+        <div><span>Jugadas</span><b>${Number(summary.moves || 0)}</b></div>
+      </div>
+    </section>
+    <section class="home-review-counts-card training-origin-card">
+      <h2>Resumen</h2>
+      <div class="review-counts home-review-counts">
+        ${labels.map(([key, label]) => `
+          <div class="review-count ${key}">
+            <span>${trainingReviewBucketIcon(key)}</span>
+            <strong>${Number(counts[key] || 0)}</strong>
+            <small>${escapeHtml(label)}</small>
+          </div>
+        `).join('')}
+      </div>
+    </section>
+  `;
+}
+
+function trainingReviewMeta(game) {
+  const white = game.white_player || 'Blancas';
+  const black = game.black_player || 'Negras';
+  const result = game.result_raw || '-';
+  const date = game.played_at || (game.imported_at || '').slice(0, 10) || '-';
+  return `${white} vs ${black} · ${result} · ${date}`;
+}
+
+function formatTrainingReviewNumber(value) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num.toFixed(1).replace(/\.0$/, '') : '--';
+}
+
+function trainingReviewBucketIcon(bucket) {
+  if (bucket === 'best') return '★';
+  if (bucket === 'excellent') return '↑';
+  if (bucket === 'good') return '✓';
+  if (bucket === 'inaccuracy') return '?!';
+  if (bucket === 'mistake') return '?';
+  if (bucket === 'blunder') return '??';
+  return '•';
 }
 
 function trainingPromptHtml(text) {
@@ -421,6 +597,19 @@ function renderTrainingBoard() {
   }
   board.innerHTML = html;
   board.dataset.orientation = trainingBoardOrientation;
+  renderTrainingBoardCoordinates();
+}
+
+function renderTrainingBoardCoordinates() {
+  const ranksEl = document.getElementById('trainingBoardRanks');
+  const filesEl = document.getElementById('trainingBoardFiles');
+  const frame = document.getElementById('trainingBoardFrame');
+  if (!ranksEl || !filesEl) return;
+  const ranks = trainingBoardOrientation === 'black' ? [1,2,3,4,5,6,7,8] : [8,7,6,5,4,3,2,1];
+  const files = trainingBoardOrientation === 'black' ? ['h','g','f','e','d','c','b','a'] : ['a','b','c','d','e','f','g','h'];
+  ranksEl.innerHTML = ranks.map(rank => `<span>${rank}</span>`).join('');
+  filesEl.innerHTML = files.map(file => `<span>${file}</span>`).join('');
+  if (frame) frame.dataset.orientation = trainingBoardOrientation;
 }
 
 function trainingPreviewGrid(grid) {
@@ -824,6 +1013,7 @@ async function submitTrainingMove() {
   showTrainingFeedback(data);
   if (data.solved || data.solution_uci) stopTrainingExerciseTimer();
   renderTrainingAttempts();
+  renderTrainingSolverChrome();
   renderTrainingBoard();
   updateTrainingDraft();
   renderTrainingStatsFromResponse(data);
@@ -850,10 +1040,14 @@ function showTrainingFeedback(data) {
 
 function renderTrainingAttempts() {
   const el = document.getElementById('trainingAttempts');
-  if (!el) return;
-  el.innerHTML = attemptedTrainingMoves.length
+  const history = document.getElementById('trainingAttemptHistory');
+  const count = document.getElementById('trainingAttemptsCount');
+  const html = attemptedTrainingMoves.length
     ? attemptedTrainingMoves.map((move, index) => `<span>${index + 1}. ${escapeHtml(move)}</span>`).join('')
     : '<span>Sin intentos todavía.</span>';
+  if (el) el.innerHTML = html;
+  if (history) history.innerHTML = html;
+  if (count) count.textContent = `${attemptedTrainingMoves.length}/5`;
 }
 
 function renderTrainingStatsFromResponse(data) {
@@ -919,6 +1113,11 @@ function showTrainingError(error) {
   if (el) {
     el.innerHTML = `<div class="empty-state"><strong>No se pudo cargar Entrenamiento.</strong><span>${escapeHtml(error.message || 'Error inesperado.')}</span></div>`;
   }
+  const feedback = document.getElementById('trainingFeedback');
+  if (feedback) {
+    feedback.textContent = error.message || 'No se pudo cargar Entrenamiento.';
+    feedback.className = 'training-feedback warn';
+  }
 }
 
 function escapeHtml(value) {
@@ -934,6 +1133,9 @@ loadTraining(1)
   .then(() => {
     if (Number.isInteger(TRAINING_INITIAL_EXERCISE_ID) && TRAINING_INITIAL_EXERCISE_ID > 0) {
       return openTrainingExercise(TRAINING_INITIAL_EXERCISE_ID);
+    }
+    if (TRAINING_SOLVER_MODE && trainingExercises.length) {
+      return openTrainingExercise(trainingExercises[0].id);
     }
     return null;
   })

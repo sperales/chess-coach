@@ -707,7 +707,7 @@ function openings_lab_related_exercises(int $userId, ?string $ecoCode, int $limi
     'resolved' => !empty($row['resolved_at']),
     'title' => trim((string)($row['white_player'] ?? '') . ' vs ' . (string)($row['black_player'] ?? '')),
     'played_at' => $row['played_at'] ?: null,
-    'training_url' => 'training.php?exercise_id=' . (int)$row['id'],
+    'training_url' => 'training-exercise.php?id=' . (int)$row['id'],
     'review_url' => 'review.php?id=' . (int)$row['game_id'] . '&ply=' . (int)$row['ply'],
   ], $st->fetchAll());
 }
