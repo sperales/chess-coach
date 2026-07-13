@@ -2662,6 +2662,60 @@ select {
     radial-gradient(circle at 88% 48%, rgba(44,192,88,.2), transparent 30%),
     linear-gradient(180deg,rgba(19,42,38,.96),rgba(13,22,27,.96))
 }
+.home-dna-panel {
+  margin-bottom:20px;
+  background:
+    radial-gradient(circle at 14% 20%, rgba(47,202,90,.16), transparent 34%),
+    linear-gradient(180deg,rgba(12,32,35,.96),rgba(7,16,20,.96))
+}
+.home-dna-layout,.home-dna-empty {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(320px,.75fr);
+  gap:20px;
+  align-items:center
+}
+.home-dna-empty {
+  grid-template-columns:minmax(0,1fr) auto
+}
+.home-dna-main h2,.home-dna-empty h2 {
+  margin:12px 0 8px
+}
+.home-dna-main p,.home-dna-empty p {
+  margin:0;
+  color:#dbe4ec;
+  line-height:1.55
+}
+.home-dna-actions {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:16px
+}
+.home-dna-kpis {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px
+}
+.home-dna-kpis div {
+  min-width:0;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:rgba(7,16,20,.42)
+}
+.home-dna-kpis span,.home-dna-kpis strong {
+  display:block
+}
+.home-dna-kpis span {
+  color:#a9b1ba;
+  font-size:13px
+}
+.home-dna-kpis strong {
+  margin-top:4px;
+  color:#fff;
+  font-size:17px;
+  line-height:1.25
+}
 .trainer-summary-content {
   display:grid;
   grid-template-columns:minmax(0,1fr) minmax(190px,250px);
@@ -3927,6 +3981,9 @@ select {
   .trainer-summary-content {
     grid-template-columns:minmax(0,1fr)
   }
+  .home-dna-layout,.home-dna-empty {
+    grid-template-columns:minmax(0,1fr)
+  }
   .trainer-accuracy-ring {
     width:180px;
     height:180px
@@ -4033,6 +4090,12 @@ select {
   }
   .trainer-mini-kpis {
     grid-template-columns:minmax(0,1fr)
+  }
+  .home-dna-kpis {
+    grid-template-columns:minmax(0,1fr)
+  }
+  .home-dna-empty .btn {
+    width:100%
   }
   .player-dna-dimensions,.player-dna-style,.player-dna-comparison > div,.player-dna-kpis {
     grid-template-columns:minmax(0,1fr)

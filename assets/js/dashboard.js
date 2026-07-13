@@ -1,5 +1,6 @@
 let games = [];
 let dashboardData = null;
+let playerDnaData = null;
 let latestReviewData = null;
 let currentPage = 1;
 let pagination = { page: 1, per_page: (window.CHESS_COACH_CONFIG && window.CHESS_COACH_CONFIG.gamesPerPage) || 50, total: 0, pages: 1 };
@@ -18,9 +19,10 @@ async function dashboardGet(url) {
 async function load(page = currentPage) {
   currentPage = Math.max(1, Number(page) || 1);
   const perPage = pagination.per_page || 50;
-  const [gamesPayload, trainerPayload] = await Promise.all([
+  const [gamesPayload, trainerPayload, playerDnaPayload] = await Promise.all([
     dashboardGet(`api/games.php?action=list&page=${currentPage}&per_page=${perPage}`),
-    dashboardGet('api/dashboard.php')
+    dashboardGet('api/dashboard.php'),
+    dashboardGet('api/player-dna.php?action=snapshot').catch(() => ({ ok: true, snapshot: null }))
   ]);
 
   games = gamesPayload.games || [];
@@ -28,6 +30,7 @@ async function load(page = currentPage) {
   currentPage = pagination.page || currentPage;
   stats = gamesPayload.stats || stats;
   dashboardData = trainerPayload;
+  playerDnaData = playerDnaPayload;
   latestReviewData = await loadLatestReview();
 
   render();
@@ -37,6 +40,7 @@ async function load(page = currentPage) {
 function render() {
   renderStats();
   renderTrainerDashboard();
+  renderHomePlayerDna();
   renderRows();
   renderPagination();
   renderPatterns();
@@ -285,6 +289,56 @@ function renderSummary() {
     ['Color', colorNote(overview)]
   ];
   kpis.innerHTML = values.map(item => `<div><span>${escapeHtml(item[0])}</span><b>${escapeHtml(item[1])}</b></div>`).join('');
+}
+
+function renderHomePlayerDna() {
+  const el = document.getElementById('homePlayerDna');
+  if (!el) return;
+  const snapshot = playerDnaData ? playerDnaData.snapshot : null;
+  if (!snapshot) {
+    el.innerHTML = `<div class="home-dna-empty">
+      <div>
+        <span class="trainer-state-badge insufficient">ADN pendiente</span>
+        <h2>ADN del jugador</h2>
+        <p>Genera tu primer snapshot para ver estilo, fortalezas, debilidades y evolución.</p>
+      </div>
+      <a class="btn secondary small" href="profile.php">Generar desde perfil</a>
+    </div>`;
+    return;
+  }
+
+  const strength = (snapshot.strengths || [])[0] || null;
+  const weakness = (snapshot.weaknesses || [])[0] || null;
+  const primary = (snapshot.recommendations && snapshot.recommendations.primary) || {};
+  el.innerHTML = `<div class="home-dna-layout">
+    <div class="home-dna-main">
+      <span class="trainer-state-badge ${confidenceClass(snapshot.confidence)}">Confianza ${escapeHtml(confidenceLabel(snapshot.confidence))}</span>
+      <h2>ADN del jugador</h2>
+      <p>${escapeHtml(snapshot.summary_text || 'Perfil generado con tus partidas analizadas.')}</p>
+      <div class="home-dna-actions">
+        <a class="btn small" href="player-dna.php">Ver ADN completo</a>
+        ${primary.url ? `<a class="btn secondary small" href="${escapeAttr(primary.url)}">${escapeHtml(primary.action_label || 'Ver foco')}</a>` : ''}
+      </div>
+    </div>
+    <div class="home-dna-kpis">
+      ${homeDnaItem('Perfil', snapshot.profile_label || '-')}
+      ${homeDnaItem('Fortaleza', strength ? strength.title : '-')}
+      ${homeDnaItem('Prioridad', weakness ? weakness.title : '-')}
+      ${homeDnaItem('Muestra', `${Number(snapshot.recent_games || 0)} recientes / ${Number(snapshot.analyzed_games || 0)} analizadas`)}
+    </div>
+  </div>`;
+}
+
+function homeDnaItem(label, value) {
+  return `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+}
+
+function confidenceLabel(value) {
+  return { low: 'baja', medium: 'media', high: 'alta' }[value] || value || 'baja';
+}
+
+function confidenceClass(value) {
+  return value === 'high' ? 'good' : (value === 'medium' ? 'improving' : 'insufficient');
 }
 
 function colorNote(overview) {
