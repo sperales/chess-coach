@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## v1.3.1 - Openings Lab UI polish
+
+### Changed
+
+- Removed the disabled `Etiquetas` entry from the hamburger menu.
+- Collapsed the Openings Lab `Vista` filter panel by default.
+- Added a `Vista` filter toggle for expanding and collapsing the panel.
+- Added spacing between the Openings Lab `Vista` panel and the lower content layout.
+- Bumped `config/version.php` to `1.3.1`.
+- Updated the service worker cache name to `chess-coach-v1.3.1`.
+
+### Database
+
+- No SQL migration required.
+
 ## v1.3.0 - Player DNA
 
 ### Added

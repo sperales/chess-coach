@@ -77,7 +77,6 @@ function coach_menu_items(): array {
     ['training.php', '◎', 'Entrenamiento', false],
     ['openings-lab.php', '▤', 'Lab de Aperturas', false],
     ['player-dna.php', '◈', 'ADN del jugador', false],
-    ['#', '◇', 'Etiquetas', true],
     ['profile.php', '⚙', 'Ajustes / Mi Perfil', false],
   ];
 }

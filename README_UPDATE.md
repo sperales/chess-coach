@@ -1,3 +1,35 @@
+# Chess Coach v1.3.1 Update Notes
+
+## Release type
+
+Small UI polish release.
+
+## Changes
+
+- Removed the disabled `Etiquetas` option from the hamburger menu.
+- Changed the Openings Lab `Vista` panel so its filters are collapsed by default.
+- Added a toggle button to expand or collapse the Openings Lab `Vista` filters.
+- Added spacing between the Openings Lab `Vista` panel and the lower `Aperturas detectadas` / `Detalle` layout.
+- Bumped `config/version.php` to `1.3.1`.
+- Updated the service worker cache to `chess-coach-v1.3.1`.
+
+## SQL migration
+
+No SQL migration required.
+
+## Verification
+
+- Run PHP syntax checks.
+- Run JavaScript syntax checks for `assets/js/openings_lab.js`.
+- Confirm the hamburger menu no longer shows `Etiquetas`.
+- Confirm `openings-lab.php` shows the `Vista` panel collapsed by default.
+- Confirm the `Mostrar filtros` / `Ocultar filtros` toggle expands and collapses the filters.
+- Confirm there is visible spacing between `Vista` and the lower Openings Lab blocks.
+- Confirm `config/version.php` contains `1.3.1`.
+- Confirm `service-worker.js` uses `chess-coach-v1.3.1`.
+
+---
+
 # Chess Coach v1.3.0 Update Notes
 
 ## Release type

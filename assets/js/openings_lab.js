@@ -324,6 +324,16 @@ document.getElementById('openingsMinGames')?.addEventListener('change', () => {
   loadOpenings();
 });
 
+document.getElementById('openingsViewToggle')?.addEventListener('click', () => {
+  const panel = document.getElementById('openingsViewPanel');
+  const button = document.getElementById('openingsViewToggle');
+  const label = button?.querySelector('.openings-view-toggle-label');
+  if (!panel || !button || !label) return;
+  const isCollapsed = panel.classList.toggle('is-collapsed');
+  button.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+  label.textContent = isCollapsed ? 'Mostrar filtros' : 'Ocultar filtros';
+});
+
 loadOpenings().catch(() => {
   const el = document.getElementById('openingsList');
   if (el) {

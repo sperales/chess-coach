@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v1.3.0**
+Current stable baseline: **v1.3.1**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,9 +32,9 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v1.3.0
+## Current baseline — v1.3.1
 
-v1.3.0 introduces Player DNA as the current stable baseline.
+v1.3.1 keeps Player DNA as the current stable baseline and adds small Openings Lab UI polish.
 
 It creates a personal chess profile from analyzed games, stores Player DNA snapshots, shows a dedicated `player-dna.php` page, exposes manual recalculation from profile, adds `ADN del jugador` to the menu and includes a compact Player DNA summary on the home dashboard.
 
