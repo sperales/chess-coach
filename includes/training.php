@@ -770,7 +770,7 @@ function training_public_exercise(array $item, bool $includeSolution = false): a
 function training_list_exercises(int $userId, string $type = 'recommended', string $status = 'pending', int $page = 1, int $perPage = 20): array {
   $types = training_exercise_types();
   if (!isset($types[$type])) $type = 'recommended';
-  if (!in_array($status, ['pending', 'resolved', 'all'], true)) $status = 'pending';
+  if (!in_array($status, ['pending', 'failed', 'resolved', 'all'], true)) $status = 'pending';
 
   $perPage = max(1, min(100, $perPage));
   $where = ['te.user_id=?', 'te.status="active"'];
@@ -782,6 +782,8 @@ function training_list_exercises(int $userId, string $type = 'recommended', stri
   }
   if ($status === 'pending') {
     $where[] = '(te.resolved_at IS NULL OR (te.next_due_at IS NOT NULL AND te.next_due_at <= NOW()))';
+  } elseif ($status === 'failed') {
+    $where[] = 'te.last_training_result="failed"';
   } elseif ($status === 'resolved') {
     $where[] = 'te.resolved_at IS NOT NULL AND (te.next_due_at IS NULL OR te.next_due_at > NOW())';
   }

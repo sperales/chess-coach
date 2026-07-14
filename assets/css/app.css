@@ -201,17 +201,20 @@ a {
   width:24px;
   height:24px;
   border-radius:50%;
-  background:#07351f;
-  color:#35f26f;
+  background:#29343c;
+  color:#a5b0b8;
   font-weight:900
 }
 .streak-pill strong {
   font-size:18px;
   line-height:1
 }
-.streak-pill small {
-  color:#94a3ad;
-  font-size:11px
+.streak-pill.trained {
+  border-color:rgba(60,210,102,.32)
+}
+.streak-pill.trained span {
+  background:#07351f;
+  color:#35f26f
 }
 .streak-pill.achieved {
   border-color:rgba(60,210,102,.42);
@@ -3676,12 +3679,50 @@ select {
 }
 .training-card {
   display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(190px,260px);
+  grid-template-columns:minmax(0,1fr) minmax(120px,150px) minmax(190px,260px);
   gap:16px;
   padding:14px;
   border:1px solid var(--line);
   border-radius:12px;
   background:rgba(7,16,20,.42)
+}
+.training-card-featured {
+  grid-template-columns:minmax(170px,220px) minmax(0,1fr) minmax(190px,250px);
+  padding:18px;
+  border-color:rgba(60,210,102,.55);
+  background:linear-gradient(135deg,rgba(7,53,31,.5),rgba(7,16,20,.58));
+  box-shadow:inset 0 0 0 1px rgba(60,210,102,.08)
+}
+.training-card-preview {
+  display:grid;
+  align-content:start;
+  gap:10px
+}
+.training-card-preview > span {
+  color:#35f26f;
+  font-size:12px;
+  font-weight:900;
+  text-transform:uppercase
+}
+.training-card-board {
+  display:grid;
+  grid-template-columns:repeat(8,minmax(0,1fr));
+  grid-template-rows:repeat(8,minmax(0,1fr));
+  width:min(100%,210px);
+  aspect-ratio:1/1;
+  overflow:hidden;
+  border:1px solid #3f5b48;
+  border-radius:8px;
+  box-shadow:0 10px 28px #0007
+}
+.training-card-board .sq {
+  min-width:0;
+  min-height:0
+}
+.training-card-board .board-piece {
+  width:94%;
+  height:94%;
+  filter:drop-shadow(0 1px 1px #0007)
 }
 .training-card-main {
   display:grid;
@@ -3731,6 +3772,28 @@ select {
 }
 .training-card-side small {
   color:#a9b1ba
+}
+.training-card-difficulty {
+  display:grid;
+  align-content:center;
+  justify-items:start;
+  gap:7px;
+  min-width:0;
+  padding:12px;
+  border-left:1px solid var(--line)
+}
+.training-card-difficulty small {
+  color:#a9b1ba;
+  font-size:12px
+}
+.training-card-difficulty strong {
+  color:#fff
+}
+.training-card-featured .training-card-side .training-card-difficulty {
+  width:100%;
+  padding:0 0 12px;
+  border-left:0;
+  border-bottom:1px solid var(--line)
 }
 .training-tags {
   margin-top:2px
@@ -4325,6 +4388,18 @@ select {
   .training-card {
     grid-template-columns:minmax(0,1fr)
   }
+  .training-card-featured {
+    grid-template-columns:minmax(150px,210px) minmax(0,1fr)
+  }
+  .training-card-featured .training-card-side {
+    grid-column:1/-1
+  }
+  .training-card-difficulty {
+    padding:10px 0;
+    border-left:0;
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line)
+  }
   .training-solver-grid {
     grid-template-columns:minmax(0,1fr)
   }
@@ -4350,6 +4425,18 @@ select {
   }
 }
 @media(max-width:560px) {
+  .training-card-featured {
+    grid-template-columns:minmax(0,1fr)
+  }
+  .training-card-preview {
+    justify-items:center
+  }
+  .training-card-preview > span {
+    justify-self:start
+  }
+  .training-card-board {
+    width:min(100%,280px)
+  }
   .opening-card {
     grid-template-columns:minmax(0,1fr)
   }
@@ -4411,9 +4498,6 @@ select {
   }
   .home-training-grid {
     grid-template-columns:minmax(0,1fr)
-  }
-  .streak-pill small {
-    display:none
   }
   .openings-view-head-actions {
     width:100%;
