@@ -3988,7 +3988,45 @@ select {
   border-color:#69c44e;
   background:#14251a
 }
+.training-goals-card form {
+  display:grid;
+  gap:16px
+}
+.training-goal-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:14px;
+  margin:14px 0 4px
+}
+.training-goal-field {
+  display:grid;
+  gap:8px;
+  color:#dce5ec;
+  font-weight:800
+}
+.training-goal-field span {
+  font-size:14px;
+  color:#c7d2dc
+}
+.training-goal-summary {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px 16px;
+  background:#0a171c;
+  color:#dce5ec
+}
+.training-goal-summary span {
+  color:var(--muted)
+}
 @media(max-width:980px) {
+  .training-goal-summary {
+    align-items:flex-start;
+    flex-direction:column
+  }
   .openings-layout {
     grid-template-columns:minmax(0,1fr)
   }
