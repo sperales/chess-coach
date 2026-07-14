@@ -2,6 +2,7 @@ let trainingExercises = [];
 let trainingTypes = {};
 let trainingTypeCounts = {};
 let trainingStats = {};
+let trainingExperience = {};
 let activeTrainingSession = null;
 let trainingPagination = { page: 1, per_page: (window.CHESS_COACH_CONFIG && window.CHESS_COACH_CONFIG.trainingPerPage) || 20, total: 0, pages: 1 };
 let currentTrainingPage = 1;
@@ -58,12 +59,13 @@ async function loadTraining(page = currentTrainingPage) {
   trainingTypes = data.types || {};
   trainingTypeCounts = data.type_counts || {};
   trainingStats = data.stats || {};
+  trainingExperience = data.experience || {};
   activeTrainingSession = data.session || null;
   trainingPagination = data.pagination || trainingPagination;
   currentTrainingPage = trainingPagination.page || currentTrainingPage;
   renderTrainingTypeOptions();
   renderTrainingStats();
-  renderTrainingSession();
+  renderTrainingExperience();
   renderTrainingExercises();
   renderTrainingPagination();
   renderTrainingStatus();
@@ -101,6 +103,139 @@ function renderTrainingStats() {
     ['clock', 'Tiempo medio', avgSeconds === null ? '--' : `${avgSeconds}s`, 'por intento'],
   ];
   el.innerHTML = cards.map(card => `<article class="metric-card ${card[0]}"><div class="metric-icon">${trainingIconFor(card[0])}</div><div><span>${escapeHtml(card[1])}</span><b>${escapeHtml(card[2])}</b><small>${escapeHtml(card[3])}</small></div></article>`).join('');
+}
+
+function renderTrainingExperience() {
+  const panel = document.getElementById('trainingExperiencePanel');
+  if (!panel) {
+    renderTrainingSession();
+    return;
+  }
+
+  let head = panel.querySelector('.panel-head');
+  if (!head) {
+    head = document.createElement('div');
+    head.className = 'panel-head';
+    head.innerHTML = '<h2>Progreso de entrenamiento</h2><div class="review-board-actions"></div>';
+    panel.insertBefore(head, panel.firstChild);
+  }
+  const title = head.querySelector('h2');
+  const actions = head.querySelector('.review-board-actions');
+  const summary = document.getElementById('trainingExperienceSummary') || document.getElementById('trainingSessionSummary');
+  const grid = document.getElementById('trainingExperienceGrid') || document.getElementById('trainingSessionKpis');
+  const repeatList = document.getElementById('trainingRepeatList');
+  const settings = trainingExperience.settings || {};
+  const today = trainingExperience.today || {};
+  const week = trainingExperience.week || {};
+  const streak = trainingExperience.streak || {};
+  const repeatQueue = trainingExperience.repeat_queue || {};
+  const goalMode = settings.daily_goal_mode || 'exercises';
+  const goalText = trainingDailyGoalText(settings);
+  const todayProgress = trainingTodayProgressText(today, settings);
+  const weeklyProgress = `${Number(week.training_days || 0)}/${Number(week.training_days_goal || settings.weekly_training_days_goal || 4)} días · ${Number(week.exercises || 0)}/${Number(week.exercise_goal || settings.weekly_exercise_goal || 25)} ejercicios`;
+  const todayPercent = trainingProgressPercent(trainingTodayProgressBar(today, settings));
+  const weeklyPercent = trainingProgressPercent(trainingWeeklyProgressBar(week, settings));
+  const dueCount = Number(repeatQueue.due_count || 0);
+
+  if (title) title.textContent = panel.classList.contains('training-solve-experience') ? 'Progreso de entrenamiento' : 'Entrenamiento de hoy';
+  if (actions) actions.innerHTML = '<a class="btn secondary small" href="profile.php">Cambiar objetivo</a>';
+  if (summary) {
+    summary.className = 'training-experience-summary';
+    summary.innerHTML = `<span>${today.trained ? 'Ya has entrenado hoy.' : 'Todavía no has entrenado hoy.'}</span><strong>${today.goal_met ? 'Objetivo diario cumplido.' : `Objetivo diario: ${escapeHtml(goalText)}.`}</strong>`;
+  }
+  if (grid) {
+    grid.className = 'training-experience-grid';
+    grid.innerHTML = [
+      ['streak', 'Racha', `${Number(streak.days || 0)} día(s)`, streak.today_goal_met ? 'objetivo cumplido hoy' : 'cumple el objetivo para mantenerla', null],
+      ['target', 'Hoy', todayProgress, trainingGoalModeLabel(goalMode), todayPercent],
+      ['calendar', 'Semana', weeklyProgress, 'progreso semanal', weeklyPercent],
+      ['repeat', 'Para repetir', dueCount, dueCount === 1 ? 'ejercicio pendiente' : 'ejercicios pendientes', null],
+    ].map(([kind, label, value, detail, percent]) => `
+      <article class="training-experience-card ${escapeAttr(kind)}">
+        <span>${trainingExperienceIcon(kind)}</span>
+        <div>
+          <small>${escapeHtml(label)}</small>
+          <strong>${escapeHtml(value)}</strong>
+          ${percent === null ? '' : trainingInlineProgress(percent)}
+          <em>${escapeHtml(detail)}</em>
+        </div>
+      </article>
+    `).join('');
+  }
+  if (repeatList) {
+    const sample = repeatQueue.sample || [];
+    repeatList.innerHTML = sample.length
+      ? `<strong>Repeticiones recomendadas</strong><div>${sample.map(trainingRepeatItem).join('')}</div>`
+      : '<strong>Repeticiones recomendadas</strong><p class="muted">No hay ejercicios vencidos para repetir ahora mismo.</p>';
+  }
+}
+
+function trainingProgressPercent(percent) {
+  return Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
+}
+
+function trainingInlineProgress(percent) {
+  const value = trainingProgressPercent(percent);
+  return `<div class="training-inline-progress" aria-label="Progreso ${value}%"><span style="width:${value}%"></span></div>`;
+}
+
+function trainingTodayProgressBar(today, settings) {
+  const mode = settings.daily_goal_mode || 'exercises';
+  const exercises = Number(today.exercises || 0);
+  const minutes = Number(today.duration_minutes || 0);
+  const exerciseGoal = Math.max(1, Number(settings.daily_exercise_goal || 5));
+  const minuteGoal = Math.max(1, Number(settings.daily_minutes_goal || 10));
+  if (mode === 'minutes') return (minutes / minuteGoal) * 100;
+  if (mode === 'both') return Math.min((exercises / exerciseGoal) * 100, (minutes / minuteGoal) * 100);
+  return (exercises / exerciseGoal) * 100;
+}
+
+function trainingWeeklyProgressBar(week, settings) {
+  const dayGoal = Math.max(1, Number(week.training_days_goal || settings.weekly_training_days_goal || 4));
+  const exerciseGoal = Math.max(1, Number(week.exercise_goal || settings.weekly_exercise_goal || 25));
+  const dayProgress = Number(week.training_days || 0) / dayGoal;
+  const exerciseProgress = Number(week.exercises || 0) / exerciseGoal;
+  return Math.max(dayProgress, exerciseProgress) * 100;
+}
+
+function trainingDailyGoalText(settings) {
+  const mode = settings.daily_goal_mode || 'exercises';
+  const exercises = Number(settings.daily_exercise_goal || 5);
+  const minutes = Number(settings.daily_minutes_goal || 10);
+  if (mode === 'minutes') return `${minutes} minuto(s)`;
+  if (mode === 'both') return `${exercises} ejercicio(s) y ${minutes} minuto(s)`;
+  return `${exercises} ejercicio(s)`;
+}
+
+function trainingTodayProgressText(today, settings) {
+  const mode = settings.daily_goal_mode || 'exercises';
+  const exercises = Number(today.exercises || 0);
+  const minutes = Number(today.duration_minutes || 0);
+  if (mode === 'minutes') return `${minutes}/${Number(settings.daily_minutes_goal || 10)} min`;
+  if (mode === 'both') return `${exercises}/${Number(settings.daily_exercise_goal || 5)} ej · ${minutes}/${Number(settings.daily_minutes_goal || 10)} min`;
+  return `${exercises}/${Number(settings.daily_exercise_goal || 5)} ejercicios`;
+}
+
+function trainingGoalModeLabel(mode) {
+  if (mode === 'minutes') return 'objetivo por tiempo';
+  if (mode === 'both') return 'objetivo combinado';
+  return 'objetivo por ejercicios';
+}
+
+function trainingExperienceIcon(kind) {
+  if (kind === 'streak') return '↗';
+  if (kind === 'target') return '◎';
+  if (kind === 'calendar') return '▦';
+  return '↻';
+}
+
+function trainingRepeatItem(item) {
+  return `
+    <a class="training-repeat-item" href="training-exercise.php?id=${Number(item.id || 0)}">
+      <span>${escapeHtml(item.type_label || 'Ejercicio')}</span>
+      <small>${escapeHtml(item.reason_label || 'Pendiente de repetir')}</small>
+    </a>
+  `;
 }
 
 function renderTrainingSession() {
@@ -275,7 +410,7 @@ async function startTrainingSession() {
   const data = await response.json();
   if (!data.ok) throw new Error(data.error || 'No se pudo iniciar la sesión.');
   activeTrainingSession = data.session || null;
-  renderTrainingSession();
+  renderTrainingExperience();
   return activeTrainingSession;
 }
 
@@ -1017,7 +1152,7 @@ async function submitTrainingMove() {
   renderTrainingBoard();
   updateTrainingDraft();
   renderTrainingStatsFromResponse(data);
-  renderTrainingSession();
+  renderTrainingExperience();
   if (data.solved || data.solution_uci) {
     await loadTraining(currentTrainingPage);
   }
@@ -1053,8 +1188,10 @@ function renderTrainingAttempts() {
 function renderTrainingStatsFromResponse(data) {
   if (!data.stats) return;
   trainingStats = data.stats;
+  if (data.experience) trainingExperience = data.experience;
   if (data.session) activeTrainingSession = data.session;
   renderTrainingStats();
+  renderTrainingExperience();
 }
 
 async function skipTrainingExercise() {
@@ -1068,7 +1205,7 @@ async function skipTrainingExercise() {
     const data = await response.json();
     if (data.ok && data.session) activeTrainingSession = data.session;
     if (data.stats) renderTrainingStatsFromResponse(data);
-    renderTrainingSession();
+    renderTrainingExperience();
     await loadTraining(currentTrainingPage);
   }
   closeTrainingSolver();

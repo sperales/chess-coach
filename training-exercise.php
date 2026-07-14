@@ -40,7 +40,7 @@ $pieceSetAssetPath = piece_set_asset_path($u['piece_set'] ?? null);
     <div class="hero-piece">◎</div>
   </section>
 
-  <section class="panel training-session-panel training-solve-session">
+  <section class="panel training-experience-panel training-solve-experience" id="trainingExperiencePanel">
     <div class="training-session-summary" id="trainingSessionSummary">
       <span>Preparando sesión...</span>
       <strong>Tu entrenamiento quedará medido automáticamente.</strong>

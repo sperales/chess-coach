@@ -33,18 +33,19 @@ $pieceSetAssetPath = piece_set_asset_path($u['piece_set'] ?? null);
 
   <section class="metric-grid" id="trainingStats"></section>
 
-  <section class="panel training-session-panel" id="trainingSessionPanel">
+  <section class="panel training-experience-panel" id="trainingExperiencePanel">
     <div class="panel-head">
-      <h2>Sesión de entrenamiento</h2>
+      <h2>Entrenamiento de hoy</h2>
       <div class="review-board-actions">
-        <button class="secondary small" type="button" id="trainingNewSessionBtn" onclick="newTrainingSession()">Nueva sesión</button>
+        <a class="btn secondary small" href="profile.php">Cambiar objetivo</a>
       </div>
     </div>
-    <div class="training-session-summary" id="trainingSessionSummary">
-      <span>Preparando sesión...</span>
-      <strong>Tu entrenamiento quedará medido automáticamente.</strong>
+    <div class="training-experience-summary" id="trainingExperienceSummary">
+      <span>Preparando entrenamiento...</span>
+      <strong>Chess Coach medirá tu progreso automáticamente.</strong>
     </div>
-    <div class="trainer-mini-kpis training-session-kpis" id="trainingSessionKpis"></div>
+    <div class="training-experience-grid" id="trainingExperienceGrid"></div>
+    <div class="training-repeat-list" id="trainingRepeatList"></div>
   </section>
 
   <section class="panel games-filter-panel">
