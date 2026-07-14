@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## v1.4.1 - Header streak polish
+
+### Changed
+
+- Changed the header streak indicator to gray until valid training activity is recorded for the current day.
+- Changed the indicator to green after training, independently of whether the full daily goal has been completed.
+- Removed the redundant `racha` text from the compact header indicator.
+- Bumped `config/version.php` to `1.4.1`.
+- Updated the service worker cache name to `chess-coach-v1.4.1`.
+
+### Database
+
+- No SQL migration required.
+
 ## v1.4.0 - Training Experience
 
 ### Added

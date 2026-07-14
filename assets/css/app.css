@@ -201,17 +201,20 @@ a {
   width:24px;
   height:24px;
   border-radius:50%;
-  background:#07351f;
-  color:#35f26f;
+  background:#29343c;
+  color:#a5b0b8;
   font-weight:900
 }
 .streak-pill strong {
   font-size:18px;
   line-height:1
 }
-.streak-pill small {
-  color:#94a3ad;
-  font-size:11px
+.streak-pill.trained {
+  border-color:rgba(60,210,102,.32)
+}
+.streak-pill.trained span {
+  background:#07351f;
+  color:#35f26f
 }
 .streak-pill.achieved {
   border-color:rgba(60,210,102,.42);
@@ -4411,9 +4414,6 @@ select {
   }
   .home-training-grid {
     grid-template-columns:minmax(0,1fr)
-  }
-  .streak-pill small {
-    display:none
   }
   .openings-view-head-actions {
     width:100%;

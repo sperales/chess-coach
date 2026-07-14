@@ -87,13 +87,15 @@ function header_training_streak_html(int $userId): string {
   try {
     require_once __DIR__ . '/training.php';
     $experience = training_experience_summary($userId);
+    $today = $experience['today'] ?? [];
     $streak = $experience['streak'] ?? [];
     $days = (int)($streak['days'] ?? 0);
+    $trainedToday = !empty($today['trained']);
     $todayMet = !empty($streak['today_goal_met']);
     $title = $todayMet
       ? 'Objetivo diario cumplido. Racha activa.'
       : ($days > 0 ? 'Completa el objetivo de hoy para mantener la racha.' : 'Completa tu objetivo diario para iniciar una racha.');
-    return '<a class="streak-pill'.($todayMet ? ' achieved' : '').'" href="training.php" title="'.e($title).'"><span aria-hidden="true">↗</span><strong>'.$days.'</strong><small>racha</small></a>';
+    return '<a class="streak-pill'.($trainedToday ? ' trained' : '').($todayMet ? ' achieved' : '').'" href="training.php" title="'.e($title).'" aria-label="Racha de entrenamiento: '.$days.' día(s)"><span aria-hidden="true">↗</span><strong>'.$days.'</strong></a>';
   } catch (Throwable $e) {
     return '';
   }

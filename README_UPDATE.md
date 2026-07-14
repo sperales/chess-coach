@@ -1,3 +1,32 @@
+# Chess Coach v1.4.1 Update Notes
+
+## Release type
+
+Small Training Experience UI polish release.
+
+## Changes
+
+- Changed the header streak indicator to remain gray until the user trains that day.
+- Changed the header streak indicator to green as soon as valid daily training activity is recorded.
+- Removed the redundant `racha` label from the compact header indicator.
+- Bumped `config/version.php` to `1.4.1`.
+- Updated the service worker cache to `chess-coach-v1.4.1`.
+
+## SQL migration
+
+No SQL migration required.
+
+## Verification
+
+- Confirm the header streak indicator is gray before training that day.
+- Complete or fail one exercise and confirm the indicator turns green.
+- Confirm skipping an exercise does not turn the indicator green.
+- Confirm the compact indicator only shows the icon and streak day count.
+- Confirm `config/version.php` contains `1.4.1`.
+- Confirm `service-worker.js` uses `chess-coach-v1.4.1`.
+
+---
+
 # Chess Coach v1.4.0 Update Notes
 
 ## Release type
