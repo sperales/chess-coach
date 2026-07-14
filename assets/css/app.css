@@ -183,6 +183,40 @@ a {
   font-size:12px;
   color:#6f7b84
 }
+.streak-pill {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  min-height:42px;
+  padding:7px 10px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#10191f;
+  color:#dce5ec;
+  text-decoration:none
+}
+.streak-pill span {
+  display:grid;
+  place-items:center;
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  background:#07351f;
+  color:#35f26f;
+  font-weight:900
+}
+.streak-pill strong {
+  font-size:18px;
+  line-height:1
+}
+.streak-pill small {
+  color:#94a3ad;
+  font-size:11px
+}
+.streak-pill.achieved {
+  border-color:rgba(60,210,102,.42);
+  box-shadow:inset 0 0 0 1px rgba(60,210,102,.08)
+}
 .hamb {
   border:1px solid var(--line);
   background:#10191f;
@@ -2662,6 +2696,109 @@ select {
     radial-gradient(circle at 88% 48%, rgba(44,192,88,.2), transparent 30%),
     linear-gradient(180deg,rgba(19,42,38,.96),rgba(13,22,27,.96))
 }
+.home-training-panel {
+  display:grid;
+  gap:16px;
+  margin-bottom:20px;
+  background:
+    radial-gradient(circle at 8% 20%, rgba(34,197,94,.16), transparent 34%),
+    radial-gradient(circle at 94% 28%, rgba(37,99,235,.12), transparent 30%),
+    linear-gradient(180deg,rgba(10,30,32,.96),rgba(7,16,20,.96))
+}
+.home-training-head {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px
+}
+.home-training-head h2 {
+  margin:10px 0 6px
+}
+.home-training-head p {
+  margin:0;
+  color:#dbe4ec
+}
+.home-training-grid {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px
+}
+.home-training-card {
+  display:flex;
+  align-items:center;
+  gap:14px;
+  min-width:0;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(7,16,20,.48)
+}
+.home-training-card > span {
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:#07351f;
+  color:#35f26f;
+  font-weight:900;
+  font-size:20px
+}
+.home-training-card div {
+  min-width:0;
+  flex:1
+}
+.home-training-card small,
+.home-training-card em {
+  display:block;
+  color:#a9b1ba;
+  font-style:normal
+}
+.home-training-card strong {
+  display:block;
+  margin-top:7px;
+  color:#fff;
+  font-size:19px;
+  line-height:1.2
+}
+.home-training-progress {
+  height:7px;
+  margin:8px 0 0;
+  overflow:hidden;
+  border-radius:999px;
+  background:#1b2930;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)
+}
+.home-training-progress i {
+  display:block;
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg,#22c55e,#84cc16)
+}
+.home-milestone-strip {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:12px 14px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;
+  background:rgba(5,14,18,.48)
+}
+.home-milestone-strip strong,
+.home-milestone-strip span {
+  display:block
+}
+.home-milestone-strip span {
+  color:#78d95e;
+  font-weight:800
+}
+.home-milestone-strip p {
+  margin:0;
+  color:#cbd5df;
+  text-align:right
+}
 .home-dna-panel {
   margin-bottom:20px;
   background:
@@ -4151,6 +4288,17 @@ select {
   .trainer-summary-content {
     grid-template-columns:minmax(0,1fr)
   }
+  .home-training-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+  .home-training-head,
+  .home-milestone-strip {
+    align-items:flex-start;
+    flex-direction:column
+  }
+  .home-milestone-strip p {
+    text-align:left
+  }
   .home-dna-layout,.home-dna-empty {
     grid-template-columns:minmax(0,1fr)
   }
@@ -4260,6 +4408,12 @@ select {
   }
   .trainer-mini-kpis {
     grid-template-columns:minmax(0,1fr)
+  }
+  .home-training-grid {
+    grid-template-columns:minmax(0,1fr)
+  }
+  .streak-pill small {
+    display:none
   }
   .openings-view-head-actions {
     width:100%;

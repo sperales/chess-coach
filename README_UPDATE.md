@@ -1,3 +1,44 @@
+# Chess Coach v1.4.0 Update Notes
+
+## Release type
+
+Training Experience release.
+
+## Changes
+
+- Added configurable training goals from profile for daily exercises, daily minutes and weekly targets.
+- Replaced visible manual session management with automatic training progress focused on today, the week, streaks and goals.
+- Added smart repetition state so failed, skipped and older solved exercises can return at controlled intervals.
+- Added clearer exercise feedback explaining whether the attempt counts for today's goal and when the exercise may return.
+- Added a compact Training Experience block to the home dashboard after `Resumen de rendimiento`.
+- Added a compact streak indicator to the header.
+- Added lightweight professional milestones based on consistency and training progress.
+- Bumped `config/version.php` to `1.4.0`.
+- Updated the service worker cache to `chess-coach-v1.4.0`.
+
+## SQL migration
+
+Run the v1.4.0 migration before using the Training Experience features:
+
+```text
+sql/migrations/024_changes_1.4.0.sql
+```
+
+## Verification
+
+- Run PHP syntax checks.
+- Run JavaScript syntax checks for `assets/js/dashboard.js` and `assets/js/training.js`.
+- Confirm `profile.php` saves the training objective.
+- Confirm `training.php` and `training-exercise.php` show progress without manual session controls.
+- Confirm skipped exercises do not count as daily training activity.
+- Confirm failed exercises become eligible for repetition later.
+- Confirm the home dashboard shows the Training Experience block after `Resumen de rendimiento`.
+- Confirm the header shows the compact streak indicator.
+- Confirm `config/version.php` contains `1.4.0`.
+- Confirm `service-worker.js` uses `chess-coach-v1.4.0`.
+
+---
+
 # Chess Coach v1.3.1 Update Notes
 
 ## Release type

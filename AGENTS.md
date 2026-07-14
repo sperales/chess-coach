@@ -10,7 +10,7 @@ This file defines the working rules for Codex and other coding agents. Follow th
 
 ## Current stable baseline
 
-Current stable version: **1.3.1**
+Current stable version: **1.4.0**
 
 The app is deployed manually to shared hosting and must remain compatible with that environment.
 
@@ -435,8 +435,9 @@ The current likely roadmap direction is:
 - v1.1.x — Training Center (completed and being hardened)
 - v1.2.0 — Openings Lab (completed)
 - v1.3.0 — Player DNA (completed)
-- v1.4.0 — Chess.com Sync
-- v1.5.0+ — Coach AI
+- v1.4.0 — Training Experience (completed)
+- v1.5.0 — AI Coach MVP
+- v1.7.0 — Automation / Chess.com Sync
 
 Use `ROADMAP.md` for details.
 

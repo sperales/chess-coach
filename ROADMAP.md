@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v1.3.1**
+Current stable baseline: **v1.4.0**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,13 +32,13 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v1.3.1
+## Current baseline — v1.4.0
 
-v1.3.1 keeps Player DNA as the current stable baseline and adds small Openings Lab UI polish.
+v1.4.0 makes Training Experience the current stable baseline.
 
-It creates a personal chess profile from analyzed games, stores Player DNA snapshots, shows a dedicated `player-dna.php` page, exposes manual recalculation from profile, adds `ADN del jugador` to the menu and includes a compact Player DNA summary on the home dashboard.
+It keeps Player DNA, Openings Lab and the Training Center as stable capabilities, and adds configurable training goals, automatic daily/weekly progress, a compact streak indicator, smart repetition scheduling, clearer exercise feedback and lightweight professional milestones.
 
-Smart Tags, the Personal Trainer Dashboard, Training Center exercise generation, the interactive solver, hints, session tracking, selectable board piece sets, Openings Lab and Player DNA are now part of the stable product baseline.
+Smart Tags, the Personal Trainer Dashboard, Training Center exercise generation, the interactive solver, hints, internal session tracking, selectable board piece sets, Openings Lab, Player DNA and Training Experience are now part of the stable product baseline.
 
 The v1.1.6 hardening pass tightened documentation, encoding checks, ownership checks, CSRF coverage, output safety and shared API request helpers before v1.2.0 Openings Lab.
 
@@ -483,6 +483,8 @@ Compare:
 ---
 
 ## v1.4.0 — Training Experience
+
+Status: completed in v1.4.0.
 
 ### Goal
 

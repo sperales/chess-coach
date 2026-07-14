@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/analysis_queue.php';
+require_once __DIR__ . '/training.php';
 
 function dashboard_accuracy_from_acpl(float $acpl): float {
   if ($acpl <= 0) return 100.0;
@@ -591,6 +592,7 @@ function dashboard_payload(int $userId, string $username): array {
     'training_focus' => $focus,
     'strengths' => dashboard_strengths($recent['summary'], $tags),
     'summary_text' => dashboard_recent_summary_text($recent['summary'], $focus),
+    'training_experience' => training_experience_summary($userId),
     'recommended_reviews' => dashboard_recommended_reviews($recent['games'], $tags),
     'patterns' => $tags,
     'recent_games' => $recent['games'],
