@@ -14,11 +14,11 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v1.4.0**
+Current stable baseline: **v1.4.1**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
-v1.4.0 is the current stable Training Experience baseline with goals, streaks, smart repetition, exercise feedback and lightweight milestones.
+v1.4.1 is the current stable Training Experience baseline with goals, streaks, smart repetition, exercise feedback, lightweight milestones and improved exercise discovery.
 
 ---
 
