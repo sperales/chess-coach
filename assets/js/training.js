@@ -146,17 +146,17 @@ function renderTrainingExperience() {
   if (grid) {
     grid.className = 'training-experience-grid';
     grid.innerHTML = [
-      ['streak', 'Racha', `${Number(streak.days || 0)} día(s)`, streak.today_goal_met ? 'objetivo cumplido hoy' : 'cumple el objetivo para mantenerla', null],
-      ['target', 'Hoy', todayProgress, trainingGoalModeLabel(goalMode), todayPercent],
-      ['calendar', 'Semana', weeklyProgress, 'progreso semanal', weeklyPercent],
-      ['repeat', 'Para repetir', dueCount, dueCount === 1 ? 'ejercicio pendiente' : 'ejercicios pendientes', null],
-    ].map(([kind, label, value, detail, percent]) => `
-      <article class="training-experience-card ${escapeAttr(kind)}">
+      { kind: 'streak', label: 'Racha', value: `${Number(streak.days || 0)} día(s)`, detail: streak.today_goal_met ? 'objetivo cumplido hoy' : 'cumple el objetivo para mantenerla' },
+      { kind: 'target', label: 'Hoy', value: todayProgress, detail: trainingGoalModeLabel(goalMode), percent: todayPercent, compact: true },
+      { kind: 'calendar', label: 'Semana', value: weeklyProgress, detail: 'progreso semanal', percent: weeklyPercent, compact: true },
+      { kind: 'repeat', label: 'Para repetir', value: dueCount, detail: dueCount === 1 ? 'ejercicio pendiente' : 'ejercicios pendientes' },
+    ].map(({ kind, label, value, detail, percent = null, compact = false }) => `
+      <article class="training-experience-card ${escapeAttr(kind)}${compact ? ' compact-progress' : ''}">
         <span>${trainingExperienceIcon(kind)}</span>
         <div>
           <small>${escapeHtml(label)}</small>
-          <strong>${escapeHtml(value)}</strong>
           ${percent === null ? '' : trainingInlineProgress(percent)}
+          <strong>${escapeHtml(value)}</strong>
           <em>${escapeHtml(detail)}</em>
         </div>
       </article>
@@ -293,19 +293,21 @@ function renderTrainingExercises() {
 
 function trainingExerciseCard(item) {
   const source = item.source_side === 'opponent' ? 'Rival' : 'Propia';
-  const status = item.resolved_at ? 'Resuelto' : 'Pendiente';
+  const isRepeatDue = !!item.is_repeat_due;
+  const isTrainable = trainingExerciseIsTrainable(item);
+  const status = isRepeatDue ? 'Repetir' : item.resolved_at ? 'Resuelto' : 'Pendiente';
   const moveNo = Math.floor((Number(item.ply || 1) - 1) / 2) + 1;
   const side = Number(item.ply || 1) % 2 === 1 ? 'blancas' : 'negras';
   const gameTitle = `${item.white_player || 'Blancas'} vs ${item.black_player || 'Negras'}`;
   const date = item.played_at || '';
-  const primaryAction = item.resolved_at
-    ? `<a class="btn secondary small" href="${escapeAttr(item.review_url || '#')}">Ver partida</a>`
-    : `<a class="btn secondary small" href="training-exercise.php?id=${Number(item.id || 0)}">Entrenar</a>`;
+  const primaryAction = isTrainable
+    ? `<a class="btn secondary small" href="training-exercise.php?id=${Number(item.id || 0)}">Entrenar</a>`
+    : `<a class="btn secondary small" href="${escapeAttr(item.review_url || '#')}">Ver partida</a>`;
   return `
     <article class="training-card">
       <div class="training-card-main">
         <div class="training-card-title">
-          <span class="queue-status ${item.resolved_at ? 'done' : 'queued'}">${escapeHtml(status)}</span>
+          <span class="queue-status ${isTrainable ? 'queued' : 'done'}">${escapeHtml(status)}</span>
           <h3>${escapeHtml(item.type_label || item.exercise_type || 'Ejercicio')}</h3>
         </div>
         <p>${escapeHtml(item.prompt || 'Encuentra la mejor jugada.')}</p>
@@ -314,6 +316,7 @@ function trainingExerciseCard(item) {
           <span>Movimiento ${moveNo} · ${escapeHtml(side)}</span>
           <span>${escapeHtml(item.difficulty || 'medium')}</span>
           <span>Prioridad ${Number(item.priority_score || 0)}</span>
+          ${isRepeatDue && item.repetition_reason ? `<span>${escapeHtml(item.repetition_reason)}</span>` : ''}
         </div>
         ${trainingTags(item)}
       </div>
@@ -331,6 +334,10 @@ function trainingTags(item) {
   const tags = (item.smart_tags || []).slice(0, 5);
   if (!tags.length) return '';
   return `<div class="smart-tag-list training-tags">${tags.map(smartTagChip).join('')}</div>`;
+}
+
+function trainingExerciseIsTrainable(item) {
+  return !!(item && (item.is_trainable || !item.resolved_at));
 }
 
 function renderTrainingPagination() {
@@ -536,7 +543,9 @@ function renderTrainingSolverChrome() {
   setText('trainingSolverHeroSide', `Juegan ${side}`);
   const sideObjective = document.getElementById('trainingSideObjective');
   if (sideObjective) sideObjective.innerHTML = trainingPromptHtml(promptText);
-  setText('trainingSolverStatus', activeExercise.resolved_at ? 'Resuelto' : 'Pendiente');
+  const isRepeatDue = !!activeExercise.is_repeat_due;
+  const isTrainable = trainingExerciseIsTrainable(activeExercise);
+  setText('trainingSolverStatus', isRepeatDue ? 'Repetir' : activeExercise.resolved_at ? 'Resuelto' : 'Pendiente');
   setText('trainingPriorityValue', activeExercise.priority_score || 0);
   setText('trainingSourceGame', gameTitle);
   setText('trainingSourceDate', activeExercise.played_at || activeExercise.result_raw || '');
@@ -548,7 +557,7 @@ function renderTrainingSolverChrome() {
   setText('trainingCorrectMove', revealedTrainingSolution || activeExercise.solution_uci || '-');
 
   const status = document.getElementById('trainingSolverStatus');
-  if (status) status.className = `queue-status ${activeExercise.resolved_at ? 'done' : 'queued'}`;
+  if (status) status.className = `queue-status ${isTrainable ? 'queued' : 'done'}`;
   const difficulty = document.getElementById('trainingDifficultyBars');
   if (difficulty) difficulty.innerHTML = trainingDifficultyBars(activeExercise.difficulty || 'medium');
 }
@@ -787,7 +796,7 @@ function trainingBoardGridFromPlacement(placement) {
 function trainingLegalTargetSet(grid) {
   const targets = new Set();
   if (!activeExercise || selectedTrainingSquare.length !== 2) return targets;
-  if (attemptedTrainingMoves.length >= 5 || activeExercise.resolved_at) return targets;
+  if (trainingExerciseFinished()) return targets;
 
   const state = trainingFenState(activeExercise.fen);
   const from = trainingSquareToGrid(selectedTrainingSquare);
@@ -1025,7 +1034,7 @@ function trainingPieceImageHtml(pieceCode) {
 }
 
 function selectTrainingSquare(square) {
-  if (!activeExercise || attemptedTrainingMoves.length >= 5 || activeExercise.resolved_at) return;
+  if (!activeExercise || trainingExerciseFinished()) return;
   if (!selectedTrainingSquare) {
     selectedTrainingSquare = square;
   } else if (selectedTrainingSquare === square) {
@@ -1086,7 +1095,7 @@ function clearTrainingSelection() {
 }
 
 function trainingExerciseFinished() {
-  return !!(activeExercise && (activeExercise.resolved_at || revealedTrainingSolution || attemptedTrainingMoves.length >= 5));
+  return !!(activeExercise && (!trainingExerciseIsTrainable(activeExercise) || revealedTrainingSolution || attemptedTrainingMoves.length >= 5));
 }
 
 function showTrainingHint() {
@@ -1114,7 +1123,7 @@ function renderTrainingControls() {
 async function openNextTrainingExercise() {
   await loadTraining(currentTrainingPage);
   const currentId = activeExercise ? Number(activeExercise.id || 0) : 0;
-  const next = trainingExercises.find(item => !item.resolved_at && Number(item.id || 0) !== currentId);
+  const next = trainingExercises.find(item => trainingExerciseIsTrainable(item) && Number(item.id || 0) !== currentId);
   if (!next) {
     closeTrainingSolver();
     return;
@@ -1123,7 +1132,7 @@ async function openNextTrainingExercise() {
 }
 
 async function submitTrainingMove() {
-  if (!activeExercise || selectedTrainingSquare.length < 4 || attemptedTrainingMoves.length >= 5) return;
+  if (!activeExercise || selectedTrainingSquare.length < 4 || trainingExerciseFinished()) return;
   let move = selectedTrainingSquare.toLowerCase();
   if (trainingMoveNeedsPromotion(move)) {
     move += document.getElementById('trainingPromotionPiece')?.value || 'q';

@@ -194,11 +194,30 @@ function training_feedback_failure(string $type): string {
   };
 }
 
+function training_attempt_feedback(array $exercise, bool $isSolved, bool $isExhausted, int $attemptsCount, bool $usedHint): string {
+  $type = (string)($exercise['exercise_type'] ?? 'find_best_move');
+  if ($isSolved) {
+    $base = $exercise['feedback_success'] ?? training_feedback_success($type);
+    $interval = training_repetition_interval_days('solved', $attemptsCount, $usedHint);
+    if ($interval >= 30) {
+      return $base . ' Cuenta para tu objetivo de hoy. Si hace falta, lo repetiremos más adelante.';
+    }
+    return $base . ' Cuenta para tu objetivo de hoy. Lo programo para repasarlo dentro de unas semanas.';
+  }
+
+  if ($isExhausted) {
+    return 'Has agotado los intentos. Este ejercicio queda marcado para repetirlo pronto y reforzar la idea.';
+  }
+
+  return $exercise['feedback_failure'] ?? training_feedback_failure($type);
+}
+
 function training_stats_for_user(int $userId): array {
   $st = db()->prepare('SELECT
       COUNT(*) AS total,
-      SUM(status="active" AND resolved_at IS NULL) AS pending,
+      SUM(status="active" AND (resolved_at IS NULL OR (next_due_at IS NOT NULL AND next_due_at <= NOW()))) AS pending,
       SUM(resolved_at IS NOT NULL) AS resolved,
+      SUM(status="active" AND resolved_at IS NOT NULL AND next_due_at IS NOT NULL AND next_due_at <= NOW()) AS due_repeats,
       SUM(status="archived") AS archived
     FROM training_exercises
     WHERE user_id=?');
@@ -220,6 +239,7 @@ function training_stats_for_user(int $userId): array {
     'total' => (int)($row['total'] ?? 0),
     'pending' => (int)($row['pending'] ?? 0),
     'resolved' => (int)($row['resolved'] ?? 0),
+    'due_repeats' => (int)($row['due_repeats'] ?? 0),
     'archived' => (int)($row['archived'] ?? 0),
     'attempts' => [
       'total' => (int)($attemptRow['total_attempts'] ?? 0),
@@ -627,7 +647,7 @@ function training_end_session(int $userId, int $sessionId, string $status = 'com
 
 function training_type_counts_for_user(int $userId): array {
   $st = db()->prepare('SELECT exercise_type, COUNT(*) AS total,
-                              SUM(status="active" AND resolved_at IS NULL) AS pending,
+                              SUM(status="active" AND (resolved_at IS NULL OR (next_due_at IS NOT NULL AND next_due_at <= NOW()))) AS pending,
                               SUM(resolved_at IS NOT NULL) AS resolved
                        FROM training_exercises
                        WHERE user_id=?
@@ -665,11 +685,25 @@ function training_exercise_tags_for_ids(array $exerciseIds, int $userId): array 
   return $byExercise;
 }
 
+function training_exercise_is_repeat_due(array $item): bool {
+  return !empty($item['resolved_at'])
+    && !empty($item['next_due_at'])
+    && strtotime((string)$item['next_due_at']) <= time();
+}
+
+function training_mark_exercise_training_state(array $item): array {
+  $isRepeatDue = training_exercise_is_repeat_due($item);
+  $item['repeat_count'] = (int)($item['repeat_count'] ?? 0);
+  $item['is_repeat_due'] = $isRepeatDue;
+  $item['is_trainable'] = empty($item['resolved_at']) || $isRepeatDue;
+  $item['repetition_reason'] = training_repetition_due_label($item['last_training_result'] ?? null, $item['last_completed_at'] ?? null);
+  return $item;
+}
+
 function training_public_exercise(array $item, bool $includeSolution = false): array {
   $solution = strtolower(trim((string)($item['solution_uci'] ?? '')));
   $item['hint_from'] = preg_match('/^[a-h][1-8]/', $solution) ? substr($solution, 0, 2) : null;
-  $item['repeat_count'] = (int)($item['repeat_count'] ?? 0);
-  $item['repetition_reason'] = training_repetition_due_label($item['last_training_result'] ?? null, $item['last_completed_at'] ?? null);
+  $item = training_mark_exercise_training_state($item);
   if (!$includeSolution) {
     unset($item['solution_uci'], $item['solution_san']);
   }
@@ -690,9 +724,9 @@ function training_list_exercises(int $userId, string $type = 'recommended', stri
     $params[] = $type;
   }
   if ($status === 'pending') {
-    $where[] = 'te.resolved_at IS NULL';
+    $where[] = '(te.resolved_at IS NULL OR (te.next_due_at IS NOT NULL AND te.next_due_at <= NOW()))';
   } elseif ($status === 'resolved') {
-    $where[] = 'te.resolved_at IS NOT NULL';
+    $where[] = 'te.resolved_at IS NOT NULL AND (te.next_due_at IS NULL OR te.next_due_at > NOW())';
   }
 
   $whereSql = implode(' AND ', $where);
@@ -704,8 +738,8 @@ function training_list_exercises(int $userId, string $type = 'recommended', stri
   $offset = ($page - 1) * $perPage;
 
   $order = $type === 'recommended'
-    ? 'te.resolved_at IS NOT NULL ASC, te.priority_score DESC, te.last_attempt_at IS NULL DESC, te.created_at DESC, te.id DESC'
-    : 'te.resolved_at IS NOT NULL ASC, te.created_at DESC, te.priority_score DESC, te.id DESC';
+    ? 'CASE WHEN te.resolved_at IS NOT NULL AND te.next_due_at IS NOT NULL AND te.next_due_at <= NOW() THEN 0 WHEN te.resolved_at IS NULL THEN 1 ELSE 2 END ASC, te.priority_score DESC, te.last_attempt_at IS NULL DESC, te.created_at DESC, te.id DESC'
+    : 'CASE WHEN te.resolved_at IS NOT NULL AND te.next_due_at IS NOT NULL AND te.next_due_at <= NOW() THEN 0 WHEN te.resolved_at IS NULL THEN 1 ELSE 2 END ASC, te.created_at DESC, te.priority_score DESC, te.id DESC';
 
   $sql = "SELECT te.*, g.white_player, g.black_player, g.result_raw, g.user_result, g.played_at,
                  g.event_name, g.site, g.eco_code, g.opening_name,
@@ -742,7 +776,9 @@ function training_list_exercises(int $userId, string $type = 'recommended', stri
     $item['type_label'] = training_exercise_type_label((string)$item['exercise_type']);
     $item['review_url'] = 'review.php?id=' . (int)$item['game_id'];
     $item['smart_tags'] = $tagsByExercise[(int)$item['id']] ?? [];
-    $item = training_public_exercise($item, !empty($item['resolved_at']));
+    $item = training_mark_exercise_training_state($item);
+    $includeSolution = !empty($item['resolved_at']) && empty($item['is_repeat_due']);
+    $item = training_public_exercise($item, $includeSolution);
   }
   unset($item);
 
@@ -796,7 +832,7 @@ function training_exercise_for_user(int $exerciseId, int $userId): ?array {
   $item['type_label'] = training_exercise_type_label((string)$item['exercise_type']);
   $item['review_url'] = 'review.php?id=' . (int)$item['game_id'];
   $item['smart_tags'] = $tagsByExercise[(int)$item['id']] ?? [];
-  return $item;
+  return training_mark_exercise_training_state($item);
 }
 
 function training_sanitize_attempted_moves(array $moves): array {
@@ -812,7 +848,14 @@ function training_sanitize_attempted_moves(array $moves): array {
 function training_record_attempt(int $userId, int $exerciseId, array $attemptedMoves, int $durationMs = 0, bool $usedHint = false, ?int $sessionId = null): array {
   $exercise = training_exercise_for_user($exerciseId, $userId);
   if (!$exercise) return ['ok' => false, 'error' => 'Ejercicio no encontrado.'];
-  if (!empty($exercise['resolved_at'])) return ['ok' => true, 'already_resolved' => true, 'exercise' => $exercise];
+  if (!empty($exercise['resolved_at']) && empty($exercise['is_repeat_due'])) {
+    return [
+      'ok' => true,
+      'already_resolved' => true,
+      'exercise' => $exercise,
+      'feedback' => 'Este ejercicio ya está completado y todavía no toca repetirlo.',
+    ];
+  }
 
   $moves = training_sanitize_attempted_moves($attemptedMoves);
   if (!$moves) return ['ok' => false, 'error' => 'No se ha enviado ninguna jugada válida.'];
@@ -864,7 +907,7 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
     'attempts_count' => count($moves),
     'remaining_attempts' => max(0, 5 - count($moves)),
     'solution_uci' => $isSolved || $isExhausted ? $solution : null,
-    'feedback' => $isSolved ? ($exercise['feedback_success'] ?? training_feedback_success((string)$exercise['exercise_type'])) : ($exercise['feedback_failure'] ?? training_feedback_failure((string)$exercise['exercise_type'])),
+    'feedback' => training_attempt_feedback($exercise, $isSolved, $isExhausted, count($moves), $usedHint),
     'exercise' => $updated,
     'stats' => training_stats_for_user($userId),
     'experience' => training_experience_summary($userId),
@@ -907,6 +950,7 @@ function training_record_skip(int $userId, int $exerciseId, ?int $sessionId = nu
   return [
     'ok' => true,
     'skipped' => true,
+    'feedback' => 'Ejercicio saltado. No cuenta para el objetivo de hoy y volverá más adelante con prioridad baja.',
     'exercise' => $updated ?: $exercise,
     'stats' => training_stats_for_user($userId),
     'experience' => training_experience_summary($userId),
