@@ -176,6 +176,7 @@ function renderTrainerDashboard() {
   renderFocus();
   renderState();
   renderSummary();
+  renderHomeTrainingExperience();
   renderStrengths();
 }
 
@@ -289,6 +290,124 @@ function renderSummary() {
     ['Color', colorNote(overview)]
   ];
   kpis.innerHTML = values.map(item => `<div><span>${escapeHtml(item[0])}</span><b>${escapeHtml(item[1])}</b></div>`).join('');
+}
+
+function renderHomeTrainingExperience() {
+  const el = document.getElementById('homeTrainingExperience');
+  if (!el) return;
+  const experience = (dashboardData && dashboardData.training_experience) || {};
+  const settings = experience.settings || {};
+  const today = experience.today || {};
+  const week = experience.week || {};
+  const streak = experience.streak || {};
+  const repeatQueue = experience.repeat_queue || {};
+  const milestones = experience.milestones || {};
+  const todayPercent = homeTrainingProgressPercent(homeTrainingTodayProgress(today, settings));
+  const weekPercent = homeTrainingProgressPercent(homeTrainingWeekProgress(week, settings));
+  const streakDays = Number(streak.days || 0);
+  const dueCount = Number(repeatQueue.due_count || 0);
+  const nextMilestone = milestones.next || null;
+  const achieved = Number(milestones.achieved_count || 0);
+  const total = Number(milestones.total || 0);
+  el.innerHTML = `
+    <div class="home-training-head">
+      <div>
+        <span class="trainer-state-badge ${today.goal_met ? 'good' : (today.trained ? 'improving' : 'stable')}">Training Experience</span>
+        <h2>Tu entrenamiento</h2>
+        <p>${escapeHtml(homeTrainingMessage(today, streak))}</p>
+      </div>
+      <a class="btn secondary small" href="training.php">Entrenar ahora</a>
+    </div>
+    <div class="home-training-grid">
+      ${homeTrainingCard('racha', 'Racha', `${streakDays} día(s)`, streak.today_goal_met ? 'objetivo cumplido hoy' : 'objetivo diario pendiente', streakDays ? Math.min(100, streakDays * 20) : 0)}
+      ${homeTrainingCard('hoy', 'Hoy', homeTrainingTodayText(today, settings), homeTrainingGoalLabel(settings), todayPercent)}
+      ${homeTrainingCard('semana', 'Semana', homeTrainingWeekText(week, settings), 'progreso semanal', weekPercent)}
+      ${homeTrainingCard('repasos', 'Para repetir', dueCount ? `${dueCount}` : 'Al día', dueCount === 1 ? 'ejercicio vencido' : (dueCount > 1 ? 'ejercicios vencidos' : 'sin repeticiones vencidas'), dueCount ? 0 : 100)}
+    </div>
+    <div class="home-milestone-strip">
+      <div>
+        <strong>Hitos</strong>
+        <span>${total ? `${achieved}/${total} conseguidos` : 'Sin hitos todavía'}</span>
+      </div>
+      ${nextMilestone ? `<p><b>Siguiente:</b> ${escapeHtml(nextMilestone.label || '')}. ${escapeHtml(nextMilestone.description || '')}</p>` : '<p>Todos los hitos iniciales están completados. Mantén el hábito.</p>'}
+    </div>
+  `;
+}
+
+function homeTrainingMessage(today, streak) {
+  if (today.goal_met) return 'Objetivo diario completado. Buen trabajo: la racha sigue viva.';
+  if (today.trained) return 'Ya has entrenado hoy. Un poco más y conviertes actividad en objetivo cumplido.';
+  if (Number(streak.days || 0) > 0) return 'Tu racha espera el objetivo de hoy. Un bloque corto mantiene la continuidad.';
+  return 'Empieza con un ejercicio. La continuidad nace de sesiones pequeñas y sostenibles.';
+}
+
+function homeTrainingCard(kind, label, value, detail, percent) {
+  const pct = homeTrainingProgressPercent(percent);
+  return `<article class="home-training-card ${escapeAttr(kind)}">
+    <span>${homeTrainingIcon(kind)}</span>
+    <div>
+      <small>${escapeHtml(label)}</small>
+      <div class="home-training-progress" aria-label="Progreso ${pct}%"><i style="width:${pct}%"></i></div>
+      <strong>${escapeHtml(value)}</strong>
+      <em>${escapeHtml(detail)}</em>
+    </div>
+  </article>`;
+}
+
+function homeTrainingIcon(kind) {
+  if (kind === 'racha') return '↗';
+  if (kind === 'hoy') return '◎';
+  if (kind === 'semana') return '▦';
+  return '↺';
+}
+
+function homeTrainingGoalLabel(settings) {
+  const mode = settings.daily_goal_mode || 'exercises';
+  if (mode === 'minutes') return 'objetivo por tiempo';
+  if (mode === 'both') return 'ejercicios y tiempo';
+  return 'objetivo por ejercicios';
+}
+
+function homeTrainingTodayText(today, settings) {
+  const mode = settings.daily_goal_mode || 'exercises';
+  const exercises = Number(today.exercises || 0);
+  const minutes = Number(today.duration_minutes || 0);
+  const exerciseGoal = Number(settings.daily_exercise_goal || 5);
+  const minuteGoal = Number(settings.daily_minutes_goal || 10);
+  if (mode === 'minutes') return `${minutes}/${minuteGoal} min`;
+  if (mode === 'both') return `${exercises}/${exerciseGoal} ej. · ${minutes}/${minuteGoal} min`;
+  return `${exercises}/${exerciseGoal} ejercicios`;
+}
+
+function homeTrainingWeekText(week, settings) {
+  const days = Number(week.training_days || 0);
+  const dayGoal = Number(week.training_days_goal || settings.weekly_training_days_goal || 4);
+  const exercises = Number(week.exercises || 0);
+  const exerciseGoal = Number(week.exercise_goal || settings.weekly_exercise_goal || 25);
+  return `${days}/${dayGoal} días · ${exercises}/${exerciseGoal} ej.`;
+}
+
+function homeTrainingTodayProgress(today, settings) {
+  const mode = settings.daily_goal_mode || 'exercises';
+  const exercises = Number(today.exercises || 0);
+  const minutes = Number(today.duration_minutes || 0);
+  const exerciseGoal = Math.max(1, Number(settings.daily_exercise_goal || 5));
+  const minuteGoal = Math.max(1, Number(settings.daily_minutes_goal || 10));
+  if (mode === 'minutes') return (minutes / minuteGoal) * 100;
+  if (mode === 'both') return Math.min((exercises / exerciseGoal) * 100, (minutes / minuteGoal) * 100);
+  return (exercises / exerciseGoal) * 100;
+}
+
+function homeTrainingWeekProgress(week, settings) {
+  const dayGoal = Math.max(1, Number(week.training_days_goal || settings.weekly_training_days_goal || 4));
+  const exerciseGoal = Math.max(1, Number(week.exercise_goal || settings.weekly_exercise_goal || 25));
+  const dayProgress = Number(week.training_days || 0) / dayGoal;
+  const exerciseProgress = Number(week.exercises || 0) / exerciseGoal;
+  return Math.min(dayProgress, exerciseProgress) * 100;
+}
+
+function homeTrainingProgressPercent(percent) {
+  return Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
 }
 
 function renderHomePlayerDna() {

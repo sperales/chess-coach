@@ -53,6 +53,10 @@ $greeting = $hour < 12 ? 'Buenos días' : ($hour < 21 ? 'Buenas tardes' : 'Buena
     </div>
   </section>
 
+  <section class="panel home-training-panel" id="homeTrainingExperience">
+    <p class="muted">Cargando progreso de entrenamiento...</p>
+  </section>
+
   <section class="panel home-dna-panel" id="homePlayerDna">
     <p class="muted">Cargando ADN del jugador...</p>
   </section>

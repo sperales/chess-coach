@@ -83,6 +83,21 @@ function coach_menu_items(): array {
 function current_user_elo(): int {
   return (int)(app_config()['default_user_elo'] ?? 1426);
 }
+function header_training_streak_html(int $userId): string {
+  try {
+    require_once __DIR__ . '/training.php';
+    $experience = training_experience_summary($userId);
+    $streak = $experience['streak'] ?? [];
+    $days = (int)($streak['days'] ?? 0);
+    $todayMet = !empty($streak['today_goal_met']);
+    $title = $todayMet
+      ? 'Objetivo diario cumplido. Racha activa.'
+      : ($days > 0 ? 'Completa el objetivo de hoy para mantener la racha.' : 'Completa tu objetivo diario para iniciar una racha.');
+    return '<a class="streak-pill'.($todayMet ? ' achieved' : '').'" href="training.php" title="'.e($title).'"><span aria-hidden="true">↗</span><strong>'.$days.'</strong><small>racha</small></a>';
+  } catch (Throwable $e) {
+    return '';
+  }
+}
 function header_bar(string $title='Chess Coach'): void {
   $v = e(app_config()['app_version']);
   $user = current_user();
@@ -93,6 +108,7 @@ function header_bar(string $title='Chess Coach'): void {
   echo '<a class="brand" href="app.php" aria-label="Ir al inicio"><img class="brand-lockup" src="assets/icons/logo-approved.png" alt="Chess Coach"></a>';
   echo '<div class="spacer"></div>';
   echo '<div class="user-pill"><div class="avatar">'.e($initial).'</div><div><strong>'.$displayName.'</strong><small>ELO '.$elo.'</small></div></div>';
+  if (!empty($user['id'])) echo header_training_streak_html((int)$user['id']);
   echo '<span class="version">v'.$v.'</span>';
   echo '<button class="hamb" id="menuBtn" aria-label="Menú" aria-controls="userMenu" aria-expanded="false">☰</button>';
   echo '<nav class="menu" id="userMenu">';

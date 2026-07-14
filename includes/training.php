@@ -483,19 +483,76 @@ function training_due_repetition_sample(int $userId, int $limit = 2): array {
   return $items;
 }
 
+function training_experience_milestones(int $userId, array $today, array $week, array $streak, int $dueCount): array {
+  $activityRows = training_activity_rows($userId, 365);
+  $activityDays = count($activityRows);
+  $streakDays = (int)($streak['days'] ?? 0);
+  $items = [
+    [
+      'code' => 'first_training_day',
+      'label' => 'Primer día entrenado',
+      'description' => 'Ya has empezado a construir el hábito.',
+      'achieved' => $activityDays > 0,
+    ],
+    [
+      'code' => 'today_goal',
+      'label' => 'Objetivo diario',
+      'description' => 'Completa tu objetivo de hoy para mantener la racha.',
+      'achieved' => !empty($today['goal_met']),
+    ],
+    [
+      'code' => 'weekly_goal',
+      'label' => 'Semana en marcha',
+      'description' => 'Cumple días y ejercicios semanales sin obsesionarte con el marcador.',
+      'achieved' => !empty($week['training_days_goal_met']) && !empty($week['exercise_goal_met']),
+    ],
+    [
+      'code' => 'three_day_streak',
+      'label' => 'Tres días de constancia',
+      'description' => 'Tres objetivos diarios seguidos.',
+      'achieved' => $streakDays >= 3,
+    ],
+    [
+      'code' => 'repetitions_clear',
+      'label' => 'Repasos al día',
+      'description' => 'No tienes ejercicios vencidos para repetir ahora mismo.',
+      'achieved' => $activityDays > 0 && $dueCount === 0,
+    ],
+  ];
+
+  $achieved = array_values(array_filter($items, fn($item) => !empty($item['achieved'])));
+  $next = null;
+  foreach ($items as $item) {
+    if (empty($item['achieved'])) {
+      $next = $item;
+      break;
+    }
+  }
+
+  return [
+    'total' => count($items),
+    'achieved_count' => count($achieved),
+    'items' => $items,
+    'next' => $next,
+  ];
+}
+
 function training_experience_summary(int $userId): array {
   $settings = training_goal_settings_for_user($userId);
   $today = training_today_progress($userId, $settings);
   $week = training_week_progress($userId, $settings);
+  $streak = training_goal_streak($userId, $settings);
+  $dueCount = training_due_repetition_count($userId);
   return [
     'settings' => $settings,
     'today' => $today,
     'week' => $week,
-    'streak' => training_goal_streak($userId, $settings),
+    'streak' => $streak,
     'repeat_queue' => [
-      'due_count' => training_due_repetition_count($userId),
+      'due_count' => $dueCount,
       'sample' => training_due_repetition_sample($userId, 2),
     ],
+    'milestones' => training_experience_milestones($userId, $today, $week, $streak, $dueCount),
   ];
 }
 

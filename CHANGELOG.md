@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## v1.4.0 - Training Experience
+
+### Added
+
+- Added training goal settings for daily exercises, daily minutes and weekly targets.
+- Added automatic Training Experience progress for today, week, streaks and repeat queue.
+- Added smart repetition scheduling for solved, failed and skipped exercises.
+- Added clearer exercise feedback after solving, exhausting attempts or skipping.
+- Added a compact Training Experience block to the home dashboard.
+- Added a compact header streak indicator.
+- Added lightweight professional milestones for consistency and progress.
+
+### Changed
+
+- Removed visible manual session management from the training UI in favor of automatic progress.
+- Prioritized due repeat exercises in the pending/recommended training lists.
+- Bumped `config/version.php` to `1.4.0`.
+- Updated the service worker cache name to `chess-coach-v1.4.0`.
+
+### Database
+
+- SQL migration required: `sql/migrations/024_changes_1.4.0.sql`.
+
 ## v1.3.1 - Openings Lab UI polish
 
 ### Changed
