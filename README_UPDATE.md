@@ -8,6 +8,7 @@ Small Training Experience UI polish release.
 
 - Made the home milestone summary expandable to show every available milestone.
 - Added clear `Conseguido` and `Pendiente` states to the milestone detail list.
+- Reused the Openings Lab toggle arrow and aligned it vertically in the milestone control.
 - Fixed vertical text alignment inside the highlighted training exercise metadata chips.
 - Bumped `config/version.php` to `1.4.2`.
 - Updated the service worker cache to `chess-coach-v1.4.2`.

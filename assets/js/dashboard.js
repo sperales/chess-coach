@@ -332,7 +332,7 @@ function renderHomeTrainingExperience() {
           <span>${total ? `${achieved}/${total} conseguidos` : 'Sin hitos todavía'}</span>
         </div>
         ${nextMilestone ? `<p><b>Siguiente:</b> ${escapeHtml(nextMilestone.label || '')}. ${escapeHtml(nextMilestone.description || '')}</p>` : '<p>Todos los hitos iniciales están completados. Mantén el hábito.</p>'}
-        <i aria-hidden="true">⌄</i>
+        <span class="openings-view-toggle-icon home-milestone-toggle-icon" aria-hidden="true">▾</span>
       </button>
       <div class="home-milestone-details" id="homeMilestoneDetails" hidden>
         ${homeMilestoneItems(milestoneItems)}

@@ -6,6 +6,7 @@
 
 - Made the home milestone summary expandable with a complete achieved/pending milestone list.
 - Improved responsive milestone detail presentation.
+- Reused and aligned the Openings Lab toggle arrow in the milestone control.
 - Fixed vertical alignment in highlighted training exercise metadata chips.
 - Bumped `config/version.php` to `1.4.2`.
 - Updated the service worker cache name to `chess-coach-v1.4.2`.
