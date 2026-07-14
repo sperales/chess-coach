@@ -307,6 +307,7 @@ function renderHomeTrainingExperience() {
   const streakDays = Number(streak.days || 0);
   const dueCount = Number(repeatQueue.due_count || 0);
   const nextMilestone = milestones.next || null;
+  const milestoneItems = Array.isArray(milestones.items) ? milestones.items : [];
   const achieved = Number(milestones.achieved_count || 0);
   const total = Number(milestones.total || 0);
   el.innerHTML = `
@@ -325,13 +326,44 @@ function renderHomeTrainingExperience() {
       ${homeTrainingCard('repasos', 'Para repetir', dueCount ? `${dueCount}` : 'Al día', dueCount === 1 ? 'ejercicio vencido' : (dueCount > 1 ? 'ejercicios vencidos' : 'sin repeticiones vencidas'), dueCount ? 0 : 100)}
     </div>
     <div class="home-milestone-strip">
-      <div>
-        <strong>Hitos</strong>
-        <span>${total ? `${achieved}/${total} conseguidos` : 'Sin hitos todavía'}</span>
+      <button class="home-milestone-toggle" type="button" aria-expanded="false" aria-controls="homeMilestoneDetails" onclick="toggleHomeMilestones(this)">
+        <div>
+          <strong>Hitos</strong>
+          <span>${total ? `${achieved}/${total} conseguidos` : 'Sin hitos todavía'}</span>
+        </div>
+        ${nextMilestone ? `<p><b>Siguiente:</b> ${escapeHtml(nextMilestone.label || '')}. ${escapeHtml(nextMilestone.description || '')}</p>` : '<p>Todos los hitos iniciales están completados. Mantén el hábito.</p>'}
+        <i aria-hidden="true">⌄</i>
+      </button>
+      <div class="home-milestone-details" id="homeMilestoneDetails" hidden>
+        ${homeMilestoneItems(milestoneItems)}
       </div>
-      ${nextMilestone ? `<p><b>Siguiente:</b> ${escapeHtml(nextMilestone.label || '')}. ${escapeHtml(nextMilestone.description || '')}</p>` : '<p>Todos los hitos iniciales están completados. Mantén el hábito.</p>'}
     </div>
   `;
+}
+
+function toggleHomeMilestones(button) {
+  const details = document.getElementById('homeMilestoneDetails');
+  if (!button || !details) return;
+  const expanded = button.getAttribute('aria-expanded') === 'true';
+  button.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+  details.hidden = expanded;
+}
+
+function homeMilestoneItems(items) {
+  if (!items.length) return '<p class="muted">Todavía no hay hitos disponibles.</p>';
+  return items.map(item => {
+    const achieved = !!item.achieved;
+    return `
+      <article class="home-milestone-item ${achieved ? 'achieved' : 'pending'}">
+        <span aria-hidden="true">${achieved ? '✓' : '○'}</span>
+        <div>
+          <strong>${escapeHtml(item.label || 'Hito')}</strong>
+          <p>${escapeHtml(item.description || '')}</p>
+        </div>
+        <b>${achieved ? 'Conseguido' : 'Pendiente'}</b>
+      </article>
+    `;
+  }).join('');
 }
 
 function homeTrainingMessage(today, streak) {

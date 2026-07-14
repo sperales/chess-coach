@@ -2780,14 +2780,27 @@ select {
   background:linear-gradient(90deg,#22c55e,#84cc16)
 }
 .home-milestone-strip {
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;
+  background:rgba(5,14,18,.48)
+}
+.home-milestone-toggle {
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:18px;
+  width:100%;
   padding:12px 14px;
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:12px;
-  background:rgba(5,14,18,.48)
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:inherit;
+  text-align:left;
+  cursor:pointer
+}
+.home-milestone-toggle:hover {
+  background:rgba(255,255,255,.035)
 }
 .home-milestone-strip strong,
 .home-milestone-strip span {
@@ -2801,6 +2814,65 @@ select {
   margin:0;
   color:#cbd5df;
   text-align:right
+}
+.home-milestone-toggle > i {
+  flex:0 0 auto;
+  color:#78d95e;
+  font-size:20px;
+  font-style:normal;
+  transition:transform .18s ease
+}
+.home-milestone-toggle[aria-expanded="true"] > i {
+  transform:rotate(180deg)
+}
+.home-milestone-details {
+  display:grid;
+  gap:8px;
+  padding:4px 14px 14px;
+  border-top:1px solid rgba(255,255,255,.08)
+}
+.home-milestone-details[hidden] {
+  display:none
+}
+.home-milestone-item {
+  display:grid;
+  grid-template-columns:34px minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  padding:11px 12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:rgba(7,16,20,.55)
+}
+.home-milestone-item > span {
+  display:grid;
+  place-items:center;
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  background:#29343c;
+  color:#a5b0b8;
+  font-size:18px;
+  font-weight:900
+}
+.home-milestone-item.achieved > span {
+  background:#07351f;
+  color:#35f26f
+}
+.home-milestone-item strong {
+  color:#fff
+}
+.home-milestone-item p {
+  margin:3px 0 0;
+  color:#a9b1ba;
+  text-align:left
+}
+.home-milestone-item > b {
+  color:#a9b1ba;
+  font-size:13px
+}
+.home-milestone-item.achieved > b {
+  color:#35f26f
 }
 .home-dna-panel {
   margin-bottom:20px;
@@ -3726,6 +3798,7 @@ select {
 }
 .training-card-main {
   display:grid;
+  align-content:start;
   gap:8px;
   min-width:0
 }
@@ -3746,15 +3819,19 @@ select {
 }
 .training-meta {
   display:flex;
+  align-items:center;
   flex-wrap:wrap;
   gap:8px
 }
 .training-meta span {
+  display:inline-flex;
+  align-items:center;
   padding:5px 8px;
   border:1px solid var(--line);
   border-radius:999px;
   color:#a9b1ba;
   font-size:13px;
+  line-height:1.2;
   background:#0d171d
 }
 .training-card-side {
@@ -4355,11 +4432,11 @@ select {
     grid-template-columns:repeat(2,minmax(0,1fr))
   }
   .home-training-head,
-  .home-milestone-strip {
+  .home-milestone-toggle {
     align-items:flex-start;
     flex-direction:column
   }
-  .home-milestone-strip p {
+  .home-milestone-toggle p {
     text-align:left
   }
   .home-dna-layout,.home-dna-empty {
@@ -4425,6 +4502,12 @@ select {
   }
 }
 @media(max-width:560px) {
+  .home-milestone-item {
+    grid-template-columns:34px minmax(0,1fr)
+  }
+  .home-milestone-item > b {
+    grid-column:2
+  }
   .training-card-featured {
     grid-template-columns:minmax(0,1fr)
   }

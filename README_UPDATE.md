@@ -1,3 +1,32 @@
+# Chess Coach v1.4.2 Update Notes
+
+## Release type
+
+Small Training Experience UI polish release.
+
+## Changes
+
+- Made the home milestone summary expandable to show every available milestone.
+- Added clear `Conseguido` and `Pendiente` states to the milestone detail list.
+- Fixed vertical text alignment inside the highlighted training exercise metadata chips.
+- Bumped `config/version.php` to `1.4.2`.
+- Updated the service worker cache to `chess-coach-v1.4.2`.
+
+## SQL migration
+
+No SQL migration required.
+
+## Verification
+
+- Confirm clicking the `Hitos` summary expands and collapses the complete milestone list.
+- Confirm achieved and pending milestones are visually distinct.
+- Confirm the milestone panel remains readable on mobile.
+- Confirm metadata text is vertically centered in the highlighted exercise chips.
+- Confirm `config/version.php` contains `1.4.2`.
+- Confirm `service-worker.js` uses `chess-coach-v1.4.2`.
+
+---
+
 # Chess Coach v1.4.1 Update Notes
 
 ## Release type
