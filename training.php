@@ -62,6 +62,7 @@ $pieceSetAssetPath = piece_set_asset_path($u['piece_set'] ?? null);
       <label>Estado
         <select id="trainingStatusFilter">
           <option value="pending">Pendientes</option>
+          <option value="failed">Fallados</option>
           <option value="resolved">Resueltos</option>
           <option value="all">Todos</option>
         </select>

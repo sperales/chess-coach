@@ -7,6 +7,9 @@
 - Changed the header streak indicator to gray until valid training activity is recorded for the current day.
 - Changed the indicator to green after training, independently of whether the full daily goal has been completed.
 - Removed the redundant `racha` text from the compact header indicator.
+- Added a `Fallados` status filter to the Training Center.
+- Highlighted the first exercise with a board preview and difficulty.
+- Added a dedicated difficulty column to the remaining exercise list.
 - Bumped `config/version.php` to `1.4.1`.
 - Updated the service worker cache name to `chess-coach-v1.4.1`.
 

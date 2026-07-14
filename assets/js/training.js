@@ -288,10 +288,10 @@ function renderTrainingExercises() {
     `;
     return;
   }
-  el.innerHTML = trainingExercises.map(trainingExerciseCard).join('');
+  el.innerHTML = trainingExercises.map((item, index) => trainingExerciseCard(item, currentTrainingPage === 1 && index === 0)).join('');
 }
 
-function trainingExerciseCard(item) {
+function trainingExerciseCard(item, featured = false) {
   const source = item.source_side === 'opponent' ? 'Rival' : 'Propia';
   const isRepeatDue = !!item.is_repeat_due;
   const isTrainable = trainingExerciseIsTrainable(item);
@@ -303,8 +303,17 @@ function trainingExerciseCard(item) {
   const primaryAction = isTrainable
     ? `<a class="btn secondary small" href="training-exercise.php?id=${Number(item.id || 0)}">Entrenar</a>`
     : `<a class="btn secondary small" href="${escapeAttr(item.review_url || '#')}">Ver partida</a>`;
+  const difficulty = item.difficulty || 'medium';
+  const difficultyBlock = `
+    <div class="training-card-difficulty">
+      <small>Dificultad</small>
+      <div class="training-difficulty-bars" aria-hidden="true">${trainingDifficultyBars(difficulty)}</div>
+      <strong>${escapeHtml(trainingDifficultyLabel(difficulty))}</strong>
+    </div>
+  `;
   return `
-    <article class="training-card">
+    <article class="training-card${featured ? ' training-card-featured' : ''}">
+      ${featured ? `<div class="training-card-preview"><span>Ejercicio destacado</span>${trainingExercisePreviewBoard(item)}</div>` : ''}
       <div class="training-card-main">
         <div class="training-card-title">
           <span class="queue-status ${isTrainable ? 'queued' : 'done'}">${escapeHtml(status)}</span>
@@ -314,13 +323,14 @@ function trainingExerciseCard(item) {
         <div class="training-meta">
           <span>${escapeHtml(source)}</span>
           <span>Movimiento ${moveNo} · ${escapeHtml(side)}</span>
-          <span>${escapeHtml(item.difficulty || 'medium')}</span>
           <span>Prioridad ${Number(item.priority_score || 0)}</span>
           ${isRepeatDue && item.repetition_reason ? `<span>${escapeHtml(item.repetition_reason)}</span>` : ''}
         </div>
         ${trainingTags(item)}
       </div>
+      ${featured ? '' : difficultyBlock}
       <div class="training-card-side">
+        ${featured ? difficultyBlock : ''}
         <strong>${escapeHtml(gameTitle)}</strong>
         <small>${escapeHtml(date || item.result_raw || '')}</small>
         <small>Intentos: ${Number(item.attempt_count || 0)}</small>
@@ -328,6 +338,24 @@ function trainingExerciseCard(item) {
       </div>
     </article>
   `;
+}
+
+function trainingExercisePreviewBoard(item) {
+  const fen = (item && item.fen ? item.fen : '').toString();
+  const [placement] = fen.split(' ');
+  const grid = trainingBoardGridFromPlacement(placement || '');
+  const blackOrientation = trainingFenSideToMove(fen) === 'b';
+  const ranks = blackOrientation ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
+  const files = blackOrientation ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
+  let squares = '';
+  for (const row of ranks) {
+    for (const file of files) {
+      const dark = (row + file) % 2 === 1;
+      squares += `<span class="sq ${dark ? 'dark' : 'light'}">${trainingPieceImageHtml(grid[row][file] || '')}</span>`;
+    }
+  }
+  const side = blackOrientation ? 'negras' : 'blancas';
+  return `<div class="training-card-board" role="img" aria-label="Vista previa de la posición. Juegan ${side}.">${squares}</div>`;
 }
 
 function trainingTags(item) {
@@ -363,7 +391,8 @@ function renderTrainingStatus() {
   if (!el) return;
   const filters = selectedTrainingFilters();
   const typeLabel = trainingTypes[filters.type] ? trainingTypes[filters.type].label : 'Recomendado para mí';
-  const statusLabel = filters.status === 'resolved' ? 'resueltos' : filters.status === 'all' ? 'todos' : 'pendientes';
+  const statusLabels = { pending: 'pendientes', failed: 'fallados', resolved: 'resueltos', all: 'todos' };
+  const statusLabel = statusLabels[filters.status] || 'pendientes';
   el.textContent = `${typeLabel} · ${statusLabel}`;
 }
 
@@ -577,12 +606,13 @@ function trainingDifficultyLabel(value) {
   const normalized = (value || '').toString().toLowerCase();
   if (normalized === 'easy') return 'Básico';
   if (normalized === 'hard') return 'Avanzado';
+  if (normalized === 'critical') return 'Crítico';
   return 'Intermedio';
 }
 
 function trainingDifficultyBars(value) {
   const normalized = (value || '').toString().toLowerCase();
-  const active = normalized === 'hard' ? 4 : normalized === 'easy' ? 1 : 2;
+  const active = normalized === 'critical' ? 4 : normalized === 'hard' ? 3 : normalized === 'easy' ? 1 : 2;
   return Array.from({ length: 4 }, (_, index) => `<span class="${index < active ? 'active' : ''}"></span>`).join('');
 }
 

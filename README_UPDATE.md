@@ -9,6 +9,9 @@ Small Training Experience UI polish release.
 - Changed the header streak indicator to remain gray until the user trains that day.
 - Changed the header streak indicator to green as soon as valid daily training activity is recorded.
 - Removed the redundant `racha` label from the compact header indicator.
+- Added a `Fallados` filter to the Training Center exercise list.
+- Highlighted the first listed exercise with a position preview and visible difficulty.
+- Added a dedicated difficulty column to the remaining exercise rows.
 - Bumped `config/version.php` to `1.4.1`.
 - Updated the service worker cache to `chess-coach-v1.4.1`.
 
@@ -22,6 +25,9 @@ No SQL migration required.
 - Complete or fail one exercise and confirm the indicator turns green.
 - Confirm skipping an exercise does not turn the indicator green.
 - Confirm the compact indicator only shows the icon and streak day count.
+- Confirm the `Fallados` filter lists exercises whose latest training result is failed.
+- Confirm the first exercise includes a correctly oriented board preview and difficulty.
+- Confirm the remaining exercises show a dedicated difficulty column on desktop and stack cleanly on mobile.
 - Confirm `config/version.php` contains `1.4.1`.
 - Confirm `service-worker.js` uses `chess-coach-v1.4.1`.
 
