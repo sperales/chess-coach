@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v1.4.1**
+Current stable baseline: **v1.4.2**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,11 +32,11 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v1.4.1
+## Current baseline — v1.4.2
 
-v1.4.1 makes the polished Training Experience the current stable baseline.
+v1.4.2 makes the polished Training Experience the current stable baseline.
 
-It keeps Player DNA, Openings Lab and the Training Center as stable capabilities, and includes configurable training goals, automatic daily/weekly progress, a compact activity-aware streak indicator, smart repetition scheduling, clearer exercise feedback, lightweight professional milestones and improved exercise filtering and prioritization.
+It keeps Player DNA, Openings Lab and the Training Center as stable capabilities, and includes configurable training goals, automatic daily/weekly progress, a compact activity-aware streak indicator, smart repetition scheduling, clearer exercise feedback, expandable professional milestones and improved exercise filtering and prioritization.
 
 Smart Tags, the Personal Trainer Dashboard, Training Center exercise generation, the interactive solver, hints, internal session tracking, selectable board piece sets, Openings Lab, Player DNA and Training Experience are now part of the stable product baseline.
 
