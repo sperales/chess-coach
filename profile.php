@@ -19,6 +19,7 @@ $latestPlayerDna = player_dna_latest_snapshot((int)$u['id']);
 $playerDnaConfidenceLabels = ['low' => 'baja', 'medium' => 'media', 'high' => 'alta'];
 $pieceSets = available_piece_sets();
 $currentPieceSet = normalize_piece_set($u['piece_set'] ?? null);
+$trainingGoalSettings = training_goal_settings_for_user((int)$u['id']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   require_csrf_token();
@@ -55,6 +56,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
     $currentPieceSet = $selectedPieceSet;
     $msg = 'Set de piezas actualizado.';
   }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') === 'save_training_goals') {
+  $trainingGoalSettings = training_save_goal_settings((int)$u['id'], [
+    'daily_goal_mode' => $_POST['daily_goal_mode'] ?? '',
+    'daily_exercise_goal' => $_POST['daily_exercise_goal'] ?? null,
+    'daily_minutes_goal' => $_POST['daily_minutes_goal'] ?? null,
+    'weekly_training_days_goal' => $_POST['weekly_training_days_goal'] ?? null,
+    'weekly_exercise_goal' => $_POST['weekly_exercise_goal'] ?? null,
+  ]);
+  $msg = 'Objetivo de entrenamiento actualizado.';
 }
 ?>
 <!doctype html>
@@ -105,6 +117,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
           <?php endforeach; ?>
         </div>
         <button>Guardar set de piezas</button>
+      </form>
+    </section>
+
+    <section class="card training-goals-card">
+      <h2>Objetivo de entrenamiento</h2>
+      <p class="muted">Configura el objetivo que usará Chess Coach para calcular progreso diario, racha e hitos. Entrenar un ejercicio cuenta como actividad, pero la racha principal se mantiene al cumplir el objetivo diario.</p>
+      <form method="post">
+        <input type="hidden" name="profile_action" value="save_training_goals">
+        <?= csrf_field() ?>
+        <div class="training-goal-grid">
+          <label class="training-goal-field">
+            <span>Objetivo diario</span>
+            <select name="daily_goal_mode">
+              <option value="exercises" <?= $trainingGoalSettings['daily_goal_mode'] === 'exercises' ? 'selected' : '' ?>>Ejercicios</option>
+              <option value="minutes" <?= $trainingGoalSettings['daily_goal_mode'] === 'minutes' ? 'selected' : '' ?>>Minutos</option>
+              <option value="both" <?= $trainingGoalSettings['daily_goal_mode'] === 'both' ? 'selected' : '' ?>>Ejercicios y minutos</option>
+            </select>
+          </label>
+          <label class="training-goal-field">
+            <span>Ejercicios al día</span>
+            <input type="number" name="daily_exercise_goal" min="1" max="100" step="1" value="<?= (int)$trainingGoalSettings['daily_exercise_goal'] ?>">
+          </label>
+          <label class="training-goal-field">
+            <span>Minutos al día</span>
+            <input type="number" name="daily_minutes_goal" min="1" max="240" step="1" value="<?= (int)$trainingGoalSettings['daily_minutes_goal'] ?>">
+          </label>
+          <label class="training-goal-field">
+            <span>Días por semana</span>
+            <input type="number" name="weekly_training_days_goal" min="1" max="7" step="1" value="<?= (int)$trainingGoalSettings['weekly_training_days_goal'] ?>">
+          </label>
+          <label class="training-goal-field">
+            <span>Ejercicios por semana</span>
+            <input type="number" name="weekly_exercise_goal" min="1" max="500" step="1" value="<?= (int)$trainingGoalSettings['weekly_exercise_goal'] ?>">
+          </label>
+        </div>
+        <div class="training-goal-summary">
+          <strong>Configuración actual</strong>
+          <span>
+            <?= (int)$trainingGoalSettings['daily_exercise_goal'] ?> ejercicio(s),
+            <?= (int)$trainingGoalSettings['daily_minutes_goal'] ?> minuto(s),
+            <?= (int)$trainingGoalSettings['weekly_training_days_goal'] ?> día(s) por semana.
+          </span>
+        </div>
+        <button>Guardar objetivo</button>
+        <a class="btn secondary" href="training.php">Ir a entrenamiento</a>
       </form>
     </section>
 
