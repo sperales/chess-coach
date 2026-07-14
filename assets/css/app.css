@@ -4022,8 +4022,104 @@ select {
 .training-goal-summary span {
   color:var(--muted)
 }
+.training-experience-panel {
+  display:grid;
+  gap:18px
+}
+.training-experience-summary {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px 16px;
+  background:#0a171c
+}
+.training-experience-summary span {
+  color:var(--muted)
+}
+.training-experience-summary strong {
+  color:#fff
+}
+.training-experience-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:14px
+}
+.training-experience-card {
+  display:flex;
+  align-items:center;
+  gap:14px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:16px;
+  background:#0b171d
+}
+.training-experience-card > span {
+  display:grid;
+  place-items:center;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:#08331f;
+  color:#35f26f;
+  font-size:22px;
+  font-weight:900
+}
+.training-experience-card small,.training-experience-card em {
+  display:block;
+  color:var(--muted);
+  font-style:normal
+}
+.training-experience-card strong {
+  display:block;
+  margin:2px 0;
+  font-size:24px;
+  color:#fff
+}
+.training-repeat-list {
+  display:grid;
+  gap:10px
+}
+.training-repeat-list > strong {
+  color:#fff
+}
+.training-repeat-list > div {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:10px
+}
+.training-repeat-item {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:12px 14px;
+  background:#081419;
+  color:#fff
+}
+.training-repeat-item small {
+  color:var(--muted)
+}
+.training-inline-progress {
+  height:8px;
+  margin:8px 0 6px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#1c2a31;
+  box-shadow:inset 0 0 0 1px #2b3a42
+}
+.training-inline-progress span {
+  display:block;
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg,#23b94f,#74dc45)
+}
 @media(max-width:980px) {
-  .training-goal-summary {
+  .training-goal-summary,.training-experience-summary {
     align-items:flex-start;
     flex-direction:column
   }
