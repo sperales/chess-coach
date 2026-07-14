@@ -4078,6 +4078,9 @@ select {
   font-size:24px;
   color:#fff
 }
+.training-experience-card.compact-progress strong {
+  margin-top:8px
+}
 .training-repeat-list {
   display:grid;
   gap:10px

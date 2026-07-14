@@ -82,9 +82,10 @@ if ($action === 'get') {
   $id = (int)($_GET['id'] ?? 0);
   $exercise = $id > 0 ? training_exercise_for_user($id, $userId) : null;
   if (!$exercise) json_response(['ok' => false, 'error' => 'Ejercicio no encontrado.']);
+  $includeSolution = !empty($exercise['resolved_at']) && empty($exercise['is_repeat_due']);
   json_response([
     'ok' => true,
-    'exercise' => training_public_exercise($exercise, !empty($exercise['resolved_at'])),
+    'exercise' => training_public_exercise($exercise, $includeSolution),
   ]);
 }
 
@@ -112,7 +113,8 @@ if ($action === 'skip') {
     ? training_record_skip($userId, $id, $sessionId ?: null)
     : ['ok' => false, 'error' => 'Ejercicio no indicado.'];
   if (!empty($result['exercise']) && is_array($result['exercise'])) {
-    $result['exercise'] = training_public_exercise($result['exercise'], !empty($result['exercise']['resolved_at']));
+    $includeSolution = !empty($result['exercise']['resolved_at']) && empty($result['exercise']['is_repeat_due']);
+    $result['exercise'] = training_public_exercise($result['exercise'], $includeSolution);
   }
   json_response($result);
 }
