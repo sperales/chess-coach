@@ -2,6 +2,8 @@
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/helpers.php';
 
+const TRAINING_EXERCISE_CONTENT_VERSION = 2;
+
 function training_exercise_types(): array {
   return [
     'recommended' => [
@@ -25,8 +27,8 @@ function training_exercise_types(): array {
       'description' => 'Encuentra la respuesta que evita una amenaza importante.',
     ],
     'find_tactic' => [
-      'label' => 'Encuentra la táctica',
-      'description' => 'Entrena golpes tácticos nacidos de tus partidas.',
+      'label' => 'Encuentra el recurso',
+      'description' => 'Busca una alternativa concreta que mejora la jugada de la partida.',
     ],
     'defend_position' => [
       'label' => 'Defiende la posición',
@@ -80,20 +82,41 @@ function training_tag_codes(array $tags): array {
   return array_keys($codes);
 }
 
+function training_tag_details(array $tag): array {
+  $details = $tag['details_json'] ?? null;
+  if (is_array($details)) return $details;
+  if (!is_string($details) || trim($details) === '') return [];
+  $decoded = json_decode($details, true);
+  return is_array($decoded) ? $decoded : [];
+}
+
+function training_relevant_game_tags(array $gameTags, int $ply): array {
+  return array_values(array_filter($gameTags, function (array $tag) use ($ply): bool {
+    $details = training_tag_details($tag);
+    $plies = array_map('intval', is_array($details['plies'] ?? null) ? $details['plies'] : []);
+    if ($plies) return in_array($ply, $plies, true);
+    return (int)($tag['primary_ply'] ?? 0) === $ply;
+  }));
+}
+
 function training_exercise_type_for_candidate(array $move, array $moveTags, array $gameTags, string $sourceSide): string {
   if ($sourceSide === 'opponent') return 'other';
 
-  $codes = array_merge(training_tag_codes($moveTags), training_tag_codes($gameTags));
+  $moveCodes = training_tag_codes($moveTags);
+  $gameCodes = training_tag_codes($gameTags);
   $classification = (string)($move['classification'] ?? 'ok');
   $loss = (int)($move['centipawn_loss'] ?? 0);
   $beforeType = (string)($move['score_before_type'] ?? 'cp');
+  $beforeScore = (int)($move['score_before'] ?? 0);
 
-  if (in_array('missed_mate', $codes, true) || $beforeType === 'mate') return 'find_mate';
-  if (in_array('allowed_mate', $codes, true)) return 'spot_threat';
-  if (in_array('lost_winning_position', $codes, true)) return 'convert_advantage';
-  if (in_array('endgame_mistake', $codes, true)) return 'defend_position';
+  if (in_array('missed_mate', $moveCodes, true)) return 'find_mate';
+  if (in_array('allowed_mate', $moveCodes, true)) return 'spot_threat';
+  if ($beforeType === 'mate' && $beforeScore > 0) return 'find_mate';
+  if ($beforeType === 'mate' && $beforeScore < 0) return 'spot_threat';
+  if (in_array('lost_winning_position', $gameCodes, true)) return 'convert_advantage';
+  if (in_array('endgame_mistake', $gameCodes, true)) return 'defend_position';
   if ($classification === 'blunder' || $loss >= 300) return 'avoid_blunder';
-  if ($classification === 'mistake' || in_array('mistake_own', $codes, true)) return 'find_tactic';
+  if ($classification === 'mistake' || in_array('mistake_own', $moveCodes, true)) return 'find_tactic';
 
   return 'find_best_move';
 }
@@ -154,14 +177,27 @@ function training_priority_score(array $move, array $moveTags, array $gameTags, 
 function training_prompt_for_type(string $type, string $sideToMove): string {
   $side = $sideToMove === 'b' ? 'negras' : 'blancas';
   return match ($type) {
-    'avoid_blunder' => "Evita la omisión grave. Juegan {$side}.",
-    'find_mate' => "Encuentra el mate. Juegan {$side}.",
-    'spot_threat' => "Detecta la amenaza rival y encuentra la mejor defensa. Juegan {$side}.",
-    'find_tactic' => "Encuentra la táctica. Juegan {$side}.",
-    'defend_position' => "Defiende la posición. Juegan {$side}.",
-    'convert_advantage' => "Convierte la ventaja. Juegan {$side}.",
-    'other' => "Encuentra la mejor jugada en esta posición. Juegan {$side}.",
-    default => "Encuentra la mejor jugada. Juegan {$side}.",
+    'avoid_blunder' => "La jugada de la partida perdió mucha evaluación. Encuentra una alternativa más segura. Juegan {$side}.",
+    'find_mate' => "Hay una secuencia forzada de mate. Encuentra el primer movimiento. Juegan {$side}.",
+    'spot_threat' => "Evita permitir una amenaza decisiva y encuentra la defensa más precisa. Juegan {$side}.",
+    'find_tactic' => "Hay una alternativa concreta que mejora la jugada de la partida. Encuéntrala. Juegan {$side}.",
+    'defend_position' => "Encuentra el recurso más preciso para sostener este tramo final. Juegan {$side}.",
+    'convert_advantage' => "La posición ofrece una ventaja clara. Encuentra cómo conservarla. Juegan {$side}.",
+    'other' => "Aprende también de las decisiones del rival: encuentra la mejor jugada disponible. Juegan {$side}.",
+    default => "Compara tu decisión con la mejor alternativa de Stockfish. Juegan {$side}.",
+  };
+}
+
+function training_title_for_type(string $type): string {
+  return match ($type) {
+    'avoid_blunder' => 'Evita el error decisivo',
+    'find_mate' => 'Remata la posición',
+    'spot_threat' => 'Neutraliza la amenaza',
+    'find_tactic' => 'Encuentra el recurso',
+    'defend_position' => 'Defiende el final',
+    'convert_advantage' => 'Conserva la ventaja',
+    'other' => 'Aprende de la jugada rival',
+    default => 'Encuentra la mejor jugada',
   };
 }
 
@@ -172,24 +208,26 @@ function training_fen_side_to_move(?string $fen): string {
 
 function training_feedback_success(string $type): string {
   return match ($type) {
-    'avoid_blunder' => 'Correcto. Has evitado la jugada que rompía la posición.',
-    'find_mate' => 'Correcto. Esa era la jugada crítica para aprovechar la red de mate.',
-    'spot_threat' => 'Correcto. Has encontrado el recurso que neutraliza la amenaza.',
-    'find_tactic' => 'Correcto. Esa era la táctica indicada por el análisis.',
-    'defend_position' => 'Correcto. Has encontrado una defensa importante.',
-    'convert_advantage' => 'Correcto. Esa jugada ayuda a transformar la ventaja.',
+    'avoid_blunder' => 'Correcto. Has encontrado una alternativa que evita la caída de evaluación.',
+    'find_mate' => 'Correcto. Has encontrado el primer movimiento de la secuencia de mate.',
+    'spot_threat' => 'Correcto. Has encontrado el recurso que evita la amenaza decisiva.',
+    'find_tactic' => 'Correcto. Has encontrado la alternativa más precisa señalada por el análisis.',
+    'defend_position' => 'Correcto. Has encontrado el recurso que sostiene el final.',
+    'convert_advantage' => 'Correcto. Esa jugada conserva la ventaja disponible.',
+    'other' => 'Correcto. Has encontrado la mejor decisión disponible para el rival.',
     default => 'Correcto. Coincide con la mejor jugada almacenada por Stockfish.',
   };
 }
 
 function training_feedback_failure(string $type): string {
   return match ($type) {
-    'avoid_blunder' => 'Todavía no. Busca una jugada que evite la caída grande de evaluación.',
-    'find_mate' => 'Todavía no. Hay una jugada de mate o una continuación decisiva.',
-    'spot_threat' => 'Todavía no. Revisa qué amenaza tiene el rival.',
-    'find_tactic' => 'Todavía no. Busca una idea táctica concreta.',
-    'defend_position' => 'Todavía no. La posición necesita una defensa precisa.',
-    'convert_advantage' => 'Todavía no. Busca cómo mantener o aumentar la ventaja.',
+    'avoid_blunder' => 'Todavía no. Busca una alternativa que mantenga estable la evaluación.',
+    'find_mate' => 'Todavía no. Busca el primer movimiento de una secuencia forzada.',
+    'spot_threat' => 'Todavía no. Comprueba qué respuestas evitan una amenaza decisiva.',
+    'find_tactic' => 'Todavía no. Compara las alternativas antes de repetir la decisión de la partida.',
+    'defend_position' => 'Todavía no. El final necesita una defensa precisa.',
+    'convert_advantage' => 'Todavía no. Busca una continuación que conserve la ventaja.',
+    'other' => 'Todavía no. Busca la decisión más precisa disponible en la posición.',
     default => 'Todavía no. Intenta encontrar la mejor jugada de la posición.',
   };
 }
@@ -477,7 +515,7 @@ function training_due_repetition_count(int $userId): int {
 
 function training_due_repetition_sample(int $userId, int $limit = 2): array {
   $limit = max(1, min(10, $limit));
-  $sql = 'SELECT id, exercise_type, difficulty, priority_score, next_due_at, repeat_count, last_training_result, last_completed_at
+  $sql = 'SELECT id, exercise_type, title, difficulty, priority_score, next_due_at, repeat_count, last_training_result, last_completed_at
           FROM training_exercises
           WHERE user_id=? AND status="active" AND resolved_at IS NOT NULL
             AND next_due_at IS NOT NULL AND next_due_at <= NOW()
@@ -490,7 +528,7 @@ function training_due_repetition_sample(int $userId, int $limit = 2): array {
     $items[] = [
       'id' => (int)$row['id'],
       'exercise_type' => (string)$row['exercise_type'],
-      'type_label' => training_exercise_type_label((string)$row['exercise_type']),
+      'type_label' => trim((string)($row['title'] ?? '')) ?: training_exercise_type_label((string)$row['exercise_type']),
       'difficulty' => (string)$row['difficulty'],
       'priority_score' => (int)$row['priority_score'],
       'next_due_at' => $row['next_due_at'],
@@ -851,7 +889,7 @@ function training_list_exercises(int $userId, string $type = 'recommended', stri
     $item['centipawn_loss'] = (int)$item['centipawn_loss'];
     $item['priority_score'] = (int)$item['priority_score'];
     $item['attempt_count'] = (int)$item['attempt_count'];
-    $item['type_label'] = training_exercise_type_label((string)$item['exercise_type']);
+    $item['type_label'] = trim((string)($item['title'] ?? '')) ?: training_exercise_type_label((string)$item['exercise_type']);
     $item['review_url'] = 'review.php?id=' . (int)$item['game_id'];
     $item['smart_tags'] = $tagsByExercise[(int)$item['id']] ?? [];
     $item = training_mark_exercise_training_state($item);
@@ -907,7 +945,7 @@ function training_exercise_for_user(int $exerciseId, int $userId): ?array {
   $item['centipawn_loss'] = (int)$item['centipawn_loss'];
   $item['priority_score'] = (int)$item['priority_score'];
   $item['attempt_count'] = (int)$item['attempt_count'];
-  $item['type_label'] = training_exercise_type_label((string)$item['exercise_type']);
+  $item['type_label'] = trim((string)($item['title'] ?? '')) ?: training_exercise_type_label((string)$item['exercise_type']);
   $item['review_url'] = 'review.php?id=' . (int)$item['game_id'];
   $item['smart_tags'] = $tagsByExercise[(int)$item['id']] ?? [];
   return training_mark_exercise_training_state($item);
@@ -1050,7 +1088,7 @@ function training_analysis_game(int $analysisId, int $userId): ?array {
 }
 
 function training_tags_for_analysis(int $analysisId, int $userId): array {
-  $gameSt = db()->prepare('SELECT gt.tag_code, d.label, d.category, d.severity
+  $gameSt = db()->prepare('SELECT gt.tag_code, gt.primary_ply, gt.details_json, d.label, d.category, d.severity
                            FROM game_tags gt
                            JOIN smart_tag_definitions d ON d.code=gt.tag_code
                            WHERE gt.analysis_id=? AND gt.user_id=?');
@@ -1104,13 +1142,14 @@ function training_insert_exercise_tags(int $exerciseId, array $tags, string $sou
 
 function training_insert_exercise(int $userId, array $game, array $move, array $moveTags, array $gameTags, ?string $focusCode = null): array {
   $sourceSide = training_source_side($move, training_user_side($game, (string)($game['username'] ?? '')));
-  if (!training_candidate_is_useful($move, $moveTags, $gameTags, $sourceSide)) {
+  $relevantGameTags = training_relevant_game_tags($gameTags, (int)($move['ply'] ?? 0));
+  if (!training_candidate_is_useful($move, $moveTags, $relevantGameTags, $sourceSide)) {
     return ['ok' => true, 'created' => false, 'skipped' => true, 'reason' => 'not-useful'];
   }
 
-  $type = training_exercise_type_for_candidate($move, $moveTags, $gameTags, $sourceSide);
+  $type = training_exercise_type_for_candidate($move, $moveTags, $relevantGameTags, $sourceSide);
   $difficulty = training_difficulty_for_candidate($move, $moveTags);
-  $priority = training_priority_score($move, $moveTags, $gameTags, $sourceSide, $focusCode);
+  $priority = training_priority_score($move, $moveTags, $relevantGameTags, $sourceSide, $focusCode);
   $fen = (string)($move['fen_before'] ?? '');
   $sideToMove = training_fen_side_to_move($fen);
   $solution = strtolower(trim((string)($move['bestmove'] ?? '')));
@@ -1121,10 +1160,10 @@ function training_insert_exercise(int $userId, array $game, array $move, array $
 
   $sql = 'INSERT INTO training_exercises
             (user_id,game_id,analysis_id,move_analysis_id,ply,source_side,exercise_type,fen,solution_uci,solution_san,
-             played_uci,played_san,centipawn_loss,classification,difficulty,priority_score,source_focus_code,prompt,
-             feedback_success,feedback_failure,status,created_at)
+             played_uci,played_san,centipawn_loss,classification,difficulty,priority_score,source_focus_code,title,prompt,
+             feedback_success,feedback_failure,content_version,status,created_at)
           VALUES
-            (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, \'active\', NOW())
+            (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, \'active\', NOW())
           ON DUPLICATE KEY UPDATE
             id=LAST_INSERT_ID(id),
             fen=VALUES(fen),
@@ -1137,9 +1176,11 @@ function training_insert_exercise(int $userId, array $game, array $move, array $
             difficulty=VALUES(difficulty),
             priority_score=VALUES(priority_score),
             source_focus_code=VALUES(source_focus_code),
+            title=VALUES(title),
             prompt=VALUES(prompt),
             feedback_success=VALUES(feedback_success),
-            feedback_failure=VALUES(feedback_failure)';
+            feedback_failure=VALUES(feedback_failure),
+            content_version=VALUES(content_version)';
   $st = db()->prepare($sql);
   $st->execute([
     $userId,
@@ -1159,14 +1200,16 @@ function training_insert_exercise(int $userId, array $game, array $move, array $
     $difficulty,
     $priority,
     $focusCode,
+    training_title_for_type($type),
     training_prompt_for_type($type, $sideToMove),
     training_feedback_success($type),
     training_feedback_failure($type),
+    TRAINING_EXERCISE_CONTENT_VERSION,
   ]);
 
   $exerciseId = (int)db()->lastInsertId();
   training_insert_exercise_tags($exerciseId, $moveTags, 'move');
-  training_insert_exercise_tags($exerciseId, $gameTags, 'game');
+  training_insert_exercise_tags($exerciseId, $relevantGameTags, 'game');
 
   return [
     'ok' => true,
@@ -1316,5 +1359,112 @@ function training_backfill_batch(int $userId, int $limit = 10, string $trigger =
     'duration_ms' => $durationMs,
     'message' => $message,
     'errors' => $errors,
+  ];
+}
+
+function training_content_backfill_pending_count(int $userId): int {
+  $st = db()->prepare('SELECT COUNT(*) FROM training_exercises WHERE user_id=? AND content_version<?');
+  $st->execute([$userId, TRAINING_EXERCISE_CONTENT_VERSION]);
+  return (int)$st->fetchColumn();
+}
+
+function training_content_backfill_batch(int $userId, int $limit = 200): array {
+  $limit = max(1, min(500, $limit));
+  $pendingBefore = training_content_backfill_pending_count($userId);
+  $sql = 'SELECT te.id, te.analysis_id, te.move_analysis_id, te.source_side, te.exercise_type,
+                 te.source_focus_code, ma.ply, ma.fen_before, ma.bestmove, ma.score_before,
+                 ma.score_before_type, ma.score_after, ma.score_after_type, ma.centipawn_loss,
+                 ma.classification, ma.san, ma.uci
+          FROM training_exercises te
+          JOIN game_move_analysis ma ON ma.id=te.move_analysis_id AND ma.analysis_id=te.analysis_id
+          WHERE te.user_id=? AND te.content_version<?
+          ORDER BY te.id
+          LIMIT ' . (int)$limit;
+  $st = db()->prepare($sql);
+  $st->execute([$userId, TRAINING_EXERCISE_CONTENT_VERSION]);
+  $rows = $st->fetchAll();
+
+  $tagsByAnalysis = [];
+  $updated = 0;
+  $retyped = 0;
+  $typeConflicts = 0;
+  $errors = [];
+
+  foreach ($rows as $row) {
+    $analysisId = (int)$row['analysis_id'];
+    if (!isset($tagsByAnalysis[$analysisId])) {
+      $tagsByAnalysis[$analysisId] = training_tags_for_analysis($analysisId, $userId);
+    }
+    $analysisTags = $tagsByAnalysis[$analysisId];
+    $moveTags = $analysisTags['move_tags'][(int)$row['move_analysis_id']] ?? [];
+    $gameTags = training_relevant_game_tags($analysisTags['game_tags'] ?? [], (int)$row['ply']);
+    $desiredType = training_exercise_type_for_candidate($row, $moveTags, $gameTags, (string)$row['source_side']);
+    $storedType = (string)$row['exercise_type'];
+    $typeToStore = $desiredType;
+
+    if ($desiredType !== $storedType) {
+      $conflictSt = db()->prepare('SELECT id FROM training_exercises
+                                   WHERE user_id=? AND move_analysis_id=? AND exercise_type=? AND id<>?
+                                   LIMIT 1');
+      $conflictSt->execute([$userId, (int)$row['move_analysis_id'], $desiredType, (int)$row['id']]);
+      if ($conflictSt->fetchColumn()) {
+        $typeToStore = $storedType;
+        $typeConflicts++;
+      }
+    }
+
+    $sideToMove = training_fen_side_to_move((string)$row['fen_before']);
+    $priority = training_priority_score(
+      $row,
+      $moveTags,
+      $gameTags,
+      (string)$row['source_side'],
+      $row['source_focus_code'] === null ? null : (string)$row['source_focus_code']
+    );
+
+    try {
+      db()->beginTransaction();
+      $up = db()->prepare('UPDATE training_exercises
+                           SET exercise_type=?, title=?, prompt=?, feedback_success=?, feedback_failure=?,
+                               priority_score=?, content_version=?
+                           WHERE id=? AND user_id=?');
+      $up->execute([
+        $typeToStore,
+        training_title_for_type($desiredType),
+        training_prompt_for_type($desiredType, $sideToMove),
+        training_feedback_success($desiredType),
+        training_feedback_failure($desiredType),
+        $priority,
+        TRAINING_EXERCISE_CONTENT_VERSION,
+        (int)$row['id'],
+        $userId,
+      ]);
+      db()->prepare('DELETE FROM training_exercise_tags WHERE exercise_id=? AND source IN ("move","game")')
+        ->execute([(int)$row['id']]);
+      training_insert_exercise_tags((int)$row['id'], $moveTags, 'move');
+      training_insert_exercise_tags((int)$row['id'], $gameTags, 'game');
+      db()->commit();
+      $updated++;
+      if ($typeToStore !== $storedType) $retyped++;
+    } catch (Throwable $e) {
+      if (db()->inTransaction()) db()->rollBack();
+      $errors[] = public_error_message($e);
+    }
+  }
+
+  $pendingAfter = training_content_backfill_pending_count($userId);
+  return [
+    'ok' => !$errors,
+    'processed' => count($rows),
+    'updated' => $updated,
+    'retyped' => $retyped,
+    'type_conflicts' => $typeConflicts,
+    'error_count' => count($errors),
+    'pending_before' => $pendingBefore,
+    'pending_after' => $pendingAfter,
+    'message' => $rows
+      ? ($errors ? 'Actualización de contenido completada con errores parciales.' : 'Contenido de ejercicios actualizado correctamente.')
+      : 'Todos los ejercicios ya tienen el contenido actualizado.',
+    'errors' => array_slice($errors, 0, 5),
   ];
 }
