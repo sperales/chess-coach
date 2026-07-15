@@ -145,6 +145,34 @@ At a viewport of 640 px or narrower:
 
 ---
 
+## Training Exercise Mobile Metadata Checks
+
+At a viewport of 560 px or narrower:
+
+- Confirm Intentos, Dificultad and Prioridad render in three equal columns.
+- Confirm the labels, values and difficulty bars are centered and do not overlap.
+- Confirm the source game remains below the metadata row.
+- Confirm the desktop training solver sidebar is unchanged.
+
+---
+
+## Training Interaction Preference Checks
+
+After applying `sql/migrations/027_changes_1.4.6.sql`:
+
+- Confirm existing users default to legal-move hints enabled and automatic submission disabled.
+- Save each preference combination in `profile.php` and reload the page.
+- Confirm selecting an empty square or an opponent piece does not set the origin.
+- Confirm selecting another own piece changes the origin selection.
+- Confirm an illegal destination is rejected and does not consume an attempt.
+- Confirm legal destinations remain enforced when visual hints are disabled.
+- Confirm automatic submission registers exactly one attempt after a legal destination is selected.
+- Confirm manual mode keeps the Comprobar button enabled after a complete legal move.
+- Confirm solving an exercise leaves the piece on its destination and highlights both move squares in green.
+- Confirm the solved destination displays a green check above the piece at mobile and desktop sizes.
+
+---
+
 ## Tag And Release Checks
 
 Create tags only after the version PR has been approved by the user and merged into `main`.

@@ -1,3 +1,48 @@
+# Chess Coach v1.4.6 Update Notes
+
+## Release type
+
+Training mobile UI polish release.
+
+## Changes
+
+- Kept exercise attempts, difficulty and priority in a compact three-column row on mobile.
+- Centered the three exercise indicators for faster scanning below the board.
+- Added profile settings for legal-move hints and automatic move submission.
+- Enforced side-to-move selection and legal destination selection in training exercises.
+- Removed the non-interactive legal-move checkbox from the exercise page.
+- Kept the solved position visible with the correct move highlighted in green.
+- Reinforced solved exercises with a green check over the destination square.
+- Preserved the existing desktop training layout.
+- Bumped `config/version.php` and the PWA cache to `1.4.6`.
+
+## SQL migration
+
+Run:
+
+```text
+sql/migrations/027_changes_1.4.6.sql
+```
+
+The migration adds the training interaction preferences with backward-compatible defaults.
+
+## Verification
+
+- Open `training-exercise.php` at a viewport of 560 px or narrower.
+- Confirm Intentos, Dificultad and Prioridad remain on one row without overlap.
+- Confirm all difficulty bars remain visible and centered.
+- Save both training preferences from `profile.php` and confirm they persist after reloading.
+- Confirm an exercise only accepts a piece belonging to the side to move.
+- Confirm an illegal destination cannot be selected or submitted.
+- Confirm legal target markers follow the saved preference.
+- Confirm automatic submission follows the saved preference without duplicate attempts.
+- Confirm a correct move remains played on the board with both squares highlighted in green.
+- Confirm the destination square displays a legible green check without obscuring the piece.
+- Confirm the desktop sidebar layout remains unchanged.
+- Confirm `config/version.php` and `service-worker.js` both use `1.4.6`.
+
+---
+
 # Chess Coach v1.4.5 Update Notes
 
 ## Release type

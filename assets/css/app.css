@@ -4055,6 +4055,33 @@ select {
 .training-board .sq.solution.from,.training-board .sq.solution.to,.training-board .sq.solution.selected {
   background:#f56f6f
 }
+.training-board .sq.correct,
+.training-board .sq.correct.from,
+.training-board .sq.correct.to,
+.training-board .sq.correct.selected {
+  background:#71d78a
+}
+.training-board .sq.correct-destination::after {
+  content:"\2713";
+  position:absolute;
+  z-index:4;
+  top:5%;
+  right:5%;
+  display:grid;
+  place-items:center;
+  width:32%;
+  min-width:18px;
+  max-width:28px;
+  aspect-ratio:1;
+  border:2px solid #e9ffe9;
+  border-radius:50%;
+  background:#55b957;
+  color:#fff;
+  box-shadow:0 2px 6px #001a08a6;
+  font-size:15px;
+  font-weight:900;
+  line-height:1
+}
 .training-solver-info {
   display:grid;
   gap:12px
@@ -4326,7 +4353,7 @@ select {
 }
 .training-solve-tip {
   display:grid;
-  grid-template-columns:auto minmax(0,1fr) auto;
+  grid-template-columns:auto minmax(0,1fr);
   gap:14px;
   align-items:center
 }
@@ -4432,11 +4459,85 @@ select {
 .board-theme-preview i.dark {
   background:var(--board-dark)
 }
+.training-preferences-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  margin:16px 0 18px
+}
+.training-preference-option {
+  display:block
+}
+.training-preference-option > input {
+  position:absolute;
+  opacity:0;
+  pointer-events:none
+}
+.training-preference-option > span {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 46px;
+  align-items:center;
+  gap:16px;
+  height:100%;
+  padding:16px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#0d171d;
+  cursor:pointer
+}
+.training-preference-option > span > span {
+  display:grid;
+  gap:5px
+}
+.training-preference-option strong {
+  color:#f5f7fb
+}
+.training-preference-option small {
+  color:var(--muted);
+  line-height:1.35
+}
+.training-preference-option i {
+  position:relative;
+  width:46px;
+  height:26px;
+  border-radius:999px;
+  background:#31404a;
+  box-shadow:inset 0 0 0 1px #ffffff1c;
+  transition:background .18s ease
+}
+.training-preference-option i::after {
+  content:"";
+  position:absolute;
+  top:4px;
+  left:4px;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:#f5f7fb;
+  transition:transform .18s ease
+}
+.training-preference-option input:checked + span {
+  border-color:#69c44e;
+  background:#14251a
+}
+.training-preference-option input:checked + span i {
+  background:#35b84f
+}
+.training-preference-option input:checked + span i::after {
+  transform:translateX(20px)
+}
+.training-preference-option input:focus-visible + span {
+  outline:2px solid #8fdd77;
+  outline-offset:3px
+}
 @media(max-width:760px) {
   .board-theme-options {
     grid-template-columns:repeat(2,minmax(0,1fr))
   }
   .piece-set-options {
+    grid-template-columns:minmax(0,1fr)
+  }
+  .training-preferences-grid {
     grid-template-columns:minmax(0,1fr)
   }
 }
@@ -4732,12 +4833,19 @@ select {
   .training-solve-sidebar {
     padding:16px
   }
-  .training-side-kpis,
   .training-detail-grid,
   .training-origin-review-grid,
   .training-solve-toolbar,
   .training-solve-tip {
     grid-template-columns:minmax(0,1fr)
+  }
+  .training-side-kpis {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:8px
+  }
+  .training-side-kpis div {
+    justify-items:center;
+    text-align:center
   }
   .training-solver-hero .coach-comment {
     display:grid

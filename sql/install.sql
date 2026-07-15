@@ -377,6 +377,8 @@ CREATE TABLE IF NOT EXISTS training_goal_settings (
   daily_minutes_goal SMALLINT UNSIGNED NOT NULL DEFAULT 10,
   weekly_training_days_goal TINYINT UNSIGNED NOT NULL DEFAULT 4,
   weekly_exercise_goal SMALLINT UNSIGNED NOT NULL DEFAULT 25,
+  show_legal_moves TINYINT(1) NOT NULL DEFAULT 1,
+  auto_submit_move TINYINT(1) NOT NULL DEFAULT 0,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (user_id),
@@ -1138,5 +1140,6 @@ INSERT INTO app_migrations (version, description) VALUES
 ('1.3.0', 'Player DNA data foundation'),
 ('1.4.0', 'Training Experience goals and repetition foundation'),
 ('1.4.3', 'Canonical Spanish ECO reference catalog'),
-('1.4.4', 'User-selectable board color themes')
+('1.4.4', 'User-selectable board color themes'),
+('1.4.6', 'Training board interaction preferences')
 ON DUPLICATE KEY UPDATE version = version;

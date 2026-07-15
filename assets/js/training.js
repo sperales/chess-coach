@@ -15,8 +15,14 @@ let trainingTimerInterval = null;
 let trainingUsedHint = false;
 let trainingHintFrom = '';
 let revealedTrainingSolution = '';
+let completedTrainingMove = '';
 let trainingOriginReviewLoadedFor = 0;
+let trainingSelectionMessage = '';
+let trainingMoveSubmitting = false;
 const TRAINING_PIECE_ASSET_PATH = (window.CHESS_COACH_PIECE_PATH || 'assets/pieces/Set%201/').toString();
+const TRAINING_PREFERENCES = window.CHESS_TRAINING_PREFERENCES || {};
+const TRAINING_SHOW_LEGAL_MOVES = TRAINING_PREFERENCES.showLegalMoves !== false;
+const TRAINING_AUTO_SUBMIT_MOVE = TRAINING_PREFERENCES.autoSubmitMove === true;
 const TRAINING_INITIAL_PARAMS = new URLSearchParams(window.location.search);
 const TRAINING_SOLVER_MODE = window.CHESS_TRAINING_SOLVER_MODE === true;
 const TRAINING_INITIAL_EXERCISE_ID = Number(window.CHESS_TRAINING_INITIAL_EXERCISE_ID || TRAINING_INITIAL_PARAMS.get('id') || TRAINING_INITIAL_PARAMS.get('exercise_id') || 0);
@@ -417,7 +423,9 @@ async function openTrainingExercise(id) {
   activeExercise = data.exercise;
   attemptedTrainingMoves = [];
   selectedTrainingSquare = '';
+  trainingSelectionMessage = '';
   revealedTrainingSolution = '';
+  completedTrainingMove = '';
   trainingHintFrom = '';
   trainingUsedHint = false;
   trainingStartedAt = Date.now();
@@ -500,8 +508,10 @@ function closeTrainingSolver() {
   activeExercise = null;
   attemptedTrainingMoves = [];
   selectedTrainingSquare = '';
+  trainingSelectionMessage = '';
   trainingHintFrom = '';
   revealedTrainingSolution = '';
+  completedTrainingMove = '';
 }
 
 function renderTrainingSolver() {
@@ -744,14 +754,17 @@ function renderTrainingBoard() {
   if (!board || !activeExercise) return;
   const [placement] = (activeExercise.fen || '').split(' ');
   const grid = trainingBoardGridFromPlacement(placement || '');
-  const displayGrid = trainingPreviewGrid(grid);
-  const legalTargets = trainingLegalTargetSet(grid);
+  const displayGrid = trainingPreviewGrid(grid, selectedTrainingSquare.length >= 4 ? selectedTrainingSquare : completedTrainingMove);
+  const legalTargets = TRAINING_SHOW_LEGAL_MOVES ? trainingLegalTargetSet(grid) : new Set();
   const previousMove = (activeExercise.previous_uci || '').toString().toLowerCase();
   const previousFrom = previousMove.length >= 4 ? previousMove.slice(0, 2) : '';
   const previousTo = previousMove.length >= 4 ? previousMove.slice(2, 4) : '';
   const solutionMove = (revealedTrainingSolution || '').toString().toLowerCase();
   const solutionFrom = solutionMove.length >= 4 ? solutionMove.slice(0, 2) : '';
   const solutionTo = solutionMove.length >= 4 ? solutionMove.slice(2, 4) : '';
+  const completedMove = (completedTrainingMove || '').toString().toLowerCase();
+  const completedFrom = completedMove.length >= 4 ? completedMove.slice(0, 2) : '';
+  const completedTo = completedMove.length >= 4 ? completedMove.slice(2, 4) : '';
   let html = '';
   const ranks = trainingBoardOrientation === 'black' ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
   const files = trainingBoardOrientation === 'black' ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
@@ -764,9 +777,11 @@ function renderTrainingBoard() {
       const selected = sq === selectedFrom || sq === selectedTo ? ' selected' : '';
       const previous = sq === previousFrom ? ' from' : sq === previousTo ? ' to' : '';
       const solution = sq === solutionFrom || sq === solutionTo ? ' solution' : '';
+      const correct = sq === completedFrom || sq === completedTo ? ' correct' : '';
+      const correctDestination = sq === completedTo ? ' correct-destination' : '';
       const legal = legalTargets.has(sq) ? ' legal-target' : '';
       const hint = sq === trainingHintFrom ? ' hint' : '';
-      html += `<button class="sq ${dark ? 'dark' : 'light'}${previous}${selected}${solution}${legal}${hint}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(displayGrid[r][file] || '')}</button>`;
+      html += `<button class="sq ${dark ? 'dark' : 'light'}${previous}${selected}${solution}${correct}${correctDestination}${legal}${hint}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(displayGrid[r][file] || '')}</button>`;
     }
   }
   board.innerHTML = html;
@@ -786,11 +801,20 @@ function renderTrainingBoardCoordinates() {
   if (frame) frame.dataset.orientation = trainingBoardOrientation;
 }
 
-function trainingPreviewGrid(grid) {
+function trainingPreviewGrid(grid, move = selectedTrainingSquare) {
   const preview = grid.map(row => row.slice());
-  if (!selectedTrainingSquare || selectedTrainingSquare.length < 4) return preview;
-  const from = selectedTrainingSquare.slice(0, 2);
-  const to = selectedTrainingSquare.slice(2, 4);
+  if (!move || move.length < 4) return preview;
+  const from = move.slice(0, 2);
+  const to = move.slice(2, 4);
+  const state = { ...trainingFenState(activeExercise?.fen || ''), grid: preview };
+  const legalMove = trainingLegalMovesForState(state, from).find(candidate => candidate.to === to);
+  if (legalMove) {
+    const promotion = move.slice(4, 5).toLowerCase();
+    if (promotion && ['q', 'r', 'b', 'n'].includes(promotion)) {
+      legalMove.promotion = state.turn === 'w' ? promotion.toUpperCase() : promotion;
+    }
+    return trainingApplyMove(state, legalMove).grid;
+  }
   const fromCoords = trainingSquareToGrid(from);
   const toCoords = trainingSquareToGrid(to);
   if (!fromCoords || !toCoords) return preview;
@@ -824,17 +848,23 @@ function trainingBoardGridFromPlacement(placement) {
 }
 
 function trainingLegalTargetSet(grid) {
+  if (selectedTrainingSquare.length !== 2) return new Set();
+  return trainingLegalTargetsFrom(selectedTrainingSquare, grid);
+}
+
+function trainingLegalTargetsFrom(square, grid = null) {
   const targets = new Set();
-  if (!activeExercise || selectedTrainingSquare.length !== 2) return targets;
+  if (!activeExercise || !square || square.length !== 2) return targets;
   if (trainingExerciseFinished()) return targets;
 
   const state = trainingFenState(activeExercise.fen);
-  const from = trainingSquareToGrid(selectedTrainingSquare);
+  const from = trainingSquareToGrid(square);
   if (!from) return targets;
-  const piece = grid[from.row][from.file] || '';
+  const boardGrid = grid || trainingBoardGridFromPlacement(state.placement);
+  const piece = boardGrid[from.row][from.file] || '';
   if (!piece || trainingPieceColor(piece) !== state.turn) return targets;
 
-  trainingLegalMovesForState({ ...state, grid }, selectedTrainingSquare).forEach(move => targets.add(move.to));
+  trainingLegalMovesForState({ ...state, grid: boardGrid }, square).forEach(move => targets.add(move.to));
   return targets;
 }
 
@@ -1064,18 +1094,38 @@ function trainingPieceImageHtml(pieceCode) {
 }
 
 function selectTrainingSquare(square) {
-  if (!activeExercise || trainingExerciseFinished()) return;
-  if (!selectedTrainingSquare) {
+  if (!activeExercise || trainingExerciseFinished() || trainingMoveSubmitting) return;
+  const state = trainingFenState(activeExercise.fen);
+  const clickedPiece = trainingPieceAtSquare(square);
+  if (!selectedTrainingSquare || selectedTrainingSquare.length >= 4) {
+    if (!clickedPiece || trainingPieceColor(clickedPiece) !== state.turn) {
+      trainingSelectionMessage = `Selecciona una pieza ${state.turn === 'b' ? 'negra' : 'blanca'}.`;
+      updateTrainingDraft();
+      return;
+    }
     selectedTrainingSquare = square;
+    trainingSelectionMessage = '';
   } else if (selectedTrainingSquare === square) {
     selectedTrainingSquare = '';
-  } else if (selectedTrainingSquare.length >= 4) {
+    trainingSelectionMessage = '';
+  } else if (clickedPiece && trainingPieceColor(clickedPiece) === state.turn) {
     selectedTrainingSquare = square;
+    trainingSelectionMessage = '';
   } else {
+    const legalTargets = trainingLegalTargetsFrom(selectedTrainingSquare);
+    if (!legalTargets.has(square)) {
+      trainingSelectionMessage = 'Esa casilla no es un destino legal para la pieza seleccionada.';
+      updateTrainingDraft();
+      return;
+    }
     selectedTrainingSquare += square;
+    trainingSelectionMessage = '';
   }
   renderTrainingBoard();
   updateTrainingDraft();
+  if (selectedTrainingSquare.length >= 4 && TRAINING_AUTO_SUBMIT_MOVE) {
+    Promise.resolve().then(() => submitTrainingMove()).catch(showTrainingError);
+  }
 }
 
 function updateTrainingDraft() {
@@ -1086,11 +1136,12 @@ function updateTrainingDraft() {
   const promotion = complete && trainingMoveNeedsPromotion(selectedTrainingSquare);
   if (promotionWrap) promotionWrap.hidden = !promotion;
   if (draft) {
-    if (!selectedTrainingSquare) draft.textContent = 'Selecciona origen y destino en el tablero.';
+    if (trainingSelectionMessage) draft.textContent = trainingSelectionMessage;
+    else if (!selectedTrainingSquare) draft.textContent = 'Selecciona origen y destino en el tablero.';
     else if (!complete) draft.textContent = `Origen seleccionado: ${selectedTrainingSquare}. Ahora elige destino.`;
     else draft.textContent = `Jugada seleccionada: ${trainingSelectedMoveText()}.`;
   }
-  if (submit) submit.disabled = !complete || trainingExerciseFinished();
+  if (submit) submit.disabled = !complete || trainingExerciseFinished() || trainingMoveSubmitting;
   renderTrainingControls();
 }
 
@@ -1120,6 +1171,7 @@ function trainingPieceAtSquare(square) {
 
 function clearTrainingSelection() {
   selectedTrainingSquare = '';
+  trainingSelectionMessage = '';
   renderTrainingBoard();
   updateTrainingDraft();
 }
@@ -1135,6 +1187,7 @@ function showTrainingHint() {
   trainingUsedHint = true;
   trainingHintFrom = from;
   selectedTrainingSquare = trainingHintFrom;
+  trainingSelectionMessage = '';
   renderTrainingBoard();
   updateTrainingDraft();
   renderTrainingControls();
@@ -1162,38 +1215,46 @@ async function openNextTrainingExercise() {
 }
 
 async function submitTrainingMove() {
-  if (!activeExercise || selectedTrainingSquare.length < 4 || trainingExerciseFinished()) return;
-  let move = selectedTrainingSquare.toLowerCase();
-  if (trainingMoveNeedsPromotion(move)) {
-    move += document.getElementById('trainingPromotionPiece')?.value || 'q';
-  }
-  attemptedTrainingMoves.push(move);
-  selectedTrainingSquare = '';
-  const response = await fetch('api/training.php?action=attempt', {
-    method: 'POST',
-    headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({
-      id: activeExercise.id,
-      session_id: activeTrainingSession ? activeTrainingSession.id : 0,
-      moves: attemptedTrainingMoves,
-      duration_ms: Date.now() - trainingStartedAt,
-      used_hint: trainingUsedHint
-    })
-  });
-  const data = await response.json();
-  if (!data.ok) throw new Error(data.error || 'No se pudo registrar el intento.');
-  if (data.exercise) activeExercise = data.exercise;
-  if (data.session) activeTrainingSession = data.session;
-  showTrainingFeedback(data);
-  if (data.solved || data.solution_uci) stopTrainingExerciseTimer();
-  renderTrainingAttempts();
-  renderTrainingSolverChrome();
-  renderTrainingBoard();
+  if (!activeExercise || selectedTrainingSquare.length < 4 || trainingExerciseFinished() || trainingMoveSubmitting) return;
+  trainingMoveSubmitting = true;
   updateTrainingDraft();
-  renderTrainingStatsFromResponse(data);
-  renderTrainingExperience();
-  if (data.solved || data.solution_uci) {
-    await loadTraining(currentTrainingPage);
+  try {
+    let move = selectedTrainingSquare.toLowerCase();
+    if (trainingMoveNeedsPromotion(move)) {
+      move += document.getElementById('trainingPromotionPiece')?.value || 'q';
+    }
+    attemptedTrainingMoves.push(move);
+    selectedTrainingSquare = '';
+    trainingSelectionMessage = '';
+    const response = await fetch('api/training.php?action=attempt', {
+      method: 'POST',
+      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({
+        id: activeExercise.id,
+        session_id: activeTrainingSession ? activeTrainingSession.id : 0,
+        moves: attemptedTrainingMoves,
+        duration_ms: Date.now() - trainingStartedAt,
+        used_hint: trainingUsedHint
+      })
+    });
+    const data = await response.json();
+    if (!data.ok) throw new Error(data.error || 'No se pudo registrar el intento.');
+    if (data.exercise) activeExercise = data.exercise;
+    if (data.session) activeTrainingSession = data.session;
+    if (data.solved) completedTrainingMove = move;
+    showTrainingFeedback(data);
+    if (data.solved || data.solution_uci) stopTrainingExerciseTimer();
+    renderTrainingAttempts();
+    renderTrainingSolverChrome();
+    renderTrainingBoard();
+    renderTrainingStatsFromResponse(data);
+    renderTrainingExperience();
+    if (data.solved || data.solution_uci) {
+      await loadTraining(currentTrainingPage);
+    }
+  } finally {
+    trainingMoveSubmitting = false;
+    updateTrainingDraft();
   }
 }
 
