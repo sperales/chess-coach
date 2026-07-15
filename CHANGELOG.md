@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## v1.4.3 - ECO catalog foundation (in progress)
+## v1.4.3 - Spanish ECO catalog
 
 ### Added
 
@@ -18,6 +18,12 @@
 - ECO labels are canonical categories and do not claim exact line detection.
 - Existing opening profiles are enriched at read time and do not require a rewrite.
 - Opening grouping and training metrics remain unchanged.
+
+### Changed
+
+- Bumped `config/version.php` to `1.4.3`.
+- Updated the service worker cache name to `chess-coach-v1.4.3`.
+- Updated stable baseline and release documentation.
 
 ### Database
 

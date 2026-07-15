@@ -2,7 +2,7 @@
 
 ## Release type
 
-Openings Lab catalog enhancement in progress.
+Openings Lab catalog release.
 
 ## PR1 - Autonomous ECO catalog
 
@@ -38,6 +38,13 @@ This PR changes backend payloads only. The new hierarchy is intentionally not re
 
 This PR does not change opening grouping, metrics or recommendation logic.
 
+## PR4 - Release readiness
+
+- Bumped `config/version.php` to `1.4.3`.
+- Updated the service worker cache to `chess-coach-v1.4.3`.
+- Updated README, roadmap, changelog, verification and agent baseline documentation.
+- Completed release checks for PHP, JavaScript, catalog integrity and PWA asset references.
+
 ## SQL migration
 
 Run:
@@ -58,6 +65,9 @@ Expected result:
 - Confirm `B90` resolves to `Defensa Siciliana` / `Variante Najdorf` in the database.
 - Confirm `C65` resolves to `Apertura Española` / `Defensa Berlinesa` in the database.
 - Confirm applying the migration twice does not create duplicate rows.
+- Confirm `config/version.php` contains `1.4.3`.
+- Confirm `service-worker.js` uses `chess-coach-v1.4.3`.
+- Reload the PWA after deployment so the new service worker cache becomes active.
 
 ---
 

@@ -14,11 +14,11 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v1.4.2**
+Current stable baseline: **v1.4.3**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
-v1.4.2 is the current stable Training Experience baseline with goals, streaks, smart repetition, exercise feedback, expandable milestones and improved exercise discovery.
+v1.4.3 is the current stable baseline. It keeps the Training Experience improvements and adds an autonomous Spanish ECO catalog so Openings Lab explains codes, opening names and representative variations without external runtime services.
 
 ---
 
