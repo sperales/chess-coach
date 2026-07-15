@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## v1.4.3 - ECO catalog foundation (in progress)
+
+### Added
+
+- Added `opening_families` for stable opening-family grouping.
+- Added `eco_codes` with the complete `A00`-`E99` catalog.
+- Added canonical Spanish opening and representative variation labels.
+- Added the same catalog baseline to `sql/install.sql` for new installations.
+
+### Notes
+
+- The catalog is derived from a pinned CC0 Lichess dataset revision.
+- ECO labels are canonical categories and do not claim exact line detection.
+- No backend or Openings Lab UI changes are included in PR1.
+
+### Database
+
+- SQL migration required: `sql/migrations/025_changes_1.4.3.sql`.
+
 ## v1.4.2 - Training milestones polish
 
 ### Changed
