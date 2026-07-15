@@ -14,6 +14,7 @@ $assetVersion = (string)filemtime(__DIR__.'/assets/css/app.css');
 $layoutJsVersion = (string)filemtime(__DIR__.'/assets/js/layout.js');
 $pendingSmartTags = smart_tag_backfill_pending_count((int)$u['id']);
 $pendingTrainingExercises = training_backfill_pending_count((int)$u['id']);
+$pendingTrainingContent = training_content_backfill_pending_count((int)$u['id']);
 $pendingOpeningProfiles = openings_profile_pending_count((int)$u['id']);
 $latestPlayerDna = player_dna_latest_snapshot((int)$u['id']);
 $playerDnaConfidenceLabels = ['low' => 'baja', 'medium' => 'media', 'high' => 'alta'];
@@ -248,6 +249,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
       <p class="muted" id="trainingBackfillResult"></p>
       <div class="batch-row">
         <div>
+          <strong>Actualizar contenido de ejercicios</strong>
+          <p class="muted">Corrige la clasificación contextual, los textos, la prioridad y los Smart Tags asociados sin borrar intentos ni progreso. Procesa hasta 200 ejercicios por ejecución.</p>
+          <p class="muted" id="trainingContentBackfillPending">Pendientes: <?= (int)$pendingTrainingContent ?></p>
+        </div>
+        <button type="button" onclick="runTrainingContentBackfill()" id="trainingContentBackfillBtn">Actualizar ejercicios</button>
+      </div>
+      <p class="muted" id="trainingContentBackfillResult"></p>
+      <div class="batch-row">
+        <div>
           <strong>Backfill de aperturas</strong>
           <p class="muted">Genera perfiles de apertura para partidas importadas o analizadas antes del Lab de Aperturas. Procesa hasta 25 partidas por ejecucion.</p>
           <p class="muted" id="openingsBackfillPending">Pendientes: <?= (int)$pendingOpeningProfiles ?></p>
@@ -317,6 +327,29 @@ async function runTrainingBackfill() {
     if (pending) pending.textContent = `Pendientes: ${data.pending_after || 0}`;
   } catch (e) {
     if (result) result.textContent = e.message || 'No se pudo ejecutar el backfill de ejercicios.';
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function runTrainingContentBackfill() {
+  const btn = document.getElementById('trainingContentBackfillBtn');
+  const result = document.getElementById('trainingContentBackfillResult');
+  const pending = document.getElementById('trainingContentBackfillPending');
+  if (btn) btn.disabled = true;
+  if (result) result.textContent = 'Actualizando el contenido de los ejercicios...';
+  try {
+    const r = await fetch('api/analyze.php?action=training_content_backfill', {
+      method: 'POST',
+      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ limit: 200 })
+    });
+    const data = await r.json();
+    if (!data.ok && Number(data.error_count || 0) > 0) throw new Error(data.message || 'Actualización completada con errores.');
+    if (result) result.textContent = `${data.message || 'Actualización ejecutada.'} Actualizados: ${data.updated || 0}. Reclasificados: ${data.retyped || 0}. Conflictos conservados: ${data.type_conflicts || 0}. Pendientes: ${data.pending_after || 0}.`;
+    if (pending) pending.textContent = `Pendientes: ${data.pending_after || 0}`;
+  } catch (e) {
+    if (result) result.textContent = e.message || 'No se pudo actualizar el contenido de los ejercicios.';
   } finally {
     if (btn) btn.disabled = false;
   }

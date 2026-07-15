@@ -1,3 +1,51 @@
+# Chess Coach v1.4.7 Update Notes
+
+## Release type
+
+Training exercise content and controlled backfill release.
+
+## Changes
+
+- Uses move-level Smart Tags as the primary evidence for exercise classification.
+- Applies game-level tags only to the plies that generated them.
+- Separates concise exercise titles from contextual instructions.
+- Improves deterministic success and failure feedback without external AI.
+- Distinguishes finding a mate from avoiding an adverse mate evaluation.
+- Recalculates exercise priority with position-relevant evidence.
+- Adds a resumable content version and a profile process that updates 200 exercises at a time.
+- Preserves exercise IDs, attempts, resolved state, repetition dates and training history.
+- Bumps `config/version.php` and the PWA cache to `1.4.7`.
+
+## SQL migration
+
+Run before deploying the PHP changes:
+
+```text
+sql/migrations/028_changes_1.4.7.sql
+```
+
+The migration adds `title`, `content_version` and an index for controlled content updates.
+
+## Existing exercise update
+
+1. Open `Ajustes / Mi perfil`.
+2. Find `Actualizar contenido de ejercicios` under `Procesos batch`.
+3. Run the process repeatedly until `Pendientes` reaches zero.
+4. Each execution updates at most 200 exercises and can safely be resumed later.
+
+The process never deletes exercises and does not run Stockfish.
+
+## Verification
+
+- Confirm new exercises use contextual titles and non-duplicated instructions.
+- Confirm only Smart Tags relevant to the exercise ply are displayed.
+- Confirm mate exercises distinguish attacking and defensive situations.
+- Run one content batch and verify pending decreases by at most 200.
+- Confirm attempts, resolved exercises and repetition dates remain unchanged.
+- Confirm `config/version.php` and `service-worker.js` both use `1.4.7`.
+
+---
+
 # Chess Coach v1.4.6 Update Notes
 
 ## Release type

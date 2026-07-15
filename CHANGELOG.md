@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## v1.4.7 - Contextual training exercise content
+
+### Changed
+
+- Reworked deterministic exercise classification to prioritize move-level evidence.
+- Restricted game-level Smart Tags to the exact plies recorded as evidence.
+- Distinguished favorable and unfavorable mate evaluations from the side-to-move perspective.
+- Added concise exercise titles and richer instructions and feedback without external AI.
+- Recalculated exercise priority using only relevant position context.
+- Added a resumable profile backfill that preserves exercise IDs, attempts, progress and repetition dates.
+- Bumped the app version and PWA cache to `1.4.7`.
+
+### Database
+
+- SQL migration required: `sql/migrations/028_changes_1.4.7.sql`.
+- Existing exercises remain valid and are upgraded in batches of 200 from `profile.php`.
+
 ## v1.4.6 - Training mobile metadata
 
 ### Changed

@@ -331,9 +331,11 @@ CREATE TABLE IF NOT EXISTS training_exercises (
   difficulty ENUM('easy','medium','hard','critical') NOT NULL DEFAULT 'medium',
   priority_score INT NOT NULL DEFAULT 0,
   source_focus_code VARCHAR(40) DEFAULT NULL,
+  title VARCHAR(120) DEFAULT NULL,
   prompt VARCHAR(255) NOT NULL,
   feedback_success VARCHAR(255) DEFAULT NULL,
   feedback_failure VARCHAR(255) DEFAULT NULL,
+  content_version SMALLINT UNSIGNED NOT NULL DEFAULT 1,
   status ENUM('active','archived') NOT NULL DEFAULT 'active',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
@@ -350,6 +352,7 @@ CREATE TABLE IF NOT EXISTS training_exercises (
   KEY idx_training_exercises_source (user_id, source_side, priority_score),
   KEY idx_training_exercises_due (user_id, status, next_due_at, priority_score),
   KEY idx_training_exercises_last_result (user_id, last_training_result, last_completed_at),
+  KEY idx_training_exercises_content (user_id, content_version, id),
   KEY idx_training_exercises_game (game_id),
   KEY idx_training_exercises_analysis (analysis_id),
   KEY idx_training_exercises_move (move_analysis_id),
@@ -1141,5 +1144,6 @@ INSERT INTO app_migrations (version, description) VALUES
 ('1.4.0', 'Training Experience goals and repetition foundation'),
 ('1.4.3', 'Canonical Spanish ECO reference catalog'),
 ('1.4.4', 'User-selectable board color themes'),
-('1.4.6', 'Training board interaction preferences')
+('1.4.6', 'Training board interaction preferences'),
+('1.4.7', 'Contextual training exercise content')
 ON DUPLICATE KEY UPDATE version = version;
