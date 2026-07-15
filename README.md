@@ -153,12 +153,21 @@ Includes:
 
 - Opening profiles generated from analyzed games
 - Grouping by ECO code and opening name when available
+- Autonomous reference catalog for all 500 ECO codes from `A00` to `E99`
+- Canonical Spanish opening families, opening names and representative variations
 - Fallback opening signatures from the first 16 plies
 - Lab de Aperturas page
 - Opening score, accuracy, ACPL and early-error metrics
 - Recommended opening review links
 - Games filtered by opening
 - Connections to frequent Smart Tags and existing Training Center exercises
+
+The local ECO catalog is derived from the CC0
+[`lichess-org/chess-openings`](https://github.com/lichess-org/chess-openings)
+dataset at commit `292fd0468068f58bb244f7fe1c3e573e493c3c53`. ECO codes are broad
+categories that can contain multiple named lines. The catalog therefore provides
+canonical Spanish labels and does not replace more specific opening metadata
+contained in an imported PGN.
 
 ### Player DNA
 

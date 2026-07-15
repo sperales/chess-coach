@@ -1,3 +1,43 @@
+# Chess Coach v1.4.3 Update Notes
+
+## Release type
+
+Openings Lab catalog enhancement in progress.
+
+## PR1 - Autonomous ECO catalog
+
+- Added `opening_families` as the stable grouping layer for future family statistics.
+- Added `eco_codes` with every code from `A00` to `E99`.
+- Added canonical Spanish opening names and representative variation names.
+- Kept the catalog independent from runtime APIs and external services.
+- Documented the pinned CC0 source revision and the distinction between an ECO category and an exact opening line.
+- Updated `sql/install.sql` so new installations receive the complete catalog.
+
+This PR contains database and reference data only. It does not change Openings Lab backend responses or UI.
+
+## SQL migration
+
+Run:
+
+```text
+sql/migrations/025_changes_1.4.3.sql
+```
+
+Expected result:
+
+- 500 rows in `eco_codes`.
+- 100 codes for each prefix from `A` to `E`.
+- No existing games or opening profiles are modified.
+
+## Verification
+
+- Run the ECO catalog checks documented in `VERIFY.md`.
+- Confirm `B90` resolves to `Defensa Siciliana` / `Variante Najdorf` in the database.
+- Confirm `C65` resolves to `Apertura Española` / `Defensa Berlinesa` in the database.
+- Confirm applying the migration twice does not create duplicate rows.
+
+---
+
 # Chess Coach v1.4.2 Update Notes
 
 ## Release type

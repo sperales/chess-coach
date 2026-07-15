@@ -67,6 +67,45 @@ Both should match the release version.
 
 ---
 
+## ECO Catalog Checks
+
+After applying `sql/migrations/025_changes_1.4.3.sql`, verify the catalog:
+
+```sql
+SELECT COUNT(*) AS total_codes FROM eco_codes;
+
+SELECT LEFT(eco_code, 1) AS volume, COUNT(*) AS total
+FROM eco_codes
+GROUP BY LEFT(eco_code, 1)
+ORDER BY volume;
+
+SELECT COUNT(*) AS invalid_codes
+FROM eco_codes
+WHERE eco_code NOT REGEXP '^[A-E][0-9]{2}$';
+
+SELECT COUNT(*) AS incomplete_labels
+FROM eco_codes ec
+JOIN opening_families f ON f.family_key = ec.family_key
+WHERE ec.opening_name = '' OR f.family_name = '';
+
+SELECT eco_code, family_name, opening_name, variation_name
+FROM eco_codes ec
+JOIN opening_families f ON f.family_key = ec.family_key
+WHERE eco_code IN ('B90', 'C65')
+ORDER BY eco_code;
+```
+
+Expected results:
+
+- `total_codes`: `500`.
+- Each volume `A`, `B`, `C`, `D` and `E`: `100`.
+- `invalid_codes`: `0`.
+- `incomplete_labels`: `0`.
+- `B90`: `Defensa Siciliana` / `Variante Najdorf`.
+- `C65`: `Apertura Española` / `Defensa Berlinesa`.
+
+---
+
 ## Tag And Release Checks
 
 Create tags only after the version PR has been approved by the user and merged into `main`.
