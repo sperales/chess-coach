@@ -2,6 +2,7 @@
 require_once __DIR__.'/includes/auth.php';
 require_once __DIR__.'/includes/helpers.php';
 require_once __DIR__.'/includes/pieces.php';
+require_once __DIR__.'/includes/training.php';
 
 $u = require_login();
 $exerciseId = max(0, (int)($_GET['id'] ?? $_GET['exercise_id'] ?? 0));
@@ -10,6 +11,7 @@ $layoutJsVersion = (string)filemtime(__DIR__.'/assets/js/layout.js');
 $trainingJsVersion = (string)filemtime(__DIR__.'/assets/js/training.js');
 $pieceSetAssetPath = piece_set_asset_path($u['piece_set'] ?? null);
 $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
+$trainingPreferences = training_goal_settings_for_user((int)$u['id']);
 ?>
 <!doctype html>
 <html lang="es">
@@ -141,9 +143,6 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
   <section class="panel training-solve-tip">
     <strong>Consejo</strong>
     <span>Analiza los recursos del rival y busca la defensa más precisa.</span>
-    <label>Sugerir movimientos al seleccionar
-      <input type="checkbox" checked disabled>
-    </label>
   </section>
 </main>
 </div>
@@ -151,6 +150,10 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
 window.CHESS_COACH_CONFIG = { trainingPerPage: 20 };
 window.CHESS_COACH_CSRF = <?= json_encode(csrf_token(), JSON_UNESCAPED_SLASHES) ?>;
 window.CHESS_COACH_PIECE_PATH = <?= json_encode($pieceSetAssetPath, JSON_UNESCAPED_SLASHES) ?>;
+window.CHESS_TRAINING_PREFERENCES = <?= json_encode([
+  'showLegalMoves' => !empty($trainingPreferences['show_legal_moves']),
+  'autoSubmitMove' => !empty($trainingPreferences['auto_submit_move']),
+], JSON_UNESCAPED_SLASHES) ?>;
 window.CHESS_TRAINING_SOLVER_MODE = true;
 window.CHESS_TRAINING_INITIAL_EXERCISE_ID = <?= (int)$exerciseId ?>;
 </script>

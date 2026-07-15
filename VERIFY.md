@@ -156,6 +156,21 @@ At a viewport of 560 px or narrower:
 
 ---
 
+## Training Interaction Preference Checks
+
+After applying `sql/migrations/027_changes_1.4.6.sql`:
+
+- Confirm existing users default to legal-move hints enabled and automatic submission disabled.
+- Save each preference combination in `profile.php` and reload the page.
+- Confirm selecting an empty square or an opponent piece does not set the origin.
+- Confirm selecting another own piece changes the origin selection.
+- Confirm an illegal destination is rejected and does not consume an attempt.
+- Confirm legal destinations remain enforced when visual hints are disabled.
+- Confirm automatic submission registers exactly one attempt after a legal destination is selected.
+- Confirm manual mode keeps the Comprobar button enabled after a complete legal move.
+
+---
+
 ## Tag And Release Checks
 
 Create tags only after the version PR has been approved by the user and merged into `main`.

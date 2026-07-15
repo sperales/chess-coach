@@ -2,6 +2,7 @@
 require_once __DIR__.'/includes/auth.php';
 require_once __DIR__.'/includes/helpers.php';
 require_once __DIR__.'/includes/pieces.php';
+require_once __DIR__.'/includes/training.php';
 
 $u = require_login();
 $assetVersion = (string)filemtime(__DIR__.'/assets/css/app.css');
@@ -9,6 +10,7 @@ $layoutJsVersion = (string)filemtime(__DIR__.'/assets/js/layout.js');
 $trainingJsVersion = (string)filemtime(__DIR__.'/assets/js/training.js');
 $pieceSetAssetPath = piece_set_asset_path($u['piece_set'] ?? null);
 $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
+$trainingPreferences = training_goal_settings_for_user((int)$u['id']);
 ?>
 <!doctype html>
 <html lang="es">
@@ -128,6 +130,10 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
 window.CHESS_COACH_CONFIG = { trainingPerPage: 20 };
 window.CHESS_COACH_CSRF = <?= json_encode(csrf_token(), JSON_UNESCAPED_SLASHES) ?>;
 window.CHESS_COACH_PIECE_PATH = <?= json_encode($pieceSetAssetPath, JSON_UNESCAPED_SLASHES) ?>;
+window.CHESS_TRAINING_PREFERENCES = <?= json_encode([
+  'showLegalMoves' => !empty($trainingPreferences['show_legal_moves']),
+  'autoSubmitMove' => !empty($trainingPreferences['auto_submit_move']),
+], JSON_UNESCAPED_SLASHES) ?>;
 </script>
 <script src="assets/js/layout.js?v=<?=e($layoutJsVersion)?>"></script>
 <script src="assets/js/training.js?v=<?=e($trainingJsVersion)?>"></script>

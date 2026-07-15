@@ -73,6 +73,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
   ]);
   $msg = 'Objetivo de entrenamiento actualizado.';
 }
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') === 'save_training_preferences') {
+  $trainingGoalSettings = training_save_preferences((int)$u['id'], [
+    'show_legal_moves' => isset($_POST['show_legal_moves']),
+    'auto_submit_move' => isset($_POST['auto_submit_move']),
+  ]);
+  $msg = 'Preferencias de entrenamiento actualizadas.';
+}
 ?>
 <!doctype html>
 <html lang="es">
@@ -141,6 +149,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
               </span>
             </label>
           <?php endforeach; ?>
+        </div>
+        <button>Guardar preferencias</button>
+      </form>
+    </section>
+
+    <section class="card training-preferences-card">
+      <h2>Entrenamiento</h2>
+      <p class="muted">Configura cómo quieres seleccionar y comprobar las jugadas en los ejercicios.</p>
+      <form method="post">
+        <input type="hidden" name="profile_action" value="save_training_preferences">
+        <?= csrf_field() ?>
+        <div class="training-preferences-grid">
+          <label class="training-preference-option">
+            <input type="checkbox" name="show_legal_moves" value="1" <?= !empty($trainingGoalSettings['show_legal_moves']) ? 'checked' : '' ?>>
+            <span>
+              <span><strong>Mostrar movimientos permitidos</strong><small>Marca los destinos legales al seleccionar una pieza.</small></span>
+              <i aria-hidden="true"></i>
+            </span>
+          </label>
+          <label class="training-preference-option">
+            <input type="checkbox" name="auto_submit_move" value="1" <?= !empty($trainingGoalSettings['auto_submit_move']) ? 'checked' : '' ?>>
+            <span>
+              <span><strong>Comprobar automáticamente</strong><small>Comprueba la jugada al seleccionar la casilla de destino.</small></span>
+              <i aria-hidden="true"></i>
+            </span>
+          </label>
         </div>
         <button>Guardar preferencias</button>
       </form>

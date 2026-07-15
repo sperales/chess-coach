@@ -258,11 +258,14 @@ function training_goal_defaults(): array {
     'daily_minutes_goal' => 10,
     'weekly_training_days_goal' => 4,
     'weekly_exercise_goal' => 25,
+    'show_legal_moves' => 1,
+    'auto_submit_move' => 0,
   ];
 }
 
 function training_goal_settings_for_user(int $userId): array {
-  $st = db()->prepare('SELECT daily_goal_mode,daily_exercise_goal,daily_minutes_goal,weekly_training_days_goal,weekly_exercise_goal
+  $st = db()->prepare('SELECT daily_goal_mode,daily_exercise_goal,daily_minutes_goal,weekly_training_days_goal,weekly_exercise_goal,
+                              show_legal_moves,auto_submit_move
                        FROM training_goal_settings
                        WHERE user_id=?
                        LIMIT 1');
@@ -276,6 +279,8 @@ function training_goal_settings_for_user(int $userId): array {
   $settings['daily_minutes_goal'] = max(1, min(240, (int)$settings['daily_minutes_goal']));
   $settings['weekly_training_days_goal'] = max(1, min(7, (int)$settings['weekly_training_days_goal']));
   $settings['weekly_exercise_goal'] = max(1, min(500, (int)$settings['weekly_exercise_goal']));
+  $settings['show_legal_moves'] = !empty($settings['show_legal_moves']) ? 1 : 0;
+  $settings['auto_submit_move'] = !empty($settings['auto_submit_move']) ? 1 : 0;
   $settings['is_configured'] = (bool)$row;
   return $settings;
 }
@@ -312,6 +317,20 @@ function training_save_goal_settings(int $userId, array $input): array {
     $settings['weekly_exercise_goal'],
   ]);
 
+  return training_goal_settings_for_user($userId);
+}
+
+function training_save_preferences(int $userId, array $input): array {
+  $showLegalMoves = !empty($input['show_legal_moves']) ? 1 : 0;
+  $autoSubmitMove = !empty($input['auto_submit_move']) ? 1 : 0;
+  $st = db()->prepare('INSERT INTO training_goal_settings
+      (user_id,show_legal_moves,auto_submit_move,created_at)
+      VALUES (?,?,?,NOW())
+      ON DUPLICATE KEY UPDATE
+        show_legal_moves=VALUES(show_legal_moves),
+        auto_submit_move=VALUES(auto_submit_move),
+        updated_at=NOW()');
+  $st->execute([$userId, $showLegalMoves, $autoSubmitMove]);
   return training_goal_settings_for_user($userId);
 }
 
