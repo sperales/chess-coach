@@ -3310,16 +3310,51 @@ select {
 }
 .opening-card-title {
   display:grid;
-  gap:4px;
+  gap:5px;
   min-width:0
 }
-.opening-card-title strong {
-  font-size:17px
+.opening-title-line {
+  display:flex;
+  align-items:baseline;
+  flex-wrap:wrap;
+  gap:5px;
+  margin:0;
+  min-width:0
+}
+.opening-title-line strong {
+  color:#f5f7fb;
+  font-size:17px;
+  line-height:1.3
+}
+.opening-eco-code,
+.opening-detail-eco {
+  color:#78d95e;
+  font-weight:900;
+  text-decoration:none;
+  white-space:nowrap
+}
+.opening-title-separator {
+  color:#738591;
+  font-weight:800
+}
+.opening-variation {
+  color:#d7e0e7;
+  font-size:14px;
+  line-height:1.35
+}
+.opening-family {
+  color:#8fa1ad;
+  font-size:12px;
+  font-weight:700;
+  line-height:1.35
 }
 .opening-card-title small,.opening-card-title a {
   color:#9fb0bd;
   font-weight:800;
   text-decoration:none
+}
+.opening-card-title a.opening-eco-code {
+  color:#78d95e
 }
 .opening-card-title a:hover {
   text-decoration:underline
@@ -3365,6 +3400,20 @@ select {
 .opening-detail-head h3,.opening-games h3 {
   margin:0 0 6px;
   font-size:20px
+}
+.opening-detail-identity {
+  display:grid;
+  gap:6px;
+  min-width:0
+}
+.opening-detail-identity .opening-title-line {
+  margin:0
+}
+.opening-detail-identity .opening-title-line strong {
+  font-size:20px
+}
+.opening-detail-identity .opening-variation {
+  font-size:15px
 }
 .opening-detail-head p {
   margin:0

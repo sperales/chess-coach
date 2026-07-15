@@ -111,6 +111,10 @@ After deploying the PR2 backend resolver, verify its precedence and API payloads
 - The same game exposes `opening_variation_name` as `Variante Najdorf` in `api/games.php?action=list`.
 - Openings Lab exposes `family_name`, `opening_name`, `variation_name` and `label_source` for catalog matches.
 - Temporarily missing catalog tables do not prevent the games or Openings Lab endpoints from returning a response.
+- Openings Lab renders `C65 · Apertura Española` with `Defensa Berlinesa` below it.
+- Openings Lab renders `B90 · Defensa Siciliana` with `Variante Najdorf` below it.
+- Long names wrap without overlapping KPIs on desktop and mobile.
+- ECO links still open only safe HTTP(S) `ECOUrl` values in a new tab.
 
 ---
 

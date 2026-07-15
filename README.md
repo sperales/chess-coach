@@ -155,6 +155,7 @@ Includes:
 - Grouping by ECO code and opening name when available
 - Autonomous reference catalog for all 500 ECO codes from `A00` to `E99`
 - Canonical Spanish opening families, opening names and representative variations
+- Friendly Openings Lab hierarchy: ECO and opening first, representative variation second
 - Fallback opening signatures from the first 16 plies
 - Lab de Aperturas page
 - Opening score, accuracy, ACPL and early-error metrics

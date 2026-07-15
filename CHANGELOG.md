@@ -10,13 +10,14 @@
 - Added the same catalog baseline to `sql/install.sql` for new installations.
 - Added a reusable backend resolver with PGN-first label precedence.
 - Added family and variation metadata to Openings Lab and games API responses.
+- Added friendly ECO, opening and variation hierarchy to Openings Lab.
 
 ### Notes
 
 - The catalog is derived from a pinned CC0 Lichess dataset revision.
 - ECO labels are canonical categories and do not claim exact line detection.
 - Existing opening profiles are enriched at read time and do not require a rewrite.
-- Openings Lab UI changes remain outside PR2.
+- Opening grouping and training metrics remain unchanged.
 
 ### Database
 
