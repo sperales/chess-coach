@@ -7,8 +7,8 @@ Mobile UI polish release.
 ## Changes
 
 - Compacted the four summary cards on mobile in Analysis Pending, Training Center and Openings Lab.
-- Kept each card on one visual row with its icon on the left and primary value aligned to the right.
-- Preserved the existing desktop layout and the dashboard cards outside these three pages.
+- Reorganized each card into two balanced columns: icon above title on the left, value above detail on the right.
+- Preserved the four-column desktop grid and the dashboard cards outside these three pages.
 - Bumped `config/version.php` and the PWA cache to `1.4.5`.
 
 ## SQL migration
@@ -17,7 +17,8 @@ No SQL migration is required.
 
 ## Verification
 
-- Check the four opening cards at mobile widths in `analysis-pending.php`, `training.php` and `openings-lab.php`.
+- Check the four summary cards at mobile and desktop widths in `analysis-pending.php`, `training.php` and `openings-lab.php`.
+- Confirm each card shows the icon above its title and the value above its supporting detail.
 - Confirm labels and details remain readable with large values and long opening names.
 - Confirm the four-card desktop layout remains unchanged.
 - Confirm `config/version.php` and `service-worker.js` both use `1.4.5`.

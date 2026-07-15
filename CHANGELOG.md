@@ -5,8 +5,8 @@
 ### Changed
 
 - Compacted the summary metric cards on mobile in Analysis Pending, Training Center and Openings Lab.
-- Aligned primary metric values to the right while keeping context labels and details readable.
-- Preserved the existing desktop layout.
+- Reorganized each card with icon and title on the left, plus value and supporting detail on the right.
+- Preserved the four-column desktop grid while updating the internal card composition.
 - Bumped the app version and PWA cache to `1.4.5`.
 
 ### Database

@@ -102,7 +102,7 @@ function renderTrainingStats() {
     ['star', 'Acierto', totalAttempts ? `${solveRate}%` : '--', totalAttempts ? `${solvedAttempts}/${totalAttempts} intentos` : 'sin intentos'],
     ['clock', 'Tiempo medio', avgSeconds === null ? '--' : `${avgSeconds}s`, 'por intento'],
   ];
-  el.innerHTML = cards.map(card => `<article class="metric-card ${card[0]}"><div class="metric-icon">${trainingIconFor(card[0])}</div><div><span>${escapeHtml(card[1])}</span><b>${escapeHtml(card[2])}</b><small>${escapeHtml(card[3])}</small></div></article>`).join('');
+  el.innerHTML = cards.map(card => `<article class="metric-card compact-metric-card ${card[0]}"><div class="metric-icon">${trainingIconFor(card[0])}</div><span>${escapeHtml(card[1])}</span><b>${escapeHtml(card[2])}</b><small>${escapeHtml(card[3])}</small></article>`).join('');
 }
 
 function renderTrainingExperience() {
