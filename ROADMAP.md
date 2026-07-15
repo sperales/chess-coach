@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v1.4.6**
+Current stable baseline: **v1.4.7**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,9 +32,9 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v1.4.6
+## Current baseline — v1.4.7
 
-v1.4.6 keeps board personalization and compact summary cards as part of the stable baseline, and improves the mobile training solver by aligning its key exercise metadata in one row.
+v1.4.7 keeps board personalization and the mobile training solver improvements as part of the stable baseline, and makes generated exercises more precise through contextual titles, instructions, feedback and move-specific Smart Tags. Existing exercises can be upgraded in resumable batches without losing attempts, resolution state or repetition scheduling.
 
 It keeps Player DNA, Openings Lab and the Training Center as stable capabilities, including the autonomous 500-code ECO reference catalog, Spanish opening and representative variation labels, PGN-first metadata resolution and clearer opening identities without runtime APIs.
 

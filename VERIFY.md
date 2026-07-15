@@ -158,6 +158,14 @@ At a viewport of 560 px or narrower:
 
 ## Training Interaction Preference Checks
 
+After applying `sql/migrations/028_changes_1.4.7.sql`:
+
+- Confirm `training_exercises.title` exists.
+- Confirm `training_exercises.content_version` exists and defaults to `1` for existing rows.
+- Run `Actualizar contenido de ejercicios` from `profile.php` and confirm the pending count decreases.
+- Confirm attempts, `resolved_at`, `next_due_at` and `last_training_result` are unchanged for updated exercises.
+- Confirm updated rows have `content_version = 2`.
+
 After applying `sql/migrations/027_changes_1.4.6.sql`:
 
 - Confirm existing users default to legal-move hints enabled and automatic submission disabled.

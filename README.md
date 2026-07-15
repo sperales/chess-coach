@@ -14,11 +14,11 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v1.4.6**
+Current stable baseline: **v1.4.7**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
-v1.4.6 is the current stable baseline. It keeps the Training Experience, Spanish ECO catalog and board personalization improvements, and further compacts the training solver interface on mobile.
+v1.4.7 is the current stable baseline. It improves exercise titles, instructions and feedback with position-specific deterministic rules, prevents game-wide Smart Tags from contaminating unrelated exercises, and provides a resumable content backfill that preserves training progress.
 
 ---
 
