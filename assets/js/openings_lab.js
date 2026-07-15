@@ -37,8 +37,8 @@ function renderOpeningsSummary() {
   el.innerHTML = [
     metricCard('♙', 'Aperturas', openingsSummary.total_openings || 0, `${openingsSummary.total_profiled_games || 0} partidas perfiladas`),
     metricCard('✓', 'Con muestra fiable', openingsSummary.openings_with_minimum_games || 0, `mínimo ${openingsSummary.minimum_games || 3} partidas`),
-    metricCard('★', 'Mejor apertura', best ? `${best.score_rate}%` : '-', best ? best.display_name : 'sin datos suficientes', 'star'),
-    metricCard('!', 'Atención', issue ? issue.opening_error_count : 0, issue ? issue.display_name : 'sin patrón claro', 'clock'),
+    metricCard('★', 'Mejor apertura', best ? `${best.score_rate}%` : '-', best ? openingCompactLabel(best) : 'sin datos suficientes', 'star'),
+    metricCard('!', 'Atención', issue ? issue.opening_error_count : 0, issue ? openingCompactLabel(issue) : 'sin patrón claro', 'clock'),
   ].join('');
 }
 
@@ -51,6 +51,49 @@ function metricCard(icon, label, value, detail, extraClass = '') {
       <small>${escapeHtml(detail)}</small>
     </div>
   </article>`;
+}
+
+function openingName(opening) {
+  return (opening?.opening_name || opening?.catalog_opening_name || '').toString().trim();
+}
+
+function openingVariation(opening) {
+  const name = openingName(opening).toLocaleLowerCase('es');
+  const variation = (opening?.variation_name || opening?.catalog_variation_name || '').toString().trim();
+  if (!variation || variation.toLocaleLowerCase('es') === name) return '';
+  return variation;
+}
+
+function openingCompactLabel(opening) {
+  const eco = (opening?.eco_code || '').toString().trim();
+  const name = openingName(opening);
+  if (eco && name) return `${eco} · ${name}`;
+  return name || eco || 'Apertura no identificada';
+}
+
+function openingEcoMarkup(opening, className = 'opening-eco-code') {
+  const eco = (opening?.eco_code || '').toString().trim();
+  if (!eco) return '';
+  const ecoUrl = safeUrl(opening?.eco_url || '');
+  return ecoUrl
+    ? `<a class="${escapeAttr(className)}" href="${escapeAttr(ecoUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(eco)}</a>`
+    : `<span class="${escapeAttr(className)}">${escapeHtml(eco)}</span>`;
+}
+
+function openingIdentityMarkup(opening, detail = false) {
+  const eco = openingEcoMarkup(opening, detail ? 'opening-detail-eco' : 'opening-eco-code');
+  const name = openingName(opening) || (!eco ? 'Apertura no identificada' : 'Apertura sin nombre');
+  const variation = openingVariation(opening);
+  const family = (opening?.family_name || '').toString().trim();
+  const showFamily = family && family.toLocaleLowerCase('es') !== name.toLocaleLowerCase('es');
+  const tag = detail ? 'h3' : 'span';
+
+  return `<${tag} class="opening-title-line">
+      ${eco}${eco ? '<span class="opening-title-separator" aria-hidden="true">·</span>' : ''}
+      <strong>${escapeHtml(name)}</strong>
+    </${tag}>
+    ${variation ? `<span class="opening-variation">${escapeHtml(variation)}</span>` : ''}
+    ${showFamily ? `<small class="opening-family">Familia: ${escapeHtml(family)}</small>` : ''}`;
 }
 
 function renderOpeningsStatus(filters) {
@@ -83,14 +126,9 @@ function renderOpeningsList() {
     const active = opening.opening_key === selectedOpeningKey ? ' active' : '';
     const issue = opening.common_issue ? `<span>${escapeHtml(opening.common_issue.label)}: ${Number(opening.common_issue.count || 0)}</span>` : '<span>Sin error recurrente claro</span>';
     const accuracy = opening.avg_opening_accuracy === null ? '-' : `${opening.avg_opening_accuracy}%`;
-    const ecoUrl = safeUrl(opening.eco_url || '');
-    const eco = ecoUrl && opening.eco_code
-      ? `<a href="${escapeAttr(ecoUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(opening.eco_code)}</a>`
-      : escapeHtml(opening.eco_code || '');
     return `<button class="opening-card${active}" type="button" data-opening-key="${escapeAttr(opening.opening_key || '')}">
       <span class="opening-card-title">
-        <strong>${escapeHtml(opening.display_name || 'Apertura no identificada')}</strong>
-        ${eco ? `<small>${eco}</small>` : ''}
+        ${openingIdentityMarkup(opening)}
       </span>
       <span class="opening-card-kpis">
         <span><b>${Number(opening.games || 0)}</b><small>partidas</small></span>
@@ -131,16 +169,11 @@ function renderOpeningDetail(opening, games, recommendedGames, gamesUrl, connect
   const issue = opening.common_issue ? `${opening.common_issue.label}: ${opening.common_issue.count}` : 'Sin error recurrente claro';
   const eval10 = opening.avg_eval_after_move_10 === null ? '-' : cpText(opening.avg_eval_after_move_10);
   const moves = (opening.first_moves_san || []).slice(0, 8).join(' ');
-  const ecoUrl = safeUrl(opening.eco_url || '');
-  const eco = ecoUrl && opening.eco_code
-    ? `<a href="${escapeAttr(ecoUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(opening.eco_code)}</a>`
-    : escapeHtml(opening.eco_code || '');
   const filteredGamesUrl = safeLocalUrl(gamesUrl) || `games.php?opening_key=${encodeURIComponent(opening.opening_key || '')}`;
 
   el.innerHTML = `<div class="opening-detail-head">
-    <div>
-      <h3>${escapeHtml(opening.display_name || 'Apertura no identificada')}</h3>
-      ${eco ? `<p class="muted">ECO ${eco}</p>` : ''}
+    <div class="opening-detail-identity">
+      ${openingIdentityMarkup(opening, true)}
     </div>
     <a class="btn secondary small" href="${escapeAttr(filteredGamesUrl)}">Ver partidas</a>
   </div>
@@ -337,6 +370,6 @@ document.getElementById('openingsViewToggle')?.addEventListener('click', () => {
 loadOpenings().catch(() => {
   const el = document.getElementById('openingsList');
   if (el) {
-    el.innerHTML = `<div class="empty-state"><strong>No se pudo cargar el Lab de Aperturas.</strong><span>Comprueba que la migración de v1.2.0 esté aplicada.</span></div>`;
+    el.innerHTML = `<div class="empty-state"><strong>No se pudo cargar el Lab de Aperturas.</strong><span>Comprueba que las migraciones del Lab estén aplicadas.</span></div>`;
   }
 });

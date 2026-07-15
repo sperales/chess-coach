@@ -27,6 +27,17 @@ This PR contains database and reference data only. It does not change Openings L
 
 This PR changes backend payloads only. The new hierarchy is intentionally not rendered in Openings Lab until the dedicated UI PR.
 
+## PR3 - Friendly Openings Lab labels
+
+- Replaced code-only opening identities with `ECO · opening name` labels.
+- Added the representative variation on a separate secondary line when available.
+- Added the family as quiet context only when it differs from the opening name.
+- Applied the same compact naming to the best-opening and attention metrics.
+- Preserved safe external `ECOUrl` links in list and detail views.
+- Added responsive wrapping for long Spanish opening and variation names.
+
+This PR does not change opening grouping, metrics or recommendation logic.
+
 ## SQL migration
 
 Run:
