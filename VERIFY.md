@@ -104,6 +104,14 @@ Expected results:
 - `B90`: `Defensa Siciliana` / `Variante Najdorf`.
 - `C65`: `Apertura Española` / `Defensa Berlinesa`.
 
+After deploying the PR2 backend resolver, verify its precedence and API payloads:
+
+- A game with an `Opening` PGN tag keeps that imported name.
+- A game with ECO `B90` and no opening name resolves to `Defensa Siciliana`.
+- The same game exposes `opening_variation_name` as `Variante Najdorf` in `api/games.php?action=list`.
+- Openings Lab exposes `family_name`, `opening_name`, `variation_name` and `label_source` for catalog matches.
+- Temporarily missing catalog tables do not prevent the games or Openings Lab endpoints from returning a response.
+
 ---
 
 ## Tag And Release Checks

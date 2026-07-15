@@ -15,6 +15,18 @@ Openings Lab catalog enhancement in progress.
 
 This PR contains database and reference data only. It does not change Openings Lab backend responses or UI.
 
+## PR2 - Backend ECO resolver
+
+- Added a central ECO resolver in `includes/eco_catalog.php`.
+- Kept imported PGN opening names as the highest-priority source.
+- Added catalog fallback for games without an imported opening name.
+- Enriched Openings Lab data with Spanish opening, variation and family labels.
+- Enriched the games API with the same normalized opening metadata.
+- Kept existing opening keys and stored profiles unchanged to avoid fragmenting historical statistics.
+- Made catalog loading fail gracefully if code is uploaded before the SQL migration is applied.
+
+This PR changes backend payloads only. The new hierarchy is intentionally not rendered in Openings Lab until the dedicated UI PR.
+
 ## SQL migration
 
 Run:

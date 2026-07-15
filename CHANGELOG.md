@@ -8,12 +8,15 @@
 - Added `eco_codes` with the complete `A00`-`E99` catalog.
 - Added canonical Spanish opening and representative variation labels.
 - Added the same catalog baseline to `sql/install.sql` for new installations.
+- Added a reusable backend resolver with PGN-first label precedence.
+- Added family and variation metadata to Openings Lab and games API responses.
 
 ### Notes
 
 - The catalog is derived from a pinned CC0 Lichess dataset revision.
 - ECO labels are canonical categories and do not claim exact line detection.
-- No backend or Openings Lab UI changes are included in PR1.
+- Existing opening profiles are enriched at read time and do not require a rewrite.
+- Openings Lab UI changes remain outside PR2.
 
 ### Database
 

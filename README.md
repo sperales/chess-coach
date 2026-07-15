@@ -169,6 +169,11 @@ categories that can contain multiple named lines. The catalog therefore provides
 canonical Spanish labels and does not replace more specific opening metadata
 contained in an imported PGN.
 
+Opening labels are resolved centrally by `includes/eco_catalog.php`. Imported PGN
+metadata has priority; the local catalog supplies missing names and adds the
+canonical family and representative variation. Existing opening profiles are
+enriched when read, so deploying the catalog does not require rewriting games.
+
 ### Player DNA
 
 - Personal player profile generated from analyzed games

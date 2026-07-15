@@ -3,6 +3,7 @@ require_once __DIR__.'/../includes/auth.php';
 require_once __DIR__.'/../includes/helpers.php';
 require_once __DIR__.'/../includes/pgn.php';
 require_once __DIR__.'/../includes/analysis_queue.php';
+require_once __DIR__.'/../includes/eco_catalog.php';
 $u=require_login();
 $action=$_GET['action']??$_POST['action']??'';
 if (in_array($action, ['import', 'delete'], true)) {
@@ -53,6 +54,13 @@ function attach_opening_info_to_games(array &$games): void {
     if (empty($game['eco_url']) && !empty($game['pgn'])) {
       $game['eco_url'] = pgn_eco_url((string)$game['pgn']);
     }
+    $labels = eco_catalog_resolve($game['eco_code'] ?? null, $game['opening_name'] ?? null);
+    $game['eco_code'] = $labels['eco_code'];
+    $game['opening_name'] = $labels['opening_name'];
+    $game['opening_variation_name'] = $labels['variation_name'];
+    $game['opening_family_key'] = $labels['family_key'];
+    $game['opening_family_name'] = $labels['family_name'];
+    $game['opening_label_source'] = $labels['label_source'];
     unset($game['pgn']);
   }
   unset($game);

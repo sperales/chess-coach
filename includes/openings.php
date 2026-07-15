@@ -3,6 +3,7 @@ require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/pgn.php';
 require_once __DIR__ . '/chess_server.php';
+require_once __DIR__ . '/eco_catalog.php';
 
 function openings_profile_plies(): int {
   return 16;
@@ -468,13 +469,26 @@ function openings_lab_build_openings(array $rows, array $movesByAnalysis): array
     $analysisId = (int)($row['analysis_id'] ?? 0);
     $metrics = openings_lab_game_metrics($row, $analysisId > 0 ? ($movesByAnalysis[$analysisId] ?? []) : []);
     $key = (string)$row['opening_key'];
+    $labels = eco_catalog_resolve($row['eco_code'] ?? null, $row['opening_name'] ?? null);
 
     if (!isset($openings[$key])) {
       $openings[$key] = [
         'opening_key' => $key,
-        'display_name' => (string)$row['display_name'],
-        'eco_code' => $row['eco_code'],
-        'opening_name' => $row['opening_name'],
+        'display_name' => openings_display_name(
+          $labels['eco_code'],
+          $labels['opening_name'],
+          $row['opening_signature'] ?? null,
+          (string)($row['user_color'] ?? 'unknown')
+        ),
+        'eco_code' => $labels['eco_code'],
+        'opening_name' => $labels['opening_name'],
+        'variation_name' => $labels['variation_name'],
+        'family_key' => $labels['family_key'],
+        'family_name' => $labels['family_name'],
+        'catalog_opening_name' => $labels['catalog_opening_name'],
+        'catalog_variation_name' => $labels['catalog_variation_name'],
+        'label_source' => $labels['label_source'],
+        'catalog_match' => $labels['catalog_match'],
         'eco_url' => $row['eco_url'],
         'opening_source' => (string)$row['opening_source'],
         'opening_signature' => $row['opening_signature'],
