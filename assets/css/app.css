@@ -4055,6 +4055,12 @@ select {
 .training-board .sq.solution.from,.training-board .sq.solution.to,.training-board .sq.solution.selected {
   background:#f56f6f
 }
+.training-board .sq.correct,
+.training-board .sq.correct.from,
+.training-board .sq.correct.to,
+.training-board .sq.correct.selected {
+  background:#71d78a
+}
 .training-solver-info {
   display:grid;
   gap:12px

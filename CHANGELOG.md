@@ -9,6 +9,7 @@
 - Added persistent settings for legal-move hints and automatic move submission.
 - Enforced correct side-to-move and legal destination selection on the training board.
 - Removed the disabled legal-move checkbox from the exercise page.
+- Kept a correctly solved move on the board and highlighted its origin and destination in green.
 - Bumped the app version and PWA cache to `1.4.6`.
 
 ### Database

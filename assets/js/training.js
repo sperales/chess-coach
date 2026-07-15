@@ -15,6 +15,7 @@ let trainingTimerInterval = null;
 let trainingUsedHint = false;
 let trainingHintFrom = '';
 let revealedTrainingSolution = '';
+let completedTrainingMove = '';
 let trainingOriginReviewLoadedFor = 0;
 let trainingSelectionMessage = '';
 let trainingMoveSubmitting = false;
@@ -424,6 +425,7 @@ async function openTrainingExercise(id) {
   selectedTrainingSquare = '';
   trainingSelectionMessage = '';
   revealedTrainingSolution = '';
+  completedTrainingMove = '';
   trainingHintFrom = '';
   trainingUsedHint = false;
   trainingStartedAt = Date.now();
@@ -509,6 +511,7 @@ function closeTrainingSolver() {
   trainingSelectionMessage = '';
   trainingHintFrom = '';
   revealedTrainingSolution = '';
+  completedTrainingMove = '';
 }
 
 function renderTrainingSolver() {
@@ -751,7 +754,7 @@ function renderTrainingBoard() {
   if (!board || !activeExercise) return;
   const [placement] = (activeExercise.fen || '').split(' ');
   const grid = trainingBoardGridFromPlacement(placement || '');
-  const displayGrid = trainingPreviewGrid(grid);
+  const displayGrid = trainingPreviewGrid(grid, selectedTrainingSquare.length >= 4 ? selectedTrainingSquare : completedTrainingMove);
   const legalTargets = TRAINING_SHOW_LEGAL_MOVES ? trainingLegalTargetSet(grid) : new Set();
   const previousMove = (activeExercise.previous_uci || '').toString().toLowerCase();
   const previousFrom = previousMove.length >= 4 ? previousMove.slice(0, 2) : '';
@@ -759,6 +762,9 @@ function renderTrainingBoard() {
   const solutionMove = (revealedTrainingSolution || '').toString().toLowerCase();
   const solutionFrom = solutionMove.length >= 4 ? solutionMove.slice(0, 2) : '';
   const solutionTo = solutionMove.length >= 4 ? solutionMove.slice(2, 4) : '';
+  const completedMove = (completedTrainingMove || '').toString().toLowerCase();
+  const completedFrom = completedMove.length >= 4 ? completedMove.slice(0, 2) : '';
+  const completedTo = completedMove.length >= 4 ? completedMove.slice(2, 4) : '';
   let html = '';
   const ranks = trainingBoardOrientation === 'black' ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
   const files = trainingBoardOrientation === 'black' ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
@@ -771,9 +777,10 @@ function renderTrainingBoard() {
       const selected = sq === selectedFrom || sq === selectedTo ? ' selected' : '';
       const previous = sq === previousFrom ? ' from' : sq === previousTo ? ' to' : '';
       const solution = sq === solutionFrom || sq === solutionTo ? ' solution' : '';
+      const correct = sq === completedFrom || sq === completedTo ? ' correct' : '';
       const legal = legalTargets.has(sq) ? ' legal-target' : '';
       const hint = sq === trainingHintFrom ? ' hint' : '';
-      html += `<button class="sq ${dark ? 'dark' : 'light'}${previous}${selected}${solution}${legal}${hint}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(displayGrid[r][file] || '')}</button>`;
+      html += `<button class="sq ${dark ? 'dark' : 'light'}${previous}${selected}${solution}${correct}${legal}${hint}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(displayGrid[r][file] || '')}</button>`;
     }
   }
   board.innerHTML = html;
@@ -793,11 +800,20 @@ function renderTrainingBoardCoordinates() {
   if (frame) frame.dataset.orientation = trainingBoardOrientation;
 }
 
-function trainingPreviewGrid(grid) {
+function trainingPreviewGrid(grid, move = selectedTrainingSquare) {
   const preview = grid.map(row => row.slice());
-  if (!selectedTrainingSquare || selectedTrainingSquare.length < 4) return preview;
-  const from = selectedTrainingSquare.slice(0, 2);
-  const to = selectedTrainingSquare.slice(2, 4);
+  if (!move || move.length < 4) return preview;
+  const from = move.slice(0, 2);
+  const to = move.slice(2, 4);
+  const state = { ...trainingFenState(activeExercise?.fen || ''), grid: preview };
+  const legalMove = trainingLegalMovesForState(state, from).find(candidate => candidate.to === to);
+  if (legalMove) {
+    const promotion = move.slice(4, 5).toLowerCase();
+    if (promotion && ['q', 'r', 'b', 'n'].includes(promotion)) {
+      legalMove.promotion = state.turn === 'w' ? promotion.toUpperCase() : promotion;
+    }
+    return trainingApplyMove(state, legalMove).grid;
+  }
   const fromCoords = trainingSquareToGrid(from);
   const toCoords = trainingSquareToGrid(to);
   if (!fromCoords || !toCoords) return preview;
@@ -1224,6 +1240,7 @@ async function submitTrainingMove() {
     if (!data.ok) throw new Error(data.error || 'No se pudo registrar el intento.');
     if (data.exercise) activeExercise = data.exercise;
     if (data.session) activeTrainingSession = data.session;
+    if (data.solved) completedTrainingMove = move;
     showTrainingFeedback(data);
     if (data.solved || data.solution_uci) stopTrainingExerciseTimer();
     renderTrainingAttempts();

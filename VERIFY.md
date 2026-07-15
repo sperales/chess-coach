@@ -168,6 +168,7 @@ After applying `sql/migrations/027_changes_1.4.6.sql`:
 - Confirm legal destinations remain enforced when visual hints are disabled.
 - Confirm automatic submission registers exactly one attempt after a legal destination is selected.
 - Confirm manual mode keeps the Comprobar button enabled after a complete legal move.
+- Confirm solving an exercise leaves the piece on its destination and highlights both move squares in green.
 
 ---
 
