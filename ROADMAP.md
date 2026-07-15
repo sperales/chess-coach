@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v1.4.2**
+Current stable baseline: **v1.4.3**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,11 +32,13 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v1.4.2
+## Current baseline — v1.4.3
 
-v1.4.2 makes the polished Training Experience the current stable baseline.
+v1.4.3 makes the Spanish ECO catalog and friendly Openings Lab labels part of the stable baseline.
 
-It keeps Player DNA, Openings Lab and the Training Center as stable capabilities, and includes configurable training goals, automatic daily/weekly progress, a compact activity-aware streak indicator, smart repetition scheduling, clearer exercise feedback, expandable professional milestones and improved exercise filtering and prioritization.
+It keeps Player DNA, Openings Lab and the Training Center as stable capabilities, and adds an autonomous 500-code ECO reference catalog, Spanish opening and representative variation labels, PGN-first metadata resolution and clearer opening identities without runtime APIs.
+
+The Training Experience remains stable with configurable goals, automatic daily/weekly progress, a compact activity-aware streak indicator, smart repetition scheduling, clearer exercise feedback, expandable professional milestones and improved exercise filtering and prioritization.
 
 Smart Tags, the Personal Trainer Dashboard, Training Center exercise generation, the interactive solver, hints, internal session tracking, selectable board piece sets, Openings Lab, Player DNA and Training Experience are now part of the stable product baseline.
 
@@ -591,6 +593,29 @@ Avoid points, coins, XP, levels, chests, rankings or anything that makes the app
 - Skipped exercises do not count as daily training activity.
 - The UI no longer requires the user to understand or manage sessions.
 - The implementation remains compatible with shared hosting.
+
+---
+
+## v1.4.3 — Spanish ECO Catalog
+
+Status: completed in v1.4.3.
+
+### Goal
+
+Make Openings Lab understandable without requiring the user to know ECO codes.
+
+### Delivered
+
+- Autonomous local catalog for all 500 codes from `A00` to `E99`.
+- Stable opening-family grouping for future statistics and recommendations.
+- Canonical Spanish opening and representative variation labels.
+- Imported PGN opening metadata kept as the highest-priority source.
+- Friendly `ECO · opening` hierarchy with the variation on a secondary line.
+- No runtime API dependency and no rewrite of existing opening profiles.
+
+### Future boundary
+
+Exact move-sequence classification, opening trees and repertoire management remain future work. An ECO category may contain multiple named lines and must not be presented as exact-line detection.
 
 ---
 
