@@ -1,3 +1,29 @@
+# Chess Coach v1.4.5 Update Notes
+
+## Release type
+
+Mobile UI polish release.
+
+## Changes
+
+- Compacted the four summary cards on mobile in Analysis Pending, Training Center and Openings Lab.
+- Kept each card on one visual row with its icon on the left and primary value aligned to the right.
+- Preserved the existing desktop layout and the dashboard cards outside these three pages.
+- Bumped `config/version.php` and the PWA cache to `1.4.5`.
+
+## SQL migration
+
+No SQL migration is required.
+
+## Verification
+
+- Check the four opening cards at mobile widths in `analysis-pending.php`, `training.php` and `openings-lab.php`.
+- Confirm labels and details remain readable with large values and long opening names.
+- Confirm the four-card desktop layout remains unchanged.
+- Confirm `config/version.php` and `service-worker.js` both use `1.4.5`.
+
+---
+
 # Chess Coach v1.4.4 Update Notes
 
 ## Release type

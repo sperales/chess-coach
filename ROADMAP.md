@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v1.4.4**
+Current stable baseline: **v1.4.5**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,9 +32,9 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v1.4.4
+## Current baseline — v1.4.5
 
-v1.4.4 makes board personalization part of the stable baseline, with three local piece sets and four user-selectable board color themes shared by review and training.
+v1.4.5 keeps board personalization as part of the stable baseline and improves the readability of key summary cards on mobile in Analysis Pending, Training Center and Openings Lab.
 
 It keeps Player DNA, Openings Lab and the Training Center as stable capabilities, including the autonomous 500-code ECO reference catalog, Spanish opening and representative variation labels, PGN-first metadata resolution and clearer opening identities without runtime APIs.
 

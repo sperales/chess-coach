@@ -132,6 +132,18 @@ After applying `sql/migrations/026_changes_1.4.4.sql`:
 
 ---
 
+## Mobile Summary Card Checks
+
+At a viewport of 640 px or narrower:
+
+- Confirm the four summary cards in `analysis-pending.php`, `training.php` and `openings-lab.php` render as compact rows.
+- Confirm each icon stays on the left and each primary value is aligned on the right.
+- Confirm labels and supporting text do not overlap or clip with large values.
+- Confirm the home dashboard metric cards are unchanged.
+- Confirm the three pages retain their four-column summary layout on desktop.
+
+---
+
 ## Tag And Release Checks
 
 Create tags only after the version PR has been approved by the user and merged into `main`.
