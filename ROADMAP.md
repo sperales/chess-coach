@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v1.4.3**
+Current stable baseline: **v1.4.4**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,11 +32,11 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v1.4.3
+## Current baseline — v1.4.4
 
-v1.4.3 makes the Spanish ECO catalog and friendly Openings Lab labels part of the stable baseline.
+v1.4.4 makes board personalization part of the stable baseline, with three local piece sets and four user-selectable board color themes shared by review and training.
 
-It keeps Player DNA, Openings Lab and the Training Center as stable capabilities, and adds an autonomous 500-code ECO reference catalog, Spanish opening and representative variation labels, PGN-first metadata resolution and clearer opening identities without runtime APIs.
+It keeps Player DNA, Openings Lab and the Training Center as stable capabilities, including the autonomous 500-code ECO reference catalog, Spanish opening and representative variation labels, PGN-first metadata resolution and clearer opening identities without runtime APIs.
 
 The Training Experience remains stable with configurable goals, automatic daily/weekly progress, a compact activity-aware streak indicator, smart repetition scheduling, clearer exercise feedback, expandable professional milestones and improved exercise filtering and prioritization.
 

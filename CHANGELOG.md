@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## v1.4.4 - Board personalization
+
+### Added
+
+- Added local transparent PNG `Set 3` pieces.
+- Added per-user green, brown, blue and gray board color themes.
+- Added richer piece and board previews to profile settings.
+
+### Changed
+
+- Applied shared board colors to review, training lists and the exercise solver.
+- Bumped `config/version.php` to `1.4.4`.
+- Updated the service worker cache and precached `Set 3` assets.
+
+### Database
+
+- SQL migration required: `sql/migrations/026_changes_1.4.4.sql`.
+
 ## v1.4.3 - Spanish ECO catalog
 
 ### Added

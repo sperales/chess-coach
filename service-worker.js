@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chess-coach-v1.4.3';
+const CACHE_NAME = 'chess-coach-v1.4.4';
 const ASSETS = [
   './',
   './app.php',
@@ -58,6 +58,18 @@ const ASSETS = [
   './assets/pieces/Set%202/wp.png',
   './assets/pieces/Set%202/wq.png',
   './assets/pieces/Set%202/wr.png',
+  './assets/pieces/Set%203/bb.png',
+  './assets/pieces/Set%203/bk.png',
+  './assets/pieces/Set%203/bn.png',
+  './assets/pieces/Set%203/bp.png',
+  './assets/pieces/Set%203/bq.png',
+  './assets/pieces/Set%203/br.png',
+  './assets/pieces/Set%203/wb.png',
+  './assets/pieces/Set%203/wk.png',
+  './assets/pieces/Set%203/wn.png',
+  './assets/pieces/Set%203/wp.png',
+  './assets/pieces/Set%203/wq.png',
+  './assets/pieces/Set%203/wr.png',
   './assets/icons/favicon.ico',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',

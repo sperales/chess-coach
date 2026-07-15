@@ -10,7 +10,7 @@ This file defines the working rules for Codex and other coding agents. Follow th
 
 ## Current stable baseline
 
-Current stable version: **1.4.3**
+Current stable version: **1.4.4**
 
 The app is deployed manually to shared hosting and must remain compatible with that environment.
 
@@ -439,6 +439,7 @@ The current likely roadmap direction is:
 - v1.4.1 — Training Experience UI polish (completed)
 - v1.4.2 — Training milestones polish (completed)
 - v1.4.3 — Spanish ECO catalog and friendly opening labels (completed)
+- v1.4.4 — Board piece and color personalization (completed)
 - v1.5.0 — AI Coach MVP
 - v1.7.0 — Automation / Chess.com Sync
 

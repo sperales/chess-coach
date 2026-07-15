@@ -9,6 +9,7 @@ $assetVersion = (string)filemtime(__DIR__.'/assets/css/app.css');
 $reviewJsVersion = (string)filemtime(__DIR__.'/assets/js/review.js');
 $layoutJsVersion = (string)filemtime(__DIR__.'/assets/js/layout.js');
 $pieceSetAssetPath = piece_set_asset_path($u['piece_set'] ?? null);
+$boardThemeClass = board_theme_class($u['board_theme'] ?? null);
 ?>
 <!doctype html>
 <html lang="es">
@@ -20,7 +21,7 @@ $pieceSetAssetPath = piece_set_asset_path($u['piece_set'] ?? null);
   <link rel="stylesheet" href="assets/css/app.css?v=<?=e($assetVersion)?>">
   <link rel="icon" href="assets/icons/favicon.ico">
 </head>
-<body class="dark-shell">
+<body class="dark-shell <?=e($boardThemeClass)?>">
 <?php header_bar('Chess Coach'); ?>
 <div class="app-area">
 <main class="dashboard review-page" data-game-id="<?= (int)$gameId ?>">
