@@ -43,13 +43,11 @@ function renderOpeningsSummary() {
 }
 
 function metricCard(icon, label, value, detail, extraClass = '') {
-  return `<article class="metric-card ${extraClass}">
+  return `<article class="metric-card compact-metric-card ${extraClass}">
     <div class="metric-icon">${escapeHtml(icon)}</div>
-    <div>
-      <span>${escapeHtml(label)}</span>
-      <b>${escapeHtml(value)}</b>
-      <small>${escapeHtml(detail)}</small>
-    </div>
+    <span>${escapeHtml(label)}</span>
+    <b>${escapeHtml(value)}</b>
+    <small>${escapeHtml(detail)}</small>
   </article>`;
 }
 

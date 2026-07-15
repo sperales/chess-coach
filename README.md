@@ -14,11 +14,11 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v1.4.4**
+Current stable baseline: **v1.4.5**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
-v1.4.4 is the current stable baseline. It keeps the Training Experience and Spanish ECO catalog improvements, adds a third local piece set and lets each user choose green, brown, blue or gray board squares.
+v1.4.5 is the current stable baseline. It keeps the Training Experience, Spanish ECO catalog and board personalization improvements, and makes key summary cards more compact and readable on mobile.
 
 ---
 

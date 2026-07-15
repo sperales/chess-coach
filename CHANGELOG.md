@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## v1.4.5 - Mobile summary cards
+
+### Changed
+
+- Compacted the summary metric cards on mobile in Analysis Pending, Training Center and Openings Lab.
+- Reorganized each card with icon and title on the left, plus value and supporting detail on the right.
+- Preserved the four-column desktop grid while updating the internal card composition.
+- Bumped the app version and PWA cache to `1.4.5`.
+
+### Database
+
+- No SQL migration is required.
+
 ## v1.4.4 - Board personalization
 
 ### Added

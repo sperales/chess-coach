@@ -93,7 +93,7 @@ function renderStats(data) {
     ['done', 'Analizadas', q.done || 0, 'completadas'],
     ['kpi-error', 'Errores', q.errors || 0, 'requieren revisión'],
   ];
-  el.innerHTML = cards.map(c => `<article class="metric-card ${c[0]}"><div class="metric-icon">${iconForQueue(c[0])}</div><div><span>${c[1]}</span><b>${c[2]}</b><small>${c[3]}</small></div></article>`).join('');
+  el.innerHTML = cards.map(c => `<article class="metric-card compact-metric-card ${c[0]}"><div class="metric-icon">${iconForQueue(c[0])}</div><span>${c[1]}</span><b>${c[2]}</b><small>${c[3]}</small></article>`).join('');
 }
 
 function iconForQueue(k) {
