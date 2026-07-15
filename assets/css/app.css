@@ -4732,12 +4732,19 @@ select {
   .training-solve-sidebar {
     padding:16px
   }
-  .training-side-kpis,
   .training-detail-grid,
   .training-origin-review-grid,
   .training-solve-toolbar,
   .training-solve-tip {
     grid-template-columns:minmax(0,1fr)
+  }
+  .training-side-kpis {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:8px
+  }
+  .training-side-kpis div {
+    justify-items:center;
+    text-align:center
   }
   .training-solver-hero .coach-comment {
     display:grid

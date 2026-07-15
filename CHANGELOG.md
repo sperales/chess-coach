@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## v1.4.6 - Training mobile metadata
+
+### Changed
+
+- Kept exercise attempts, difficulty and priority aligned in three columns on mobile.
+- Centered the three indicators for a more compact training solver sidebar.
+- Bumped the app version and PWA cache to `1.4.6`.
+
+### Database
+
+- No SQL migration is required.
+
 ## v1.4.5 - Mobile summary cards
 
 ### Changed

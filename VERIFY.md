@@ -145,6 +145,17 @@ At a viewport of 640 px or narrower:
 
 ---
 
+## Training Exercise Mobile Metadata Checks
+
+At a viewport of 560 px or narrower:
+
+- Confirm Intentos, Dificultad and Prioridad render in three equal columns.
+- Confirm the labels, values and difficulty bars are centered and do not overlap.
+- Confirm the source game remains below the metadata row.
+- Confirm the desktop training solver sidebar is unchanged.
+
+---
+
 ## Tag And Release Checks
 
 Create tags only after the version PR has been approved by the user and merged into `main`.

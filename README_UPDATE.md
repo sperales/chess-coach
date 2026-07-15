@@ -1,3 +1,30 @@
+# Chess Coach v1.4.6 Update Notes
+
+## Release type
+
+Training mobile UI polish release.
+
+## Changes
+
+- Kept exercise attempts, difficulty and priority in a compact three-column row on mobile.
+- Centered the three exercise indicators for faster scanning below the board.
+- Preserved the existing desktop training layout.
+- Bumped `config/version.php` and the PWA cache to `1.4.6`.
+
+## SQL migration
+
+No SQL migration is required.
+
+## Verification
+
+- Open `training-exercise.php` at a viewport of 560 px or narrower.
+- Confirm Intentos, Dificultad and Prioridad remain on one row without overlap.
+- Confirm all difficulty bars remain visible and centered.
+- Confirm the desktop sidebar layout remains unchanged.
+- Confirm `config/version.php` and `service-worker.js` both use `1.4.6`.
+
+---
+
 # Chess Coach v1.4.5 Update Notes
 
 ## Release type
