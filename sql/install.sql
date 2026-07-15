@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
   username VARCHAR(80) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   piece_set VARCHAR(80) NOT NULL DEFAULT 'Set 1',
+  board_theme VARCHAR(20) NOT NULL DEFAULT 'green',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
@@ -1136,5 +1137,6 @@ INSERT INTO app_migrations (version, description) VALUES
 ('1.2.0', 'Openings Lab data foundation'),
 ('1.3.0', 'Player DNA data foundation'),
 ('1.4.0', 'Training Experience goals and repetition foundation'),
-('1.4.3', 'Canonical Spanish ECO reference catalog')
+('1.4.3', 'Canonical Spanish ECO reference catalog'),
+('1.4.4', 'User-selectable board color themes')
 ON DUPLICATE KEY UPDATE version = version;

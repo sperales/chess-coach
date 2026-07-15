@@ -49,3 +49,20 @@ function piece_set_asset_path(?string $name): string {
   return 'assets/pieces/' . rawurlencode($set) . '/';
 }
 
+function board_theme_options(): array {
+  return [
+    'green' => 'Verde',
+    'brown' => 'Marrón',
+    'blue' => 'Azul',
+    'gray' => 'Gris',
+  ];
+}
+
+function normalize_board_theme(?string $theme): string {
+  $theme = strtolower(trim((string)$theme));
+  return array_key_exists($theme, board_theme_options()) ? $theme : 'green';
+}
+
+function board_theme_class(?string $theme): string {
+  return 'board-theme-' . normalize_board_theme($theme);
+}

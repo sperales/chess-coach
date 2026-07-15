@@ -14,11 +14,11 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v1.4.3**
+Current stable baseline: **v1.4.4**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
-v1.4.3 is the current stable baseline. It keeps the Training Experience improvements and adds an autonomous Spanish ECO catalog so Openings Lab explains codes, opening names and representative variations without external runtime services.
+v1.4.4 is the current stable baseline. It keeps the Training Experience and Spanish ECO catalog improvements, adds a third local piece set and lets each user choose green, brown, blue or gray board squares.
 
 ---
 
@@ -162,6 +162,7 @@ Includes:
 - Recommended opening review links
 - Games filtered by opening
 - Connections to frequent Smart Tags and existing Training Center exercises
+- User-selectable local piece sets and board color themes shared by review and training
 
 The local ECO catalog is derived from the CC0
 [`lichess-org/chess-openings`](https://github.com/lichess-org/chess-openings)

@@ -19,6 +19,8 @@ $latestPlayerDna = player_dna_latest_snapshot((int)$u['id']);
 $playerDnaConfidenceLabels = ['low' => 'baja', 'medium' => 'media', 'high' => 'alta'];
 $pieceSets = available_piece_sets();
 $currentPieceSet = normalize_piece_set($u['piece_set'] ?? null);
+$boardThemes = board_theme_options();
+$currentBoardTheme = normalize_board_theme($u['board_theme'] ?? null);
 $trainingGoalSettings = training_goal_settings_for_user((int)$u['id']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -45,16 +47,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
   }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') === 'change_piece_set') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array(($_POST['profile_action'] ?? ''), ['change_piece_set', 'save_board_preferences'], true)) {
   $selectedPieceSet = normalize_piece_set($_POST['piece_set'] ?? '');
+  $selectedBoardTheme = normalize_board_theme($_POST['board_theme'] ?? $currentBoardTheme);
   if (!$selectedPieceSet) {
     $err = 'No hay sets de piezas disponibles.';
   } else {
-    $st = db()->prepare('UPDATE users SET piece_set=?, updated_at=NOW() WHERE id=?');
-    $st->execute([$selectedPieceSet, $u['id']]);
+    $st = db()->prepare('UPDATE users SET piece_set=?, board_theme=?, updated_at=NOW() WHERE id=?');
+    $st->execute([$selectedPieceSet, $selectedBoardTheme, $u['id']]);
     $u['piece_set'] = $selectedPieceSet;
+    $u['board_theme'] = $selectedBoardTheme;
     $currentPieceSet = $selectedPieceSet;
-    $msg = 'Set de piezas actualizado.';
+    $currentBoardTheme = $selectedBoardTheme;
+    $msg = 'Preferencias del tablero actualizadas.';
   }
 }
 
@@ -79,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icons/favicon.ico">
 </head>
-<body class="dark-shell">
+<body class="dark-shell <?=e(board_theme_class($currentBoardTheme))?>">
 <?php header_bar('Chess Coach'); ?>
 <div class="app-area">
   <main class="wrap">
@@ -101,22 +106,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
 
     <section class="card">
       <h2>Tablero</h2>
-      <p class="muted">Elige el set de piezas que se usará en revisión y entrenamiento.</p>
+      <p class="muted">Elige el set de piezas y el color del tablero que se usarán en revisión y entrenamiento.</p>
       <form method="post">
-        <input type="hidden" name="profile_action" value="change_piece_set">
+        <input type="hidden" name="profile_action" value="save_board_preferences">
         <?= csrf_field() ?>
+        <h3 class="board-preference-heading">Set de piezas</h3>
         <div class="piece-set-options">
           <?php foreach ($pieceSets as $set): ?>
             <label class="piece-set-option">
               <input type="radio" name="piece_set" value="<?=e($set)?>" <?= $set === $currentPieceSet ? 'checked' : '' ?>>
               <span>
                 <strong><?=e($set)?></strong>
-                <img src="<?=e(piece_set_asset_path($set))?>wk.png" alt="<?=e($set)?>" draggable="false">
+                <span class="piece-set-preview" aria-hidden="true">
+                  <?php foreach (['wp','wn','wb','wr','wq','wk'] as $piece): ?>
+                    <img src="<?=e(piece_set_asset_path($set))?><?=e($piece)?>.png" alt="" draggable="false">
+                  <?php endforeach; ?>
+                </span>
               </span>
             </label>
           <?php endforeach; ?>
         </div>
-        <button>Guardar set de piezas</button>
+        <h3 class="board-preference-heading">Color del tablero</h3>
+        <div class="board-theme-options">
+          <?php foreach ($boardThemes as $theme => $label): ?>
+            <label class="board-theme-option <?=e(board_theme_class($theme))?>">
+              <input type="radio" name="board_theme" value="<?=e($theme)?>" <?= $theme === $currentBoardTheme ? 'checked' : '' ?>>
+              <span>
+                <span class="board-theme-preview" aria-hidden="true">
+                  <?php for ($square = 0; $square < 8; $square++): ?>
+                    <i class="<?= (($square + intdiv($square, 4)) % 2) === 0 ? 'light' : 'dark' ?>"></i>
+                  <?php endfor; ?>
+                </span>
+                <strong><?=e($label)?></strong>
+              </span>
+            </label>
+          <?php endforeach; ?>
+        </div>
+        <button>Guardar preferencias</button>
       </form>
     </section>
 

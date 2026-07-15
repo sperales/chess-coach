@@ -118,6 +118,20 @@ After deploying the PR2 backend resolver, verify its precedence and API payloads
 
 ---
 
+## Board Personalization Checks
+
+After applying `sql/migrations/026_changes_1.4.4.sql`:
+
+- Confirm `users.board_theme` defaults to `green`.
+- Confirm profile settings list `Set 1`, `Set 2` and `Set 3`.
+- Confirm the available themes are `Verde`, `Marrón`, `Azul` and `Gris`.
+- Save every set/theme combination and reload the page.
+- Confirm review and training boards preserve the selected combination.
+- Confirm move, best-move, selection, legal-target, hint and solution highlights remain distinguishable.
+- Confirm all 36 piece-set assets declared in `service-worker.js` exist.
+
+---
+
 ## Tag And Release Checks
 
 Create tags only after the version PR has been approved by the user and merged into `main`.

@@ -1,3 +1,40 @@
+# Chess Coach v1.4.4 Update Notes
+
+## Release type
+
+Board personalization release.
+
+## Changes
+
+- Added `Set 3` with 12 local transparent PNG chess pieces.
+- Expanded the profile board settings with six-piece previews for every available set.
+- Added four board color themes: `Verde`, `Marrón`, `Azul` and `Gris`.
+- Applied the selected theme to review, Training Center previews and the dedicated exercise solver.
+- Stored the preference per user using a constrained server-side allowlist.
+- Kept `Verde` as the default for existing users and invalid/missing values.
+- Bumped `config/version.php` and the PWA cache to `1.4.4`.
+
+## SQL migration
+
+Run:
+
+```text
+sql/migrations/026_changes_1.4.4.sql
+```
+
+The migration adds `users.board_theme` and defaults existing users to `green`.
+
+## Verification
+
+- Confirm `Set 3` appears in `profile.php` and shows all six white piece types.
+- Save each piece set and verify review and training use it.
+- Save each board color and verify review, training previews and the exercise solver use it.
+- Confirm highlights for previous move, selection, hints and solutions remain visible in every theme.
+- Confirm the profile selector stacks cleanly on mobile.
+- Confirm `config/version.php` and `service-worker.js` both use `1.4.4`.
+
+---
+
 # Chess Coach v1.4.3 Update Notes
 
 ## Release type
