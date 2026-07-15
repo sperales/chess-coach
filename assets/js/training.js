@@ -778,9 +778,10 @@ function renderTrainingBoard() {
       const previous = sq === previousFrom ? ' from' : sq === previousTo ? ' to' : '';
       const solution = sq === solutionFrom || sq === solutionTo ? ' solution' : '';
       const correct = sq === completedFrom || sq === completedTo ? ' correct' : '';
+      const correctDestination = sq === completedTo ? ' correct-destination' : '';
       const legal = legalTargets.has(sq) ? ' legal-target' : '';
       const hint = sq === trainingHintFrom ? ' hint' : '';
-      html += `<button class="sq ${dark ? 'dark' : 'light'}${previous}${selected}${solution}${correct}${legal}${hint}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(displayGrid[r][file] || '')}</button>`;
+      html += `<button class="sq ${dark ? 'dark' : 'light'}${previous}${selected}${solution}${correct}${correctDestination}${legal}${hint}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(displayGrid[r][file] || '')}</button>`;
     }
   }
   board.innerHTML = html;

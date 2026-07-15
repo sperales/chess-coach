@@ -12,6 +12,7 @@ Training mobile UI polish release.
 - Enforced side-to-move selection and legal destination selection in training exercises.
 - Removed the non-interactive legal-move checkbox from the exercise page.
 - Kept the solved position visible with the correct move highlighted in green.
+- Reinforced solved exercises with a green check over the destination square.
 - Preserved the existing desktop training layout.
 - Bumped `config/version.php` and the PWA cache to `1.4.6`.
 
@@ -36,6 +37,7 @@ The migration adds the training interaction preferences with backward-compatible
 - Confirm legal target markers follow the saved preference.
 - Confirm automatic submission follows the saved preference without duplicate attempts.
 - Confirm a correct move remains played on the board with both squares highlighted in green.
+- Confirm the destination square displays a legible green check without obscuring the piece.
 - Confirm the desktop sidebar layout remains unchanged.
 - Confirm `config/version.php` and `service-worker.js` both use `1.4.6`.
 

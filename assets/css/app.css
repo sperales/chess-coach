@@ -4061,6 +4061,27 @@ select {
 .training-board .sq.correct.selected {
   background:#71d78a
 }
+.training-board .sq.correct-destination::after {
+  content:"\2713";
+  position:absolute;
+  z-index:4;
+  top:5%;
+  right:5%;
+  display:grid;
+  place-items:center;
+  width:32%;
+  min-width:18px;
+  max-width:28px;
+  aspect-ratio:1;
+  border:2px solid #e9ffe9;
+  border-radius:50%;
+  background:#55b957;
+  color:#fff;
+  box-shadow:0 2px 6px #001a08a6;
+  font-size:15px;
+  font-weight:900;
+  line-height:1
+}
 .training-solver-info {
   display:grid;
   gap:12px
