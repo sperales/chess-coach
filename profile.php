@@ -378,8 +378,9 @@ async function runTrainingEngineBackfill() {
       body: JSON.stringify({ limit: 50 })
     });
     const data = await r.json();
-    if (!data.ok && Number(data.error_count || 0) > 0) throw new Error(data.message || 'Enriquecimiento completado con errores.');
-    if (result) result.textContent = `${data.message || 'Proceso ejecutado.'} Mejorados: ${data.updated || 0}. Bestmoves distintas: ${data.mismatches || 0}. Alternativas válidas: ${data.alternatives_accepted || 0}. Alternativas descartadas: ${data.alternatives_rejected || 0}. Pendientes: ${data.pending_after || 0}.`;
+    const errors = Array.isArray(data.errors) ? data.errors.filter(Boolean) : [];
+    const summary = `${data.message || 'Proceso ejecutado.'} Mejorados: ${data.updated || 0}. Bestmoves distintas: ${data.mismatches || 0}. Alternativas válidas: ${data.alternatives_accepted || 0}. Alternativas descartadas: ${data.alternatives_rejected || 0}. Pendientes: ${data.pending_after || 0}.`;
+    if (result) result.textContent = errors.length ? `${summary} Errores: ${errors.join(' | ')}` : summary;
     if (pending) pending.textContent = `Pendientes: ${data.pending_after || 0}`;
   } catch (e) {
     if (result) result.textContent = e.message || 'No se pudieron enriquecer los ejercicios con Stockfish.';

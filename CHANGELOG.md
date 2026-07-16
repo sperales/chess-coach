@@ -10,6 +10,7 @@
 - Recorded bestmove mismatches without replacing the exercise's accepted solution.
 - Added constrained Stockfish validation for historical solutions when the refreshed bestmove differs.
 - Added support for one validated alternative solution per exercise.
+- Exposed safe per-exercise diagnostics for partially completed enrichment batches in the profile process result.
 
 ### Changed
 

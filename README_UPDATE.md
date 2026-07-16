@@ -16,6 +16,7 @@ Training feedback and Stockfish enrichment release.
 - Re-evaluates the original solution with Stockfish `searchmoves` when a bestmove mismatch is found.
 - Accepts the refreshed bestmove as a second valid solution only when it is equivalent within 30 centipawns or a conservative mate-distance tolerance.
 - Stores the original constrained evaluation so accepted and rejected alternatives remain auditable.
+- Shows the first safe per-exercise errors when an enrichment batch completes partially.
 - Improves deterministic mate descriptions only when the refreshed solution agrees with the accepted solution.
 - Hides refreshed engine solutions and PVs while the exercise is unresolved.
 - Bumps `config/version.php` and the PWA cache to `1.4.8`.
