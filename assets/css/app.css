@@ -4050,10 +4050,12 @@ select {
   box-shadow:inset 0 0 0 4px #ffd45a
 }
 .training-board .sq.solution {
-  background:#f56f6f
+  background:#6eb8f2;
+  box-shadow:inset 0 0 0 4px #b9e2ff
 }
 .training-board .sq.solution.from,.training-board .sq.solution.to,.training-board .sq.solution.selected {
-  background:#f56f6f
+  background:#6eb8f2;
+  box-shadow:inset 0 0 0 4px #b9e2ff
 }
 .training-board .sq.correct,
 .training-board .sq.correct.from,
@@ -4086,6 +4088,10 @@ select {
 .training-board .sq.incorrect-destination.selected {
   background:#df6666;
   box-shadow:inset 0 0 0 4px #ffb0b0
+}
+.training-board .sq.solution.incorrect-destination {
+  background:#6eb8f2;
+  box-shadow:inset 0 0 0 4px #b9e2ff
 }
 .training-solver-info {
   display:grid;
