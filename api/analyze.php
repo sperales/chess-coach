@@ -17,6 +17,7 @@ $mutatingActions = [
   'smart_tags_backfill',
   'training_backfill',
   'training_content_backfill',
+  'training_engine_backfill',
   'process',
 ];
 if (in_array($action, $mutatingActions, true)) {
@@ -138,6 +139,15 @@ if ($action === 'training_content_backfill') {
   $limit = max(1, min(500, (int)($body['limit'] ?? 200)));
   if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
   json_response(training_content_backfill_batch($userId, $limit));
+}
+
+if ($action === 'training_engine_backfill') {
+  ignore_user_abort(true);
+  @set_time_limit(300);
+  $body = request_json_body();
+  $limit = max(1, min(20, (int)($body['limit'] ?? 20)));
+  if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
+  json_response(training_engine_backfill_batch($userId, $limit));
 }
 
 if ($action === 'process') {

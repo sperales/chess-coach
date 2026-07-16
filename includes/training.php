@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/helpers.php';
+require_once __DIR__ . '/stockfish.php';
 
 const TRAINING_EXERCISE_CONTENT_VERSION = 2;
 
@@ -819,7 +820,14 @@ function training_public_exercise(array $item, bool $includeSolution = false): a
   $item['hint_from'] = preg_match('/^[a-h][1-8]/', $solution) ? substr($solution, 0, 2) : null;
   $item = training_mark_exercise_training_state($item);
   if (!$includeSolution) {
-    unset($item['solution_uci'], $item['solution_san']);
+    unset(
+      $item['solution_uci'],
+      $item['solution_san'],
+      $item['engine_bestmove_uci'],
+      $item['engine_pv_uci'],
+      $item['engine_score'],
+      $item['engine_score_type']
+    );
   }
   return $item;
 }
@@ -1465,6 +1473,140 @@ function training_content_backfill_batch(int $userId, int $limit = 200): array {
     'message' => $rows
       ? ($errors ? 'Actualización de contenido completada con errores parciales.' : 'Contenido de ejercicios actualizado correctamente.')
       : 'Todos los ejercicios ya tienen el contenido actualizado.',
+    'errors' => array_slice($errors, 0, 5),
+  ];
+}
+
+function training_engine_content(array $exercise, array $evaluation): array {
+  $type = (string)($exercise['exercise_type'] ?? 'find_best_move');
+  $side = training_fen_side_to_move((string)($exercise['fen'] ?? '')) === 'b' ? 'negras' : 'blancas';
+  $title = trim((string)($exercise['title'] ?? '')) ?: training_title_for_type($type);
+  $prompt = trim((string)($exercise['prompt'] ?? '')) ?: training_prompt_for_type($type, $side === 'negras' ? 'b' : 'w');
+  $scoreType = (string)($evaluation['score_type'] ?? 'cp');
+  $score = (int)($evaluation['score'] ?? 0);
+
+  if ($scoreType === 'mate' && $score > 0) {
+    $distance = abs($score);
+    $title = $distance > 0 ? "Encuentra el mate en {$distance}" : 'Remata la posición';
+    $prompt = "Stockfish confirma una secuencia forzada de mate. Encuentra el primer movimiento. Juegan {$side}.";
+  } elseif ($scoreType === 'mate' && $score < 0) {
+    $title = 'Encuentra la mejor defensa';
+    $prompt = "El rival dispone de una secuencia forzada. Encuentra la defensa que ofrece más resistencia. Juegan {$side}.";
+  } elseif ($type === 'convert_advantage' && $score >= 250) {
+    $prompt = "Stockfish confirma una ventaja clara en la posición. Encuentra la continuación que la conserva. Juegan {$side}.";
+  } elseif ($type === 'defend_position' && $score < 0) {
+    $prompt = "La posición exige precisión. Encuentra la continuación que limita la presión rival. Juegan {$side}.";
+  }
+
+  return ['title' => $title, 'prompt' => $prompt];
+}
+
+function training_engine_backfill_pending_count(int $userId): int {
+  $st = db()->prepare('SELECT COUNT(*)
+                       FROM training_exercises
+                       WHERE user_id=? AND status="active" AND resolved_at IS NULL
+                         AND content_version>=? AND content_version<?');
+  $st->execute([$userId, TRAINING_EXERCISE_CONTENT_VERSION, 3]);
+  return (int)$st->fetchColumn();
+}
+
+function training_engine_backfill_batch(int $userId, int $limit = 20): array {
+  $limit = max(1, min(20, $limit));
+  $pendingBefore = training_engine_backfill_pending_count($userId);
+  $sql = 'SELECT id, exercise_type, fen, solution_uci, title, prompt, feedback_success
+          FROM training_exercises
+          WHERE user_id=? AND status="active" AND resolved_at IS NULL
+            AND content_version>=? AND content_version<?
+          ORDER BY priority_score DESC, id
+          LIMIT ' . (int)$limit;
+  $st = db()->prepare($sql);
+  $st->execute([$userId, TRAINING_EXERCISE_CONTENT_VERSION, 3]);
+  $rows = $st->fetchAll();
+
+  if (!$rows) {
+    return [
+      'ok' => true,
+      'processed' => 0,
+      'updated' => 0,
+      'mismatches' => 0,
+      'error_count' => 0,
+      'pending_before' => $pendingBefore,
+      'pending_after' => $pendingBefore,
+      'message' => 'No hay ejercicios pendientes de enriquecer con Stockfish.',
+      'errors' => [],
+    ];
+  }
+
+  $updated = 0;
+  $mismatches = 0;
+  $errors = [];
+  $runner = null;
+
+  try {
+    $runner = stockfish_runner();
+    foreach ($rows as $row) {
+      try {
+        $evaluation = $runner->evalFen((string)$row['fen']);
+        $bestmove = strtolower(trim((string)($evaluation['bestmove'] ?? '')));
+        $pv = is_array($evaluation['pv'] ?? null) ? $evaluation['pv'] : [];
+        if (!training_valid_solution($bestmove) || !$pv || strtolower((string)$pv[0]) !== $bestmove) {
+          throw new RuntimeException('Stockfish no devolvió una variante principal válida.');
+        }
+
+        $storedSolution = strtolower(trim((string)$row['solution_uci']));
+        $mismatch = $storedSolution !== $bestmove;
+        $content = $mismatch
+          ? ['title' => (string)$row['title'], 'prompt' => (string)$row['prompt']]
+          : training_engine_content($row, $evaluation);
+        $feedback = (string)($row['feedback_success'] ?? '');
+        if (!$mismatch && $feedback !== '') {
+          $feedback .= ' La verificación reciente de Stockfish confirma esta primera jugada.';
+        }
+
+        $up = db()->prepare('UPDATE training_exercises
+                             SET title=?, prompt=?, feedback_success=?, content_version=3,
+                                 engine_bestmove_uci=?, engine_pv_uci=?, engine_score=?, engine_score_type=?,
+                                 engine_depth=?, engine_solution_mismatch=?, engine_refreshed_at=NOW()
+                             WHERE id=? AND user_id=? AND resolved_at IS NULL');
+        $up->execute([
+          $content['title'],
+          $content['prompt'],
+          $feedback,
+          $bestmove,
+          implode(' ', $pv),
+          (int)($evaluation['score'] ?? 0),
+          in_array(($evaluation['score_type'] ?? 'cp'), ['cp', 'mate'], true) ? $evaluation['score_type'] : 'cp',
+          max(0, (int)($evaluation['depth'] ?? 0)),
+          $mismatch ? 1 : 0,
+          (int)$row['id'],
+          $userId,
+        ]);
+        if ($up->rowCount() > 0) {
+          $updated++;
+          if ($mismatch) $mismatches++;
+        }
+      } catch (Throwable $e) {
+        $errors[] = 'Ejercicio ' . (int)$row['id'] . ': ' . public_error_message($e);
+      }
+    }
+  } catch (Throwable $e) {
+    $errors[] = public_error_message($e);
+  } finally {
+    if ($runner instanceof StockfishRunner) $runner->close();
+  }
+
+  $pendingAfter = training_engine_backfill_pending_count($userId);
+  return [
+    'ok' => !$errors,
+    'processed' => count($rows),
+    'updated' => $updated,
+    'mismatches' => $mismatches,
+    'error_count' => count($errors),
+    'pending_before' => $pendingBefore,
+    'pending_after' => $pendingAfter,
+    'message' => $errors
+      ? 'Enriquecimiento Stockfish completado con errores parciales.'
+      : 'Ejercicios enriquecidos con Stockfish correctamente.',
     'errors' => array_slice($errors, 0, 5),
   ];
 }

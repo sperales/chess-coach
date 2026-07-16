@@ -16,6 +16,7 @@ let trainingUsedHint = false;
 let trainingHintFrom = '';
 let revealedTrainingSolution = '';
 let completedTrainingMove = '';
+let incorrectTrainingDestination = '';
 let trainingOriginReviewLoadedFor = 0;
 let trainingSelectionMessage = '';
 let trainingMoveSubmitting = false;
@@ -426,6 +427,7 @@ async function openTrainingExercise(id) {
   trainingSelectionMessage = '';
   revealedTrainingSolution = '';
   completedTrainingMove = '';
+  incorrectTrainingDestination = '';
   trainingHintFrom = '';
   trainingUsedHint = false;
   trainingStartedAt = Date.now();
@@ -512,6 +514,7 @@ function closeTrainingSolver() {
   trainingHintFrom = '';
   revealedTrainingSolution = '';
   completedTrainingMove = '';
+  incorrectTrainingDestination = '';
 }
 
 function renderTrainingSolver() {
@@ -779,9 +782,10 @@ function renderTrainingBoard() {
       const solution = sq === solutionFrom || sq === solutionTo ? ' solution' : '';
       const correct = sq === completedFrom || sq === completedTo ? ' correct' : '';
       const correctDestination = sq === completedTo ? ' correct-destination' : '';
+      const incorrectDestination = sq === incorrectTrainingDestination ? ' incorrect-destination' : '';
       const legal = legalTargets.has(sq) ? ' legal-target' : '';
       const hint = sq === trainingHintFrom ? ' hint' : '';
-      html += `<button class="sq ${dark ? 'dark' : 'light'}${previous}${selected}${solution}${correct}${correctDestination}${legal}${hint}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(displayGrid[r][file] || '')}</button>`;
+      html += `<button class="sq ${dark ? 'dark' : 'light'}${previous}${selected}${solution}${correct}${correctDestination}${incorrectDestination}${legal}${hint}" type="button" data-sq="${sq}" onclick="selectTrainingSquare('${sq}')">${trainingPieceImageHtml(displayGrid[r][file] || '')}</button>`;
     }
   }
   board.innerHTML = html;
@@ -1241,7 +1245,12 @@ async function submitTrainingMove() {
     if (!data.ok) throw new Error(data.error || 'No se pudo registrar el intento.');
     if (data.exercise) activeExercise = data.exercise;
     if (data.session) activeTrainingSession = data.session;
-    if (data.solved) completedTrainingMove = move;
+    if (data.solved) {
+      completedTrainingMove = move;
+      incorrectTrainingDestination = '';
+    } else {
+      incorrectTrainingDestination = move.slice(2, 4);
+    }
     showTrainingFeedback(data);
     if (data.solved || data.solution_uci) stopTrainingExerciseTimer();
     renderTrainingAttempts();
