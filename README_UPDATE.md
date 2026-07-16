@@ -13,6 +13,9 @@ Training feedback and Stockfish enrichment release.
 - Stores refreshed bestmove, principal variation, evaluation, score type, depth and timestamp.
 - Marks enriched exercises as `content_version = 3` only after receiving a valid bestmove and PV.
 - Preserves the original `solution_uci` when the refreshed bestmove differs and records the mismatch.
+- Re-evaluates the original solution with Stockfish `searchmoves` when a bestmove mismatch is found.
+- Accepts the refreshed bestmove as a second valid solution only when it is equivalent within 30 centipawns or a conservative mate-distance tolerance.
+- Stores the original constrained evaluation so accepted and rejected alternatives remain auditable.
 - Improves deterministic mate descriptions only when the refreshed solution agrees with the accepted solution.
 - Hides refreshed engine solutions and PVs while the exercise is unresolved.
 - Bumps `config/version.php` and the PWA cache to `1.4.8`.
@@ -32,7 +35,10 @@ sql/migrations/029_changes_1.4.8.sql
 3. Run the process when desired; each request analyzes at most 50 unresolved exercises.
 4. Repeat later until `Pendientes` reaches zero.
 
-The process uses the current `config/engine.php` settings. It never processes resolved exercises and never overwrites the accepted solution when Stockfish returns a different bestmove.
+The process uses the current `config/engine.php` settings. It never processes resolved exercises and never overwrites the original accepted solution. When Stockfish returns a different bestmove, it performs one additional constrained evaluation and only stores that bestmove as an accepted alternative when both moves are objectively equivalent.
+
+If migration `029_changes_1.4.8.sql` was already run before this validation was added, run it again. Its `ADD COLUMN IF NOT EXISTS` statements safely add the new alternative-solution fields.
+Previously enriched version 3 mismatches without a constrained original evaluation are automatically included once in the pending count, so early test batches are not left behind.
 
 ## Verification
 
@@ -42,6 +48,8 @@ The process uses the current `config/engine.php` settings. It never processes re
 - Run one Stockfish enrichment batch and confirm no more than 50 exercises move to content version 3.
 - Confirm resolved exercises are not selected.
 - Confirm mismatched bestmoves leave `solution_uci` unchanged and set `engine_solution_mismatch = 1`.
+- Confirm equivalent mismatches populate `accepted_alternative_uci` and materially inferior alternatives leave it empty.
+- Confirm either accepted move solves the exercise, while rejected bestmoves do not.
 - Confirm unresolved exercise API responses do not expose engine bestmove or PV fields.
 - Confirm `config/version.php` and `service-worker.js` both use `1.4.8`.
 

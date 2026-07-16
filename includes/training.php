@@ -826,7 +826,11 @@ function training_public_exercise(array $item, bool $includeSolution = false): a
       $item['engine_bestmove_uci'],
       $item['engine_pv_uci'],
       $item['engine_score'],
-      $item['engine_score_type']
+      $item['engine_score_type'],
+      $item['engine_original_score'],
+      $item['engine_original_score_type'],
+      $item['engine_original_depth'],
+      $item['accepted_alternative_uci']
     );
   }
   return $item;
@@ -985,8 +989,11 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
   if (!$moves) return ['ok' => false, 'error' => 'No se ha enviado ninguna jugada válida.'];
 
   $solution = strtolower(trim((string)($exercise['solution_uci'] ?? '')));
+  $alternative = strtolower(trim((string)($exercise['accepted_alternative_uci'] ?? '')));
+  $acceptedSolutions = array_values(array_filter(array_unique([$solution, $alternative]), 'training_valid_solution'));
   $finalMove = end($moves);
-  $isSolved = in_array($solution, $moves, true);
+  $matchedSolution = in_array($finalMove, $acceptedSolutions, true) ? $finalMove : null;
+  $isSolved = $matchedSolution !== null;
   $isExhausted = count($moves) >= 5;
   $result = $isSolved ? 'solved' : 'failed';
   $durationMs = max(0, min(86400000, $durationMs));
@@ -1030,7 +1037,7 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
     'exhausted' => $isExhausted && !$isSolved,
     'attempts_count' => count($moves),
     'remaining_attempts' => max(0, 5 - count($moves)),
-    'solution_uci' => $isSolved || $isExhausted ? $solution : null,
+    'solution_uci' => $isSolved ? $matchedSolution : ($isExhausted ? $solution : null),
     'feedback' => training_attempt_feedback($exercise, $isSolved, $isExhausted, count($moves), $usedHint),
     'exercise' => $updated,
     'stats' => training_stats_for_user($userId),
@@ -1501,11 +1508,40 @@ function training_engine_content(array $exercise, array $evaluation): array {
   return ['title' => $title, 'prompt' => $prompt];
 }
 
+function training_engine_score_value(array $evaluation): ?int {
+  $type = (string)($evaluation['score_type'] ?? '');
+  $score = (int)($evaluation['score'] ?? 0);
+  if ($type === 'cp') return $score;
+  if ($type !== 'mate' || $score === 0) return null;
+  return $score > 0
+    ? 100000 - (abs($score) * 1000)
+    : -100000 + (abs($score) * 1000);
+}
+
+function training_engine_solutions_equivalent(array $best, array $candidate): bool {
+  $bestType = (string)($best['score_type'] ?? '');
+  $candidateType = (string)($candidate['score_type'] ?? '');
+  if ($bestType !== $candidateType) return false;
+
+  $bestValue = training_engine_score_value($best);
+  $candidateValue = training_engine_score_value($candidate);
+  if ($bestValue === null || $candidateValue === null) return false;
+
+  if ($bestType === 'cp') return ($bestValue - $candidateValue) <= 30;
+
+  $bestScore = (int)($best['score'] ?? 0);
+  $candidateScore = (int)($candidate['score'] ?? 0);
+  if (($bestScore > 0) !== ($candidateScore > 0)) return false;
+  return ($bestValue - $candidateValue) <= 2000;
+}
+
 function training_engine_backfill_pending_count(int $userId): int {
   $st = db()->prepare('SELECT COUNT(*)
                        FROM training_exercises
                        WHERE user_id=? AND status="active" AND resolved_at IS NULL
-                         AND content_version>=? AND content_version<?');
+                         AND content_version>=?
+                         AND (content_version<? OR
+                              (content_version=3 AND engine_solution_mismatch=1 AND engine_original_depth IS NULL))');
   $st->execute([$userId, TRAINING_EXERCISE_CONTENT_VERSION, 3]);
   return (int)$st->fetchColumn();
 }
@@ -1516,8 +1552,10 @@ function training_engine_backfill_batch(int $userId, int $limit = 50): array {
   $sql = 'SELECT id, exercise_type, fen, solution_uci, title, prompt, feedback_success
           FROM training_exercises
           WHERE user_id=? AND status="active" AND resolved_at IS NULL
-            AND content_version>=? AND content_version<?
-          ORDER BY priority_score DESC, id
+            AND content_version>=?
+            AND (content_version<? OR
+                 (content_version=3 AND engine_solution_mismatch=1 AND engine_original_depth IS NULL))
+          ORDER BY CASE WHEN content_version=3 THEN 0 ELSE 1 END, priority_score DESC, id
           LIMIT ' . (int)$limit;
   $st = db()->prepare($sql);
   $st->execute([$userId, TRAINING_EXERCISE_CONTENT_VERSION, 3]);
@@ -1529,6 +1567,8 @@ function training_engine_backfill_batch(int $userId, int $limit = 50): array {
       'processed' => 0,
       'updated' => 0,
       'mismatches' => 0,
+      'alternatives_accepted' => 0,
+      'alternatives_rejected' => 0,
       'error_count' => 0,
       'pending_before' => $pendingBefore,
       'pending_after' => $pendingBefore,
@@ -1539,6 +1579,8 @@ function training_engine_backfill_batch(int $userId, int $limit = 50): array {
 
   $updated = 0;
   $mismatches = 0;
+  $alternativesAccepted = 0;
+  $alternativesRejected = 0;
   $errors = [];
   $runner = null;
 
@@ -1555,6 +1597,18 @@ function training_engine_backfill_batch(int $userId, int $limit = 50): array {
 
         $storedSolution = strtolower(trim((string)$row['solution_uci']));
         $mismatch = $storedSolution !== $bestmove;
+        $originalEvaluation = $evaluation;
+        $acceptedAlternative = null;
+        if ($mismatch) {
+          $originalEvaluation = $runner->evalFenWithSearchMoves((string)$row['fen'], [$storedSolution]);
+          $originalBestmove = strtolower(trim((string)($originalEvaluation['bestmove'] ?? '')));
+          if ($originalBestmove !== $storedSolution) {
+            throw new RuntimeException('Stockfish no pudo evaluar la solución original de forma controlada.');
+          }
+          if (training_engine_solutions_equivalent($evaluation, $originalEvaluation)) {
+            $acceptedAlternative = $bestmove;
+          }
+        }
         $content = $mismatch
           ? ['title' => (string)$row['title'], 'prompt' => (string)$row['prompt']]
           : training_engine_content($row, $evaluation);
@@ -1566,7 +1620,9 @@ function training_engine_backfill_batch(int $userId, int $limit = 50): array {
         $up = db()->prepare('UPDATE training_exercises
                              SET title=?, prompt=?, feedback_success=?, content_version=3,
                                  engine_bestmove_uci=?, engine_pv_uci=?, engine_score=?, engine_score_type=?,
-                                 engine_depth=?, engine_solution_mismatch=?, engine_refreshed_at=NOW()
+                                 engine_depth=?, engine_original_score=?, engine_original_score_type=?,
+                                 engine_original_depth=?, accepted_alternative_uci=?,
+                                 engine_solution_mismatch=?, engine_refreshed_at=NOW()
                              WHERE id=? AND user_id=? AND resolved_at IS NULL');
         $up->execute([
           $content['title'],
@@ -1577,13 +1633,21 @@ function training_engine_backfill_batch(int $userId, int $limit = 50): array {
           (int)($evaluation['score'] ?? 0),
           in_array(($evaluation['score_type'] ?? 'cp'), ['cp', 'mate'], true) ? $evaluation['score_type'] : 'cp',
           max(0, (int)($evaluation['depth'] ?? 0)),
+          (int)($originalEvaluation['score'] ?? 0),
+          in_array(($originalEvaluation['score_type'] ?? 'cp'), ['cp', 'mate'], true) ? $originalEvaluation['score_type'] : 'cp',
+          max(0, (int)($originalEvaluation['depth'] ?? 0)),
+          $acceptedAlternative,
           $mismatch ? 1 : 0,
           (int)$row['id'],
           $userId,
         ]);
         if ($up->rowCount() > 0) {
           $updated++;
-          if ($mismatch) $mismatches++;
+          if ($mismatch) {
+            $mismatches++;
+            if ($acceptedAlternative !== null) $alternativesAccepted++;
+            else $alternativesRejected++;
+          }
         }
       } catch (Throwable $e) {
         $errors[] = 'Ejercicio ' . (int)$row['id'] . ': ' . public_error_message($e);
@@ -1601,6 +1665,8 @@ function training_engine_backfill_batch(int $userId, int $limit = 50): array {
     'processed' => count($rows),
     'updated' => $updated,
     'mismatches' => $mismatches,
+    'alternatives_accepted' => $alternativesAccepted,
+    'alternatives_rejected' => $alternativesRejected,
     'error_count' => count($errors),
     'pending_before' => $pendingBefore,
     'pending_after' => $pendingAfter,

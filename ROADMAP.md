@@ -34,7 +34,7 @@ The product should help answer questions like:
 
 ## Current baseline — v1.4.8
 
-v1.4.8 keeps contextual exercise content as part of the stable baseline, marks the destination of the latest incorrect attempt in red, and introduces version 3 exercise enrichment with fresh Stockfish evaluations and stored principal variations. The enrichment is limited to unresolved exercises and preserves the original accepted solution whenever the refreshed bestmove differs.
+v1.4.8 keeps contextual exercise content as part of the stable baseline, marks the destination of the latest incorrect attempt in red, and introduces version 3 exercise enrichment with fresh Stockfish evaluations and stored principal variations. The enrichment is limited to unresolved exercises, preserves the original accepted solution and validates equivalent alternative moves when the refreshed bestmove differs.
 
 It keeps Player DNA, Openings Lab and the Training Center as stable capabilities, including the autonomous 500-code ECO reference catalog, Spanish opening and representative variation labels, PGN-first metadata resolution and clearer opening identities without runtime APIs.
 

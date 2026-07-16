@@ -8,11 +8,14 @@
 - Added a resumable Stockfish enrichment process for unresolved version 2 exercises.
 - Stored refreshed bestmove, principal variation, score, score type, depth and refresh timestamp.
 - Recorded bestmove mismatches without replacing the exercise's accepted solution.
+- Added constrained Stockfish validation for historical solutions when the refreshed bestmove differs.
+- Added support for one validated alternative solution per exercise.
 
 ### Changed
 
 - Enriched safe mate and evaluation descriptions when the refreshed solution matches.
 - Limited each Stockfish enrichment request to 50 exercises.
+- Accepted alternative moves only within a 30-centipawn tolerance or a conservative equivalent mate distance.
 - Kept newly generated exercises at content version 2 until explicitly enriched.
 - Bumped the app version and PWA cache to `1.4.8`.
 

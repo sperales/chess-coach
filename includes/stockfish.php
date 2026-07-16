@@ -43,8 +43,21 @@ class StockfishRunner {
   }
 
   public function evalFen(string $fen): array {
+    return $this->evalFenWithSearchMoves($fen, []);
+  }
+
+  public function evalFenWithSearchMoves(string $fen, array $moves): array {
+    $searchMoves = [];
+    foreach ($moves as $move) {
+      $uci = strtolower(trim((string)$move));
+      if (preg_match('/^[a-h][1-8][a-h][1-8][qrbn]?$/', $uci)) $searchMoves[] = $uci;
+    }
+    if ($moves && !$searchMoves) throw new InvalidArgumentException('No se indicó ninguna jugada válida para evaluar.');
+
     $this->send('position fen '.$fen);
-    $this->send($this->movetime > 0 ? 'go movetime '.$this->movetime : 'go depth '.$this->depth);
+    $go = $this->movetime > 0 ? 'go movetime '.$this->movetime : 'go depth '.$this->depth;
+    if ($searchMoves) $go .= ' searchmoves '.implode(' ', array_values(array_unique($searchMoves)));
+    $this->send($go);
     $timeout = $this->movetime > 0 ? max(10, (int)ceil($this->movetime / 1000) + 5) : 10;
     return stockfish_parse_output($this->readUntil('bestmove', $timeout));
   }
