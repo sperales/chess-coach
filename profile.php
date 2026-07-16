@@ -370,18 +370,44 @@ async function runTrainingEngineBackfill() {
   const result = document.getElementById('trainingEngineBackfillResult');
   const pending = document.getElementById('trainingEngineBackfillPending');
   if (btn) btn.disabled = true;
-  if (result) result.textContent = 'Stockfish está enriqueciendo hasta 50 ejercicios...';
+  if (result) result.textContent = 'Stockfish está enriqueciendo hasta 50 ejercicios en lotes seguros...';
   try {
-    const r = await fetch('api/analyze.php?action=training_engine_backfill', {
-      method: 'POST',
-      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ limit: 50 })
-    });
-    const data = await r.json();
-    const errors = Array.isArray(data.errors) ? data.errors.filter(Boolean) : [];
-    const summary = `${data.message || 'Proceso ejecutado.'} Mejorados: ${data.updated || 0}. Bestmoves distintas: ${data.mismatches || 0}. Alternativas válidas: ${data.alternatives_accepted || 0}. Alternativas descartadas: ${data.alternatives_rejected || 0}. Pendientes: ${data.pending_after || 0}.`;
+    const totals = { updated: 0, mismatches: 0, accepted: 0, rejected: 0 };
+    const errors = [];
+    let pendingAfter = Number(pending?.textContent.match(/\d+/)?.[0] || 0);
+    let message = 'Ejercicios enriquecidos con Stockfish correctamente.';
+
+    for (let batch = 0; batch < 5; batch += 1) {
+      if (result) result.textContent = `Stockfish está procesando el lote ${batch + 1}/5...`;
+      const response = await fetch('api/analyze.php?action=training_engine_backfill', {
+        method: 'POST',
+        headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ limit: 10 })
+      });
+      const responseText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        const status = response.status ? ` HTTP ${response.status}` : '';
+        throw new Error(`El servidor interrumpió el lote antes de devolver JSON.${status}. Prueba de nuevo; los lotes anteriores sí se han conservado.`);
+      }
+
+      if (!response.ok) throw new Error(data.error || `El servidor rechazó el lote (HTTP ${response.status}).`);
+      totals.updated += Number(data.updated || 0);
+      totals.mismatches += Number(data.mismatches || 0);
+      totals.accepted += Number(data.alternatives_accepted || 0);
+      totals.rejected += Number(data.alternatives_rejected || 0);
+      pendingAfter = Number(data.pending_after || 0);
+      message = data.message || message;
+      errors.push(...(Array.isArray(data.errors) ? data.errors.filter(Boolean) : []));
+
+      if (pending) pending.textContent = `Pendientes: ${pendingAfter}`;
+      if (errors.length || Number(data.processed || 0) === 0 || pendingAfter === 0) break;
+    }
+
+    const summary = `${message} Mejorados: ${totals.updated}. Bestmoves distintas: ${totals.mismatches}. Alternativas válidas: ${totals.accepted}. Alternativas descartadas: ${totals.rejected}. Pendientes: ${pendingAfter}.`;
     if (result) result.textContent = errors.length ? `${summary} Errores: ${errors.join(' | ')}` : summary;
-    if (pending) pending.textContent = `Pendientes: ${data.pending_after || 0}`;
   } catch (e) {
     if (result) result.textContent = e.message || 'No se pudieron enriquecer los ejercicios con Stockfish.';
   } finally {

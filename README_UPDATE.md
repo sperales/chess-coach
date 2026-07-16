@@ -9,7 +9,7 @@ Training feedback and Stockfish enrichment release.
 - Keeps the destination square of the latest incorrect attempt marked in red after returning the piece.
 - Clears the incorrect marker after solving the exercise or opening another exercise.
 - Keeps newly generated exercises at `content_version = 2`.
-- Adds an optional Stockfish process for unresolved version 2 exercises in batches of 50.
+- Adds an optional Stockfish process for unresolved version 2 exercises, processing up to 50 per click through HTTP sub-batches of 10.
 - Stores refreshed bestmove, principal variation, evaluation, score type, depth and timestamp.
 - Marks enriched exercises as `content_version = 3` only after receiving a valid bestmove and PV.
 - Preserves the original `solution_uci` when the refreshed bestmove differs and records the mismatch.
@@ -33,7 +33,7 @@ sql/migrations/029_changes_1.4.8.sql
 
 1. Open `Ajustes / Mi perfil`.
 2. Find `Enriquecer ejercicios con Stockfish` under `Procesos batch`.
-3. Run the process when desired; each request analyzes at most 50 unresolved exercises.
+3. Run the process when desired; each click analyzes up to 50 unresolved exercises through five sequential requests of at most 10.
 4. Repeat later until `Pendientes` reaches zero.
 
 The process uses the current `config/engine.php` settings. It never processes resolved exercises and never overwrites the original accepted solution. When Stockfish returns a different bestmove, it performs one additional constrained evaluation and only stores that bestmove as an accepted alternative when both moves are objectively equivalent.
@@ -47,6 +47,7 @@ Previously enriched version 3 mismatches without a constrained original evaluati
 - Confirm a later incorrect move replaces the previous red destination marker.
 - Solve the exercise and confirm the red marker disappears in favor of the green solved state.
 - Run one Stockfish enrichment batch and confirm no more than 50 exercises move to content version 3.
+- Confirm the browser splits that operation into requests of at most 10 exercises and reports an intelligible message if the hosting returns HTML instead of JSON.
 - Confirm resolved exercises are not selected.
 - Confirm mismatched bestmoves leave `solution_uci` unchanged and set `engine_solution_mismatch = 1`.
 - Confirm equivalent mismatches populate `accepted_alternative_uci` and materially inferior alternatives leave it empty.

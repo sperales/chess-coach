@@ -15,7 +15,8 @@
 ### Changed
 
 - Enriched safe mate and evaluation descriptions when the refreshed solution matches.
-- Limited each Stockfish enrichment request to 50 exercises.
+- Kept up to 50 enrichments per user action while splitting the work into HTTP requests of at most 10 exercises to avoid shared-hosting timeouts.
+- Added a clear client-side diagnostic when the hosting returns an HTML timeout/error page instead of JSON.
 - Accepted alternative moves only within a 30-centipawn tolerance or a conservative equivalent mate distance.
 - Kept newly generated exercises at content version 2 until explicitly enriched.
 - Bumped the app version and PWA cache to `1.4.8`.
