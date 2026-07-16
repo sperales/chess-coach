@@ -1,5 +1,34 @@
 # CHANGELOG
 
+## v1.4.8 - Training feedback and principal variations
+
+### Added
+
+- Added a persistent red destination marker for the latest incorrect exercise attempt.
+- Added a resumable Stockfish enrichment process for unresolved version 2 exercises.
+- Stored refreshed bestmove, principal variation, score, score type, depth and refresh timestamp.
+- Recorded bestmove mismatches without replacing the exercise's accepted solution.
+- Added constrained Stockfish validation for historical solutions when the refreshed bestmove differs.
+- Added support for one validated alternative solution per exercise.
+- Exposed safe per-exercise diagnostics for partially completed enrichment batches in the profile process result.
+
+### Changed
+
+- Enriched safe mate and evaluation descriptions when the refreshed solution matches.
+- Kept up to 50 enrichments per user action while splitting the work into HTTP requests of at most 10 exercises to avoid shared-hosting timeouts.
+- Added a clear client-side diagnostic when the hosting returns an HTML timeout/error page instead of JSON.
+- Accepted alternative moves only within a 30-centipawn tolerance or a conservative equivalent mate distance.
+- Kept newly generated exercises at content version 2 until explicitly enriched.
+- Bumped the app version and PWA cache to `1.4.8`.
+
+### Database
+
+- SQL migration required: `sql/migrations/029_changes_1.4.8.sql`.
+
+### Security
+
+- Principal variations and refreshed engine solutions are hidden from unresolved exercise API payloads.
+
 ## v1.4.7 - Contextual training exercise content
 
 ### Changed

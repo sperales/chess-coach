@@ -15,6 +15,7 @@ $layoutJsVersion = (string)filemtime(__DIR__.'/assets/js/layout.js');
 $pendingSmartTags = smart_tag_backfill_pending_count((int)$u['id']);
 $pendingTrainingExercises = training_backfill_pending_count((int)$u['id']);
 $pendingTrainingContent = training_content_backfill_pending_count((int)$u['id']);
+$pendingTrainingEngine = training_engine_backfill_pending_count((int)$u['id']);
 $pendingOpeningProfiles = openings_profile_pending_count((int)$u['id']);
 $latestPlayerDna = player_dna_latest_snapshot((int)$u['id']);
 $playerDnaConfidenceLabels = ['low' => 'baja', 'medium' => 'media', 'high' => 'alta'];
@@ -258,6 +259,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
       <p class="muted" id="trainingContentBackfillResult"></p>
       <div class="batch-row">
         <div>
+          <strong>Enriquecer ejercicios con Stockfish</strong>
+          <p class="muted">Guarda una nueva evaluación y la variante principal para ejercicios pendientes de resolver. Procesa hasta 50 ejercicios por ejecución y conserva la solución original si la nueva bestmove es distinta.</p>
+          <p class="muted" id="trainingEngineBackfillPending">Pendientes: <?= (int)$pendingTrainingEngine ?></p>
+        </div>
+        <button type="button" onclick="runTrainingEngineBackfill()" id="trainingEngineBackfillBtn">Mejorar ejercicios</button>
+      </div>
+      <p class="muted" id="trainingEngineBackfillResult"></p>
+      <div class="batch-row">
+        <div>
           <strong>Backfill de aperturas</strong>
           <p class="muted">Genera perfiles de apertura para partidas importadas o analizadas antes del Lab de Aperturas. Procesa hasta 25 partidas por ejecucion.</p>
           <p class="muted" id="openingsBackfillPending">Pendientes: <?= (int)$pendingOpeningProfiles ?></p>
@@ -350,6 +360,56 @@ async function runTrainingContentBackfill() {
     if (pending) pending.textContent = `Pendientes: ${data.pending_after || 0}`;
   } catch (e) {
     if (result) result.textContent = e.message || 'No se pudo actualizar el contenido de los ejercicios.';
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function runTrainingEngineBackfill() {
+  const btn = document.getElementById('trainingEngineBackfillBtn');
+  const result = document.getElementById('trainingEngineBackfillResult');
+  const pending = document.getElementById('trainingEngineBackfillPending');
+  if (btn) btn.disabled = true;
+  if (result) result.textContent = 'Stockfish está enriqueciendo hasta 50 ejercicios en lotes seguros...';
+  try {
+    const totals = { updated: 0, mismatches: 0, accepted: 0, rejected: 0 };
+    const errors = [];
+    let pendingAfter = Number(pending?.textContent.match(/\d+/)?.[0] || 0);
+    let message = 'Ejercicios enriquecidos con Stockfish correctamente.';
+
+    for (let batch = 0; batch < 5; batch += 1) {
+      if (result) result.textContent = `Stockfish está procesando el lote ${batch + 1}/5...`;
+      const response = await fetch('api/analyze.php?action=training_engine_backfill', {
+        method: 'POST',
+        headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ limit: 10 })
+      });
+      const responseText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        const status = response.status ? ` HTTP ${response.status}` : '';
+        throw new Error(`El servidor interrumpió el lote antes de devolver JSON.${status}. Prueba de nuevo; los lotes anteriores sí se han conservado.`);
+      }
+
+      if (!response.ok) throw new Error(data.error || `El servidor rechazó el lote (HTTP ${response.status}).`);
+      totals.updated += Number(data.updated || 0);
+      totals.mismatches += Number(data.mismatches || 0);
+      totals.accepted += Number(data.alternatives_accepted || 0);
+      totals.rejected += Number(data.alternatives_rejected || 0);
+      pendingAfter = Number(data.pending_after || 0);
+      message = data.message || message;
+      errors.push(...(Array.isArray(data.errors) ? data.errors.filter(Boolean) : []));
+
+      if (pending) pending.textContent = `Pendientes: ${pendingAfter}`;
+      if (errors.length || Number(data.processed || 0) === 0 || pendingAfter === 0) break;
+    }
+
+    const summary = `${message} Mejorados: ${totals.updated}. Bestmoves distintas: ${totals.mismatches}. Alternativas válidas: ${totals.accepted}. Alternativas descartadas: ${totals.rejected}. Pendientes: ${pendingAfter}.`;
+    if (result) result.textContent = errors.length ? `${summary} Errores: ${errors.join(' | ')}` : summary;
+  } catch (e) {
+    if (result) result.textContent = e.message || 'No se pudieron enriquecer los ejercicios con Stockfish.';
   } finally {
     if (btn) btn.disabled = false;
   }

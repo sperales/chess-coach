@@ -43,8 +43,21 @@ class StockfishRunner {
   }
 
   public function evalFen(string $fen): array {
+    return $this->evalFenWithSearchMoves($fen, []);
+  }
+
+  public function evalFenWithSearchMoves(string $fen, array $moves): array {
+    $searchMoves = [];
+    foreach ($moves as $move) {
+      $uci = strtolower(trim((string)$move));
+      if (preg_match('/^[a-h][1-8][a-h][1-8][qrbn]?$/', $uci)) $searchMoves[] = $uci;
+    }
+    if ($moves && !$searchMoves) throw new InvalidArgumentException('No se indicó ninguna jugada válida para evaluar.');
+
     $this->send('position fen '.$fen);
-    $this->send($this->movetime > 0 ? 'go movetime '.$this->movetime : 'go depth '.$this->depth);
+    $go = $this->movetime > 0 ? 'go movetime '.$this->movetime : 'go depth '.$this->depth;
+    if ($searchMoves) $go .= ' searchmoves '.implode(' ', array_values(array_unique($searchMoves)));
+    $this->send($go);
     $timeout = $this->movetime > 0 ? max(10, (int)ceil($this->movetime / 1000) + 5) : 10;
     return stockfish_parse_output($this->readUntil('bestmove', $timeout));
   }
@@ -100,13 +113,33 @@ function stockfish_parse_output(string $out): array {
 
   $scoreType = 'cp';
   $score = 0;
+  $depth = 0;
+  $pv = [];
   if (preg_match_all('/score\s+(cp|mate)\s+(-?\d+)/', $out, $ms, PREG_SET_ORDER)) {
     $last = end($ms);
     $scoreType = $last[1];
     $score = (int)$last[2];
   }
 
-  return ['bestmove' => $best, 'score_type' => $scoreType, 'score' => $score, 'raw' => substr($out, -2000)];
+  foreach (preg_split('/\R/', $out) ?: [] as $line) {
+    if (!str_starts_with(trim($line), 'info ')) continue;
+    if (preg_match('/\bdepth\s+(\d+)/', $line, $depthMatch)) {
+      $depth = (int)$depthMatch[1];
+    }
+    if (!preg_match('/\bpv\s+(.+)$/', trim($line), $pvMatch)) continue;
+    $moves = preg_split('/\s+/', trim($pvMatch[1])) ?: [];
+    $validMoves = array_values(array_filter($moves, fn($move) => (bool)preg_match('/^[a-h][1-8][a-h][1-8][qrbn]?$/', $move)));
+    if ($validMoves) $pv = $validMoves;
+  }
+
+  return [
+    'bestmove' => $best,
+    'score_type' => $scoreType,
+    'score' => $score,
+    'depth' => $depth,
+    'pv' => $pv,
+    'raw' => substr($out, -2000),
+  ];
 }
 
 function stockfish_eval_fen(string $fen): array {

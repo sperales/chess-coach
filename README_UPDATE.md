@@ -1,3 +1,62 @@
+# Chess Coach v1.4.8 Update Notes
+
+## Release type
+
+Training feedback and Stockfish enrichment release.
+
+## Changes
+
+- Keeps the destination square of the latest incorrect attempt marked in red after returning the piece.
+- Clears the incorrect marker after solving the exercise or opening another exercise.
+- Keeps newly generated exercises at `content_version = 2`.
+- Adds an optional Stockfish process for unresolved version 2 exercises, processing up to 50 per click through HTTP sub-batches of 10.
+- Stores refreshed bestmove, principal variation, evaluation, score type, depth and timestamp.
+- Marks enriched exercises as `content_version = 3` only after receiving a valid bestmove and PV.
+- Preserves the original `solution_uci` when the refreshed bestmove differs and records the mismatch.
+- Re-evaluates the original solution with Stockfish `searchmoves` when a bestmove mismatch is found.
+- Accepts the refreshed bestmove as a second valid solution only when it is equivalent within 30 centipawns or a conservative mate-distance tolerance.
+- Stores the original constrained evaluation so accepted and rejected alternatives remain auditable.
+- Shows the first safe per-exercise errors when an enrichment batch completes partially.
+- Improves deterministic mate descriptions only when the refreshed solution agrees with the accepted solution.
+- Hides refreshed engine solutions and PVs while the exercise is unresolved.
+- Bumps `config/version.php` and the PWA cache to `1.4.8`.
+
+## SQL migration
+
+Run before deploying the PHP changes:
+
+```text
+sql/migrations/029_changes_1.4.8.sql
+```
+
+## Stockfish enrichment
+
+1. Open `Ajustes / Mi perfil`.
+2. Find `Enriquecer ejercicios con Stockfish` under `Procesos batch`.
+3. Run the process when desired; each click analyzes up to 50 unresolved exercises through five sequential requests of at most 10.
+4. Repeat later until `Pendientes` reaches zero.
+
+The process uses the current `config/engine.php` settings. It never processes resolved exercises and never overwrites the original accepted solution. When Stockfish returns a different bestmove, it performs one additional constrained evaluation and only stores that bestmove as an accepted alternative when both moves are objectively equivalent.
+
+If migration `029_changes_1.4.8.sql` was already run before this validation was added, run it again. Its `ADD COLUMN IF NOT EXISTS` statements safely add the new alternative-solution fields.
+Previously enriched version 3 mismatches without a constrained original evaluation are automatically included once in the pending count, so early test batches are not left behind.
+
+## Verification
+
+- Make an incorrect legal move and confirm the piece returns while its destination remains red.
+- Confirm a later incorrect move replaces the previous red destination marker.
+- Solve the exercise and confirm the red marker disappears in favor of the green solved state.
+- Run one Stockfish enrichment batch and confirm no more than 50 exercises move to content version 3.
+- Confirm the browser splits that operation into requests of at most 10 exercises and reports an intelligible message if the hosting returns HTML instead of JSON.
+- Confirm resolved exercises are not selected.
+- Confirm mismatched bestmoves leave `solution_uci` unchanged and set `engine_solution_mismatch = 1`.
+- Confirm equivalent mismatches populate `accepted_alternative_uci` and materially inferior alternatives leave it empty.
+- Confirm either accepted move solves the exercise, while rejected bestmoves do not.
+- Confirm unresolved exercise API responses do not expose engine bestmove or PV fields.
+- Confirm `config/version.php` and `service-worker.js` both use `1.4.8`.
+
+---
+
 # Chess Coach v1.4.7 Update Notes
 
 ## Release type

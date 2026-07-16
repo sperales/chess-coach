@@ -336,6 +336,17 @@ CREATE TABLE IF NOT EXISTS training_exercises (
   feedback_success VARCHAR(255) DEFAULT NULL,
   feedback_failure VARCHAR(255) DEFAULT NULL,
   content_version SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+  engine_bestmove_uci VARCHAR(10) DEFAULT NULL,
+  engine_pv_uci TEXT DEFAULT NULL,
+  engine_score INT DEFAULT NULL,
+  engine_score_type ENUM('cp','mate') DEFAULT NULL,
+  engine_depth SMALLINT UNSIGNED DEFAULT NULL,
+  engine_original_score INT DEFAULT NULL,
+  engine_original_score_type ENUM('cp','mate') DEFAULT NULL,
+  engine_original_depth SMALLINT UNSIGNED DEFAULT NULL,
+  accepted_alternative_uci VARCHAR(10) DEFAULT NULL,
+  engine_solution_mismatch TINYINT(1) NOT NULL DEFAULT 0,
+  engine_refreshed_at TIMESTAMP NULL DEFAULT NULL,
   status ENUM('active','archived') NOT NULL DEFAULT 'active',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
@@ -353,6 +364,7 @@ CREATE TABLE IF NOT EXISTS training_exercises (
   KEY idx_training_exercises_due (user_id, status, next_due_at, priority_score),
   KEY idx_training_exercises_last_result (user_id, last_training_result, last_completed_at),
   KEY idx_training_exercises_content (user_id, content_version, id),
+  KEY idx_training_exercises_engine_backfill (user_id, status, resolved_at, content_version, id),
   KEY idx_training_exercises_game (game_id),
   KEY idx_training_exercises_analysis (analysis_id),
   KEY idx_training_exercises_move (move_analysis_id),
@@ -1145,5 +1157,6 @@ INSERT INTO app_migrations (version, description) VALUES
 ('1.4.3', 'Canonical Spanish ECO reference catalog'),
 ('1.4.4', 'User-selectable board color themes'),
 ('1.4.6', 'Training board interaction preferences'),
-('1.4.7', 'Contextual training exercise content')
+('1.4.7', 'Contextual training exercise content'),
+('1.4.8', 'Training feedback and Stockfish principal variations')
 ON DUPLICATE KEY UPDATE version = version;

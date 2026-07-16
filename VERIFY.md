@@ -158,6 +158,20 @@ At a viewport of 560 px or narrower:
 
 ## Training Interaction Preference Checks
 
+After applying `sql/migrations/029_changes_1.4.8.sql`:
+
+- Confirm the `engine_*` columns exist in `training_exercises`.
+- Confirm new exercises remain at `content_version = 2`.
+- Run `Enriquecer ejercicios con Stockfish` and confirm no more than 50 unresolved exercises become version 3 through requests of at most 10 exercises each.
+- Confirm `engine_pv_uci`, `engine_depth` and `engine_refreshed_at` are populated.
+- For mismatches, confirm `solution_uci` is unchanged and `engine_solution_mismatch = 1`.
+- Confirm mismatches also populate `engine_original_score`, `engine_original_score_type` and `engine_original_depth`.
+- Confirm version 3 mismatches created before alternative validation reappear once and leave the pending set after validation.
+- Confirm an equivalent mismatch populates `accepted_alternative_uci` and that both moves solve the exercise.
+- Confirm a mismatch outside the accepted tolerance leaves `accepted_alternative_uci` empty and the refreshed bestmove is rejected by the solver.
+- Confirm unresolved exercise API responses do not expose `accepted_alternative_uci` or either engine evaluation.
+- Confirm resolved exercises are not modified by the enrichment process.
+
 After applying `sql/migrations/028_changes_1.4.7.sql`:
 
 - Confirm `training_exercises.title` exists.
