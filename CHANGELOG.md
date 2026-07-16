@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## v1.4.9 - Training solution highlight
+
+### Changed
+
+- Kept the latest incorrect destination marked in red when an exercise reaches the attempt limit.
+- Changed the revealed solution squares to blue so the failed attempt and the correct solution remain visually distinct.
+- Gave the solution highlight precedence when a square belongs to both states.
+- Bumped the app version and PWA cache to `1.4.9`.
+
+### Database
+
+- No SQL migration is required.
+
 ## v1.4.8 - Training feedback and principal variations
 
 ### Added

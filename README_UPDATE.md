@@ -1,3 +1,30 @@
+# Chess Coach v1.4.9 Update Notes
+
+## Release type
+
+Training solver visual feedback fix.
+
+## Changes
+
+- Keeps the latest incorrect destination marked in red after the fifth failed attempt.
+- Shows the revealed solution origin and destination in blue instead of red.
+- Prioritizes the blue solution highlight if a square belongs to both the failed attempt and the revealed solution.
+- Bumps `config/version.php` and the PWA cache to `1.4.9`.
+
+## SQL migration
+
+No SQL migration is required.
+
+## Verification
+
+- Exhaust all five attempts with an incorrect final move.
+- Confirm the final incorrect destination remains red.
+- Confirm the revealed solution squares are blue and visually distinct from the failed attempt.
+- Confirm a square shared by both states uses the blue solution highlight.
+- Confirm `config/version.php` and `service-worker.js` both use `1.4.9`.
+
+---
+
 # Chess Coach v1.4.8 Update Notes
 
 ## Release type
