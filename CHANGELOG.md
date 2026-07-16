@@ -1,5 +1,29 @@
 # CHANGELOG
 
+## v1.4.8 - Training feedback and principal variations
+
+### Added
+
+- Added a persistent red destination marker for the latest incorrect exercise attempt.
+- Added a resumable Stockfish enrichment process for unresolved version 2 exercises.
+- Stored refreshed bestmove, principal variation, score, score type, depth and refresh timestamp.
+- Recorded bestmove mismatches without replacing the exercise's accepted solution.
+
+### Changed
+
+- Enriched safe mate and evaluation descriptions when the refreshed solution matches.
+- Limited each Stockfish enrichment request to 20 exercises.
+- Kept newly generated exercises at content version 2 until explicitly enriched.
+- Bumped the app version and PWA cache to `1.4.8`.
+
+### Database
+
+- SQL migration required: `sql/migrations/029_changes_1.4.8.sql`.
+
+### Security
+
+- Principal variations and refreshed engine solutions are hidden from unresolved exercise API payloads.
+
 ## v1.4.7 - Contextual training exercise content
 
 ### Changed

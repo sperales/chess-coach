@@ -1,3 +1,52 @@
+# Chess Coach v1.4.8 Update Notes
+
+## Release type
+
+Training feedback and Stockfish enrichment release.
+
+## Changes
+
+- Keeps the destination square of the latest incorrect attempt marked in red after returning the piece.
+- Clears the incorrect marker after solving the exercise or opening another exercise.
+- Keeps newly generated exercises at `content_version = 2`.
+- Adds an optional Stockfish process for unresolved version 2 exercises in batches of 20.
+- Stores refreshed bestmove, principal variation, evaluation, score type, depth and timestamp.
+- Marks enriched exercises as `content_version = 3` only after receiving a valid bestmove and PV.
+- Preserves the original `solution_uci` when the refreshed bestmove differs and records the mismatch.
+- Improves deterministic mate descriptions only when the refreshed solution agrees with the accepted solution.
+- Hides refreshed engine solutions and PVs while the exercise is unresolved.
+- Bumps `config/version.php` and the PWA cache to `1.4.8`.
+
+## SQL migration
+
+Run before deploying the PHP changes:
+
+```text
+sql/migrations/029_changes_1.4.8.sql
+```
+
+## Stockfish enrichment
+
+1. Open `Ajustes / Mi perfil`.
+2. Find `Enriquecer ejercicios con Stockfish` under `Procesos batch`.
+3. Run the process when desired; each request analyzes at most 20 unresolved exercises.
+4. Repeat later until `Pendientes` reaches zero.
+
+The process uses the current `config/engine.php` settings. It never processes resolved exercises and never overwrites the accepted solution when Stockfish returns a different bestmove.
+
+## Verification
+
+- Make an incorrect legal move and confirm the piece returns while its destination remains red.
+- Confirm a later incorrect move replaces the previous red destination marker.
+- Solve the exercise and confirm the red marker disappears in favor of the green solved state.
+- Run one Stockfish enrichment batch and confirm no more than 20 exercises move to content version 3.
+- Confirm resolved exercises are not selected.
+- Confirm mismatched bestmoves leave `solution_uci` unchanged and set `engine_solution_mismatch = 1`.
+- Confirm unresolved exercise API responses do not expose engine bestmove or PV fields.
+- Confirm `config/version.php` and `service-worker.js` both use `1.4.8`.
+
+---
+
 # Chess Coach v1.4.7 Update Notes
 
 ## Release type
