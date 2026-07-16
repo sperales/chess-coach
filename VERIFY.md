@@ -162,7 +162,7 @@ After applying `sql/migrations/029_changes_1.4.8.sql`:
 
 - Confirm the `engine_*` columns exist in `training_exercises`.
 - Confirm new exercises remain at `content_version = 2`.
-- Run `Enriquecer ejercicios con Stockfish` and confirm no more than 20 unresolved exercises become version 3.
+- Run `Enriquecer ejercicios con Stockfish` and confirm no more than 50 unresolved exercises become version 3.
 - Confirm `engine_pv_uci`, `engine_depth` and `engine_refreshed_at` are populated.
 - For mismatches, confirm `solution_uci` is unchanged and `engine_solution_mismatch = 1`.
 - Confirm resolved exercises are not modified by the enrichment process.

@@ -12,7 +12,7 @@
 ### Changed
 
 - Enriched safe mate and evaluation descriptions when the refreshed solution matches.
-- Limited each Stockfish enrichment request to 20 exercises.
+- Limited each Stockfish enrichment request to 50 exercises.
 - Kept newly generated exercises at content version 2 until explicitly enriched.
 - Bumped the app version and PWA cache to `1.4.8`.
 

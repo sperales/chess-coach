@@ -1510,8 +1510,8 @@ function training_engine_backfill_pending_count(int $userId): int {
   return (int)$st->fetchColumn();
 }
 
-function training_engine_backfill_batch(int $userId, int $limit = 20): array {
-  $limit = max(1, min(20, $limit));
+function training_engine_backfill_batch(int $userId, int $limit = 50): array {
+  $limit = max(1, min(50, $limit));
   $pendingBefore = training_engine_backfill_pending_count($userId);
   $sql = 'SELECT id, exercise_type, fen, solution_uci, title, prompt, feedback_success
           FROM training_exercises

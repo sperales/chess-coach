@@ -260,7 +260,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
       <div class="batch-row">
         <div>
           <strong>Enriquecer ejercicios con Stockfish</strong>
-          <p class="muted">Guarda una nueva evaluación y la variante principal para ejercicios pendientes de resolver. Procesa hasta 20 ejercicios por ejecución y conserva la solución original si la nueva bestmove es distinta.</p>
+          <p class="muted">Guarda una nueva evaluación y la variante principal para ejercicios pendientes de resolver. Procesa hasta 50 ejercicios por ejecución y conserva la solución original si la nueva bestmove es distinta.</p>
           <p class="muted" id="trainingEngineBackfillPending">Pendientes: <?= (int)$pendingTrainingEngine ?></p>
         </div>
         <button type="button" onclick="runTrainingEngineBackfill()" id="trainingEngineBackfillBtn">Mejorar ejercicios</button>
@@ -370,12 +370,12 @@ async function runTrainingEngineBackfill() {
   const result = document.getElementById('trainingEngineBackfillResult');
   const pending = document.getElementById('trainingEngineBackfillPending');
   if (btn) btn.disabled = true;
-  if (result) result.textContent = 'Stockfish está enriqueciendo hasta 20 ejercicios...';
+  if (result) result.textContent = 'Stockfish está enriqueciendo hasta 50 ejercicios...';
   try {
     const r = await fetch('api/analyze.php?action=training_engine_backfill', {
       method: 'POST',
       headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ limit: 20 })
+      body: JSON.stringify({ limit: 50 })
     });
     const data = await r.json();
     if (!data.ok && Number(data.error_count || 0) > 0) throw new Error(data.message || 'Enriquecimiento completado con errores.');
