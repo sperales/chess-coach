@@ -93,6 +93,29 @@ Manual checks:
 
 ---
 
+## Training Progress Foundation Checks
+
+Run the dependency-free scoring fixtures:
+
+```powershell
+php tests\training_progress_test.php
+```
+
+Expected result:
+
+```text
+OK: 20 casos de progreso de entrenamiento.
+```
+
+After applying `sql/migrations/030_changes_1.4.12.sql`, confirm:
+
+- The solve-run, progressive-hint, progress-event, snapshot, plan-goal and review-progress tables exist.
+- `training_attempts.solve_run_id` exists and accepts `NULL` for historical attempts.
+- Re-running the migration does not duplicate the `app_migrations` entry.
+- Skipped and abandoned runs do not create scoring evidence.
+
+---
+
 ## ECO Catalog Checks
 
 After applying `sql/migrations/025_changes_1.4.3.sql`, verify the catalog:
