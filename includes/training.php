@@ -818,7 +818,6 @@ function training_mark_exercise_training_state(array $item): array {
 
 function training_public_exercise(array $item, bool $includeSolution = false): array {
   $solution = strtolower(trim((string)($item['solution_uci'] ?? '')));
-  $item['hint_from'] = preg_match('/^[a-h][1-8]/', $solution) ? substr($solution, 0, 2) : null;
   $item = training_mark_exercise_training_state($item);
   if ($includeSolution && $solution !== '') {
     $solutionSan = chess_uci_to_san((string)($item['fen'] ?? ''), $solution);

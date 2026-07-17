@@ -101,9 +101,16 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
         </label>
         <p id="trainingFeedback" class="training-feedback"></p>
         <div class="training-attempts" id="trainingAttempts"></div>
+        <div class="training-hints-panel" id="trainingHintsPanel" hidden aria-live="polite">
+          <div class="training-hints-head">
+            <strong>Pistas progresivas</strong>
+            <span id="trainingHintsProgress">0/3</span>
+          </div>
+          <div class="training-hints-list" id="trainingHintsList"></div>
+        </div>
         <div class="review-controls training-controls" id="trainingActiveControls">
           <button type="button" onclick="submitTrainingMove()" id="trainingSubmitBtn" disabled>Comprobar</button>
-          <button type="button" onclick="showTrainingHint()" id="trainingHintBtn">Pista</button>
+          <button type="button" onclick="showTrainingHint()" id="trainingHintBtn">Pista 1/3</button>
           <button type="button" onclick="skipTrainingExercise()" id="trainingSkipBtn">Saltar</button>
         </div>
         <div class="review-controls training-controls" id="trainingDoneControls" hidden>
