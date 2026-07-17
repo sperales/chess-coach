@@ -10,7 +10,7 @@ This file defines the working rules for Codex and other coding agents. Follow th
 
 ## Current stable baseline
 
-Current stable version: **1.4.9**
+Current stable version: **1.4.10**
 
 The app is deployed manually to shared hosting and must remain compatible with that environment.
 
@@ -445,6 +445,7 @@ The current likely roadmap direction is:
 - v1.4.7 — Contextual training exercise content (completed)
 - v1.4.8 — Training feedback and principal variations (completed)
 - v1.4.9 — Training solution highlight polish (completed)
+- v1.4.10 — Mobile-first training solver (completed)
 - v1.5.0 — AI Coach MVP
 - v1.7.0 — Automation / Chess.com Sync
 

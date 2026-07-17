@@ -1,3 +1,40 @@
+# Chess Coach v1.4.10 Update Notes
+
+## Release type
+
+Mobile-first Training Center solver release.
+
+## Changes
+
+- Prioritizes the board, instructions, attempt feedback and solving actions on mobile.
+- Expands the responsive board while retaining coordinates, orientation and selected piece set.
+- Places progress, difficulty, priority, Smart Tags and source-game information after the active solving area.
+- Uses a compact exercise hero on mobile and preserves the current desktop layout.
+- Shows `Comprobar` as a full-width action when manual submission is configured.
+- Hides `Comprobar` on mobile when the profile preference automatically submits a legal move after its destination is selected.
+- Keeps `Pista` and `Saltar` available as two balanced touch actions.
+- Adds a two-column mobile landscape layout for the board and solving controls.
+- Bumps `config/version.php` and the PWA cache to `1.4.10`.
+
+## SQL migration
+
+No SQL migration is required.
+
+## Verification
+
+- Open an unresolved exercise on a 320-430 px wide viewport and confirm the board remains square with visible coordinates.
+- Confirm the objective, side to move, status, timer, draft, feedback and controls follow directly after the board.
+- With automatic submission enabled, confirm `Comprobar` is hidden on mobile and selecting a legal destination submits the move.
+- With automatic submission disabled, confirm `Comprobar` spans the full control width and remains disabled until a complete legal move is selected.
+- Confirm `Pista` and `Saltar` remain available in both preference modes.
+- Confirm finished exercises replace the active controls with `Siguiente`, `Cerrar` and `Ver partida`.
+- Confirm progress, metadata and source-game information remain available below the solving area.
+- Confirm mobile landscape uses side-by-side board and controls without horizontal overflow.
+- Confirm the desktop page retains the existing two-column workspace and visible `Comprobar` button.
+- Confirm `config/version.php` and `service-worker.js` both use `1.4.10`.
+
+---
+
 # Chess Coach v1.4.9 Update Notes
 
 ## Release type

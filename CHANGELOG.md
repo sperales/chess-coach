@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## v1.4.10 - Mobile-first training solver
+
+### Changed
+
+- Reorganized the mobile exercise solver around the board, instructions, feedback and primary actions.
+- Increased the usable board width on narrow screens while preserving coordinates and a square aspect ratio.
+- Moved progress, exercise metadata and source-game information below the active solving controls on mobile.
+- Compacted the mobile hero and toolbar without changing their desktop presentation.
+- Added a dedicated landscape layout with the board and solving panel aligned side by side.
+- Hid the `Comprobar` button on mobile when automatic move submission is enabled.
+- Kept manual submission as a full-width primary action when automatic submission is disabled.
+- Bumped the app version and PWA cache to `1.4.10`.
+
+### Database
+
+- No SQL migration is required.
+
 ## v1.4.9 - Training solution highlight
 
 ### Changed
