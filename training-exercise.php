@@ -26,7 +26,7 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
 <body class="dark-shell <?=e($boardThemeClass)?>">
 <?php header_bar('Chess Coach'); ?>
 <div class="app-area">
-<main class="dashboard training-solve-page">
+<main class="dashboard training-solve-page <?=!empty($trainingPreferences['auto_submit_move']) ? 'training-auto-submit' : 'training-manual-submit'?>">
   <a class="training-back-link" href="training.php">← Entrenamiento</a>
 
   <section class="hero-card compact training-hero training-solver-hero">
