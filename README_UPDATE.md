@@ -14,6 +14,7 @@ Mobile-first Training Center solver release.
 - Hides `Comprobar` on mobile when the profile preference automatically submits a legal move after its destination is selected.
 - Keeps `Pista` and `Saltar` available as two balanced touch actions.
 - Adds a two-column mobile landscape layout for the board and solving controls.
+- Keeps the green solved-move check marker circular and centered across mobile browsers.
 - Bumps `config/version.php` and the PWA cache to `1.4.10`.
 
 ## SQL migration

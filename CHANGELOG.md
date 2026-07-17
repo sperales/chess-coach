@@ -11,6 +11,7 @@
 - Added a dedicated landscape layout with the board and solving panel aligned side by side.
 - Hid the `Comprobar` button on mobile when automatic move submission is enabled.
 - Kept manual submission as a full-width primary action when automatic submission is disabled.
+- Stabilized the solved-move check marker dimensions and glyph alignment on mobile browsers.
 - Bumped the app version and PWA cache to `1.4.10`.
 
 ### Database

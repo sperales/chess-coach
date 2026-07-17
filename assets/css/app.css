@@ -4984,6 +4984,22 @@ select {
     max-width:none;
     border-radius:9px
   }
+  .training-board .sq.correct-destination::after {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:20px;
+    height:20px;
+    min-width:0;
+    max-width:none;
+    aspect-ratio:auto;
+    padding:0 0 1px 1px;
+    font-family:Arial,sans-serif;
+    font-size:14px;
+    font-weight:700;
+    line-height:1;
+    text-align:center
+  }
   .training-solve-sidebar {
     gap:10px;
     padding:14px;
