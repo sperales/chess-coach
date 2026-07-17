@@ -10,11 +10,13 @@ let activeExercise = null;
 let trainingBoardOrientation = 'white';
 let selectedTrainingSquare = '';
 let attemptedTrainingMoves = [];
+let attemptedTrainingMoveDisplays = [];
 let trainingStartedAt = 0;
 let trainingTimerInterval = null;
 let trainingUsedHint = false;
 let trainingHintFrom = '';
 let revealedTrainingSolution = '';
+let revealedTrainingSolutionDisplay = '';
 let completedTrainingMove = '';
 let incorrectTrainingDestination = '';
 let trainingOriginReviewLoadedFor = 0;
@@ -423,9 +425,11 @@ async function openTrainingExercise(id) {
   if (!data.ok) throw new Error(data.error || 'No se pudo cargar el ejercicio.');
   activeExercise = data.exercise;
   attemptedTrainingMoves = [];
+  attemptedTrainingMoveDisplays = [];
   selectedTrainingSquare = '';
   trainingSelectionMessage = '';
   revealedTrainingSolution = '';
+  revealedTrainingSolutionDisplay = '';
   completedTrainingMove = '';
   incorrectTrainingDestination = '';
   trainingHintFrom = '';
@@ -509,10 +513,12 @@ function closeTrainingSolver() {
   stopTrainingExerciseTimer();
   activeExercise = null;
   attemptedTrainingMoves = [];
+  attemptedTrainingMoveDisplays = [];
   selectedTrainingSquare = '';
   trainingSelectionMessage = '';
   trainingHintFrom = '';
   revealedTrainingSolution = '';
+  revealedTrainingSolutionDisplay = '';
   completedTrainingMove = '';
   incorrectTrainingDestination = '';
 }
@@ -596,7 +602,13 @@ function renderTrainingSolverChrome() {
   setText('trainingDetailsTheme', trainingThemeForType(activeExercise.exercise_type || ''));
   setText('trainingDetailsLevel', trainingDifficultyLabel(activeExercise.difficulty || 'medium'));
   setText('trainingDetailsPriority', activeExercise.priority_score || 0);
-  setText('trainingCorrectMove', revealedTrainingSolution || activeExercise.solution_uci || '-');
+  setText(
+    'trainingCorrectMove',
+    revealedTrainingSolutionDisplay
+      || activeExercise.solution_display
+      || trainingUciFallback(revealedTrainingSolution || activeExercise.solution_uci || '')
+      || '-'
+  );
 
   const status = document.getElementById('trainingSolverStatus');
   if (status) status.className = `queue-status ${isTrainable ? 'queued' : 'done'}`;
@@ -607,6 +619,13 @@ function renderTrainingSolverChrome() {
 function setText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value === null || typeof value === 'undefined' ? '' : value.toString();
+}
+
+function trainingUciFallback(move) {
+  const normalized = (move || '').toString().trim().toLowerCase();
+  const match = normalized.match(/^([a-h][1-8])([a-h][1-8])([qrbn])?$/);
+  if (!match) return normalized;
+  return `${match[1]} → ${match[2]}${match[3] ? `=${match[3].toUpperCase()}` : ''}`;
 }
 
 function trainingMoveLabel(item) {
@@ -1245,6 +1264,10 @@ async function submitTrainingMove() {
     if (!data.ok) throw new Error(data.error || 'No se pudo registrar el intento.');
     if (data.exercise) activeExercise = data.exercise;
     if (data.session) activeTrainingSession = data.session;
+    attemptedTrainingMoveDisplays = Array.isArray(data.attempted_moves_display)
+      ? data.attempted_moves_display.map(item => item && item.display ? item.display.toString() : '')
+      : [];
+    if (data.solution_display) revealedTrainingSolutionDisplay = data.solution_display.toString();
     if (data.solved) {
       completedTrainingMove = move;
       incorrectTrainingDestination = '';
@@ -1278,7 +1301,8 @@ function showTrainingFeedback(data) {
   feedback.className = `training-feedback ${data.solved ? 'ok' : 'warn'}`;
   if (!data.solved && data.solution_uci) {
     revealedTrainingSolution = data.solution_uci;
-    feedback.textContent += ` Solución: ${data.solution_uci}.`;
+    revealedTrainingSolutionDisplay = data.solution_display || trainingUciFallback(data.solution_uci);
+    feedback.textContent += ` Solución: ${revealedTrainingSolutionDisplay}.`;
   }
 }
 
@@ -1287,7 +1311,10 @@ function renderTrainingAttempts() {
   const history = document.getElementById('trainingAttemptHistory');
   const count = document.getElementById('trainingAttemptsCount');
   const html = attemptedTrainingMoves.length
-    ? attemptedTrainingMoves.map((move, index) => `<span>${index + 1}. ${escapeHtml(move)}</span>`).join('')
+    ? attemptedTrainingMoves.map((move, index) => {
+        const display = attemptedTrainingMoveDisplays[index] || trainingUciFallback(move);
+        return `<span>${index + 1}. ${escapeHtml(display)}</span>`;
+      }).join('')
     : '<span>Sin intentos todavía.</span>';
   if (el) el.innerHTML = html;
   if (history) history.innerHTML = html;

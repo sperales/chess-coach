@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## v1.4.11 - SAN notation for training exercises
+
+### Added
+
+- Added a centralized server-side UCI-to-SAN presentation helper based on each exercise's pre-move FEN.
+- Added SAN support for captures, disambiguation, check, mate, castling, promotion and en passant.
+- Added dependency-free PHP fixtures for legal SAN conversion and coordinate fallbacks.
+
+### Changed
+
+- Displayed SAN in training attempts, revealed solutions and the correct-move summary while preserving UCI internally.
+- Added a readable coordinate fallback when a historical FEN or move cannot be converted safely.
+- Bumped the app version and PWA cache to `1.4.11`.
+
+### Database
+
+- No SQL migration is required.
+
 ## v1.4.10 - Mobile-first training solver
 
 ### Changed

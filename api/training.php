@@ -100,6 +100,14 @@ if ($action === 'attempt') {
     ? training_record_attempt($userId, $id, $moves, $durationMs, $usedHint, $sessionId ?: null)
     : ['ok' => false, 'error' => 'Ejercicio no indicado.'];
   if (!empty($result['exercise']) && is_array($result['exercise'])) {
+    $fenBefore = (string)($result['exercise']['fen'] ?? '');
+    $result['attempted_moves_display'] = chess_uci_presentations($fenBefore, $result['attempted_moves'] ?? []);
+    if (!empty($result['solution_uci'])) {
+      $solutionSan = chess_uci_to_san($fenBefore, (string)$result['solution_uci']);
+      $result['solution_san'] = $solutionSan;
+      $result['solution_display'] = $solutionSan ?? chess_uci_fallback((string)$result['solution_uci']);
+    }
+    unset($result['attempted_moves']);
     $result['exercise'] = training_public_exercise($result['exercise'], !empty($result['solved']) || !empty($result['solution_uci']));
   }
   json_response($result);

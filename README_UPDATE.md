@@ -1,3 +1,36 @@
+# Chess Coach v1.4.11 Update Notes
+
+## Release type
+
+Training exercise SAN notation release.
+
+## Changes
+
+- Adds a centralized PHP helper that converts legal UCI moves to SAN from the position immediately before the move.
+- Keeps UCI as the internal format for Stockfish, board interaction, accepted alternatives and exercise validation.
+- Shows SAN in the current attempt list, attempt history, revealed solution and correct-move summary.
+- Supports captures, legal disambiguation, check, mate, castling, promotion and en passant.
+- Falls back to readable coordinate notation such as `b1 → c3` when SAN conversion cannot be completed safely.
+- Avoids exposing either UCI or SAN solutions before the existing exercise resolution rules allow it.
+- Adds a dependency-free PHP notation test suite.
+- Bumps `config/version.php` and the PWA cache to `1.4.11`.
+
+## SQL migration
+
+No SQL migration or exercise backfill is required. SAN is derived only in the presentation layer.
+
+## Verification
+
+- Run `php tests/chess_notation_test.php` and confirm all notation fixtures pass.
+- Submit normal moves, captures and special moves in training exercises and confirm attempt history uses SAN.
+- Solve an exercise through its original move and through an accepted alternative, when available.
+- Exhaust all five attempts and confirm the revealed solution and `Movimiento correcto` use SAN.
+- Confirm an invalid or inconsistent historical position falls back to coordinate notation without breaking the page.
+- Confirm unresolved exercise payloads still hide all representations of the solution.
+- Confirm `config/version.php` and `service-worker.js` both use `1.4.11`.
+
+---
+
 # Chess Coach v1.4.10 Update Notes
 
 ## Release type
