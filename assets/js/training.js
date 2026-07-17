@@ -228,7 +228,7 @@ function renderTrainingPlan(panel) {
   const plan = trainingPlan || { daily: [], weekly: [] };
   panel.innerHTML = `
     <div class="training-plan-overview">
-      ${trainingProgressMetric('Progress Score', progress.available ? `${Number(progress.score || 0)}/1000` : '--', progress.available ? '60% ejercicios · 40% partidas' : 'Se calculará con tu actividad', progress.available ? Number(progress.score || 0) / 10 : 0)}
+      ${trainingProgressMetric('Índice de rendimiento', progress.available ? `${Number(progress.score || 0)}/1000` : '--', progress.available ? '60% ejercicios · 40% partidas' : 'Se calculará con tu actividad', progress.available ? Number(progress.score || 0) / 10 : 0)}
       ${trainingProgressMetric('Autonomía', autonomy.score === null || typeof autonomy.score === 'undefined' ? '--' : `${Math.round(Number(autonomy.score))}%`, autonomy.calibrated ? 'capacidad de resolver sin ayudas' : `calibrando ${Number(autonomy.samples || 0)}/${Number(autonomy.minimum_samples || 6)}`, autonomy.score || 0)}
     </div>
     <div class="training-plan-columns">

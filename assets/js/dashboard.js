@@ -352,7 +352,7 @@ function renderHomeTrainingExperience() {
       ${homeTrainingCard('repasos', 'Para repetir', dueCount ? `${dueCount}` : 'Al día', dueCount === 1 ? 'ejercicio vencido' : (dueCount > 1 ? 'ejercicios vencidos' : 'sin repeticiones vencidas'), dueCount ? 0 : 100)}
     </div>
     <div class="training-plan-overview">
-      ${homeProgressMetric('Progress Score', progress.available ? `${Number(progress.score || 0)}/1000` : '--', progress.available ? 'rendimiento reciente' : 'calculando progreso', progress.available ? Number(progress.score || 0) / 10 : 0)}
+      ${homeProgressMetric('Índice de rendimiento', progress.available ? `${Number(progress.score || 0)}/1000` : '--', progress.available ? 'basado en tus ejercicios y partidas recientes' : 'calculando progreso', progress.available ? Number(progress.score || 0) / 10 : 0)}
       ${homeProgressMetric('Autonomía', autonomy.score === null || typeof autonomy.score === 'undefined' ? '--' : `${Math.round(Number(autonomy.score))}%`, autonomy.calibrated ? 'resolución sin ayudas' : `calibrando ${Number(autonomy.samples || 0)}/${Number(autonomy.minimum_samples || 6)}`, autonomy.score || 0)}
     </div>
     <div class="training-plan-columns">

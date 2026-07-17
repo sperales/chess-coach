@@ -188,14 +188,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
       <div class="panel-head">
         <div>
           <h2>Progreso del jugador</h2>
-          <p class="muted">Una medida móvil de tu rendimiento reciente. No son monedas: puede subir o bajar según cómo juegas y entrenas.</p>
+          <p class="muted">Una medida móvil basada en tus ejercicios y partidas recientes. No son monedas: puede subir o bajar según cómo juegas y entrenas.</p>
         </div>
         <a class="btn secondary small" href="training.php">Ver plan</a>
       </div>
       <?php $autonomy = $playerProgress['autonomy'] ?? []; ?>
       <div class="training-plan-overview">
         <article class="training-progress-metric">
-          <div><span>Progress Score</span><strong><?= !empty($playerProgress['available']) ? (int)$playerProgress['score'].'/1000' : '--' ?></strong></div>
+          <div><span>Índice de rendimiento</span><strong><?= !empty($playerProgress['available']) ? (int)$playerProgress['score'].'/1000' : '--' ?></strong></div>
           <p><?= !empty($playerProgress['available']) ? '60% ejercicios · 40% partidas' : 'Se calculará al abrir tu plan de entrenamiento.' ?></p>
           <div class="home-training-progress"><i style="width:<?= !empty($playerProgress['available']) ? max(0, min(100, (int)round((int)$playerProgress['score'] / 10))) : 0 ?>%"></i></div>
         </article>

@@ -98,7 +98,7 @@ function header_training_streak_html(int $userId): string {
     $title = $todayMet
       ? 'Objetivo diario cumplido. Racha activa.'
       : ($days > 0 ? 'Completa el objetivo de hoy para mantener la racha.' : 'Completa tu objetivo diario para iniciar una racha.');
-    $aria = 'Racha de entrenamiento: '.$days.' día(s). Progress Score: '.($score === null ? 'pendiente' : $score).'.';
+    $aria = 'Racha de entrenamiento: '.$days.' día(s). Índice de rendimiento: '.($score === null ? 'pendiente' : $score).'.';
     return '<a class="streak-pill'.($trainedToday ? ' trained' : '').($todayMet ? ' achieved' : '').'" href="training.php" title="'.e($title).'" aria-label="'.e($aria).'">'
       .'<span class="header-progress-metric streak"><span class="header-progress-icon" aria-hidden="true">↗</span><strong>'.$days.'</strong></span>'
       .'<span class="header-progress-separator" aria-hidden="true"></span>'
