@@ -99,12 +99,14 @@ Run the dependency-free scoring fixtures:
 
 ```powershell
 php tests\training_progress_test.php
+php tests\training_hints_test.php
 ```
 
 Expected result:
 
 ```text
 OK: 20 casos de progreso de entrenamiento.
+OK: pistas progresivas contextuales sin filtrar la solución.
 ```
 
 After applying `sql/migrations/030_changes_1.4.12.sql`, confirm:
@@ -113,6 +115,7 @@ After applying `sql/migrations/030_changes_1.4.12.sql`, confirm:
 - `training_attempts.solve_run_id` exists and accepts `NULL` for historical attempts.
 - Re-running the migration does not duplicate the `app_migrations` entry.
 - Skipped and abandoned runs do not create scoring evidence.
+- Progressive hints expose the idea, origin piece and board region without returning the destination square or solution UCI.
 
 ---
 
