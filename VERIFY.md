@@ -99,6 +99,7 @@ Run the dependency-free scoring fixtures:
 
 ```powershell
 php tests\training_progress_test.php
+php tests\player_progress_test.php
 php tests\training_hints_test.php
 ```
 
