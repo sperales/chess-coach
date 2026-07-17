@@ -14,11 +14,11 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v1.4.12**
+Current stable baseline: **v1.4.13**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
-v1.4.12 turns recent games and exercise resolutions into a measurable personal plan. It adds progressive hints, an Índice de rendimiento, an Autonomía metric, daily and weekly goals, and review completion tracking while keeping the experience professional and compatible with shared hosting.
+v1.4.13 keeps the measurable personal plan introduced in v1.4.12 and extends the centralized SAN presentation layer to Stockfish best-move explanations in game reviews.
 
 ---
 

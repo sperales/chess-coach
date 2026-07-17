@@ -78,7 +78,7 @@ php tests\chess_notation_test.php
 Expected result:
 
 ```text
-OK: 11 casos de notacion SAN.
+OK: 12 casos de notacion SAN.
 ```
 
 Manual checks:
@@ -90,6 +90,7 @@ Manual checks:
 - Confirm an accepted alternative solution displays the alternative that actually solved the exercise.
 - Confirm unresolved exercise responses do not expose `solution_uci`, `solution_san` or `solution_display`.
 - Confirm conversion failures use coordinate notation such as `b1 → c3` without breaking the solver.
+- Confirm review comments and the `Mejor` action show Stockfish alternatives in SAN from `fen_before`.
 
 ---
 

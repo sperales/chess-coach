@@ -3,6 +3,7 @@ require_once __DIR__ . '/../includes/chess_notation.php';
 
 $tests = [
   ['Movimiento normal', 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'g1f3', 'Nf3'],
+  ['Movimiento negro', 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1', 'e7e5', 'e5'],
   ['Captura', '4k3/8/8/3p4/4P3/8/8/4K3 w - - 0 1', 'e4d5', 'exd5'],
   ['Desambiguacion', '4k3/8/8/8/8/8/8/1N2KN2 w - - 0 1', 'b1d2', 'Nbd2'],
   ['Jaque', '4k3/8/8/8/8/8/8/R3K3 w - - 0 1', 'a1a8', 'Ra8+'],

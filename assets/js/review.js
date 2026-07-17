@@ -499,7 +499,7 @@ function showBestMove(){
   const m = moves[currentMoveIndex];
   if (!m) return;
   const explanation = document.getElementById('moveExplanation');
-  const best = m.bestmove_human || 'no disponible';
+  const best = m.bestmove_display || m.bestmove_human || 'no disponible';
   bestMoveHighlight = (m.bestmove || '').toString().toLowerCase();
   if (bestMoveHighlight.length >= 4) renderBoard(m.fen_before || m.fen_after, '', bestMoveHighlight);
   explanation.textContent = `Mejor alternativa según Stockfish: ${best}. Úsalo como pista, no como una línea para memorizar.`;

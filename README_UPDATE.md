@@ -1,3 +1,34 @@
+# Chess Coach v1.4.13 Update Notes
+
+## Release type
+
+Review best-move SAN notation fix.
+
+## Changes
+
+- Converts Stockfish best moves to SAN in review move explanations.
+- Uses the same SAN presentation in the `Mejor` action.
+- Always converts from the FEN immediately before the reviewed move.
+- Keeps the original UCI move for Stockfish, board highlighting and internal contracts.
+- Falls back to readable coordinates such as `e7 → e5` if legal SAN cannot be generated safely.
+- Adds an explicit black-to-move SAN fixture.
+- Bumps `config/version.php` and the PWA cache to `1.4.13`.
+
+## SQL migration
+
+No SQL migration or analysis backfill is required. SAN is derived when the review API prepares its presentation payload.
+
+## Verification
+
+- Run `php tests/chess_notation_test.php` and confirm all 12 fixtures pass.
+- Open a reviewed mistake or blunder and confirm its suggested alternative uses SAN.
+- Press `Mejor` and confirm the same SAN move appears while the board still highlights the correct UCI origin and destination.
+- Verify both white and black best moves.
+- Confirm malformed historical data falls back to coordinate notation without breaking the review.
+- Confirm `config/version.php` and `service-worker.js` both use `1.4.13`.
+
+---
+
 # Chess Coach v1.4.12 Update Notes
 
 ## Release type
