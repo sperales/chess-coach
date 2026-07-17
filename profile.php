@@ -5,6 +5,7 @@ require_once __DIR__.'/includes/smart_tags.php';
 require_once __DIR__.'/includes/training.php';
 require_once __DIR__.'/includes/openings.php';
 require_once __DIR__.'/includes/player_dna.php';
+require_once __DIR__.'/includes/player_progress.php';
 require_once __DIR__.'/includes/pieces.php';
 
 $u = require_login();
@@ -24,6 +25,7 @@ $currentPieceSet = normalize_piece_set($u['piece_set'] ?? null);
 $boardThemes = board_theme_options();
 $currentBoardTheme = normalize_board_theme($u['board_theme'] ?? null);
 $trainingGoalSettings = training_goal_settings_for_user((int)$u['id']);
+$playerProgress = player_progress_latest((int)$u['id']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   require_csrf_token();
@@ -182,9 +184,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
       </form>
     </section>
 
+    <section class="card player-progress-card">
+      <div class="panel-head">
+        <div>
+          <h2>Progreso del jugador</h2>
+          <p class="muted">Una medida móvil basada en tus ejercicios y partidas recientes. No son monedas: puede subir o bajar según cómo juegas y entrenas.</p>
+        </div>
+        <a class="btn secondary small" href="training.php">Ver plan</a>
+      </div>
+      <?php $autonomy = $playerProgress['autonomy'] ?? []; ?>
+      <div class="training-plan-overview">
+        <article class="training-progress-metric">
+          <div><span>Índice de rendimiento</span><strong><?= !empty($playerProgress['available']) ? (int)$playerProgress['score'].'/1000' : '--' ?></strong></div>
+          <p><?= !empty($playerProgress['available']) ? '60% ejercicios · 40% partidas' : 'Se calculará al abrir tu plan de entrenamiento.' ?></p>
+          <div class="home-training-progress"><i style="width:<?= !empty($playerProgress['available']) ? max(0, min(100, (int)round((int)$playerProgress['score'] / 10))) : 0 ?>%"></i></div>
+        </article>
+        <article class="training-progress-metric">
+          <div><span>Autonomía</span><strong><?= isset($autonomy['score']) && $autonomy['score'] !== null ? (int)round((float)$autonomy['score']).'%' : '--' ?></strong></div>
+          <p><?= !empty($autonomy['calibrated']) ? 'Capacidad de resolver sin ayudas.' : 'Calibrando '.(int)($autonomy['samples'] ?? 0).'/'.(int)($autonomy['minimum_samples'] ?? 6).' ejercicios.' ?></p>
+          <div class="home-training-progress"><i style="width:<?= isset($autonomy['score']) && $autonomy['score'] !== null ? max(0, min(100, (int)round((float)$autonomy['score']))) : 0 ?>%"></i></div>
+        </article>
+      </div>
+    </section>
+
     <section class="card training-goals-card">
       <h2>Objetivo de entrenamiento</h2>
-      <p class="muted">Configura el objetivo que usará Chess Coach para calcular progreso diario, racha e hitos. Entrenar un ejercicio cuenta como actividad, pero la racha principal se mantiene al cumplir el objetivo diario.</p>
+      <p class="muted">Configura el objetivo que usará Chess Coach para calcular el progreso diario, la racha y tu plan personal. Entrenar un ejercicio cuenta como actividad, pero la racha principal se mantiene al cumplir el objetivo diario.</p>
       <form method="post">
         <input type="hidden" name="profile_action" value="save_training_goals">
         <?= csrf_field() ?>

@@ -86,16 +86,24 @@ function current_user_elo(): int {
 function header_training_streak_html(int $userId): string {
   try {
     require_once __DIR__ . '/training.php';
+    require_once __DIR__ . '/player_progress.php';
     $experience = training_experience_summary($userId);
     $today = $experience['today'] ?? [];
     $streak = $experience['streak'] ?? [];
     $days = (int)($streak['days'] ?? 0);
     $trainedToday = !empty($today['trained']);
     $todayMet = !empty($streak['today_goal_met']);
+    $progress = player_progress_latest($userId);
+    $score = !empty($progress['available']) ? (int)$progress['score'] : null;
     $title = $todayMet
       ? 'Objetivo diario cumplido. Racha activa.'
       : ($days > 0 ? 'Completa el objetivo de hoy para mantener la racha.' : 'Completa tu objetivo diario para iniciar una racha.');
-    return '<a class="streak-pill'.($trainedToday ? ' trained' : '').($todayMet ? ' achieved' : '').'" href="training.php" title="'.e($title).'" aria-label="Racha de entrenamiento: '.$days.' día(s)"><span aria-hidden="true">↗</span><strong>'.$days.'</strong></a>';
+    $aria = 'Racha de entrenamiento: '.$days.' día(s). Índice de rendimiento: '.($score === null ? 'pendiente' : $score).'.';
+    return '<a class="streak-pill'.($trainedToday ? ' trained' : '').($todayMet ? ' achieved' : '').'" href="training.php" title="'.e($title).'" aria-label="'.e($aria).'">'
+      .'<span class="header-progress-metric streak"><span class="header-progress-icon" aria-hidden="true">↗</span><strong>'.$days.'</strong></span>'
+      .'<span class="header-progress-separator" aria-hidden="true"></span>'
+      .'<span class="header-progress-metric score"><span class="header-progress-icon" aria-hidden="true">◇</span><strong>'.($score === null ? '--' : $score).'</strong></span>'
+      .'</a>';
   } catch (Throwable $e) {
     return '';
   }
