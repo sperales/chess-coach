@@ -1667,6 +1667,11 @@ body.login-page::before {
   color:#ffd665;
   border-color:#69562a
 }
+.queue-status.mistake {
+  background:#4a2b11;
+  color:#ffb36b;
+  border-color:#704018
+}
 .progress {
   height:8px;
   background:#23313a;

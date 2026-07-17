@@ -32,7 +32,7 @@ function bucketIcon(bucket) {
 function bucketClass(bucket) {
   if (bucket === 'best' || bucket === 'excellent' || bucket === 'good') return 'done';
   if (bucket === 'inaccuracy') return 'cancelled';
-  if (bucket === 'mistake') return 'running';
+  if (bucket === 'mistake') return 'mistake';
   if (bucket === 'blunder') return 'error';
   return 'queued';
 }
