@@ -4129,6 +4129,65 @@ select {
 .training-feedback.warn {
   color:#f5b942
 }
+.training-hints-panel {
+  display:grid;
+  gap:10px;
+  padding:12px 14px;
+  border-left:3px solid #87d94f;
+  background:#10251d;
+  border-radius:4px
+}
+.training-hints-panel[hidden] {
+  display:none
+}
+.training-hints-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px
+}
+.training-hints-head span {
+  color:#87d94f;
+  font-size:13px;
+  font-weight:800
+}
+.training-hints-list {
+  display:grid;
+  gap:9px
+}
+.training-hint-item {
+  display:grid;
+  grid-template-columns:24px minmax(0,1fr);
+  gap:9px;
+  align-items:start
+}
+.training-hint-item > span {
+  display:grid;
+  place-items:center;
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  background:#155b38;
+  color:#8df06f;
+  font-size:12px;
+  font-weight:900
+}
+.training-hint-item strong {
+  display:block;
+  margin-bottom:2px;
+  color:#e9f3ed;
+  font-size:13px
+}
+.training-hint-item p,
+.training-hint-error {
+  margin:0;
+  color:#b9c8c0;
+  font-size:14px;
+  line-height:1.4
+}
+.training-hint-error {
+  color:#f5b942
+}
 .training-attempts {
   display:flex;
   flex-wrap:wrap;
@@ -5015,22 +5074,25 @@ select {
     order:3
   }
   .training-solve-sidebar > .training-promotion {
+    order:5
+  }
+  .training-solve-sidebar > .training-hints-panel {
     order:4
   }
   .training-solve-sidebar > .training-feedback {
-    order:5
-  }
-  .training-solve-sidebar > .training-solve-controls {
     order:6
   }
-  .training-solve-sidebar > #trainingAttempts {
+  .training-solve-sidebar > .training-solve-controls {
     order:7
   }
-  .training-solve-sidebar > .training-side-kpis {
+  .training-solve-sidebar > #trainingAttempts {
     order:8
   }
-  .training-solve-sidebar > .training-source-box {
+  .training-solve-sidebar > .training-side-kpis {
     order:9
+  }
+  .training-solve-sidebar > .training-source-box {
+    order:10
   }
   .training-side-objective {
     font-size:15px;

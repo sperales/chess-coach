@@ -15,6 +15,10 @@ let trainingStartedAt = 0;
 let trainingTimerInterval = null;
 let trainingUsedHint = false;
 let trainingHintFrom = '';
+let trainingSolveRun = null;
+let trainingHints = [];
+let trainingHintLoading = false;
+let trainingHintError = '';
 let revealedTrainingSolution = '';
 let revealedTrainingSolutionDisplay = '';
 let completedTrainingMove = '';
@@ -434,10 +438,15 @@ async function openTrainingExercise(id) {
   incorrectTrainingDestination = '';
   trainingHintFrom = '';
   trainingUsedHint = false;
+  trainingSolveRun = null;
+  trainingHints = [];
+  trainingHintLoading = false;
+  trainingHintError = '';
   trainingStartedAt = Date.now();
   startTrainingExerciseTimer();
   trainingBoardOrientation = trainingFenSideToMove(activeExercise.fen) === 'b' ? 'black' : 'white';
   renderTrainingSolver();
+  await startTrainingSolveRun();
   if (TRAINING_SOLVER_MODE && activeExercise && activeExercise.id) {
     const url = new URL(window.location.href);
     url.searchParams.set('id', activeExercise.id);
@@ -517,6 +526,10 @@ function closeTrainingSolver() {
   selectedTrainingSquare = '';
   trainingSelectionMessage = '';
   trainingHintFrom = '';
+  trainingSolveRun = null;
+  trainingHints = [];
+  trainingHintLoading = false;
+  trainingHintError = '';
   revealedTrainingSolution = '';
   revealedTrainingSolutionDisplay = '';
   completedTrainingMove = '';
@@ -552,6 +565,7 @@ function renderTrainingSolver() {
   }
   updateTrainingExerciseTimer();
   renderTrainingAttempts();
+  renderTrainingHints();
   renderTrainingBoard();
   updateTrainingDraft();
   renderTrainingControls();
@@ -1203,17 +1217,98 @@ function trainingExerciseFinished() {
   return !!(activeExercise && (!trainingExerciseIsTrainable(activeExercise) || revealedTrainingSolution || attemptedTrainingMoves.length >= 5));
 }
 
-function showTrainingHint() {
+function applyTrainingSolveRun(run) {
+  trainingSolveRun = run && Number(run.id || 0) > 0 ? run : null;
+  trainingHints = trainingSolveRun && Array.isArray(trainingSolveRun.hints)
+    ? trainingSolveRun.hints.filter(hint => Number(hint.level || 0) >= 1 && Number(hint.level || 0) <= 3)
+    : [];
+  trainingUsedHint = trainingHints.length > 0;
+  const highlighted = [...trainingHints].reverse().find(hint => Array.isArray(hint.highlight_squares) && hint.highlight_squares.length);
+  trainingHintFrom = highlighted ? (highlighted.highlight_squares[0] || '').toString().toLowerCase() : '';
+}
+
+async function startTrainingSolveRun() {
   if (!activeExercise || trainingExerciseFinished()) return;
-  const from = (activeExercise.hint_from || '').toString().toLowerCase();
-  if (from.length !== 2) return;
-  trainingUsedHint = true;
-  trainingHintFrom = from;
-  selectedTrainingSquare = trainingHintFrom;
-  trainingSelectionMessage = '';
+  trainingHintLoading = true;
+  renderTrainingControls();
+  try {
+    const response = await fetch('api/training.php?action=solve_start', {
+      method: 'POST',
+      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({
+        id: activeExercise.id,
+        session_id: activeTrainingSession ? activeTrainingSession.id : 0
+      })
+    });
+    const data = await response.json();
+    if (!data.ok) throw new Error(data.error || 'No se pudo preparar el sistema de pistas.');
+    applyTrainingSolveRun(data.solve_run);
+    if (trainingHintFrom) selectedTrainingSquare = trainingHintFrom;
+    trainingHintError = '';
+  } catch (error) {
+    trainingHintError = error && error.message ? error.message : 'Las pistas no están disponibles temporalmente.';
+  } finally {
+    trainingHintLoading = false;
+  }
+  renderTrainingHints();
   renderTrainingBoard();
   updateTrainingDraft();
   renderTrainingControls();
+}
+
+async function showTrainingHint() {
+  if (!activeExercise || trainingExerciseFinished() || trainingHintLoading) return;
+  if (!trainingSolveRun) await startTrainingSolveRun();
+  if (!trainingSolveRun) return;
+  const currentLevel = Number(trainingSolveRun.highest_hint_level || 0);
+  const nextLevel = Math.min(3, currentLevel + 1);
+  if (currentLevel >= 3) return;
+
+  trainingHintLoading = true;
+  trainingHintError = '';
+  renderTrainingControls();
+  try {
+    const response = await fetch('api/training.php?action=hint', {
+      method: 'POST',
+      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({
+        id: activeExercise.id,
+        solve_run_id: trainingSolveRun.id,
+        session_id: activeTrainingSession ? activeTrainingSession.id : 0,
+        level: nextLevel
+      })
+    });
+    const data = await response.json();
+    if (!data.ok) throw new Error(data.error || 'No se pudo obtener la pista.');
+    applyTrainingSolveRun(data.solve_run);
+    selectedTrainingSquare = trainingHintFrom || '';
+    trainingSelectionMessage = '';
+  } catch (error) {
+    trainingHintError = error && error.message ? error.message : 'No se pudo obtener la pista.';
+  } finally {
+    trainingHintLoading = false;
+  }
+  renderTrainingHints();
+  renderTrainingBoard();
+  updateTrainingDraft();
+  renderTrainingControls();
+}
+
+function renderTrainingHints() {
+  const panel = document.getElementById('trainingHintsPanel');
+  const list = document.getElementById('trainingHintsList');
+  const progress = document.getElementById('trainingHintsProgress');
+  if (!panel || !list) return;
+
+  const levelLabels = { 1: 'Idea', 2: 'Pieza', 3: 'Acción y zona' };
+  if (progress) progress.textContent = `${trainingHints.length}/3`;
+  panel.hidden = trainingHints.length === 0 && !trainingHintError;
+  list.innerHTML = trainingHints.map(hint => {
+    const level = Number(hint.level || 0);
+    return `<div class="training-hint-item"><span>${level}</span><div><strong>${escapeHtml(levelLabels[level] || 'Pista')}</strong><p>${escapeHtml(hint.text || '')}</p></div></div>`;
+  }).join('') + (trainingHintError
+    ? `<p class="training-hint-error">${escapeHtml(trainingHintError)}</p>`
+    : '');
 }
 
 function renderTrainingControls() {
@@ -1223,7 +1318,13 @@ function renderTrainingControls() {
   const finished = trainingExerciseFinished();
   if (active) active.hidden = finished;
   if (done) done.hidden = !finished;
-  if (hint) hint.disabled = finished || trainingUsedHint || !activeExercise || !(activeExercise.hint_from || '').toString();
+  if (hint) {
+    const hintLevel = trainingSolveRun ? Number(trainingSolveRun.highest_hint_level || 0) : 0;
+    hint.disabled = finished || trainingHintLoading || !trainingSolveRun || hintLevel >= 3;
+    hint.textContent = trainingHintLoading
+      ? 'Preparando pista...'
+      : (hintLevel >= 3 ? 'Pistas completadas' : `${hintLevel > 0 ? 'Siguiente pista' : 'Pista'} ${hintLevel + 1}/3`);
+  }
 }
 
 async function openNextTrainingExercise() {
@@ -1257,7 +1358,9 @@ async function submitTrainingMove() {
         session_id: activeTrainingSession ? activeTrainingSession.id : 0,
         moves: attemptedTrainingMoves,
         duration_ms: Date.now() - trainingStartedAt,
-        used_hint: trainingUsedHint
+        used_hint: trainingUsedHint,
+        solve_run_id: trainingSolveRun ? trainingSolveRun.id : 0,
+        highest_hint_level: trainingSolveRun ? Number(trainingSolveRun.highest_hint_level || 0) : 0
       })
     });
     const data = await response.json();
@@ -1336,7 +1439,11 @@ async function skipTrainingExercise() {
     const response = await fetch('api/training.php?action=skip', {
       method: 'POST',
       headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ id: activeExercise.id, session_id: activeTrainingSession.id })
+      body: JSON.stringify({
+        id: activeExercise.id,
+        session_id: activeTrainingSession.id,
+        solve_run_id: trainingSolveRun ? trainingSolveRun.id : 0
+      })
     });
     const data = await response.json();
     if (data.ok && data.session) activeTrainingSession = data.session;

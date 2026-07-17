@@ -116,6 +116,11 @@ After applying `sql/migrations/030_changes_1.4.12.sql`, confirm:
 - Re-running the migration does not duplicate the `app_migrations` entry.
 - Skipped and abandoned runs do not create scoring evidence.
 - Progressive hints expose the idea, origin piece and board region without returning the destination square or solution UCI.
+- Confirm the first hint shows an idea without changing or highlighting a board square.
+- Confirm the second hint identifies and selects the origin piece, including its legal-move markers.
+- Confirm the third hint adds the action and board region while preserving the origin highlight.
+- Reload an unfinished exercise and confirm its requested hints are restored in the same order.
+- Confirm the hint button advances from `Pista 1/3` to `Pistas completadas` and remains usable on mobile.
 
 ---
 
