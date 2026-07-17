@@ -157,7 +157,8 @@ function player_progress_record_event(
   float $evidenceWeight = 1.0,
   array $metadata = [],
   ?int $solveRunId = null,
-  int $ruleVersion = TRAINING_PROGRESS_RULE_VERSION
+  int $ruleVersion = TRAINING_PROGRESS_RULE_VERSION,
+  ?string $occurredAt = null
 ): array {
   $eventKey = trim($eventKey);
   $eventType = trim($eventType);
@@ -169,11 +170,15 @@ function player_progress_record_event(
   $evidenceWeight = max(0.0, min(10.0, $evidenceWeight));
   $metadataJson = $metadata ? json_encode($metadata, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null;
   if ($metadata && $metadataJson === false) throw new InvalidArgumentException('Metadatos de evento no validos.');
+  $occurredAt = $occurredAt && strtotime($occurredAt) !== false ? date('Y-m-d H:i:s', strtotime($occurredAt)) : null;
 
   $st = db()->prepare('INSERT INTO player_progress_events
       (user_id,event_key,event_type,source_type,source_id,solve_run_id,quality_score,evidence_weight,metadata_json,rule_version,occurred_at,created_at)
-      VALUES (?,?,?,?,?,?,?,?,?,?,NOW(),NOW())
-      ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)');
+      VALUES (?,?,?,?,?,?,?,?,?,?,COALESCE(?,NOW()),NOW())
+      ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id),event_type=VALUES(event_type),source_type=VALUES(source_type),
+        source_id=VALUES(source_id),solve_run_id=VALUES(solve_run_id),quality_score=VALUES(quality_score),
+        evidence_weight=VALUES(evidence_weight),metadata_json=VALUES(metadata_json),rule_version=VALUES(rule_version),
+        occurred_at=VALUES(occurred_at)');
   $st->execute([
     $userId,
     $eventKey,
@@ -185,6 +190,7 @@ function player_progress_record_event(
     $evidenceWeight,
     $metadataJson,
     max(1, $ruleVersion),
+    $occurredAt,
   ]);
   $eventId = (int)db()->lastInsertId();
   $eventSt = db()->prepare('SELECT * FROM player_progress_events WHERE id=? AND user_id=? LIMIT 1');
@@ -192,6 +198,17 @@ function player_progress_record_event(
   $event = $eventSt->fetch();
   if (!$event) throw new RuntimeException('No se pudo recuperar el evento registrado.');
   return $event;
+}
+
+function training_progress_update_solve_run_attempts(int $userId, int $runId, int $attemptsCount): ?array {
+  $run = training_progress_run_for_user($runId, $userId);
+  if (!$run || $run['status'] !== 'active') return $run;
+  $attemptsCount = training_progress_attempts_count($attemptsCount);
+  db()->prepare('UPDATE training_solve_runs
+                 SET attempts_count=GREATEST(attempts_count,?),updated_at=NOW()
+                 WHERE id=? AND user_id=? AND status="active"')
+    ->execute([$attemptsCount, $runId, $userId]);
+  return training_progress_run_for_user($runId, $userId);
 }
 
 function training_progress_complete_solve_run(

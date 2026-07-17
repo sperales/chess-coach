@@ -3,6 +3,8 @@ require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/stockfish.php';
 require_once __DIR__ . '/chess_notation.php';
+require_once __DIR__ . '/training_progress.php';
+require_once __DIR__ . '/player_progress.php';
 
 const TRAINING_EXERCISE_CONTENT_VERSION = 2;
 
@@ -978,7 +980,7 @@ function training_sanitize_attempted_moves(array $moves): array {
   return $clean;
 }
 
-function training_record_attempt(int $userId, int $exerciseId, array $attemptedMoves, int $durationMs = 0, bool $usedHint = false, ?int $sessionId = null): array {
+function training_record_attempt(int $userId, int $exerciseId, array $attemptedMoves, int $durationMs = 0, bool $usedHint = false, ?int $sessionId = null, ?int $solveRunId = null): array {
   $exercise = training_exercise_for_user($exerciseId, $userId);
   if (!$exercise) return ['ok' => false, 'error' => 'Ejercicio no encontrado.'];
   if (!empty($exercise['resolved_at']) && empty($exercise['is_repeat_due'])) {
@@ -1008,12 +1010,20 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
     $sessionId = !empty($sessionResult['session']['id']) ? (int)$sessionResult['session']['id'] : null;
   }
 
+  $solveRun = $solveRunId ? training_progress_run_for_user($solveRunId, $userId) : null;
+  if (!$solveRun || (int)$solveRun['exercise_id'] !== $exerciseId || $solveRun['status'] !== 'active') {
+    $solveRun = training_progress_start_solve_run($userId, $exerciseId, $sessionId);
+  }
+  $solveRunId = (int)$solveRun['id'];
+  $usedHint = (int)$solveRun['highest_hint_level'] > 0;
+
   $ins = db()->prepare('INSERT INTO training_attempts
-      (session_id,exercise_id,user_id,started_at,completed_at,duration_ms,attempts_count,first_move_uci,final_move_uci,
+      (session_id,solve_run_id,exercise_id,user_id,started_at,completed_at,duration_ms,attempts_count,first_move_uci,final_move_uci,
        attempted_moves_json,is_solved,result,used_hint,difficulty_after_attempt,created_at)
-      VALUES (?,?,?,NOW(),NOW(),?,?,?,?,?,?,?,?,?,NOW())');
+      VALUES (?,?,?,?,NOW(),NOW(),?,?,?,?,?,?,?,?,?,NOW())');
   $ins->execute([
     $sessionId,
+    $solveRunId,
     $exerciseId,
     $userId,
     $durationMs,
@@ -1030,12 +1040,22 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
   if ($isSolved || $isExhausted) {
     db()->prepare('UPDATE training_exercises SET resolved_at=COALESCE(resolved_at,NOW()), last_attempt_at=NOW(), updated_at=NOW() WHERE id=? AND user_id=?')->execute([$exerciseId, $userId]);
     training_update_exercise_repetition($userId, $exerciseId, $isSolved ? 'solved' : 'failed', count($moves), $usedHint);
+    training_progress_complete_solve_run($userId, $solveRunId, $isSolved ? 'solved' : 'failed', count($moves));
   } else {
     db()->prepare('UPDATE training_exercises SET last_attempt_at=NOW(), last_training_result="failed", updated_at=NOW() WHERE id=? AND user_id=?')->execute([$exerciseId, $userId]);
+    training_progress_update_solve_run_attempts($userId, $solveRunId, count($moves));
   }
 
   $updated = training_exercise_for_user($exerciseId, $userId);
   $session = $sessionId ? training_update_session_metrics($sessionId, $userId) : null;
+  $progress = null;
+  if ($isSolved || $isExhausted) {
+    try {
+      $progress = player_progress_recalculate($userId, 'exercise_completed', false);
+    } catch (Throwable $progressError) {
+      error_log('Player progress recalculation failed: ' . $progressError->getMessage());
+    }
+  }
   return [
     'ok' => true,
     'solved' => $isSolved,
@@ -1049,6 +1069,7 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
     'stats' => training_stats_for_user($userId),
     'experience' => training_experience_summary($userId),
     'session' => $session,
+    'progress' => $progress,
   ];
 }
 
@@ -1059,7 +1080,7 @@ function training_session_is_active(int $sessionId, int $userId): bool {
   return (int)$st->fetchColumn() > 0;
 }
 
-function training_record_skip(int $userId, int $exerciseId, ?int $sessionId = null): array {
+function training_record_skip(int $userId, int $exerciseId, ?int $sessionId = null, ?int $solveRunId = null): array {
   $exercise = training_exercise_for_user($exerciseId, $userId);
   if (!$exercise) return ['ok' => false, 'error' => 'Ejercicio no encontrado.'];
   $sessionId = $sessionId && training_session_is_active($sessionId, $userId) ? $sessionId : null;
@@ -1069,12 +1090,19 @@ function training_record_skip(int $userId, int $exerciseId, ?int $sessionId = nu
   }
   if (!$sessionId) return ['ok' => false, 'error' => 'No se pudo registrar la sesión de entrenamiento.'];
 
+  $solveRun = $solveRunId ? training_progress_run_for_user($solveRunId, $userId) : null;
+  if (!$solveRun || (int)$solveRun['exercise_id'] !== $exerciseId || $solveRun['status'] !== 'active') {
+    $solveRun = training_progress_start_solve_run($userId, $exerciseId, $sessionId);
+  }
+  $solveRunId = (int)$solveRun['id'];
+
   $ins = db()->prepare('INSERT INTO training_attempts
-      (session_id,exercise_id,user_id,started_at,completed_at,duration_ms,attempts_count,
+      (session_id,solve_run_id,exercise_id,user_id,started_at,completed_at,duration_ms,attempts_count,
        attempted_moves_json,is_solved,result,used_hint,difficulty_after_attempt,created_at)
-      VALUES (?,?,?,NOW(),NOW(),0,0,?,0,"skipped",0,?,NOW())');
+      VALUES (?,?,?,?,NOW(),NOW(),0,0,?,0,"skipped",0,?,NOW())');
   $ins->execute([
     $sessionId,
+    $solveRunId,
     $exerciseId,
     $userId,
     json_encode([], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
@@ -1082,6 +1110,7 @@ function training_record_skip(int $userId, int $exerciseId, ?int $sessionId = nu
   ]);
   db()->prepare('UPDATE training_exercises SET resolved_at=COALESCE(resolved_at,NOW()), last_attempt_at=NOW(), updated_at=NOW() WHERE id=? AND user_id=?')->execute([$exerciseId, $userId]);
   training_update_exercise_repetition($userId, $exerciseId, 'skipped', 0, false);
+  training_progress_complete_solve_run($userId, $solveRunId, 'skipped', 0);
   $updated = training_exercise_for_user($exerciseId, $userId);
   $session = training_update_session_metrics($sessionId, $userId);
   return [

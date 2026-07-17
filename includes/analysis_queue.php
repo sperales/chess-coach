@@ -250,6 +250,12 @@ function process_analysis_job(int $analysisId, int $userId): array {
       // Training exercises are derived metadata; generation can be retried from the profile backfill.
     }
     db()->prepare('UPDATE game_analysis SET status="done", completed_at=NOW(), updated_at=NOW(), blunders=?, mistakes=?, inaccuracies=?, current_ply=?, total_ply=? WHERE id=?')->execute([$counts['blunder'],$counts['mistake'],$counts['inaccuracy'],$total,$total,$analysisId]);
+    try {
+      player_progress_recalculate($userId, 'analysis_completed');
+    } catch (Throwable $progressError) {
+      // El progreso es derivado y no debe invalidar un analisis Stockfish completado.
+      error_log('Player progress recalculation failed: ' . $progressError->getMessage());
+    }
     return ['ok' => true, 'processed' => true, 'analysis_id' => $analysisId, 'status' => 'done', 'summary' => $counts];
   } catch (Throwable $e) {
     $publicMessage = public_error_message($e);

@@ -7,7 +7,7 @@ require_once __DIR__.'/../includes/training_hints.php';
 $u = require_login();
 $userId = (int)$u['id'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
-$mutatingActions = ['session_start', 'session_end', 'solve_start', 'hint', 'attempt', 'skip', 'goal_settings'];
+$mutatingActions = ['session_start', 'session_end', 'solve_start', 'hint', 'attempt', 'skip', 'goal_settings', 'progress_refresh'];
 if (in_array($action, $mutatingActions, true)) {
   require_post_csrf();
 }
@@ -50,6 +50,24 @@ if ($action === 'experience') {
     'ok' => true,
     'experience' => training_experience_summary($userId),
   ]);
+}
+
+if ($action === 'progress') {
+  try {
+    json_response(['ok' => true, 'progress' => player_progress_latest($userId)]);
+  } catch (Throwable $e) {
+    error_log('Player progress read failed: ' . $e->getMessage());
+    json_response(['ok' => false, 'error' => 'No se ha podido cargar el progreso.']);
+  }
+}
+
+if ($action === 'progress_refresh') {
+  try {
+    json_response(['ok' => true, 'progress' => player_progress_recalculate($userId, 'manual_refresh')]);
+  } catch (Throwable $e) {
+    error_log('Player progress refresh failed: ' . $e->getMessage());
+    json_response(['ok' => false, 'error' => 'No se ha podido recalcular el progreso.']);
+  }
 }
 
 if ($action === 'goal_settings') {
@@ -131,8 +149,9 @@ if ($action === 'attempt') {
   $durationMs = (int)($body['duration_ms'] ?? 0);
   $usedHint = !empty($body['used_hint']);
   $sessionId = (int)($body['session_id'] ?? 0);
+  $solveRunId = (int)($body['solve_run_id'] ?? 0);
   $result = $id > 0
-    ? training_record_attempt($userId, $id, $moves, $durationMs, $usedHint, $sessionId ?: null)
+    ? training_record_attempt($userId, $id, $moves, $durationMs, $usedHint, $sessionId ?: null, $solveRunId ?: null)
     : ['ok' => false, 'error' => 'Ejercicio no indicado.'];
   if (!empty($result['exercise']) && is_array($result['exercise'])) {
     $fenBefore = (string)($result['exercise']['fen'] ?? '');
@@ -152,8 +171,9 @@ if ($action === 'skip') {
   $body = request_json_body();
   $id = (int)($body['id'] ?? 0);
   $sessionId = (int)($body['session_id'] ?? 0);
+  $solveRunId = (int)($body['solve_run_id'] ?? 0);
   $result = $id > 0
-    ? training_record_skip($userId, $id, $sessionId ?: null)
+    ? training_record_skip($userId, $id, $sessionId ?: null, $solveRunId ?: null)
     : ['ok' => false, 'error' => 'Ejercicio no indicado.'];
   if (!empty($result['exercise']) && is_array($result['exercise'])) {
     $includeSolution = !empty($result['exercise']['resolved_at']) && empty($result['exercise']['is_repeat_due']);
