@@ -7,6 +7,7 @@ const INITIAL_REVIEW_PARAMS = new URLSearchParams(window.location.search);
 const reviewVisitedPlies = new Set();
 const reviewPendingPlies = new Set();
 let reviewProgressTimer = null;
+let reviewProgressData = null;
 
 const PIECE_IMAGES = {
   P: 'wp.png', N: 'wn.png', B: 'wb.png', R: 'wr.png', Q: 'wq.png', K: 'wk.png',
@@ -68,6 +69,7 @@ async function loadReview() {
     reviewData = data;
     currentMoveIndex = initialReviewMoveIndex(data.moves || []);
     boardOrientation = data.user_side === 'b' ? 'black' : 'white';
+    await loadReviewProgress();
     bindBoardControls();
     renderSummary();
     renderChart();
@@ -81,6 +83,32 @@ async function loadReview() {
     const comment = document.getElementById('reviewComment');
     if (comment) comment.textContent = 'Asegúrate de que la partida ya está analizada.';
   }
+}
+
+async function loadReviewProgress() {
+  const gameId = Number(window.CHESS_REVIEW_GAME_ID || 0);
+  if (!gameId) return;
+  try {
+    const response = await fetch(`api/review-progress.php?game_id=${gameId}`, { cache: 'no-store' });
+    const data = await response.json();
+    if (!response.ok || !data.ok) return;
+    reviewProgressData = data.progress || null;
+    (reviewProgressData?.visited_plies || []).forEach(ply => reviewVisitedPlies.add(Number(ply)));
+    renderReviewProgress();
+  } catch (error) {
+    // Review remains usable if progress tracking is temporarily unavailable.
+  }
+}
+
+function renderReviewProgress() {
+  const el = document.getElementById('reviewProgressPill');
+  if (!el || !reviewProgressData) return;
+  const completed = Boolean(reviewProgressData.completed);
+  const required = Number(reviewProgressData.required_plies || 0);
+  const current = Math.min(Number(reviewProgressData.visited_plies_count || 0), required);
+  el.className = `review-progress-pill${completed ? ' completed' : ''}`;
+  el.textContent = completed ? 'Revisión completada' : `Revisión ${current}/${required}`;
+  el.hidden = false;
 }
 
 function initialReviewMoveIndex(moves) {
@@ -375,6 +403,8 @@ async function flushReviewProgress(keepalive) {
     });
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(data.error || 'No se pudo guardar el progreso de revisión.');
+    reviewProgressData = data.progress || reviewProgressData;
+    renderReviewProgress();
   } catch (error) {
     plies.forEach(ply => reviewPendingPlies.add(ply));
   }

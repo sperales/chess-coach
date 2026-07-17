@@ -195,7 +195,7 @@ a {
   color:#dce5ec;
   text-decoration:none
 }
-.streak-pill span {
+.streak-pill .header-progress-icon {
   display:grid;
   place-items:center;
   width:24px;
@@ -212,9 +212,26 @@ a {
 .streak-pill.trained {
   border-color:rgba(60,210,102,.32)
 }
-.streak-pill.trained span {
+.streak-pill.trained .header-progress-metric.streak .header-progress-icon {
   background:#07351f;
   color:#35f26f
+}
+.header-progress-metric {
+  display:inline-flex;
+  align-items:center;
+  gap:5px
+}
+.header-progress-metric.score .header-progress-icon {
+  background:#102d3d;
+  color:#55b9ff
+}
+.header-progress-metric.score strong {
+  font-size:15px
+}
+.header-progress-separator {
+  width:1px;
+  height:24px;
+  background:var(--line)
 }
 .streak-pill.achieved {
   border-color:rgba(60,210,102,.42);
@@ -2838,6 +2855,131 @@ select {
   border-radius:inherit;
   background:linear-gradient(90deg,#22c55e,#84cc16)
 }
+.training-plan-overview {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px
+}
+.training-progress-metric {
+  padding:14px 16px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:rgba(7,16,20,.6)
+}
+.training-progress-metric > div:first-child {
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:12px
+}
+.training-progress-metric span,
+.training-progress-metric p {
+  color:#a9b1ba
+}
+.training-progress-metric strong {
+  color:#fff;
+  font-size:22px
+}
+.training-progress-metric p {
+  margin:5px 0 0
+}
+.training-plan-columns {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px
+}
+.training-plan-column {
+  display:grid;
+  align-content:start;
+  gap:9px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:rgba(5,14,18,.52)
+}
+.training-plan-column-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px
+}
+.training-plan-column-head h3 {
+  margin:0
+}
+.training-plan-column-head span {
+  color:#78d95e;
+  font-weight:800
+}
+.training-plan-goal {
+  display:grid;
+  grid-template-columns:30px minmax(0,1fr);
+  gap:10px;
+  padding:11px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#081419;
+  color:inherit;
+  text-decoration:none
+}
+a.training-plan-goal:hover {
+  border-color:rgba(53,242,111,.45);
+  background:#0b1d1a
+}
+.training-plan-check {
+  display:grid;
+  place-items:center;
+  width:28px;
+  height:28px;
+  border:1px solid #40505b;
+  border-radius:50%;
+  color:#35f26f;
+  font-weight:900
+}
+.training-plan-goal.completed .training-plan-check {
+  border-color:#168c42;
+  background:#07351f
+}
+.training-plan-goal strong,
+.training-plan-goal small,
+.training-plan-goal em {
+  display:block
+}
+.training-plan-goal small {
+  margin-top:3px;
+  color:#a9b1ba
+}
+.training-plan-goal em {
+  margin-top:5px;
+  color:#78d95e;
+  font-size:12px;
+  font-style:normal;
+  text-align:right
+}
+.training-page-plan {
+  display:grid;
+  gap:12px
+}
+.review-progress-pill {
+  display:inline-flex;
+  align-items:center;
+  min-height:30px;
+  margin-top:10px;
+  padding:5px 10px;
+  border:1px solid rgba(85,185,255,.38);
+  border-radius:999px;
+  background:rgba(16,45,61,.82);
+  color:#b9ddf6;
+  font-size:13px;
+  font-weight:800
+}
+.review-progress-pill.completed {
+  border-color:rgba(53,242,111,.4);
+  background:rgba(7,53,31,.85);
+  color:#73f49a
+}
+.review-progress-pill[hidden] {
+  display:none
+}
 .home-milestone-strip {
   overflow:hidden;
   border:1px solid rgba(255,255,255,.08);
@@ -4777,6 +4919,9 @@ select {
   .home-training-grid {
     grid-template-columns:repeat(2,minmax(0,1fr))
   }
+  .training-plan-columns {
+    grid-template-columns:minmax(0,1fr)
+  }
   .home-training-head {
     align-items:flex-start;
     flex-direction:column
@@ -4943,6 +5088,9 @@ select {
     grid-template-columns:minmax(0,1fr)
   }
   .home-training-grid {
+    grid-template-columns:minmax(0,1fr)
+  }
+  .training-plan-overview {
     grid-template-columns:minmax(0,1fr)
   }
   .openings-view-head-actions {

@@ -3,6 +3,9 @@ let trainingTypes = {};
 let trainingTypeCounts = {};
 let trainingStats = {};
 let trainingExperience = {};
+let trainingPlan = null;
+let trainingProgress = null;
+let trainingExtrasLoaded = false;
 let activeTrainingSession = null;
 let trainingPagination = { page: 1, per_page: (window.CHESS_COACH_CONFIG && window.CHESS_COACH_CONFIG.trainingPerPage) || 20, total: 0, pages: 1 };
 let currentTrainingPage = 1;
@@ -76,12 +79,38 @@ async function loadTraining(page = currentTrainingPage) {
   activeTrainingSession = data.session || null;
   trainingPagination = data.pagination || trainingPagination;
   currentTrainingPage = trainingPagination.page || currentTrainingPage;
+  if (!trainingExtrasLoaded) await loadTrainingExtras();
   renderTrainingTypeOptions();
   renderTrainingStats();
   renderTrainingExperience();
   renderTrainingExercises();
   renderTrainingPagination();
   renderTrainingStatus();
+}
+
+async function trainingPost(url, body = {}) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(body),
+  });
+  const data = await response.json();
+  if (!response.ok || !data.ok) throw new Error(data.error || 'No se pudo cargar el plan.');
+  return data;
+}
+
+async function loadTrainingExtras() {
+  const [progressResponse, planResponse] = await Promise.all([
+    fetch('api/training.php?action=progress', { cache: 'no-store' }).then(response => response.json()).catch(() => null),
+    trainingPost('api/training-plan.php').catch(() => null),
+  ]);
+  trainingProgress = progressResponse && progressResponse.ok ? progressResponse.progress : null;
+  trainingPlan = planResponse ? planResponse.plan : null;
+  if (trainingProgress && trainingProgress.available === false) {
+    const refreshed = await trainingPost('api/training.php?action=progress_refresh').catch(() => null);
+    if (refreshed) trainingProgress = refreshed.progress || trainingProgress;
+  }
+  trainingExtrasLoaded = true;
 }
 
 function renderTrainingTypeOptions() {
@@ -137,6 +166,14 @@ function renderTrainingExperience() {
   const summary = document.getElementById('trainingExperienceSummary') || document.getElementById('trainingSessionSummary');
   const grid = document.getElementById('trainingExperienceGrid') || document.getElementById('trainingSessionKpis');
   const repeatList = document.getElementById('trainingRepeatList');
+  let planPanel = document.getElementById('trainingPlanPanel');
+  if (!planPanel) {
+    planPanel = document.createElement('div');
+    planPanel.id = 'trainingPlanPanel';
+    planPanel.className = 'training-page-plan';
+    if (repeatList) panel.insertBefore(planPanel, repeatList);
+    else panel.appendChild(planPanel);
+  }
   const settings = trainingExperience.settings || {};
   const today = trainingExperience.today || {};
   const week = trainingExperience.week || {};
@@ -181,6 +218,39 @@ function renderTrainingExperience() {
       ? `<strong>Repeticiones recomendadas</strong><div>${sample.map(trainingRepeatItem).join('')}</div>`
       : '<strong>Repeticiones recomendadas</strong><p class="muted">No hay ejercicios vencidos para repetir ahora mismo.</p>';
   }
+  renderTrainingPlan(planPanel);
+}
+
+function renderTrainingPlan(panel) {
+  if (!panel) return;
+  const progress = trainingProgress || {};
+  const autonomy = progress.autonomy || {};
+  const plan = trainingPlan || { daily: [], weekly: [] };
+  panel.innerHTML = `
+    <div class="training-plan-overview">
+      ${trainingProgressMetric('Progress Score', progress.available ? `${Number(progress.score || 0)}/1000` : '--', progress.available ? '60% ejercicios · 40% partidas' : 'Se calculará con tu actividad', progress.available ? Number(progress.score || 0) / 10 : 0)}
+      ${trainingProgressMetric('Autonomía', autonomy.score === null || typeof autonomy.score === 'undefined' ? '--' : `${Math.round(Number(autonomy.score))}%`, autonomy.calibrated ? 'capacidad de resolver sin ayudas' : `calibrando ${Number(autonomy.samples || 0)}/${Number(autonomy.minimum_samples || 6)}`, autonomy.score || 0)}
+    </div>
+    <div class="training-plan-columns">
+      ${trainingPlanColumn('Objetivos de hoy', plan.daily || [])}
+      ${trainingPlanColumn('Objetivos de la semana', plan.weekly || [])}
+    </div>`;
+}
+
+function trainingProgressMetric(label, value, detail, percent) {
+  return `<article class="training-progress-metric"><div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div><p>${escapeHtml(detail)}</p>${trainingInlineProgress(percent)}</article>`;
+}
+
+function trainingPlanColumn(title, goals) {
+  const items = Array.isArray(goals) ? goals : [];
+  const complete = items.filter(goal => goal.status === 'completed').length;
+  return `<section class="training-plan-column"><div class="training-plan-column-head"><h3>${escapeHtml(title)}</h3><span>${complete}/${items.length}</span></div>${items.length ? items.map(trainingPlanGoal).join('') : '<p class="muted">No hay acciones pendientes.</p>'}</section>`;
+}
+
+function trainingPlanGoal(goal) {
+  const done = goal.status === 'completed';
+  const content = `<span class="training-plan-check" aria-hidden="true">${done ? '✓' : ''}</span><div><strong>${escapeHtml(goal.title || 'Objetivo')}</strong><small>${escapeHtml(goal.rationale || '')}</small>${trainingInlineProgress(goal.progress_percent)}<em>${Number(goal.current_value || 0)}/${Number(goal.target_value || 0)}</em></div>`;
+  return goal.action_url && !done ? `<a class="training-plan-goal" href="${escapeAttr(goal.action_url)}">${content}</a>` : `<div class="training-plan-goal ${done ? 'completed' : ''}">${content}</div>`;
 }
 
 function trainingProgressPercent(percent) {
@@ -1385,6 +1455,7 @@ async function submitTrainingMove() {
     renderTrainingStatsFromResponse(data);
     renderTrainingExperience();
     if (data.solved || data.solution_uci) {
+      trainingExtrasLoaded = false;
       await loadTraining(currentTrainingPage);
     }
   } finally {
@@ -1449,6 +1520,7 @@ async function skipTrainingExercise() {
     if (data.ok && data.session) activeTrainingSession = data.session;
     if (data.stats) renderTrainingStatsFromResponse(data);
     renderTrainingExperience();
+    trainingExtrasLoaded = false;
     await loadTraining(currentTrainingPage);
   }
   closeTrainingSolver();

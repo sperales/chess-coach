@@ -2,6 +2,9 @@ let games = [];
 let dashboardData = null;
 let playerDnaData = null;
 let latestReviewData = null;
+let playerProgressData = null;
+let trainingPlanData = null;
+let trainingDashboardExtrasLoaded = false;
 let currentPage = 1;
 let pagination = { page: 1, per_page: (window.CHESS_COACH_CONFIG && window.CHESS_COACH_CONFIG.gamesPerPage) || 50, total: 0, pages: 1 };
 let stats = { recent10: { total: 0, wins: 0, losses: 0, draws: 0 }, analysis_accuracy: { average: null, analyzed_games: 0 }, queue: { pending_total: 0 } };
@@ -14,6 +17,32 @@ async function dashboardGet(url) {
   const data = await response.json();
   if (!data.ok) throw new Error(data.error || 'No se pudieron cargar los datos.');
   return data;
+}
+
+async function dashboardPost(url, body = {}) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(body),
+  });
+  const data = await response.json();
+  if (!response.ok || !data.ok) throw new Error(data.error || 'No se pudieron cargar los datos.');
+  return data;
+}
+
+async function loadTrainingPlanAndProgress() {
+  if (trainingDashboardExtrasLoaded) return;
+  const [progressPayload, planPayload] = await Promise.all([
+    dashboardGet('api/training.php?action=progress').catch(() => ({ progress: null })),
+    dashboardPost('api/training-plan.php').catch(() => ({ plan: null })),
+  ]);
+  playerProgressData = progressPayload.progress || null;
+  trainingPlanData = planPayload.plan || null;
+  if (playerProgressData && playerProgressData.available === false) {
+    const refreshed = await dashboardPost('api/training.php?action=progress_refresh').catch(() => null);
+    if (refreshed && refreshed.progress) playerProgressData = refreshed.progress;
+  }
+  trainingDashboardExtrasLoaded = true;
 }
 
 async function load(page = currentPage) {
@@ -31,6 +60,7 @@ async function load(page = currentPage) {
   stats = gamesPayload.stats || stats;
   dashboardData = trainerPayload;
   playerDnaData = playerDnaPayload;
+  await loadTrainingPlanAndProgress();
   latestReviewData = await loadLatestReview();
 
   render();
@@ -301,69 +331,52 @@ function renderHomeTrainingExperience() {
   const week = experience.week || {};
   const streak = experience.streak || {};
   const repeatQueue = experience.repeat_queue || {};
-  const milestones = experience.milestones || {};
-  const todayPercent = homeTrainingProgressPercent(homeTrainingTodayProgress(today, settings));
-  const weekPercent = homeTrainingProgressPercent(homeTrainingWeekProgress(week, settings));
+  const progress = playerProgressData || {};
+  const autonomy = progress.autonomy || {};
+  const plan = trainingPlanData || { daily: [], weekly: [] };
   const streakDays = Number(streak.days || 0);
   const dueCount = Number(repeatQueue.due_count || 0);
-  const nextMilestone = milestones.next || null;
-  const milestoneItems = Array.isArray(milestones.items) ? milestones.items : [];
-  const achieved = Number(milestones.achieved_count || 0);
-  const total = Number(milestones.total || 0);
   el.innerHTML = `
     <div class="home-training-head">
       <div>
-        <span class="trainer-state-badge ${today.goal_met ? 'good' : (today.trained ? 'improving' : 'stable')}">Training Experience</span>
-        <h2>Tu entrenamiento</h2>
+        <span class="trainer-state-badge ${today.goal_met ? 'good' : (today.trained ? 'improving' : 'stable')}">Plan personal</span>
+        <h2>Tu progreso y próximos pasos</h2>
         <p>${escapeHtml(homeTrainingMessage(today, streak))}</p>
       </div>
       <a class="btn secondary small" href="training.php">Entrenar ahora</a>
     </div>
     <div class="home-training-grid">
       ${homeTrainingCard('racha', 'Racha', `${streakDays} día(s)`, streak.today_goal_met ? 'objetivo cumplido hoy' : 'objetivo diario pendiente', streakDays ? Math.min(100, streakDays * 20) : 0)}
-      ${homeTrainingCard('hoy', 'Hoy', homeTrainingTodayText(today, settings), homeTrainingGoalLabel(settings), todayPercent)}
-      ${homeTrainingCard('semana', 'Semana', homeTrainingWeekText(week, settings), 'progreso semanal', weekPercent)}
+      ${homeTrainingCard('hoy', 'Hoy', homeTrainingTodayText(today, settings), homeTrainingGoalLabel(settings), homeTrainingProgressPercent(homeTrainingTodayProgress(today, settings)))}
+      ${homeTrainingCard('semana', 'Semana', homeTrainingWeekText(week, settings), 'progreso semanal', homeTrainingProgressPercent(homeTrainingWeekProgress(week, settings)))}
       ${homeTrainingCard('repasos', 'Para repetir', dueCount ? `${dueCount}` : 'Al día', dueCount === 1 ? 'ejercicio vencido' : (dueCount > 1 ? 'ejercicios vencidos' : 'sin repeticiones vencidas'), dueCount ? 0 : 100)}
     </div>
-    <div class="home-milestone-strip">
-      <button class="home-milestone-toggle" type="button" aria-expanded="false" aria-controls="homeMilestoneDetails" onclick="toggleHomeMilestones(this)">
-        <div>
-          <strong>Hitos</strong>
-          <span>${total ? `${achieved}/${total} conseguidos` : 'Sin hitos todavía'}</span>
-        </div>
-        ${nextMilestone ? `<p><b>Siguiente:</b> ${escapeHtml(nextMilestone.label || '')}. ${escapeHtml(nextMilestone.description || '')}</p>` : '<p>Todos los hitos iniciales están completados. Mantén el hábito.</p>'}
-        <span class="openings-view-toggle-icon home-milestone-toggle-icon" aria-hidden="true">▾</span>
-      </button>
-      <div class="home-milestone-details" id="homeMilestoneDetails" hidden>
-        ${homeMilestoneItems(milestoneItems)}
-      </div>
+    <div class="training-plan-overview">
+      ${homeProgressMetric('Progress Score', progress.available ? `${Number(progress.score || 0)}/1000` : '--', progress.available ? 'rendimiento reciente' : 'calculando progreso', progress.available ? Number(progress.score || 0) / 10 : 0)}
+      ${homeProgressMetric('Autonomía', autonomy.score === null || typeof autonomy.score === 'undefined' ? '--' : `${Math.round(Number(autonomy.score))}%`, autonomy.calibrated ? 'resolución sin ayudas' : `calibrando ${Number(autonomy.samples || 0)}/${Number(autonomy.minimum_samples || 6)}`, autonomy.score || 0)}
+    </div>
+    <div class="training-plan-columns">
+      ${homePlanColumn('Hoy', plan.daily || [])}
+      ${homePlanColumn('Esta semana', plan.weekly || [])}
     </div>
   `;
 }
 
-function toggleHomeMilestones(button) {
-  const details = document.getElementById('homeMilestoneDetails');
-  if (!button || !details) return;
-  const expanded = button.getAttribute('aria-expanded') === 'true';
-  button.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-  details.hidden = expanded;
+function homeProgressMetric(label, value, detail, percent) {
+  const pct = homeTrainingProgressPercent(percent);
+  return `<article class="training-progress-metric"><div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div><p>${escapeHtml(detail)}</p><div class="home-training-progress"><i style="width:${pct}%"></i></div></article>`;
 }
 
-function homeMilestoneItems(items) {
-  if (!items.length) return '<p class="muted">Todavía no hay hitos disponibles.</p>';
-  return items.map(item => {
-    const achieved = !!item.achieved;
-    return `
-      <article class="home-milestone-item ${achieved ? 'achieved' : 'pending'}">
-        <span aria-hidden="true">${achieved ? '✓' : '○'}</span>
-        <div>
-          <strong>${escapeHtml(item.label || 'Hito')}</strong>
-          <p>${escapeHtml(item.description || '')}</p>
-        </div>
-        <b>${achieved ? 'Conseguido' : 'Pendiente'}</b>
-      </article>
-    `;
-  }).join('');
+function homePlanColumn(title, goals) {
+  const items = Array.isArray(goals) ? goals : [];
+  return `<section class="training-plan-column"><div class="training-plan-column-head"><h3>${escapeHtml(title)}</h3><span>${items.filter(goal => goal.status === 'completed').length}/${items.length}</span></div>${items.length ? items.map(homePlanGoal).join('') : '<p class="muted">No hay acciones pendientes.</p>'}</section>`;
+}
+
+function homePlanGoal(goal) {
+  const done = goal.status === 'completed';
+  const percent = homeTrainingProgressPercent(goal.progress_percent);
+  const content = `<span class="training-plan-check" aria-hidden="true">${done ? '✓' : ''}</span><div><strong>${escapeHtml(goal.title || 'Objetivo')}</strong><small>${escapeHtml(goal.rationale || '')}</small><div class="home-training-progress"><i style="width:${percent}%"></i></div><em>${Number(goal.current_value || 0)}/${Number(goal.target_value || 0)}</em></div>`;
+  return goal.action_url && !done ? `<a class="training-plan-goal" href="${escapeAttr(goal.action_url)}">${content}</a>` : `<div class="training-plan-goal ${done ? 'completed' : ''}">${content}</div>`;
 }
 
 function homeTrainingMessage(today, streak) {

@@ -29,6 +29,7 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
     <div>
       <h1>Revisión de partida</h1>
       <p id="reviewIntro">Cargando análisis...</p>
+      <div class="review-progress-pill" id="reviewProgressPill" hidden></div>
     </div>
     <div class="hero-piece">♞</div>
   </section>
