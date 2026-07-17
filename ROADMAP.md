@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v1.4.8**
+Current stable baseline: **v1.4.11**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -616,6 +616,28 @@ Make Openings Lab understandable without requiring the user to know ECO codes.
 ### Future boundary
 
 Exact move-sequence classification, opening trees and repertoire management remain future work. An ECO category may contain multiple named lines and must not be presented as exact-line detection.
+
+---
+
+## v1.4.11 — SAN notation for training exercises
+
+Status: completed in v1.4.11.
+
+### Goal
+
+Make training attempts and solutions readable as chess notation without changing the UCI contracts used by Stockfish and exercise validation.
+
+### Delivered
+
+- Central server-side conversion from UCI to SAN using the FEN immediately before the move.
+- SAN presentation for attempts, revealed solutions and correct moves.
+- Coverage for captures, disambiguation, check, mate, castling, promotion and en passant.
+- Safe coordinate fallback for malformed historical positions or illegal moves.
+- Dependency-free notation fixtures suitable for shared hosting.
+
+### Future boundary
+
+UCI remains the stored and validated format. Broader SAN presentation outside training can reuse the helper in later versions without changing analysis data.
 
 ---
 

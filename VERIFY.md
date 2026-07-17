@@ -67,6 +67,32 @@ Both should match the release version.
 
 ---
 
+## Training SAN Notation Checks
+
+Run the dependency-free notation fixtures:
+
+```powershell
+php tests\chess_notation_test.php
+```
+
+Expected result:
+
+```text
+OK: 11 casos de notacion SAN.
+```
+
+Manual checks:
+
+- Confirm submitted attempts are displayed as SAN while the board and API validation retain UCI.
+- Confirm captures, check, mate, castling, promotion and en passant render correctly.
+- Confirm disambiguated moves include the required origin file or rank.
+- Confirm the exhausted-attempt solution and `Movimiento correcto` use SAN.
+- Confirm an accepted alternative solution displays the alternative that actually solved the exercise.
+- Confirm unresolved exercise responses do not expose `solution_uci`, `solution_san` or `solution_display`.
+- Confirm conversion failures use coordinate notation such as `b1 → c3` without breaking the solver.
+
+---
+
 ## ECO Catalog Checks
 
 After applying `sql/migrations/025_changes_1.4.3.sql`, verify the catalog:

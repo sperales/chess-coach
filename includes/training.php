@@ -2,6 +2,7 @@
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/stockfish.php';
+require_once __DIR__ . '/chess_notation.php';
 
 const TRAINING_EXERCISE_CONTENT_VERSION = 2;
 
@@ -819,10 +820,15 @@ function training_public_exercise(array $item, bool $includeSolution = false): a
   $solution = strtolower(trim((string)($item['solution_uci'] ?? '')));
   $item['hint_from'] = preg_match('/^[a-h][1-8]/', $solution) ? substr($solution, 0, 2) : null;
   $item = training_mark_exercise_training_state($item);
-  if (!$includeSolution) {
+  if ($includeSolution && $solution !== '') {
+    $solutionSan = chess_uci_to_san((string)($item['fen'] ?? ''), $solution);
+    $item['solution_san'] = $solutionSan;
+    $item['solution_display'] = $solutionSan ?? chess_uci_fallback($solution);
+  } else {
     unset(
       $item['solution_uci'],
       $item['solution_san'],
+      $item['solution_display'],
       $item['engine_bestmove_uci'],
       $item['engine_pv_uci'],
       $item['engine_score'],
@@ -1038,6 +1044,7 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
     'attempts_count' => count($moves),
     'remaining_attempts' => max(0, 5 - count($moves)),
     'solution_uci' => $isSolved ? $matchedSolution : ($isExhausted ? $solution : null),
+    'attempted_moves' => $moves,
     'feedback' => training_attempt_feedback($exercise, $isSolved, $isExhausted, count($moves), $usedHint),
     'exercise' => $updated,
     'stats' => training_stats_for_user($userId),
