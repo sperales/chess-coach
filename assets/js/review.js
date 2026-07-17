@@ -4,6 +4,9 @@ let bestMoveHighlight = '';
 let boardOrientation = 'white';
 const PIECE_ASSET_PATH = (window.CHESS_COACH_PIECE_PATH || 'assets/pieces/Set%201/').toString();
 const INITIAL_REVIEW_PARAMS = new URLSearchParams(window.location.search);
+const reviewVisitedPlies = new Set();
+const reviewPendingPlies = new Set();
+let reviewProgressTimer = null;
 
 const PIECE_IMAGES = {
   P: 'wp.png', N: 'wn.png', B: 'wb.png', R: 'wr.png', Q: 'wq.png', K: 'wk.png',
@@ -347,6 +350,34 @@ function renderMove() {
   renderTagList(ensureTagList('moveSmartTags', 'moveExplanation', 'move-tags'), filteredMoveTags(m));
   renderBoard(m.fen_after, m.uci);
   renderMoveList();
+  queueReviewProgress(Number(m.ply || 0));
+}
+
+function queueReviewProgress(ply) {
+  if (!Number.isInteger(ply) || ply <= 0 || reviewVisitedPlies.has(ply)) return;
+  reviewVisitedPlies.add(ply);
+  reviewPendingPlies.add(ply);
+  window.clearTimeout(reviewProgressTimer);
+  reviewProgressTimer = window.setTimeout(() => flushReviewProgress(false), 650);
+}
+
+async function flushReviewProgress(keepalive) {
+  const gameId = Number(window.CHESS_REVIEW_GAME_ID || 0);
+  const plies = Array.from(reviewPendingPlies);
+  if (!gameId || !plies.length) return;
+  plies.forEach(ply => reviewPendingPlies.delete(ply));
+  try {
+    const response = await fetch('api/review-progress.php', {
+      method: 'POST',
+      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ game_id: gameId, plies }),
+      keepalive: Boolean(keepalive)
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || 'No se pudo guardar el progreso de revisión.');
+  } catch (error) {
+    plies.forEach(ply => reviewPendingPlies.add(ply));
+  }
 }
 
 function renderBoard(fen, uci, bestUci = '') {
@@ -445,3 +476,4 @@ function showBestMove(){
 }
 
 window.addEventListener('load', loadReview);
+window.addEventListener('pagehide', () => flushReviewProgress(true));

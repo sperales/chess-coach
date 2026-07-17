@@ -101,6 +101,7 @@ Run the dependency-free scoring fixtures:
 php tests\training_progress_test.php
 php tests\player_progress_test.php
 php tests\training_hints_test.php
+php tests\training_plan_test.php
 ```
 
 Expected result:
@@ -122,6 +123,12 @@ After applying `sql/migrations/030_changes_1.4.12.sql`, confirm:
 - Confirm the third hint adds the action and board region while preserving the origin highlight.
 - Reload an unfinished exercise and confirm its requested hints are restored in the same order.
 - Confirm the hint button advances from `Pista 1/3` to `Pistas completadas` and remains usable on mobile.
+- Navigate through 17 different plies in `review.php` and confirm `game_review_progress.completed_at` is populated.
+- Confirm a deep link to a late ply does not complete a review without visiting the required number of distinct plies.
+- Confirm a game shorter than 17 plies is completed after every ply has been viewed.
+- POST to `api/training-plan.php` with a valid CSRF token and confirm it returns measurable `daily` and `weekly` goals.
+- Confirm plan progress counts solved or failed exercises, but not skipped exercises.
+- Change the configured daily goal and confirm obsolete pending plan goals are dismissed.
 
 ---
 

@@ -127,6 +127,7 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
 window.CHESS_REVIEW_GAME_ID = <?= (int)$gameId ?>;
 window.CHESS_COACH_PIECE_PATH = <?= json_encode($pieceSetAssetPath, JSON_UNESCAPED_SLASHES) ?>;
 </script>
+<?= csrf_script() ?>
 <script src="assets/js/layout.js?v=<?=e($layoutJsVersion)?>"></script>
 <script src="assets/js/review.js?v=<?=e($reviewJsVersion)?>"></script>
 </body>
