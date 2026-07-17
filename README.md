@@ -14,11 +14,11 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v1.4.11**
+Current stable baseline: **v1.4.12**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
-v1.4.8 is the current stable baseline. It reinforces incorrect training attempts directly on the board and adds an optional Stockfish enrichment pass that stores principal variations for unresolved exercises without silently replacing their accepted solutions.
+v1.4.12 turns recent games and exercise resolutions into a measurable personal plan. It adds progressive hints, an Índice de rendimiento, an Autonomía metric, daily and weekly goals, and review completion tracking while keeping the experience professional and compatible with shared hosting.
 
 ---
 
@@ -706,13 +706,16 @@ Current planned direction:
 - Strengths and weaknesses
 - Behavioural insights
 
-### v1.4.0 — Training Experience
+### Completed in v1.4.x — Training Experience
 
 - Daily and weekly training goals
 - Training streaks
 - Smart exercise repetition
 - Progress by training area
-- Training milestones without game-like points
+- Progressive hints that preserve the solving process
+- Índice de rendimiento based on recent exercises and games
+- Autonomía based on solving without assistance
+- Measurable personal plans and completed-review tracking
 
 ### v1.5.0 — AI Coach MVP
 

@@ -1,3 +1,52 @@
+# Chess Coach v1.4.12 Update Notes
+
+## Release type
+
+Personal training plan and performance tracking release.
+
+## Changes
+
+- Records each exercise solve run with difficulty, attempts, progressive hints and final quality.
+- Replaces the single direct hint with three progressive levels that preserve the reasoning process.
+- Adds an `Índice de rendimiento` from recent exercise and analyzed-game evidence; the value can rise or fall with performance.
+- Adds an `Autonomía` metric focused on solving without help and calibrated after six useful exercise samples.
+- Generates measurable daily and weekly objectives from configured goals, reviews, current Smart Tag focus and opening work.
+- Counts a game as reviewed after 17 distinct plies have been visited, or every ply for shorter games.
+- Shows the personal plan in Home and Training with direct links to the next useful action.
+- Shows the performance index and autonomy in Home, Training and Profile, plus compact streak/index feedback in the header.
+- Shows review progress in `review.php` without changing move navigation or analysis data.
+- Keeps sessions as an internal implementation detail rather than a user-facing training concept.
+- Bumps `config/version.php` and the PWA cache to `1.4.12`.
+
+## SQL migration
+
+Run before deploying the PHP and JavaScript changes:
+
+```text
+sql/migrations/030_changes_1.4.12.sql
+```
+
+The migration creates solve-run, progressive-hint, progress-event, snapshot, training-plan and review-progress storage. It also links new training attempts to their solve run.
+
+Historical attempts are intentionally not backfilled: old records do not contain enough reliable information to reconstruct hint usage or autonomy. Newly completed exercises are counted from deployment onward, while recent analyzed games can be synchronized into the performance index.
+
+## Verification
+
+- Run `php tests/training_progress_test.php`.
+- Run `php tests/player_progress_test.php`.
+- Run `php tests/training_hints_test.php`.
+- Run `php tests/training_plan_test.php`.
+- Request all three hints and confirm none exposes the solution destination.
+- Confirm hint level two selects the correct origin piece on the board.
+- Solve and fail exercises and confirm daily/weekly plan progress updates while skipped exercises do not count.
+- Confirm the `Índice de rendimiento` and `Autonomía` appear consistently in Home, Training and Profile.
+- Confirm the header shows the streak and performance index without the word `racha` on desktop.
+- Visit 17 distinct plies in a review and confirm its progress changes to completed.
+- Confirm a deep link to a late ply does not complete a review by itself.
+- Confirm `config/version.php` and `service-worker.js` both use `1.4.12`.
+
+---
+
 # Chess Coach v1.4.11 Update Notes
 
 ## Release type
