@@ -101,6 +101,7 @@ Run the dependency-free scoring fixtures:
 php tests\training_progress_test.php
 php tests\player_progress_test.php
 php tests\training_hints_test.php
+php tests\training_plan_test.php
 ```
 
 Expected result:
