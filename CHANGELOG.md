@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## v1.4.12 - Personal training plan and performance tracking
+
+### Added
+
+- Added persistent solve runs, progressive hint history and normalized progress events.
+- Added three contextual hint levels that reveal progressively more information without exposing the destination square.
+- Added the moving `Índice de rendimiento` based on recent exercises and analyzed games.
+- Added the `Autonomía` metric for measuring successful solving without assistance.
+- Added deterministic daily and weekly training plans with measurable goals and action links.
+- Added review completion tracking based on distinct visited plies.
+- Added plan, performance and autonomy presentation across Home, Training, Profile, header and Review.
+- Added dependency-free tests for resolution quality, hints, performance formulas and training plans.
+
+### Changed
+
+- Kept training sessions internal and centered the UI on progress, objectives and recommended actions.
+- Replaced the previous home milestone emphasis with a concrete personal plan.
+- Made progressive hints and exercise outcomes contribute to future coaching evidence.
+- Bumped the app version and PWA cache to `1.4.12`.
+
+### Database
+
+- SQL migration required: `sql/migrations/030_changes_1.4.12.sql`.
+- Historical attempts remain valid but are not reconstructed as solve runs because their hint context is unknown.
+
+### Security
+
+- Plan generation and progress refresh use authenticated CSRF-protected POST endpoints.
+- Review and progress data remain scoped to the authenticated user.
+- Progressive hints do not expose solution UCI or destination coordinates.
+
 ## v1.4.11 - SAN notation for training exercises
 
 ### Added

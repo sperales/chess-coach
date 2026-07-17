@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v1.4.11**
+Current stable baseline: **v1.4.12**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,13 +32,13 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v1.4.8
+## Current baseline — v1.4.12
 
-v1.4.8 keeps contextual exercise content as part of the stable baseline, marks the destination of the latest incorrect attempt in red, and introduces version 3 exercise enrichment with fresh Stockfish evaluations and stored principal variations. The enrichment is limited to unresolved exercises, preserves the original accepted solution and validates equivalent alternative moves when the refreshed bestmove differs.
+v1.4.12 makes training progress measurable and actionable. It records individual solve runs, progressive hint usage and resolution quality; combines recent exercise and game evidence into an Índice de rendimiento; measures Autonomía; and generates explicit daily and weekly training goals.
 
 It keeps Player DNA, Openings Lab and the Training Center as stable capabilities, including the autonomous 500-code ECO reference catalog, Spanish opening and representative variation labels, PGN-first metadata resolution and clearer opening identities without runtime APIs.
 
-The Training Experience remains stable with configurable goals, automatic daily/weekly progress, a compact activity-aware streak indicator, smart repetition scheduling, clearer exercise feedback, expandable professional milestones and improved exercise filtering and prioritization.
+The Training Experience now exposes a personal plan in Home and Training, keeps the streak and smart repetition system, and tracks a game review as completed only after enough distinct plies have actually been visited. This creates a deterministic data layer that a future AI Coach can interpret without inventing chess facts.
 
 Smart Tags, the Personal Trainer Dashboard, Training Center exercise generation, the interactive solver, hints, internal session tracking, selectable board piece sets, Openings Lab, Player DNA and Training Experience are now part of the stable product baseline.
 
@@ -638,6 +638,35 @@ Make training attempts and solutions readable as chess notation without changing
 ### Future boundary
 
 UCI remains the stored and validated format. Broader SAN presentation outside training can reuse the helper in later versions without changing analysis data.
+
+---
+
+## v1.4.12 — Personal training plan and performance tracking
+
+Status: completed in v1.4.12.
+
+### Goal
+
+Make progress visible and turn the Training Center into a clear plan of work without introducing coins, XP or game-like rewards.
+
+### Delivered
+
+- Persistent solve runs with difficulty, attempts, hint usage and resolution quality.
+- Three progressive hints that reveal the idea, the piece and the action/region without exposing the destination square.
+- Índice de rendimiento from a moving window of recent exercises and analyzed games, so it can rise or fall with performance.
+- Autonomía metric focused on solving exercises without assistance, calibrated after a minimum useful sample.
+- Deterministic daily and weekly goals with measurable progress and direct links to the recommended action.
+- Review completion tracking based on visiting 17 distinct plies, or every ply in a shorter game.
+- Personal-plan UI in Home and Training, compact header visibility, profile context and review progress feedback.
+- A deterministic data foundation ready to be consumed by the future AI Coach.
+
+### Data boundary
+
+Historical exercise attempts made before the v1.4.12 tracking tables were active are not reconstructed automatically because their hint level and solve-run context cannot be inferred reliably. New activity is tracked from deployment onward; recent analyzed games can be synchronized safely.
+
+### Future boundary
+
+The plan remains rule-based. Natural-language interpretation, conversational coaching and AI-generated objectives belong to v1.5.x and later versions.
 
 ---
 

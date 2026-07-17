@@ -108,7 +108,9 @@ Expected result:
 
 ```text
 OK: 20 casos de progreso de entrenamiento.
+OK: formulas de Progress Score, partidas y autonomia.
 OK: pistas progresivas contextuales sin filtrar la solución.
+OK: seguimiento de reviews y periodos del plan de entrenamiento.
 ```
 
 After applying `sql/migrations/030_changes_1.4.12.sql`, confirm:
@@ -129,6 +131,11 @@ After applying `sql/migrations/030_changes_1.4.12.sql`, confirm:
 - POST to `api/training-plan.php` with a valid CSRF token and confirm it returns measurable `daily` and `weekly` goals.
 - Confirm plan progress counts solved or failed exercises, but not skipped exercises.
 - Change the configured daily goal and confirm obsolete pending plan goals are dismissed.
+- Confirm Home and Training show separate daily and weekly plan columns with working action links.
+- Confirm the `Índice de rendimiento` and `Autonomía` values agree across Home, Training and Profile.
+- Confirm the header shows streak and performance index compactly on desktop and mobile.
+- Solve or fail a new exercise and confirm plan progress refreshes without a full page reload.
+- Confirm attempts made before migration 030 are not presented as fully reconstructed solve runs.
 
 ---
 
