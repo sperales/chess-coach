@@ -2,11 +2,12 @@
 require_once __DIR__.'/../includes/auth.php';
 require_once __DIR__.'/../includes/helpers.php';
 require_once __DIR__.'/../includes/training.php';
+require_once __DIR__.'/../includes/training_hints.php';
 
 $u = require_login();
 $userId = (int)$u['id'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
-$mutatingActions = ['session_start', 'session_end', 'attempt', 'skip', 'goal_settings'];
+$mutatingActions = ['session_start', 'session_end', 'solve_start', 'hint', 'attempt', 'skip', 'goal_settings'];
 if (in_array($action, $mutatingActions, true)) {
   require_post_csrf();
 }
@@ -87,6 +88,40 @@ if ($action === 'get') {
     'ok' => true,
     'exercise' => training_public_exercise($exercise, $includeSolution),
   ]);
+}
+
+if ($action === 'solve_start') {
+  $body = request_json_body();
+  $id = (int)($body['id'] ?? 0);
+  $sessionId = (int)($body['session_id'] ?? 0);
+  try {
+    json_response($id > 0
+      ? training_hint_start_run($userId, $id, $sessionId ?: null)
+      : ['ok' => false, 'error' => 'Ejercicio no indicado.']);
+  } catch (InvalidArgumentException|RuntimeException $e) {
+    json_response(['ok' => false, 'error' => $e->getMessage()]);
+  } catch (Throwable $e) {
+    error_log('Training solve start failed: ' . $e->getMessage());
+    json_response(['ok' => false, 'error' => 'No se ha podido iniciar el ejercicio.']);
+  }
+}
+
+if ($action === 'hint') {
+  $body = request_json_body();
+  $id = (int)($body['id'] ?? 0);
+  $runId = (int)($body['solve_run_id'] ?? 0);
+  $level = (int)($body['level'] ?? 0);
+  $sessionId = (int)($body['session_id'] ?? 0);
+  try {
+    json_response($id > 0
+      ? training_hint_request($userId, $id, $runId, $level, $sessionId ?: null)
+      : ['ok' => false, 'error' => 'Ejercicio no indicado.']);
+  } catch (InvalidArgumentException|RuntimeException $e) {
+    json_response(['ok' => false, 'error' => $e->getMessage()]);
+  } catch (Throwable $e) {
+    error_log('Training hint failed: ' . $e->getMessage());
+    json_response(['ok' => false, 'error' => 'No se ha podido generar la pista.']);
+  }
 }
 
 if ($action === 'attempt') {
