@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## v1.4.13 - SAN notation for review best moves
+
+### Changed
+
+- Converted Stockfish best-move alternatives in review comments to SAN using each move's `fen_before`.
+- Reused the same SAN presentation for the review `Mejor` action.
+- Preserved UCI for engine data and board highlighting.
+- Added a readable coordinate fallback for invalid historical positions.
+- Added black-to-move notation coverage.
+- Bumped the app version and PWA cache to `1.4.13`.
+
+### Database
+
+- No SQL migration or backfill is required.
+
 ## v1.4.12 - Personal training plan and performance tracking
 
 ### Added

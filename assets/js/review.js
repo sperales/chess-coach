@@ -32,7 +32,7 @@ function bucketIcon(bucket) {
 function bucketClass(bucket) {
   if (bucket === 'best' || bucket === 'excellent' || bucket === 'good') return 'done';
   if (bucket === 'inaccuracy') return 'cancelled';
-  if (bucket === 'mistake') return 'running';
+  if (bucket === 'mistake') return 'mistake';
   if (bucket === 'blunder') return 'error';
   return 'queued';
 }
@@ -499,7 +499,7 @@ function showBestMove(){
   const m = moves[currentMoveIndex];
   if (!m) return;
   const explanation = document.getElementById('moveExplanation');
-  const best = m.bestmove_human || 'no disponible';
+  const best = m.bestmove_display || m.bestmove_human || 'no disponible';
   bestMoveHighlight = (m.bestmove || '').toString().toLowerCase();
   if (bestMoveHighlight.length >= 4) renderBoard(m.fen_before || m.fen_after, '', bestMoveHighlight);
   explanation.textContent = `Mejor alternativa según Stockfish: ${best}. Úsalo como pista, no como una línea para memorizar.`;

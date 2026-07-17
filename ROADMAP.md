@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v1.4.12**
+Current stable baseline: **v1.4.13**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,9 +32,9 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v1.4.12
+## Current baseline — v1.4.13
 
-v1.4.12 makes training progress measurable and actionable. It records individual solve runs, progressive hint usage and resolution quality; combines recent exercise and game evidence into an Índice de rendimiento; measures Autonomía; and generates explicit daily and weekly training goals.
+v1.4.13 keeps the measurable training plan from v1.4.12 and presents Stockfish best moves in game reviews as SAN, using each move's previous FEN and a safe coordinate fallback.
 
 It keeps Player DNA, Openings Lab and the Training Center as stable capabilities, including the autonomous 500-code ECO reference catalog, Spanish opening and representative variation labels, PGN-first metadata resolution and clearer opening identities without runtime APIs.
 
@@ -667,6 +667,23 @@ Historical exercise attempts made before the v1.4.12 tracking tables were active
 ### Future boundary
 
 The plan remains rule-based. Natural-language interpretation, conversational coaching and AI-generated objectives belong to v1.5.x and later versions.
+
+---
+
+## v1.4.13 — SAN notation in game review
+
+Status: completed in v1.4.13.
+
+### Goal
+
+Make Stockfish alternatives in game reviews readable as standard chess notation.
+
+### Delivered
+
+- SAN conversion for the best-move text shown in move comments and by the `Mejor` action.
+- Conversion from the position immediately before the reviewed move.
+- UCI retained for Stockfish, board highlights and internal validation.
+- Safe coordinate fallback when historical position data cannot produce legal SAN.
 
 ---
 

@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__.'/../includes/auth.php';
 require_once __DIR__.'/../includes/helpers.php';
-require_once __DIR__.'/../includes/move_notation.php';
+require_once __DIR__.'/../includes/chess_notation.php';
 $u = require_login();
 $userId = (int)$u['id'];
 $gameId = (int)($_GET['id'] ?? 0);
@@ -79,7 +79,10 @@ function review_explanation(array $m): string {
   $bucket = review_move_bucket($m);
   $loss = (int)($m['centipawn_loss'] ?? 0);
   $best = trim((string)($m['bestmove'] ?? ''));
-  $bestHuman = human_move_notation($best);
+  $bestHuman = trim((string)($m['bestmove_display'] ?? ''));
+  if ($best !== '' && $bestHuman === '') {
+    $bestHuman = chess_uci_display((string)($m['fen_before'] ?? ''), $best);
+  }
   return match ($bucket) {
     'best' => 'Muy buena decisión: mantiene prácticamente toda la ventaja disponible en la posición.',
     'excellent' => 'Jugada excelente: mejora tu posición sin conceder opciones importantes al rival.',
@@ -130,8 +133,11 @@ foreach ($moves as $row) {
   $totalLoss += review_loss_for_summary($row['centipawn_loss']);
   $row['review_bucket'] = $bucket;
   $row['review_label'] = review_bucket_label($bucket);
+  $bestmove = trim((string)($row['bestmove'] ?? ''));
+  $row['bestmove_san'] = $bestmove === '' ? null : chess_uci_to_san((string)($row['fen_before'] ?? ''), $bestmove);
+  $row['bestmove_display'] = $bestmove === '' ? '' : ($row['bestmove_san'] ?? chess_uci_fallback($bestmove));
   $row['explanation'] = review_explanation($row);
-  $row['bestmove_human'] = human_move_notation($row['bestmove'] ?? '');
+  $row['bestmove_human'] = $row['bestmove_display'];
   $row['smart_tags'] = $moveTags[(int)$row['id']] ?? [];
   $reviewMoves[] = $row;
 }
