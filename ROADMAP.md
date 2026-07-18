@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v1.4.13**
+Current stable baseline: **v1.4.14**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,9 +32,9 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v1.4.13
+## Current baseline — v1.4.14
 
-v1.4.13 keeps the measurable training plan from v1.4.12 and presents Stockfish best moves in game reviews as SAN, using each move's previous FEN and a safe coordinate fallback.
+v1.4.14 keeps completed daily and weekly objectives visible throughout their active period and recovers objectives hidden by the earlier refresh-order bug. It retains the SAN review presentation delivered in v1.4.13.
 
 It keeps Player DNA, Openings Lab and the Training Center as stable capabilities, including the autonomous 500-code ECO reference catalog, Spanish opening and representative variation labels, PGN-first metadata resolution and clearer opening identities without runtime APIs.
 
@@ -684,6 +684,23 @@ Make Stockfish alternatives in game reviews readable as standard chess notation.
 - Conversion from the position immediately before the reviewed move.
 - UCI retained for Stockfish, board highlights and internal validation.
 - Safe coordinate fallback when historical position data cannot produce legal SAN.
+
+---
+
+## v1.4.14 — Completed training goal persistence
+
+Status: completed in v1.4.14.
+
+### Goal
+
+Keep the personal training plan stable after the user completes an objective.
+
+### Delivered
+
+- Goal progress is evaluated before obsolete rule-based candidates are dismissed.
+- Completed daily and weekly goals remain visible until their period ends.
+- Goals already hidden by the previous refresh order are recovered automatically when their stored progress proves completion.
+- Completed goals cannot return to pending during the same active period.
 
 ---
 

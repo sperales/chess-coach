@@ -1,3 +1,34 @@
+# Chess Coach v1.4.14 Update Notes
+
+## Release type
+
+Training plan completed-goal persistence fix.
+
+## Changes
+
+- Evaluates daily and weekly objective progress before removing obsolete rule-generated candidates.
+- Keeps completed objectives visible and included in the completed/total counter until their period ends.
+- Automatically recovers objectives already hidden by the previous refresh-order bug when their progress proves completion.
+- Prevents completed objectives from returning to pending during the same day or week.
+- Adds regression coverage for daily and weekly completion lifecycle rules.
+- Bumps `config/version.php` and the PWA cache to `1.4.14`.
+
+## SQL migration
+
+No SQL migration or manual repair is required. Opening Home or Training refreshes the plan and recovers affected objectives automatically.
+
+## Verification
+
+- Run `php tests/training_plan_test.php`.
+- Complete a daily objective such as reviewing a game and confirm it remains in the list as completed.
+- Confirm the daily counter changes from `0/3` to `1/3`, rather than shrinking to `0/2`.
+- Complete a weekly objective and confirm the weekly total remains stable for the rest of the week.
+- Confirm an objective already hidden by this bug reappears as completed after refreshing Home or Training.
+- Confirm obsolete objectives that are still incomplete remain hidden.
+- Confirm `config/version.php` and `service-worker.js` both use `1.4.14`.
+
+---
+
 # Chess Coach v1.4.13 Update Notes
 
 ## Release type

@@ -14,11 +14,11 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v1.4.13**
+Current stable baseline: **v1.4.14**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
-v1.4.13 keeps the measurable personal plan introduced in v1.4.12 and extends the centralized SAN presentation layer to Stockfish best-move explanations in game reviews.
+v1.4.14 keeps completed daily and weekly plan goals visible for the rest of their period, including goals previously hidden by the refresh-order bug. It retains the SAN review improvements from v1.4.13.
 
 ---
 

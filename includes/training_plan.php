@@ -217,23 +217,23 @@ function training_plan_goal_url(array $goal): ?string {
   };
 }
 
+function training_plan_goal_status(string $currentStatus, int $currentValue, int $targetValue, bool $isDefined): string {
+  if ($currentStatus === 'completed') return 'completed';
+  if ($currentValue >= max(1, $targetValue)) return 'completed';
+  return $isDefined ? 'pending' : 'dismissed';
+}
+
 function training_plan_refresh(int $userId): array {
   db()->prepare('UPDATE training_plan_goals SET status="expired",updated_at=NOW()
                  WHERE user_id=? AND status="pending" AND period_end<CURDATE()')->execute([$userId]);
   $definitions = training_plan_definitions($userId);
   foreach ($definitions as $goal) training_plan_upsert_goal($userId, $goal);
   $activeKeys = array_column($definitions, 'goal_key');
-  if ($activeKeys) {
-    $placeholders = implode(',', array_fill(0, count($activeKeys), '?'));
-    $dismiss = db()->prepare('UPDATE training_plan_goals SET status="dismissed",updated_at=NOW()
-                              WHERE user_id=? AND source="rules" AND period_start<=CURDATE() AND period_end>=CURDATE()
-                                AND status="pending" AND goal_key NOT IN (' . $placeholders . ')');
-    $dismiss->execute(array_merge([$userId], $activeKeys));
-  }
+  $activeKeyLookup = array_fill_keys($activeKeys, true);
 
   $st = db()->prepare('SELECT * FROM training_plan_goals
                        WHERE user_id=? AND period_start<=CURDATE() AND period_end>=CURDATE()
-                         AND status IN ("pending","completed")
+                         AND status IN ("pending","completed","dismissed")
                        ORDER BY FIELD(period_type,"daily","weekly"),id');
   $st->execute([$userId]);
   $goals = $st->fetchAll();
@@ -244,17 +244,20 @@ function training_plan_refresh(int $userId): array {
       $periodCache[$cacheKey] = training_plan_period_progress($userId, $goal['period_start'], $goal['period_end']);
     }
     $current = training_plan_goal_progress($userId, $goal, $periodCache[$cacheKey]);
-    $completed = $current >= (int)$goal['target_value'];
-    if ($completed && $goal['status'] !== 'completed') {
-      db()->prepare('UPDATE training_plan_goals SET status="completed",completed_at=NOW(),updated_at=NOW() WHERE id=? AND user_id=?')
-        ->execute([(int)$goal['id'], $userId]);
-      $goal['status'] = 'completed';
-      $goal['completed_at'] = date('Y-m-d H:i:s');
-    } elseif (!$completed && $goal['status'] === 'completed') {
-      db()->prepare('UPDATE training_plan_goals SET status="pending",completed_at=NULL,updated_at=NOW() WHERE id=? AND user_id=?')
-        ->execute([(int)$goal['id'], $userId]);
-      $goal['status'] = 'pending';
-      $goal['completed_at'] = null;
+    $nextStatus = training_plan_goal_status(
+      (string)$goal['status'],
+      $current,
+      (int)$goal['target_value'],
+      isset($activeKeyLookup[$goal['goal_key']]) || (string)$goal['source'] !== 'rules'
+    );
+    if ($nextStatus !== $goal['status']) {
+      $completedAt = $nextStatus === 'completed' ? 'COALESCE(completed_at,NOW())' : 'NULL';
+      db()->prepare("UPDATE training_plan_goals SET status=?,completed_at={$completedAt},updated_at=NOW() WHERE id=? AND user_id=?")
+        ->execute([$nextStatus, (int)$goal['id'], $userId]);
+      $goal['status'] = $nextStatus;
+      $goal['completed_at'] = $nextStatus === 'completed'
+        ? ($goal['completed_at'] ?: date('Y-m-d H:i:s'))
+        : null;
     }
     $goal['id'] = (int)$goal['id'];
     $goal['target_value'] = (int)$goal['target_value'];
@@ -263,9 +266,13 @@ function training_plan_refresh(int $userId): array {
     $goal['action_url'] = training_plan_goal_url($goal);
   }
   unset($goal);
+  $visibleGoals = array_values(array_filter(
+    $goals,
+    fn(array $goal): bool => in_array($goal['status'], ['pending', 'completed'], true)
+  ));
   return [
     'generation_version' => TRAINING_PLAN_GENERATION_VERSION,
-    'daily' => array_values(array_filter($goals, fn(array $goal): bool => $goal['period_type'] === 'daily')),
-    'weekly' => array_values(array_filter($goals, fn(array $goal): bool => $goal['period_type'] === 'weekly')),
+    'daily' => array_values(array_filter($visibleGoals, fn(array $goal): bool => $goal['period_type'] === 'daily')),
+    'weekly' => array_values(array_filter($visibleGoals, fn(array $goal): bool => $goal['period_type'] === 'weekly')),
   ];
 }
