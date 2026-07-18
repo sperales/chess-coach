@@ -132,6 +132,9 @@ After applying `sql/migrations/030_changes_1.4.12.sql`, confirm:
 - POST to `api/training-plan.php` with a valid CSRF token and confirm it returns measurable `daily` and `weekly` goals.
 - Confirm plan progress counts solved or failed exercises, but not skipped exercises.
 - Change the configured daily goal and confirm obsolete pending plan goals are dismissed.
+- Complete a daily review goal and confirm it remains visible as completed instead of reducing the daily goal count.
+- Complete the weekly review target and confirm it remains visible as completed for the rest of the week.
+- Confirm a goal hidden by the v1.4.12-v1.4.13 refresh-order bug reappears as completed on the next plan refresh.
 - Confirm Home and Training show separate daily and weekly plan columns with working action links.
 - Confirm the `Índice de rendimiento` and `Autonomía` values agree across Home, Training and Profile.
 - Confirm the header shows streak and performance index compactly on desktop and mobile.

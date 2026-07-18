@@ -24,6 +24,31 @@ assert_plan_value(
   training_plan_goal_key('daily', '2026-07-17', 'review_game', '42'),
   'daily:2026-07-17:review_game:42'
 );
+assert_plan_value(
+  'Objetivo diario completado aunque deje de ser candidato',
+  training_plan_goal_status('pending', 1, 1, false),
+  'completed'
+);
+assert_plan_value(
+  'Objetivo semanal completado aunque deje de ser candidato',
+  training_plan_goal_status('pending', 2, 2, false),
+  'completed'
+);
+assert_plan_value(
+  'Objetivo descartado por el bug se recupera al estar completado',
+  training_plan_goal_status('dismissed', 1, 1, false),
+  'completed'
+);
+assert_plan_value(
+  'Objetivo incompleto obsoleto permanece oculto',
+  training_plan_goal_status('pending', 0, 1, false),
+  'dismissed'
+);
+assert_plan_value(
+  'Objetivo completado no vuelve a pendiente dentro del periodo',
+  training_plan_goal_status('completed', 0, 1, false),
+  'completed'
+);
 
 if ($failures) {
   fwrite(STDERR, "Fallos del plan de entrenamiento:\n- " . implode("\n- ", $failures) . "\n");

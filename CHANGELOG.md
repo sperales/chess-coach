@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## v1.4.14 - Completed training goal persistence
+
+### Fixed
+
+- Evaluated goal progress before dismissing rule-based goals that are no longer current candidates.
+- Kept completed daily and weekly goals visible until their active period ends.
+- Recovered completed goals that had already been hidden by the previous refresh order.
+- Prevented completed goals from returning to pending during the same period.
+- Added regression coverage for daily goals, weekly goals and recovery of previously dismissed completions.
+- Bumped the app version and PWA cache to `1.4.14`.
+
+### Database
+
+- No SQL migration or manual data repair is required.
+
 ## v1.4.13 - SAN notation for review best moves
 
 ### Changed
