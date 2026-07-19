@@ -535,6 +535,60 @@ function dashboard_recent_summary_text(array $recentSummary, array $focus): stri
   return "En tus últimas {$games} partidas analizadas tienes {$recentSummary['wins']} victorias, {$recentSummary['losses']} derrotas y {$recentSummary['draws']} tablas, con {$accuracy}. Tu primer foco ahora mismo: {$focusTitle}.";
 }
 
+function dashboard_metric_history(int $userId, int $days = 10): array {
+  $days = max(2, min(31, $days));
+  $start = (new DateTimeImmutable('today'))->modify('-' . ($days - 1) . ' days');
+  $startDate = $start->format('Y-m-d');
+  $labels = [];
+  for ($index = 0; $index < $days; $index++) {
+    $labels[] = $start->modify('+' . $index . ' days')->format('Y-m-d');
+  }
+
+  $st = db()->prepare('SELECT DATE(imported_at) AS metric_day,COUNT(*) AS total
+                       FROM games
+                       WHERE user_id=? AND imported_at>=?
+                       GROUP BY DATE(imported_at)');
+  $st->execute([$userId, $startDate . ' 00:00:00']);
+  $gamesByDay = [];
+  foreach ($st->fetchAll() as $row) {
+    $gamesByDay[(string)$row['metric_day']] = (int)$row['total'];
+  }
+
+  $st = db()->prepare('SELECT COUNT(*) FROM games WHERE user_id=? AND imported_at<?');
+  $st->execute([$userId, $startDate . ' 00:00:00']);
+  $runningGames = (int)$st->fetchColumn();
+  $gamesTotal = [];
+  foreach ($labels as $day) {
+    $runningGames += $gamesByDay[$day] ?? 0;
+    $gamesTotal[] = $runningGames;
+  }
+
+  $st = db()->prepare('SELECT DATE(a.completed_at) AS metric_day,COUNT(*) AS total
+                       FROM game_analysis a
+                       WHERE a.user_id=? AND a.status="done" AND a.completed_at>=?
+                         AND a.id=(
+                           SELECT latest.id FROM game_analysis latest
+                           WHERE latest.user_id=a.user_id AND latest.game_id=a.game_id AND latest.status="done"
+                           ORDER BY latest.id DESC LIMIT 1
+                         )
+                       GROUP BY DATE(a.completed_at)');
+  $st->execute([$userId, $startDate . ' 00:00:00']);
+  $analysesByDay = [];
+  foreach ($st->fetchAll() as $row) {
+    $analysesByDay[(string)$row['metric_day']] = (int)$row['total'];
+  }
+
+  return [
+    'days' => $labels,
+    'games_total' => $gamesTotal,
+    'games_added' => array_sum($gamesByDay),
+    'analyses_completed' => array_map(
+      static fn(string $day): int => $analysesByDay[$day] ?? 0,
+      $labels
+    ),
+  ];
+}
+
 function dashboard_payload(int $userId, string $username): array {
   $periodSize = 10;
   $minimumGames = 6;
@@ -582,6 +636,7 @@ function dashboard_payload(int $userId, string $username): array {
     'recommended_reviews' => dashboard_recommended_reviews($recent['games'], $tags),
     'patterns' => $tags,
     'recent_games' => $recent['games'],
+    'metric_history' => dashboard_metric_history($userId, 10),
     'queue' => queue_stats($userId),
   ];
 }

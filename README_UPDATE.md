@@ -12,6 +12,7 @@ Player-perspective metrics and bounded opening objectives.
 - Prevents Dashboard, Player DNA and performance calculations from falling back to both players when the username cannot be matched safely.
 - Changes the weekly opening objective to two completed exercises from the selected opening.
 - Makes Training `Entrenar` actions blue and 90% wide on small mobile screens.
+- Uses real 10-day history for the Home game-total and completed-analysis charts instead of synthetic lines.
 - Bumps `config/version.php` and the PWA cache to `1.4.15`.
 
 ## SQL migration
@@ -26,6 +27,8 @@ Apply `sql/migrations/031_changes_1.4.15.sql` once after uploading the release. 
 - Confirm the move list and graph still include both players.
 - Confirm a weekly opening objective shows a target of two exercises and completes after two related solve runs.
 - Confirm `Entrenar` is blue and occupies 90% of its action area on a narrow mobile viewport.
+- Confirm the `Partidas` chart shows the cumulative database total for each of the last 10 days.
+- Confirm `Pendientes de análisis` shows the current queue total while its chart shows completed analyses per day.
 - Confirm `config/version.php` and `service-worker.js` both use `1.4.15`.
 
 ---

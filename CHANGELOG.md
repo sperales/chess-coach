@@ -12,6 +12,7 @@
 
 - Replaced weekly opening review goals with a bounded target of two related exercises.
 - Made Training actions blue and easier to tap on mobile.
+- Replaced synthetic Home sparklines with real 10-day game totals and completed-analysis history.
 - Bumped the app version and PWA cache to `1.4.15`.
 
 ### Database
