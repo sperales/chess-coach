@@ -1,3 +1,35 @@
+# Chess Coach v1.4.15 Update Notes
+
+## Release type
+
+Player-perspective metrics and bounded opening objectives.
+
+## Changes
+
+- Counts Review summary classifications, ACPL and accuracy from the authenticated player's moves only.
+- Keeps the complete move list and evaluation graph available for game reconstruction and opponent context.
+- Stores new B/E/I analysis counters from the player's perspective and repairs existing completed analyses through SQL.
+- Prevents Dashboard, Player DNA and performance calculations from falling back to both players when the username cannot be matched safely.
+- Changes the weekly opening objective to two completed exercises from the selected opening.
+- Makes Training `Entrenar` actions blue and 90% wide on small mobile screens.
+- Bumps `config/version.php` and the PWA cache to `1.4.15`.
+
+## SQL migration
+
+Apply `sql/migrations/031_changes_1.4.15.sql` once after uploading the release. It recalculates historical B/E/I counters without rerunning Stockfish and retires active objectives using the previous opening-review semantics.
+
+## Verification
+
+- Run `php tests/player_perspective_test.php`.
+- Run `php tests/training_plan_test.php`.
+- Review a game containing an opponent blunder and confirm the Summary only counts the authenticated player's classifications.
+- Confirm the move list and graph still include both players.
+- Confirm a weekly opening objective shows a target of two exercises and completes after two related solve runs.
+- Confirm `Entrenar` is blue and occupies 90% of its action area on a narrow mobile viewport.
+- Confirm `config/version.php` and `service-worker.js` both use `1.4.15`.
+
+---
+
 # Chess Coach v1.4.14 Update Notes
 
 ## Release type

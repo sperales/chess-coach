@@ -155,7 +155,11 @@ function stockfish_eval_cached(string $fen, StockfishRunner &$runner, array &$ca
 }
 
 function process_analysis_job(int $analysisId, int $userId): array {
-  $st = db()->prepare('SELECT a.*, g.pgn FROM game_analysis a JOIN games g ON g.id=a.game_id WHERE a.id=? AND a.user_id=?');
+  $st = db()->prepare('SELECT a.*, g.pgn, g.white_player, g.black_player, u.username
+                       FROM game_analysis a
+                       JOIN games g ON g.id=a.game_id
+                       JOIN users u ON u.id=a.user_id
+                       WHERE a.id=? AND a.user_id=?');
   $st->execute([$analysisId, $userId]);
   $a = $st->fetch();
   if (!$a) return ['ok' => false, 'error' => 'Análisis no encontrado.'];
@@ -229,8 +233,11 @@ function process_analysis_job(int $analysisId, int $userId): array {
     db()->prepare('DELETE FROM game_move_analysis WHERE analysis_id=?')->execute([$analysisId]);
     $mi = db()->prepare('INSERT INTO game_move_analysis (analysis_id,ply,san,uci,fen_before,fen_after,bestmove,score_before,score_before_type,score_after,score_after_type,centipawn_loss,classification) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)');
     $counts = ['blunder' => 0, 'mistake' => 0, 'inaccuracy' => 0];
+    $playerSide = player_perspective_side($a, (string)($a['username'] ?? ''));
     foreach ($rows as $r) {
-      if (isset($counts[$r['classification']])) $counts[$r['classification']]++;
+      if (player_perspective_is_own_move((int)$r['ply'], $playerSide) && isset($counts[$r['classification']])) {
+        $counts[$r['classification']]++;
+      }
       $mi->execute([$analysisId,$r['ply'],$r['san'],$r['uci'],$r['fen_before'],$r['fen_after'],$r['bestmove'],$r['score_before'],$r['score_before_type'],$r['score_after'],$r['score_after_type'],$r['centipawn_loss'],$r['classification']]);
     }
 

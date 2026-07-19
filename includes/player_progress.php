@@ -88,10 +88,7 @@ function player_progress_game_rows(int $userId, int $limit = PLAYER_PROGRESS_GAM
 }
 
 function player_progress_game_side(array $game): ?string {
-  $username = strtolower(trim((string)($game['username'] ?? '')));
-  if ($username !== '' && $username === strtolower(trim((string)($game['white_player'] ?? '')))) return 'w';
-  if ($username !== '' && $username === strtolower(trim((string)($game['black_player'] ?? '')))) return 'b';
-  return null;
+  return player_perspective_side($game, (string)($game['username'] ?? ''));
 }
 
 function player_progress_sync_recent_games(int $userId, int $limit = PLAYER_PROGRESS_GAME_WINDOW): array {

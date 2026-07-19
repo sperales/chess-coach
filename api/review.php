@@ -26,12 +26,7 @@ function review_fen_side_to_move(?string $fen): string {
 }
 
 function review_user_side(array $game, string $username): ?string {
-  $user = strtolower(trim($username));
-  $white = strtolower(trim((string)($game['white_player'] ?? '')));
-  $black = strtolower(trim((string)($game['black_player'] ?? '')));
-  if ($user !== '' && $white !== '' && $user === $white) return 'w';
-  if ($user !== '' && $black !== '' && $user === $black) return 'b';
-  return null;
+  return player_perspective_side($game, $username);
 }
 
 function review_score_to_white(?int $score, string $type, ?string $fen): array {
@@ -112,7 +107,9 @@ $moves = $m->fetchAll();
 $gameTags = review_game_tags((int)$analysis['id'], $userId);
 $moveTags = review_move_tags((int)$analysis['id'], $userId);
 
-$count = count($moves);
+$moveCount = count($moves);
+$userSide = review_user_side($game, (string)($u['username'] ?? ''));
+$summaryMoveCount = 0;
 $totalLoss = 0;
 $counts = ['best'=>0,'excellent'=>0,'good'=>0,'inaccuracy'=>0,'mistake'=>0,'blunder'=>0];
 $reviewMoves = [];
@@ -129,8 +126,11 @@ foreach ($moves as $row) {
   $row['eval_before_mate'] = $beforeEval['mate'];
   $row['eval_after_mate'] = $afterEval['mate'];
   $bucket = review_move_bucket($row);
-  $counts[$bucket]++;
-  $totalLoss += review_loss_for_summary($row['centipawn_loss']);
+  if (player_perspective_is_own_move((int)($row['ply'] ?? 0), $userSide)) {
+    $counts[$bucket]++;
+    $totalLoss += review_loss_for_summary($row['centipawn_loss']);
+    $summaryMoveCount++;
+  }
   $row['review_bucket'] = $bucket;
   $row['review_label'] = review_bucket_label($bucket);
   $bestmove = trim((string)($row['bestmove'] ?? ''));
@@ -143,26 +143,26 @@ foreach ($moves as $row) {
 }
 // Si la última posición es mate, forzamos la dirección del mate según el resultado real de la partida.
 // Esto evita que un mate recibido por el bando que mueve aparezca como ventaja para ese mismo bando.
-if ($count > 0 && !empty($reviewMoves[$count - 1])) {
-  $lastSan = (string)($reviewMoves[$count - 1]['san'] ?? '');
-  $finalLooksLikeMate = ($reviewMoves[$count - 1]['score_after_type'] ?? '') === 'mate' || str_contains($lastSan, '#');
+if ($moveCount > 0 && !empty($reviewMoves[$moveCount - 1])) {
+  $lastSan = (string)($reviewMoves[$moveCount - 1]['san'] ?? '');
+  $finalLooksLikeMate = ($reviewMoves[$moveCount - 1]['score_after_type'] ?? '') === 'mate' || str_contains($lastSan, '#');
   if ($finalLooksLikeMate) {
     $resultRaw = trim((string)($game['result_raw'] ?? ''));
-    $reviewMoves[$count - 1]['eval_after_type'] = 'mate';
+    $reviewMoves[$moveCount - 1]['eval_after_type'] = 'mate';
     if ($resultRaw === '1-0') {
-      $reviewMoves[$count - 1]['eval_after_white'] = 100000;
-      $reviewMoves[$count - 1]['eval_after_mate'] = abs((float)($reviewMoves[$count - 1]['eval_after_mate'] ?? 0));
+      $reviewMoves[$moveCount - 1]['eval_after_white'] = 100000;
+      $reviewMoves[$moveCount - 1]['eval_after_mate'] = abs((float)($reviewMoves[$moveCount - 1]['eval_after_mate'] ?? 0));
     } elseif ($resultRaw === '0-1') {
-      $reviewMoves[$count - 1]['eval_after_white'] = -100000;
-      $reviewMoves[$count - 1]['eval_after_mate'] = -abs((float)($reviewMoves[$count - 1]['eval_after_mate'] ?? 0));
+      $reviewMoves[$moveCount - 1]['eval_after_white'] = -100000;
+      $reviewMoves[$moveCount - 1]['eval_after_mate'] = -abs((float)($reviewMoves[$moveCount - 1]['eval_after_mate'] ?? 0));
     } elseif ($resultRaw === '1/2-1/2') {
-      $reviewMoves[$count - 1]['eval_after_white'] = 0;
-      $reviewMoves[$count - 1]['eval_after_type'] = 'cp';
+      $reviewMoves[$moveCount - 1]['eval_after_white'] = 0;
+      $reviewMoves[$moveCount - 1]['eval_after_type'] = 'cp';
     }
   }
 }
 
-$acpl = $count ? round($totalLoss / $count, 1) : 0;
+$acpl = $summaryMoveCount ? round($totalLoss / $summaryMoveCount, 1) : 0;
 $accuracy = review_accuracy_from_acpl($acpl);
 
 $result = $game['user_result'] ?? 'unknown';
@@ -186,9 +186,9 @@ json_response([
   'ok' => true,
   'game' => $game,
   'analysis' => $analysis,
-  'user_side' => review_user_side($game, (string)($u['username'] ?? '')),
+  'user_side' => $userSide,
   'summary' => [
-    'moves' => $count,
+    'moves' => $summaryMoveCount,
     'accuracy' => $accuracy,
     'acpl' => $acpl,
     'counts' => $counts,

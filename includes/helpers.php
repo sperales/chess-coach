@@ -1,6 +1,20 @@
 <?php
 require_once __DIR__ . '/config.php';
 function e(?string $s): string { return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8'); }
+function player_perspective_side(array $game, string $username): ?string {
+  $user = strtolower(trim($username));
+  if ($user === '') return null;
+  if ($user === strtolower(trim((string)($game['white_player'] ?? '')))) return 'w';
+  if ($user === strtolower(trim((string)($game['black_player'] ?? '')))) return 'b';
+  return null;
+}
+function player_perspective_move_side(int $ply): ?string {
+  if ($ply < 1) return null;
+  return $ply % 2 === 1 ? 'w' : 'b';
+}
+function player_perspective_is_own_move(int $ply, ?string $playerSide): bool {
+  return in_array($playerSide, ['w', 'b'], true) && player_perspective_move_side($ply) === $playerSide;
+}
 function csrf_token(): string {
   if (session_status() !== PHP_SESSION_ACTIVE && function_exists('start_app_session')) {
     start_app_session();

@@ -9,15 +9,7 @@ function dashboard_accuracy_from_acpl(float $acpl): float {
 }
 
 function dashboard_user_side(array $game, string $username): ?string {
-  $user = strtolower(trim($username));
-  if ($user === '') return null;
-  if ($user === strtolower(trim((string)($game['white_player'] ?? '')))) return 'w';
-  if ($user === strtolower(trim((string)($game['black_player'] ?? '')))) return 'b';
-  return null;
-}
-
-function dashboard_move_side(int $ply): string {
-  return $ply % 2 === 1 ? 'w' : 'b';
+  return player_perspective_side($game, $username);
 }
 
 function dashboard_latest_analyzed_games(int $userId, int $limit = 10): array {
@@ -108,17 +100,11 @@ function dashboard_metrics_for_games(array $games, string $username): array {
 
     foreach ($moves as $move) {
       $ply = (int)($move['ply'] ?? 0);
-      if ($side !== null && dashboard_move_side($ply) !== $side) continue;
+      if (!player_perspective_is_own_move($ply, $side)) continue;
       $loss = min(max(0, (int)($move['centipawn_loss'] ?? 0)), 1000);
       $ownLosses[] = $loss;
       $classification = (string)($move['classification'] ?? 'ok');
       if (isset($ownCounts[$classification])) $ownCounts[$classification]++;
-    }
-
-    if (!$ownLosses) {
-      foreach ($moves as $move) {
-        $ownLosses[] = min(max(0, (int)($move['centipawn_loss'] ?? 0)), 1000);
-      }
     }
 
     $acpl = $ownLosses ? round(array_sum($ownLosses) / count($ownLosses), 1) : null;

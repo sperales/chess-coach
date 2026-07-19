@@ -49,6 +49,12 @@ assert_plan_value(
   training_plan_goal_status('completed', 0, 1, false),
   'completed'
 );
+assert_plan_value('Objetivo semanal de apertura acotado', training_plan_opening_exercise_target(), 2);
+assert_plan_value(
+  'Clave semanal de ejercicios de apertura',
+  training_plan_goal_key('weekly', '2026-07-13', 'opening_exercises', 'C45'),
+  'weekly:2026-07-13:opening_exercises:C45'
+);
 
 if ($failures) {
   fwrite(STDERR, "Fallos del plan de entrenamiento:\n- " . implode("\n- ", $failures) . "\n");
