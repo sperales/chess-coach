@@ -103,6 +103,7 @@ php tests\training_progress_test.php
 php tests\player_progress_test.php
 php tests\training_hints_test.php
 php tests\training_plan_test.php
+php tests\player_perspective_test.php
 ```
 
 Expected result:
@@ -112,7 +113,18 @@ OK: 20 casos de progreso de entrenamiento.
 OK: formulas de Progress Score, partidas y autonomia.
 OK: pistas progresivas contextuales sin filtrar la solución.
 OK: seguimiento de reviews y periodos del plan de entrenamiento.
+OK: perspectiva del jugador en movimientos blancos y negros.
 ```
+
+For v1.4.15, after applying `sql/migrations/031_changes_1.4.15.sql`, confirm:
+
+- Review Summary B/E/I, ACPL and accuracy only use the authenticated player's plies.
+- The review move list, board and graph still include both players.
+- Stored analysis counters match the player's side for historical completed analyses.
+- A weekly opening objective targets two related exercises and progresses after each completed solve run.
+- The Training `Entrenar` button is blue and comfortably tappable on mobile.
+- The Home `Partidas` sparkline matches cumulative imported-game totals for the last 10 days.
+- The Home pending-analysis card shows the current queue count and daily completed analyses as its sparkline.
 
 After applying `sql/migrations/030_changes_1.4.12.sql`, confirm:
 

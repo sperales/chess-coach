@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v1.4.14**
+Current stable baseline: **v1.4.15**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,9 +32,9 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v1.4.14
+## Current baseline — v1.4.15
 
-v1.4.14 keeps completed daily and weekly objectives visible throughout their active period and recovers objectives hidden by the earlier refresh-order bug. It retains the SAN review presentation delivered in v1.4.13.
+v1.4.15 makes review summaries, stored error counters, accuracy, ACPL, Player DNA and performance evidence consistently follow the authenticated player's side. It also replaces unbounded opening-review objectives with a weekly target of two related exercises and improves Training actions on mobile.
 
 It keeps Player DNA, Openings Lab and the Training Center as stable capabilities, including the autonomous 500-code ECO reference catalog, Spanish opening and representative variation labels, PGN-first metadata resolution and clearer opening identities without runtime APIs.
 
@@ -701,6 +701,24 @@ Keep the personal training plan stable after the user completes an objective.
 - Completed daily and weekly goals remain visible until their period ends.
 - Goals already hidden by the previous refresh order are recovered automatically when their stored progress proves completion.
 - Completed goals cannot return to pending during the same active period.
+
+---
+
+## v1.4.15 — Player-perspective metrics and bounded opening goals
+
+Status: completed in v1.4.15.
+
+### Goal
+
+Make every personal metric reflect the player's own decisions and keep opening objectives achievable.
+
+### Delivered
+
+- Review summary counts, ACPL and accuracy use only the authenticated player's plies.
+- Stored blunder, mistake and inaccuracy counters are generated and backfilled from the player's perspective.
+- Dashboard, Player DNA and performance calculations no longer fall back to mixing both players when the side cannot be resolved.
+- Weekly opening work is completed by solving two related exercises instead of reviewing an unbounded set of games.
+- Training actions are blue and easier to tap on mobile.
 
 ---
 

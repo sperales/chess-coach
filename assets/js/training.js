@@ -384,7 +384,7 @@ function trainingExerciseCard(item, featured = false) {
   const gameTitle = `${item.white_player || 'Blancas'} vs ${item.black_player || 'Negras'}`;
   const date = item.played_at || '';
   const primaryAction = isTrainable
-    ? `<a class="btn secondary small" href="training-exercise.php?id=${Number(item.id || 0)}">Entrenar</a>`
+    ? `<a class="btn small action-train training-card-action" href="training-exercise.php?id=${Number(item.id || 0)}">Entrenar</a>`
     : `<a class="btn secondary small" href="${escapeAttr(item.review_url || '#')}">Ver partida</a>`;
   const difficulty = item.difficulty || 'medium';
   const difficultyBlock = `

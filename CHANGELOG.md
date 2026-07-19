@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## v1.4.15 - Player-perspective metrics and bounded opening goals
+
+### Fixed
+
+- Limited Review summary classifications, ACPL and accuracy to the authenticated player's moves.
+- Corrected stored B/E/I analysis counters for new and historical analyses.
+- Removed unsafe metric fallbacks that could mix both players when the user's side was unresolved.
+
+### Changed
+
+- Replaced weekly opening review goals with a bounded target of two related exercises.
+- Made Training actions blue and easier to tap on mobile.
+- Replaced synthetic Home sparklines with real 10-day game totals and completed-analysis history.
+- Bumped the app version and PWA cache to `1.4.15`.
+
+### Database
+
+- SQL migration required: `sql/migrations/031_changes_1.4.15.sql`.
+
 ## v1.4.14 - Completed training goal persistence
 
 ### Fixed

@@ -2,7 +2,11 @@
 require_once __DIR__ . '/training.php';
 require_once __DIR__ . '/review_progress.php';
 
-const TRAINING_PLAN_GENERATION_VERSION = 1;
+const TRAINING_PLAN_GENERATION_VERSION = 2;
+
+function training_plan_opening_exercise_target(): int {
+  return 2;
+}
 
 function training_plan_period(string $periodType, ?DateTimeImmutable $now = null): array {
   $today = ($now ?: new DateTimeImmutable('now'))->setTime(0, 0);
@@ -134,7 +138,8 @@ function training_plan_definitions(int $userId): array {
 
   $opening = training_plan_opening_candidate($userId);
   if ($opening) {
-    $add('weekly', $weekly, 'opening_review', 'Refuerza ' . $opening['display_name'], 'Apertura recurrente con ejercicios pendientes.', 1, 'opening', $opening['opening_key']);
+    $target = training_plan_opening_exercise_target();
+    $add('weekly', $weekly, 'opening_exercises', 'Refuerza ' . $opening['display_name'], "Completa {$target} ejercicios de esta apertura.", $target, 'opening', $opening['opening_key']);
   }
   return $goals;
 }
@@ -197,12 +202,17 @@ function training_plan_goal_progress(int $userId, array $goal, array $periodProg
     $st->execute([$goal['context_key'], $userId, $goal['period_start'], $goal['period_end']]);
     return (int)$st->fetchColumn();
   }
-  if ($type === 'opening_review') {
-    $st = db()->prepare('SELECT COUNT(DISTINCT rp.game_id)
-                         FROM game_review_progress rp
-                         JOIN game_opening_profiles op ON op.user_id=rp.user_id AND op.game_id=rp.game_id AND op.opening_key=?
-                         WHERE rp.user_id=? AND DATE(rp.completed_at) BETWEEN ? AND ?');
-    $st->execute([$goal['context_key'], $userId, $goal['period_start'], $goal['period_end']]);
+  if ($type === 'opening_exercises') {
+    $st = db()->prepare('SELECT COUNT(DISTINCT sr.id)
+                         FROM training_solve_runs sr
+                         JOIN training_exercises te ON te.id=sr.exercise_id AND te.user_id=sr.user_id
+                         WHERE sr.user_id=? AND sr.status IN ("solved","failed")
+                           AND DATE(sr.completed_at) BETWEEN ? AND ?
+                           AND EXISTS (
+                             SELECT 1 FROM game_opening_profiles op
+                             WHERE op.user_id=sr.user_id AND op.game_id=te.game_id AND op.opening_key=?
+                           )');
+    $st->execute([$userId, $goal['period_start'], $goal['period_end'], $goal['context_key']]);
     return (int)$st->fetchColumn();
   }
   return 0;
@@ -212,7 +222,7 @@ function training_plan_goal_url(array $goal): ?string {
   return match ((string)$goal['goal_type']) {
     'review_game' => 'review.php?id=' . (int)$goal['context_key'],
     'review_games' => 'games.php',
-    'opening_review' => 'openings-lab.php',
+    'opening_exercises' => 'openings-lab.php',
     default => 'training.php',
   };
 }

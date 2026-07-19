@@ -137,10 +137,17 @@ function accuracy_from_acpl(float $acpl): float {
 function analysis_accuracy_stats_for_user(int $userId): array {
   $sql = 'SELECT a.id AS analysis_id, AVG(LEAST(GREATEST(COALESCE(m.centipawn_loss, 0), 0), 1000)) AS acpl
           FROM game_analysis a
+          JOIN games g ON g.id=a.game_id AND g.user_id=a.user_id
+          JOIN users u ON u.id=a.user_id
           JOIN game_move_analysis m ON m.analysis_id=a.id
           WHERE a.user_id=?
             AND a.status="done"
             AND a.id=(SELECT id FROM game_analysis WHERE game_id=a.game_id AND user_id=? AND status="done" ORDER BY id DESC LIMIT 1)
+            AND (
+              (LOWER(TRIM(g.white_player))=LOWER(TRIM(u.username)) AND MOD(m.ply,2)=1)
+              OR
+              (LOWER(TRIM(g.black_player))=LOWER(TRIM(u.username)) AND MOD(m.ply,2)=0)
+            )
           GROUP BY a.id';
   $st = db()->prepare($sql);
   $st->execute([$userId, $userId]);

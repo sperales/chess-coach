@@ -14,11 +14,11 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v1.4.14**
+Current stable baseline: **v1.4.15**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
-v1.4.14 keeps completed daily and weekly plan goals visible for the rest of their period, including goals previously hidden by the refresh-order bug. It retains the SAN review improvements from v1.4.13.
+v1.4.15 makes analysis summaries and derived performance metrics consistently use only the authenticated player's moves. It also turns weekly opening work into a bounded objective of two related exercises and improves the Training action on mobile.
 
 ---
 

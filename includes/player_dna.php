@@ -151,7 +151,7 @@ function player_dna_metric_pack(array $games, string $username): array {
     $firstOwnBlunder = false;
     foreach ($moves as $move) {
       $ply = (int)($move['ply'] ?? 0);
-      if ($userSide !== null && dashboard_move_side($ply) !== $userSide) continue;
+      if (!player_perspective_is_own_move($ply, $userSide)) continue;
 
       $class = (string)($move['classification'] ?? 'ok');
       if ($ply <= 16 && isset($phase['opening'][$class])) $phase['opening'][$class]++;

@@ -5026,6 +5026,11 @@ a.training-plan-goal:hover {
   .training-card-board {
     width:min(100%,280px)
   }
+  .training-card-action {
+    width:90%;
+    justify-self:center;
+    text-align:center
+  }
   .opening-card {
     grid-template-columns:minmax(0,1fr)
   }

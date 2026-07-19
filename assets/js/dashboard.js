@@ -102,11 +102,12 @@ function renderStats() {
   const analyzedGames = Number(accuracy.analyzed_games || 0);
   const avgAccuracy = accuracy.average === null || typeof accuracy.average === 'undefined' ? null : Number(accuracy.average);
   const trends = dashboardMetricTrends(overview, previous, queue, { winRate, avgAccuracy });
+  const analyzedLast10 = trends.analysesCompleted.reduce((total, value) => total + Number(value || 0), 0);
   const cards = [
-    { kind: 'pulse', label: 'Partidas', value: global.total || 0, detail: 'Ver todas', href: 'games.php', trend: trends.games, trendLabel: trendDeltaLabel(trendDeltaFromValues(trends.games), 'partidas') },
+    { kind: 'pulse', label: 'Partidas', value: global.total || 0, detail: 'Ver todas', href: 'games.php', trend: trends.games, trendLabel: trendDeltaLabel(trends.gamesAdded, 'partidas') },
     { kind: 'target', label: 'Win Rate', value: `${winRate}%`, detail: `${global.wins || 0} victorias / ${global.total || 0}`, trend: trends.winRate, trendLabel: trendDeltaLabel(trendDeltaFromValues(trends.winRate), 'puntos') },
     { kind: 'star', label: 'Accuracy media', value: avgAccuracy === null ? '--' : `${avgAccuracy.toFixed(1)}%`, detail: analyzedGames ? `${analyzedGames} partidas analizadas` : 'sin partidas analizadas', trend: trends.accuracy, trendLabel: trendDeltaLabel(trendDeltaFromValues(trends.accuracy), 'puntos') },
-    { kind: 'clock', label: 'Pendientes de análisis', value: pending, detail: 'Ver cola', href: 'analysis-pending.php', trend: trends.pending, trendLabel: trendDeltaLabel(trendDeltaFromValues(trends.pending), 'pendientes') }
+    { kind: 'clock', label: 'Pendientes de análisis', value: pending, detail: 'Ver cola', href: 'analysis-pending.php', trend: trends.analysesCompleted, trendLabel: `${analyzedLast10} analizadas en 10 días` }
   ];
   el.innerHTML = cards.map(card => {
     const detail = card.href
@@ -130,7 +131,10 @@ function iconFor(kind) {
 
 function dashboardMetricTrends(overview, previous, queue, anchors = {}) {
   const recentGames = ((dashboardData && dashboardData.recent_games) || []).slice().reverse();
-  const gamesTrend = recentGames.length ? recentGames.map((_, index) => index + 1) : [0, 0, 0, 0, 0, 0];
+  const history = (dashboardData && dashboardData.metric_history) || {};
+  const gamesTrend = numericTrend(history.games_total, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  const analysesCompleted = numericTrend(history.analyses_completed, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  const gamesAdded = Number(history.games_added || 0);
   let wins = 0;
   const recentWinRates = recentGames.length ? recentGames.map((game, index) => {
     if ((game.user_result || '') === 'win') wins++;
@@ -142,14 +146,18 @@ function dashboardMetricTrends(overview, previous, queue, anchors = {}) {
     .map(game => game.accuracy === null || typeof game.accuracy === 'undefined' ? null : Number(game.accuracy))
     .filter(value => Number.isFinite(value));
   const accuracyTrend = anchorTrendToValue(accuracyBase, anchors.avgAccuracy, 0, 100);
-  const pending = Number(queue.pending_total || 0);
-  const pendingTrend = pending ? [Math.max(0, pending - 2), Math.max(0, pending - 1), pending, Math.max(0, pending - 1), pending] : [0, 0, 0, 0, 0];
   return {
     games: gamesTrend,
+    gamesAdded: Number.isFinite(gamesAdded) ? gamesAdded : 0,
     winRate: winRateTrend,
     accuracy: accuracyTrend.length ? accuracyTrend : [0, 0, 0, 0, 0],
-    pending: pendingTrend,
+    analysesCompleted,
   };
+}
+
+function numericTrend(values, fallback) {
+  const nums = Array.isArray(values) ? values.map(Number).filter(value => Number.isFinite(value)) : [];
+  return nums.length >= 2 ? nums : fallback;
 }
 
 function anchorTrendToValue(values, endValue, min = -Infinity, max = Infinity) {
