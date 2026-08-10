@@ -18,6 +18,7 @@ const ASSETS = [
   './assets/fonts/poppins-500.woff2',
   './assets/fonts/poppins-600.woff2',
   './assets/nova/nova-status-sprite.png',
+  './assets/nova/nova-coach-pointing.png',
   './assets/js/app.js',
   './assets/js/dashboard.js',
   './assets/js/games.js',
