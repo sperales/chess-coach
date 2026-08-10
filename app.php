@@ -24,7 +24,7 @@ $greeting = $hour < 12 ? 'Buenos días' : ($hour < 21 ? 'Buenas tardes' : 'Buena
 <body class="dark-shell">
 <?php header_bar('Chess Coach'); ?>
 <div class="app-area">
-<main class="dashboard trainer-dashboard">
+<main class="dashboard trainer-dashboard home-mobile-first">
   <section class="hero-card trainer-hero">
     <div>
       <h1><?=e($greeting)?>, <?=e($u['username'])?></h1>
@@ -34,6 +34,24 @@ $greeting = $hour < 12 ? 'Buenos días' : ($hour < 21 ? 'Buenas tardes' : 'Buena
       <strong id="trainerHeroFocusLabel">Foco</strong>
     </div>
   </section>
+
+  <nav class="home-section-nav" aria-label="Secciones del panel">
+    <a class="active" href="#homeToday">Hoy</a>
+    <a href="#homeProgress">Progreso</a>
+    <a href="#partidas">Partidas</a>
+  </nav>
+
+  <section class="panel home-training-panel" id="homeToday">
+    <p class="muted">Nova est&aacute; preparando tu entrenamiento de hoy...</p>
+  </section>
+
+  <div class="home-section-heading" id="homeProgress">
+    <div>
+      <span>Tu evoluci&oacute;n</span>
+      <h2>Progreso reciente</h2>
+    </div>
+    <a href="player-dna.php">Ver ADN completo</a>
+  </div>
 
   <section class="metric-grid" id="stats"></section>
 
@@ -51,10 +69,6 @@ $greeting = $hour < 12 ? 'Buenos días' : ($hour < 21 ? 'Buenas tardes' : 'Buena
         </div>
       </div>
     </div>
-  </section>
-
-  <section class="panel home-training-panel" id="homeTrainingExperience">
-    <p class="muted">Cargando progreso de entrenamiento...</p>
   </section>
 
   <section class="panel home-dna-panel" id="homePlayerDna">

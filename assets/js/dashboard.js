@@ -331,7 +331,7 @@ function renderSummary() {
 }
 
 function renderHomeTrainingExperience() {
-  const el = document.getElementById('homeTrainingExperience');
+  const el = document.getElementById('homeToday');
   if (!el) return;
   const experience = (dashboardData && dashboardData.training_experience) || {};
   const settings = experience.settings || {};
@@ -344,14 +344,30 @@ function renderHomeTrainingExperience() {
   const plan = trainingPlanData || { daily: [], weekly: [] };
   const streakDays = Number(streak.days || 0);
   const dueCount = Number(repeatQueue.due_count || 0);
+  const dailyGoals = Array.isArray(plan.daily) ? plan.daily : [];
+  const weeklyGoals = Array.isArray(plan.weekly) ? plan.weekly : [];
+  const primaryGoal = dailyGoals.find(goal => goal.status !== 'completed') || weeklyGoals.find(goal => goal.status !== 'completed') || dailyGoals[0] || weeklyGoals[0] || null;
+  const primaryProgress = primaryGoal ? homeTrainingProgressPercent(primaryGoal.progress_percent) : homeTrainingProgressPercent(homeTrainingTodayProgress(today, settings));
+  const primaryTitle = primaryGoal ? (primaryGoal.title || 'Completa tu objetivo de hoy') : 'Empieza tu entrenamiento de hoy';
+  const primaryMessage = primaryGoal && primaryGoal.rationale ? primaryGoal.rationale : homeTrainingMessage(today, streak);
+  const novaState = today.goal_met ? 'success' : (today.trained ? 'focus' : 'neutral');
+  const primaryAction = primaryGoal && primaryGoal.action_url ? primaryGoal.action_url : 'training.php';
   el.innerHTML = `
-    <div class="home-training-head">
-      <div>
-        <span class="trainer-state-badge ${today.goal_met ? 'good' : (today.trained ? 'improving' : 'stable')}">Plan personal</span>
-        <h2>Tu progreso y próximos pasos</h2>
-        <p>${escapeHtml(homeTrainingMessage(today, streak))}</p>
+    <div class="home-nova-plan">
+      <span class="nova-avatar nova-avatar--${novaState}" role="img" aria-label="Nova"></span>
+      <div class="home-nova-plan__content">
+        <span class="home-nova-eyebrow">Nova · Entrenamiento de hoy</span>
+        <h2>${escapeHtml(primaryTitle)}</h2>
+        <p>${escapeHtml(primaryMessage)}</p>
+        <div class="home-nova-progress" aria-label="Progreso ${primaryProgress}%">
+          <span><strong>${primaryProgress}%</strong><small>completado</small></span>
+          <div class="home-training-progress"><i style="width:${primaryProgress}%"></i></div>
+        </div>
+        <div class="home-nova-actions">
+          <a class="btn home-nova-primary" href="${escapeAttr(primaryAction)}">${today.goal_met ? 'Seguir entrenando' : 'Empezar entrenamiento'}</a>
+          <a class="home-nova-secondary" href="player-dna.php">Por qué este plan</a>
+        </div>
       </div>
-      <a class="btn secondary small" href="training.php">Entrenar ahora</a>
     </div>
     <div class="home-training-grid">
       ${homeTrainingCard('racha', 'Racha', `${streakDays} día(s)`, streak.today_goal_met ? 'objetivo cumplido hoy' : 'objetivo diario pendiente', streakDays ? Math.min(100, streakDays * 20) : 0)}
@@ -359,14 +375,17 @@ function renderHomeTrainingExperience() {
       ${homeTrainingCard('semana', 'Semana', homeTrainingWeekText(week, settings), 'progreso semanal', homeTrainingProgressPercent(homeTrainingWeekProgress(week, settings)))}
       ${homeTrainingCard('repasos', 'Para repetir', dueCount ? `${dueCount}` : 'Al día', dueCount === 1 ? 'ejercicio vencido' : (dueCount > 1 ? 'ejercicios vencidos' : 'sin repeticiones vencidas'), dueCount ? 0 : 100)}
     </div>
-    <div class="training-plan-overview">
-      ${homeProgressMetric('Índice de rendimiento', progress.available ? `${Number(progress.score || 0)}/1000` : '--', progress.available ? 'basado en tus ejercicios y partidas recientes' : 'calculando progreso', progress.available ? Number(progress.score || 0) / 10 : 0)}
-      ${homeProgressMetric('Autonomía', autonomy.score === null || typeof autonomy.score === 'undefined' ? '--' : `${Math.round(Number(autonomy.score))}%`, autonomy.calibrated ? 'resolución sin ayudas' : `calibrando ${Number(autonomy.samples || 0)}/${Number(autonomy.minimum_samples || 6)}`, autonomy.score || 0)}
-    </div>
-    <div class="training-plan-columns">
-      ${homePlanColumn('Hoy', plan.daily || [])}
-      ${homePlanColumn('Esta semana', plan.weekly || [])}
-    </div>
+    <details class="home-plan-details">
+      <summary>Ver plan y métricas</summary>
+      <div class="training-plan-overview">
+        ${homeProgressMetric('Índice de rendimiento', progress.available ? `${Number(progress.score || 0)}/1000` : '--', progress.available ? 'basado en tus ejercicios y partidas recientes' : 'calculando progreso', progress.available ? Number(progress.score || 0) / 10 : 0)}
+        ${homeProgressMetric('Autonomía', autonomy.score === null || typeof autonomy.score === 'undefined' ? '--' : `${Math.round(Number(autonomy.score))}%`, autonomy.calibrated ? 'resolución sin ayudas' : `calibrando ${Number(autonomy.samples || 0)}/${Number(autonomy.minimum_samples || 6)}`, autonomy.score || 0)}
+      </div>
+      <div class="training-plan-columns">
+        ${homePlanColumn('Hoy', dailyGoals)}
+        ${homePlanColumn('Esta semana', weeklyGoals)}
+      </div>
+    </details>
   `;
 }
 
@@ -583,19 +602,19 @@ function renderRows() {
 
 function gameRow(game) {
   const actions = analysisActions(game);
-  return `<tr><td>${rivalCell(game)}</td><td>${resultBadge(game)}</td><td>${escapeHtml(game.event_name || rhythmFromSite(game.site) || '-')}</td><td class="hide-sm">${game.played_at || (game.imported_at || '').slice(0,10) || '-'}</td><td>${actions.meta}</td><td>${actions.primary}</td><td>${actions.secondary}</td></tr>`;
+  return `<tr><td data-label="Rival">${rivalCell(game)}</td><td data-label="Resultado">${resultBadge(game)}</td><td data-label="Ritmo">${escapeHtml(game.event_name || rhythmFromSite(game.site) || '-')}</td><td class="hide-sm" data-label="Fecha">${game.played_at || (game.imported_at || '').slice(0,10) || '-'}</td><td data-label="Análisis">${actions.meta}</td><td class="game-row-action">${actions.primary}</td><td class="game-row-action">${actions.secondary}</td></tr>`;
 }
 
 function recommendedRow(item) {
   return `
     <tr>
-      <td><a class="game-title-link" href="${escapeAttr(item.review_url || '#')}"><strong>${escapeHtml(item.title || 'Partida')}</strong></a><small class="recommend-reason">${escapeHtml(item.reason || '')}</small></td>
-      <td>${resultBadge(item)}</td>
-      <td>${item.accuracy === null || typeof item.accuracy === 'undefined' ? '--' : `${Number(item.accuracy).toFixed(1)}%`}</td>
-      <td class="hide-sm">${escapeHtml(item.played_at || '-')}</td>
-      <td>${analysisMeta(item)}</td>
-      <td><a class="btn small game-review-btn" href="${escapeAttr(item.review_url || '#')}">Revisar</a></td>
-      <td></td>
+      <td data-label="Partida"><a class="game-title-link" href="${escapeAttr(item.review_url || '#')}"><strong>${escapeHtml(item.title || 'Partida')}</strong></a><small class="recommend-reason">${escapeHtml(item.reason || '')}</small></td>
+      <td data-label="Resultado">${resultBadge(item)}</td>
+      <td data-label="Accuracy">${item.accuracy === null || typeof item.accuracy === 'undefined' ? '--' : `${Number(item.accuracy).toFixed(1)}%`}</td>
+      <td class="hide-sm" data-label="Fecha">${escapeHtml(item.played_at || '-')}</td>
+      <td data-label="Análisis">${analysisMeta(item)}</td>
+      <td class="game-row-action"><a class="btn small game-review-btn" href="${escapeAttr(item.review_url || '#')}">Revisar</a></td>
+      <td class="game-row-action"></td>
     </tr>
   `;
 }
@@ -827,6 +846,20 @@ function updateGamesPanelTabs() {
   if (link) link.style.display = gamesPanelMode === 'latest' ? '' : 'none';
 }
 
+function initializeHomeSectionNav() {
+  const links = Array.from(document.querySelectorAll('.home-section-nav a[href^="#"]'));
+  if (!links.length) return;
+  const activate = hash => links.forEach(link => link.classList.toggle('active', link.getAttribute('href') === hash));
+  links.forEach(link => link.addEventListener('click', () => activate(link.getAttribute('href'))));
+  if (!('IntersectionObserver' in window)) return;
+  const sections = links.map(link => document.querySelector(link.getAttribute('href'))).filter(Boolean);
+  const observer = new IntersectionObserver(entries => {
+    const visible = entries.filter(entry => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+    if (visible) activate(`#${visible.target.id}`);
+  }, { rootMargin: '-15% 0px -70% 0px', threshold: [0, .25, .6] });
+  sections.forEach(section => observer.observe(section));
+}
+
 async function analyzeGame(id, force = false) {
   id = Number(id);
   if (analyzing.has(id)) return;
@@ -882,6 +915,7 @@ function escapeAttr(value) {
 }
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js').catch(() => {});
+initializeHomeSectionNav();
 load(1).catch(error => {
   const hero = document.getElementById('trainerHeroText');
   if (hero) hero.textContent = error.message || 'No se pudo cargar el dashboard.';

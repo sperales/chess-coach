@@ -5707,3 +5707,486 @@ body.login-page::before {
     display:none
   }
 }
+
+/* v1.4.16 Home mobile-first */
+.home-mobile-first {
+  display:grid;
+  gap:14px;
+  padding:16px 12px 32px;
+  scroll-behavior:smooth
+}
+.home-mobile-first .trainer-hero {
+  min-height:150px;
+  padding:22px 20px;
+  border-radius:12px;
+  background-position:62% center
+}
+.home-mobile-first .trainer-hero h1 {
+  max-width:75%;
+  margin-bottom:8px;
+  font-size:26px;
+  line-height:1.18
+}
+.home-mobile-first .trainer-hero p {
+  max-width:74%;
+  font-size:14px
+}
+.home-mobile-first .trainer-hero-focus {
+  max-width:74%;
+  padding:8px 10px
+}
+.home-section-nav {
+  position:sticky;
+  z-index:12;
+  top:8px;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:4px;
+  padding:4px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:rgba(7,16,20,.94);
+  box-shadow:0 8px 24px rgba(0,0,0,.28);
+  backdrop-filter:blur(10px)
+}
+.home-section-nav a {
+  padding:10px 8px;
+  border-radius:7px;
+  color:#aeb8c0;
+  font-family:var(--font-brand);
+  font-size:13px;
+  font-weight:600;
+  text-align:center;
+  text-decoration:none
+}
+.home-section-nav a:hover,
+.home-section-nav a:focus-visible,
+.home-section-nav a.active {
+  background:#173522;
+  color:#9bdd00
+}
+.home-section-heading {
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:12px;
+  padding:6px 2px 0;
+  scroll-margin-top:68px
+}
+.home-section-heading span {
+  color:#79c53b;
+  font-family:var(--font-brand);
+  font-size:12px;
+  font-weight:600;
+  text-transform:uppercase
+}
+.home-section-heading h2 {
+  margin:3px 0 0;
+  font-size:22px
+}
+.home-section-heading a {
+  color:#79c53b;
+  font-size:13px;
+  font-weight:700;
+  text-decoration:none
+}
+.home-mobile-first .home-training-panel {
+  gap:14px;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  scroll-margin-top:68px;
+  border-color:#31563c;
+  border-radius:12px;
+  background:linear-gradient(155deg,#10251d 0%,#0a1718 66%,#101a20 100%)
+}
+.home-nova-plan {
+  display:grid;
+  grid-template-columns:84px minmax(0,1fr);
+  gap:12px;
+  padding:18px 16px 6px
+}
+.home-nova-plan > .nova-avatar {
+  --nova-size:84px;
+  align-self:start
+}
+.home-nova-plan__content {
+  min-width:0
+}
+.home-nova-eyebrow {
+  color:#9bdd00;
+  font-family:var(--font-brand);
+  font-size:12px;
+  font-weight:600
+}
+.home-nova-plan h2 {
+  margin:5px 0 7px;
+  font-family:var(--font-brand);
+  font-size:20px;
+  line-height:1.25
+}
+.home-nova-plan p {
+  margin:0;
+  color:#cbd5dc;
+  font-size:14px;
+  line-height:1.5
+}
+.home-nova-progress {
+  margin-top:14px
+}
+.home-nova-progress > span {
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:8px
+}
+.home-nova-progress strong {
+  color:#fff;
+  font-size:17px
+}
+.home-nova-progress small {
+  color:#a9b1ba
+}
+.home-nova-actions {
+  display:grid;
+  gap:8px;
+  margin-top:15px
+}
+.home-nova-primary {
+  width:100%;
+  min-height:46px;
+  justify-content:center;
+  background:linear-gradient(135deg,#79c53b,#3e9f42)
+}
+.home-nova-secondary {
+  padding:5px;
+  color:#b9c5cc;
+  font-size:13px;
+  font-weight:700;
+  text-align:center;
+  text-decoration:none
+}
+.home-mobile-first .home-training-grid {
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  padding:0 12px
+}
+.home-mobile-first .home-training-card {
+  display:grid;
+  grid-template-columns:34px minmax(0,1fr);
+  gap:9px;
+  padding:10px;
+  border-radius:8px
+}
+.home-mobile-first .home-training-card > span {
+  width:34px;
+  height:34px;
+  font-size:16px
+}
+.home-mobile-first .home-training-card strong {
+  font-size:15px
+}
+.home-mobile-first .home-training-card em,
+.home-mobile-first .home-training-card small {
+  font-size:11px
+}
+.home-plan-details {
+  margin:2px 12px 12px;
+  border-top:1px solid rgba(255,255,255,.08)
+}
+.home-plan-details > summary {
+  padding:13px 2px 2px;
+  color:#9bdd00;
+  font-family:var(--font-brand);
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer
+}
+.home-plan-details[open] > summary {
+  margin-bottom:12px
+}
+.home-plan-details .training-plan-overview,
+.home-plan-details .training-plan-columns {
+  grid-template-columns:minmax(0,1fr);
+  margin-top:10px
+}
+.home-mobile-first .metric-grid {
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px;
+  margin:0
+}
+.home-mobile-first .metric-card {
+  min-height:154px;
+  gap:8px;
+  padding:13px;
+  border-radius:10px
+}
+.home-mobile-first .metric-card-top {
+  gap:9px
+}
+.home-mobile-first .metric-icon {
+  width:38px;
+  height:38px;
+  font-size:18px
+}
+.home-mobile-first .metric-card span {
+  font-size:12px
+}
+.home-mobile-first .metric-card b {
+  font-size:24px
+}
+.home-mobile-first .metric-spark {
+  height:38px
+}
+.home-mobile-first .metric-card small,
+.home-mobile-first .metric-card em {
+  font-size:11px
+}
+.home-mobile-first .panel {
+  border-radius:10px;
+  padding:16px
+}
+.home-mobile-first .home-training-panel {
+  padding:0
+}
+.home-mobile-first .trainer-summary-content {
+  gap:16px
+}
+.home-mobile-first .trainer-accuracy-ring {
+  width:154px;
+  height:154px;
+  justify-self:center
+}
+.home-mobile-first .trainer-accuracy-ring div {
+  width:106px;
+  height:106px
+}
+.home-mobile-first .home-middle-grid,
+.home-mobile-first .home-review-grid {
+  grid-template-columns:minmax(0,1fr);
+  gap:14px
+}
+.home-mobile-first .trainer-focus-list {
+  grid-template-columns:minmax(0,1fr)
+}
+.home-mobile-first .trainer-focus-card {
+  min-height:0
+}
+.home-mobile-first #partidas {
+  scroll-margin-top:68px
+}
+.home-mobile-first #partidas .panel-head {
+  align-items:flex-start;
+  gap:12px
+}
+.home-mobile-first #partidas .panel-actions {
+  justify-content:flex-end
+}
+.home-mobile-first #partidas .games thead {
+  display:none
+}
+.home-mobile-first #partidas .games,
+.home-mobile-first #partidas .games tbody,
+.home-mobile-first #partidas .games tr,
+.home-mobile-first #partidas .games td {
+  display:block;
+  width:100%
+}
+.home-mobile-first #partidas .games {
+  min-width:0
+}
+.home-mobile-first #partidas .games tbody {
+  display:grid;
+  gap:10px;
+  margin-top:12px
+}
+.home-mobile-first #partidas .games tr {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:#09161b
+}
+.home-mobile-first #partidas .games td {
+  min-width:0;
+  padding:0;
+  border:0;
+  font-size:12px
+}
+.home-mobile-first #partidas .games td:first-child {
+  grid-column:1/-1;
+  font-size:14px
+}
+.home-mobile-first #partidas .games td:not(:first-child):not(.game-row-action)::before {
+  content:attr(data-label);
+  display:block;
+  margin-bottom:4px;
+  color:#7f8b93;
+  font-size:10px;
+  text-transform:uppercase
+}
+.home-mobile-first #partidas .games .game-row-action {
+  grid-column:span 3
+}
+.home-mobile-first #partidas .games .game-row-action:empty {
+  display:none
+}
+.home-mobile-first #partidas .games .game-row-action .btn,
+.home-mobile-first #partidas .games .game-row-action button {
+  width:100%;
+  justify-content:center
+}
+.home-mobile-first .quick-grid {
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:8px
+}
+
+@media(min-width:761px) {
+  .home-mobile-first {
+    gap:20px;
+    padding:28px 34px 40px
+  }
+  .home-mobile-first .trainer-hero {
+    min-height:220px;
+    padding:42px;
+    border-radius:18px
+  }
+  .home-mobile-first .trainer-hero h1 {
+    max-width:760px;
+    font-size:36px
+  }
+  .home-mobile-first .trainer-hero p {
+    max-width:620px;
+    font-size:17px
+  }
+  .home-section-nav {
+    position:static;
+    justify-self:center;
+    width:min(100%,420px)
+  }
+  .home-nova-plan {
+    grid-template-columns:126px minmax(0,1fr);
+    gap:24px;
+    padding:24px 24px 8px
+  }
+  .home-nova-plan > .nova-avatar {
+    --nova-size:126px
+  }
+  .home-nova-plan h2 {
+    font-size:26px
+  }
+  .home-nova-actions {
+    display:flex;
+    align-items:center
+  }
+  .home-nova-primary {
+    width:auto;
+    min-width:220px
+  }
+  .home-mobile-first .home-training-grid {
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    padding:0 20px
+  }
+  .home-plan-details {
+    margin:4px 20px 18px
+  }
+  .home-plan-details .training-plan-overview,
+  .home-plan-details .training-plan-columns {
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+  .home-mobile-first .metric-grid {
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:20px
+  }
+  .home-mobile-first .metric-card {
+    min-height:210px;
+    gap:12px;
+    padding:22px;
+    border-radius:16px
+  }
+  .home-mobile-first .metric-card-top {
+    gap:18px
+  }
+  .home-mobile-first .metric-icon {
+    width:54px;
+    height:54px;
+    font-size:25px
+  }
+  .home-mobile-first .metric-card span {
+    font-size:15px
+  }
+  .home-mobile-first .metric-card b {
+    font-size:32px
+  }
+  .home-mobile-first .metric-spark {
+    height:58px
+  }
+  .home-mobile-first .metric-card small,
+  .home-mobile-first .metric-card em {
+    font-size:13px
+  }
+  .home-mobile-first .panel {
+    padding:22px;
+    border-radius:16px
+  }
+  .home-mobile-first .trainer-summary-content {
+    grid-template-columns:minmax(0,1fr) minmax(190px,250px);
+    gap:24px
+  }
+  .home-mobile-first .trainer-accuracy-ring {
+    width:220px;
+    height:220px
+  }
+  .home-mobile-first .trainer-accuracy-ring div {
+    width:146px;
+    height:146px
+  }
+  .home-mobile-first .home-middle-grid {
+    grid-template-columns:minmax(0,3fr) minmax(260px,1fr);
+    gap:20px
+  }
+  .home-mobile-first .home-review-grid {
+    grid-template-columns:1.1fr .9fr;
+    gap:20px
+  }
+  .home-mobile-first .trainer-focus-list {
+    grid-template-columns:repeat(3,minmax(0,1fr))
+  }
+  .home-mobile-first #partidas .games,
+  .home-mobile-first #partidas .games tbody {
+    display:table-row-group;
+    width:100%
+  }
+  .home-mobile-first #partidas .games {
+    display:table
+  }
+  .home-mobile-first #partidas .games thead {
+    display:table-header-group
+  }
+  .home-mobile-first #partidas .games tr {
+    display:table-row;
+    padding:0;
+    border:0;
+    background:transparent
+  }
+  .home-mobile-first #partidas .games td {
+    display:table-cell;
+    width:auto;
+    padding:13px 8px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+    font-size:14px
+  }
+  .home-mobile-first #partidas .games td:not(:first-child):not(.game-row-action)::before {
+    display:none
+  }
+  .home-mobile-first #partidas .games .game-row-action .btn,
+  .home-mobile-first #partidas .games .game-row-action button {
+    width:auto
+  }
+  .home-mobile-first .quick-grid {
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:20px
+  }
+}

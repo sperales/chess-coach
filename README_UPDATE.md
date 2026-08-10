@@ -6,6 +6,13 @@ Stockfish 18 analysis confidence, chess-logic consistency and pipeline hardening
 
 ## Changes
 
+- Reorganizes the Home as a mobile-first training dashboard while preserving the complete desktop experience and existing backend contracts.
+- Promotes Nova's real daily recommendation, current progress and primary action to the first actionable block after the greeting.
+- Keeps detailed daily and weekly goals available in a compact expandable section instead of overwhelming the initial mobile viewport.
+- Adds quick in-page navigation between today's plan, progress and recent games, with accessible active-section feedback.
+- Presents the four headline metrics in a compact two-column mobile grid and retains the four-column desktop layout.
+- Converts recent and recommended game rows into readable mobile cards with full-width review actions while preserving the desktop table.
+- Keeps Player DNA, coach focus, strengths, patterns, latest review and quick actions available below the prioritized mobile workflow.
 - Redesigns Login from a mobile-first layout and adapts the same composition for desktop instead of maintaining a separate desktop experience.
 - Introduces Nova through a lightweight local WebM background with a static poster and reduced-motion fallback.
 - Replaces session language with `entrenamiento de hoy` and keeps the internal training-session model invisible to the player.
@@ -48,6 +55,10 @@ Keep the production binary path in `config/engine.php`. Add the new settings fro
 
 ## Verification
 
+- Check Home at 360 px and 390 px: Nova's plan, 2x2 metrics and game cards must not produce horizontal overflow.
+- Check Home on desktop: headline metrics remain in one row and the games list remains a table.
+- Confirm Nova's primary action uses the first incomplete real plan goal and falls back to Training when no generated goal exists.
+- Confirm `Ver plan y métricas` exposes the complete daily/weekly plan without mentioning internal sessions.
 - Run `php tests/stockfish_protocol_test.php`.
 - Run `php tests/chess_evaluation_test.php`.
 - Run `php tests/player_windows_test.php`.

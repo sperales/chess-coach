@@ -84,6 +84,15 @@ Both should match the release version.
 - Confirm the password visibility control updates its accessible state.
 - Submit an expired or invalid CSRF token and confirm authentication is rejected without exposing technical details.
 
+## Mobile Home Checks
+
+- Check the Home at 360 px and 390 px without horizontal overflow.
+- Confirm Nova presents the first incomplete real training-plan goal and links to its existing action.
+- Confirm the detailed plan is collapsed initially and still exposes daily, weekly, performance and autonomy data.
+- Confirm the four headline metrics render as a 2x2 mobile grid and a single desktop row.
+- Confirm recent and recommended games render as mobile cards with large actions, while desktop retains the table layout.
+- Confirm the `Hoy`, `Progreso` and `Partidas` links scroll to the corresponding section and update their active state.
+
 ---
 
 ## Stockfish Analysis Pipeline Checks
