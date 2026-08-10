@@ -6,6 +6,11 @@ Stockfish 18 analysis confidence, chess-logic consistency and pipeline hardening
 
 ## Changes
 
+- Redesigns Login from a mobile-first layout and adapts the same composition for desktop instead of maintaining a separate desktop experience.
+- Introduces Nova through a lightweight local WebM background with a static poster and reduced-motion fallback.
+- Replaces session language with `entrenamiento de hoy` and keeps the internal training-session model invisible to the player.
+- Preserves native password-manager and iOS autofill behavior while adding explicit labels, accessible password visibility state and login CSRF protection.
+- Omits password-recovery and other inactive controls until a real workflow exists behind them.
 - Adds the shared Chess Coach visual identity foundation for the upcoming mobile-first redesign.
 - Replaces the legacy header and login logo with the new local SVG wordmark.
 - Refreshes favicon, standard PWA icons, maskable icons and Apple touch icon.

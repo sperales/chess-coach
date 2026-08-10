@@ -8,13 +8,18 @@ if (current_user()) {
 }
 
 $err = '';
+$username = '';
 $assetVersion = (string)filemtime(__DIR__ . '/assets/css/app.css');
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  if (login_user(trim($_POST['username'] ?? ''), $_POST['password'] ?? '')) {
+  $username = trim((string)($_POST['username'] ?? ''));
+  if (!csrf_token_valid(request_csrf_token())) {
+    $err = 'La sesión de acceso ha caducado. Inténtalo de nuevo.';
+  } elseif (login_user($username, $_POST['password'] ?? '')) {
     header('Location: app.php');
     exit;
+  } else {
+    $err = 'Usuario o contraseña incorrectos.';
   }
-  $err = 'Usuario o contraseña incorrectos.';
 }
 ?>
 <!doctype html>
@@ -30,64 +35,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 </head>
 <body class="login-page">
+  <video class="login-background-video" id="loginBackgroundVideo" autoplay muted loop playsinline preload="metadata" poster="assets/images/login-nova-background-poster.jpg" aria-hidden="true" tabindex="-1">
+    <source src="assets/images/login-nova-background.webm" type="video/webm">
+  </video>
   <main class="login-shell" aria-label="Acceso a Chess Coach">
-    <section class="login-panel" aria-labelledby="loginTitle">
-      <div class="login-brand">
+    <div class="login-layout">
+      <header class="login-brand">
         <img src="assets/brand/logo-horizontal-dark.svg" alt="Chess Coach">
-        <p>Juega. Aprende. Mejora.</p>
-      </div>
+      </header>
 
-      <div class="login-divider" aria-hidden="true"><span></span></div>
+      <section class="login-intro" aria-labelledby="loginTitle">
+        <h1 id="loginTitle">Lleva tu entrenamiento al siguiente nivel</h1>
+        <p>Nova ha preparado tu entrenamiento de hoy.</p>
+      </section>
 
-      <h1 id="loginTitle">Entrar</h1>
+      <section class="login-panel" aria-label="Formulario de acceso">
+        <?php if ($err): ?>
+          <p class="login-error" id="loginError" role="alert"><?= e($err) ?></p>
+        <?php endif; ?>
 
-      <?php if ($err): ?>
-        <p class="login-error"><?= e($err) ?></p>
-      <?php endif; ?>
-
-      <form class="login-form" method="post">
-        <div class="login-field">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M20 21a8 8 0 0 0-16 0"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-          <input name="username" placeholder="Usuario" autocomplete="username" aria-label="Usuario" required>
-        </div>
-
-        <div class="login-field">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="5" y="11" width="14" height="10" rx="2"></rect>
-            <path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
-          </svg>
-          <input id="loginPassword" name="password" type="password" placeholder="Contraseña" autocomplete="current-password" aria-label="Contraseña" required>
-          <button class="login-eye" type="button" aria-label="Mostrar contraseña" onclick="toggleLoginPassword()">
+        <form class="login-form" method="post"<?= $err ? ' aria-describedby="loginError"' : '' ?>>
+          <?= csrf_field() ?>
+          <div class="login-field">
+            <label class="sr-only" for="loginUsername">Usuario</label>
             <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"></path>
-              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M20 21a8 8 0 0 0-16 0"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <input id="loginUsername" name="username" value="<?= e($username) ?>" placeholder="Usuario" autocomplete="username" required>
+          </div>
+
+          <div class="login-field">
+            <label class="sr-only" for="loginPassword">Contraseña</label>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="5" y="11" width="14" height="10" rx="2"></rect>
+              <path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
+            </svg>
+            <input id="loginPassword" name="password" type="password" placeholder="Contraseña" autocomplete="current-password" required>
+            <button class="login-eye" id="loginPasswordToggle" type="button" aria-label="Mostrar contraseña" aria-pressed="false" onclick="toggleLoginPassword()">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+
+          <button class="login-submit" type="submit">
+            <span>Entrar</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m9 18 6-6-6-6"></path>
             </svg>
           </button>
-        </div>
-
-        <button class="login-submit" type="submit">
-          <span>Entrar</span>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="m9 18 6-6-6-6"></path>
-          </svg>
-        </button>
-      </form>
+        </form>
+      </section>
 
       <div class="login-version" aria-label="Versión de Chess Coach">
-        <span aria-hidden="true">♘</span>
         <small>v<?= e(app_config()['app_version']) ?></small>
       </div>
-    </section>
+    </div>
   </main>
   <script>
     function toggleLoginPassword() {
       const input = document.getElementById('loginPassword');
+      const toggle = document.getElementById('loginPasswordToggle');
       if (!input) return;
-      input.type = input.type === 'password' ? 'text' : 'password';
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      if (toggle) {
+        toggle.setAttribute('aria-pressed', show ? 'true' : 'false');
+        toggle.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña');
+      }
     }
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const backgroundVideo = document.getElementById('loginBackgroundVideo');
+    if (backgroundVideo && reduceMotion.matches) backgroundVideo.pause();
   </script>
 </body>
 </html>
