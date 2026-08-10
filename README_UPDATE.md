@@ -6,6 +6,14 @@ Stockfish 18 analysis confidence, chess-logic consistency and pipeline hardening
 
 ## Changes
 
+- Adds the shared Chess Coach visual identity foundation for the upcoming mobile-first redesign.
+- Replaces the legacy header and login logo with the new local SVG wordmark.
+- Refreshes favicon, standard PWA icons, maskable icons and Apple touch icon.
+- Adds local Poppins 500/600 fonts without introducing an external dependency.
+- Adds Nova's transparent six-state sprite and reusable, escaped PHP presentation helpers for neutral, thinking, focus, warning, error and success feedback.
+- Keeps the current pages operational while establishing stable mobile and desktop dimensions for the new shared header identity.
+- Keeps training sessions internal and reserves user-facing language for the daily plan or today's training.
+- Reserves the future `Escenarios` training category for multi-move exercises without implementing or exposing an inactive workflow yet.
 - Uses one persistent Stockfish process per game and sends `position startpos moves ...` with the complete UCI history for every evaluated ply.
 - Detects and stores the engine name, version and optional build label used by each analysis.
 - Stores search configuration and telemetry: depth, selective depth, nodes, time, NPS, hash usage, PV, best move, retries and process exit/error details.

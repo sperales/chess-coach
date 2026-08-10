@@ -1,3 +1,17 @@
+@font-face {
+  font-family:"Poppins CC";
+  src:url("../fonts/poppins-500.woff2") format("woff2");
+  font-style:normal;
+  font-weight:500;
+  font-display:swap
+}
+@font-face {
+  font-family:"Poppins CC";
+  src:url("../fonts/poppins-600.woff2") format("woff2");
+  font-style:normal;
+  font-weight:600;
+  font-display:swap
+}
 :root {
   --bg:#071014;
   --bg2:#0b1419;
@@ -12,7 +26,10 @@
   --purple:#8c41c9;
   --amber:#d9821f;
   --red:#ef5350;
-  --yellow:#f5b942
+  --yellow:#f5b942;
+  --brand-lime:#9bdd00;
+  --brand-ink:#101413;
+  --font-brand:"Poppins CC",system-ui,-apple-system,"Segoe UI",sans-serif
 }
 * {
   box-sizing:border-box
@@ -32,6 +49,108 @@ body {
   background:var(--bg);
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
   color:var(--text)
+}
+
+/* v1.4.16 Nova and brand foundation */
+.nova-avatar {
+  --nova-size:96px;
+  display:block;
+  width:var(--nova-size);
+  height:var(--nova-size);
+  flex:0 0 var(--nova-size);
+  background-image:url("../nova/nova-status-sprite.png");
+  background-repeat:no-repeat;
+  background-size:300% 200%
+}
+.nova-avatar--success {
+  background-position:left top
+}
+.nova-avatar--neutral {
+  background-position:center top
+}
+.nova-avatar--warning {
+  background-position:right top
+}
+.nova-avatar--thinking {
+  background-position:left bottom
+}
+.nova-avatar--focus {
+  background-position:center bottom
+}
+.nova-avatar--error {
+  background-position:right bottom
+}
+.nova-coach {
+  --nova-accent:#42a5f5;
+  display:flex;
+  align-items:center;
+  gap:18px;
+  padding:18px;
+  border:1px solid var(--line);
+  border:1px solid color-mix(in srgb,var(--nova-accent) 36%,var(--line));
+  border-radius:8px;
+  background:var(--panel);
+  background:color-mix(in srgb,var(--nova-accent) 7%,var(--panel));
+  font-family:var(--font-brand)
+}
+.nova-coach--success,
+.nova-coach--focus {
+  --nova-accent:#79c53b
+}
+.nova-coach--warning {
+  --nova-accent:#ff9f2e
+}
+.nova-coach--error {
+  --nova-accent:#ef5350
+}
+.nova-coach--thinking {
+  --nova-accent:#42a5f5
+}
+.nova-coach__content {
+  min-width:0
+}
+.nova-coach__title {
+  display:block;
+  color:var(--text);
+  font-size:18px;
+  font-weight:600
+}
+.nova-coach__message {
+  margin:5px 0 0;
+  color:#d7dfe5;
+  line-height:1.5
+}
+.nova-coach__action {
+  display:inline-flex;
+  margin-top:12px;
+  color:var(--brand-lime);
+  font-weight:600;
+  text-decoration:none
+}
+.nova-coach__action:hover,
+.nova-coach__action:focus-visible {
+  text-decoration:underline
+}
+.nova-coach--compact {
+  gap:12px;
+  padding:12px 14px
+}
+.nova-coach--compact .nova-avatar {
+  --nova-size:64px
+}
+.nova-coach--compact .nova-coach__title {
+  font-size:16px
+}
+@media(max-width:640px) {
+  .nova-coach {
+    --nova-size:76px;
+    align-items:flex-start;
+    gap:12px;
+    padding:14px
+  }
+  .nova-coach--compact .nova-avatar {
+    --nova-size:54px
+  }
 }
 a {
   color:inherit
@@ -5361,5 +5480,20 @@ a.training-plan-goal:hover {
   }
   .training-solve-controls {
     gap:8px
+  }
+}
+
+/* New horizontal identity uses a wider aspect ratio than the legacy lockup. */
+.topbar .brand img.brand-lockup,
+.brand img.brand-lockup {
+  width:auto!important;
+  height:44px!important;
+  max-width:min(44vw,260px)!important
+}
+@media(max-width:640px) {
+  .topbar .brand img.brand-lockup,
+  .brand img.brand-lockup {
+    height:34px!important;
+    max-width:42vw!important
   }
 }
