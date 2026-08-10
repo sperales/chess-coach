@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v1.4.15**
+Current stable baseline: **v1.4.16**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,9 +32,11 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v1.4.15
+## Current baseline — v1.4.16
 
-v1.4.15 makes review summaries, stored error counters, accuracy, ACPL, Player DNA and performance evidence consistently follow the authenticated player's side. It also replaces unbounded opening-review objectives with a weekly target of two related exercises and improves Training actions on mobile.
+v1.4.16 establishes Stockfish 18 as an auditable analysis baseline. Each game records its engine identity, search configuration, telemetry and process diagnostics; every ply is evaluated from the complete UCI history, and incomplete output can no longer masquerade as a neutral score.
+
+The pipeline keeps one engine process alive per game, retries transient failures, recovers interrupted queue work and serializes Stockfish execution by default for shared-hosting safety.
 
 It keeps Player DNA, Openings Lab and the Training Center as stable capabilities, including the autonomous 500-code ECO reference catalog, Spanish opening and representative variation labels, PGN-first metadata resolution and clearer opening identities without runtime APIs.
 
@@ -719,6 +721,25 @@ Make every personal metric reflect the player's own decisions and keep opening o
 - Dashboard, Player DNA and performance calculations no longer fall back to mixing both players when the side cannot be resolved.
 - Weekly opening work is completed by solving two related exercises instead of reviewing an unbounded set of games.
 - Training actions are blue and easier to tap on mobile.
+
+---
+
+## v1.4.16 — Stockfish 18 analysis confidence
+
+Status: completed in v1.4.16.
+
+### Goal
+
+Make every new engine evaluation traceable, complete and trustworthy before adding AI interpretation.
+
+### Delivered
+
+- Stockfish name, version, build label and search configuration stored per analysis.
+- Full `position startpos moves ...` history sent for each ply while reusing one engine process.
+- Per-ply depth, nodes, time, NPS, hash usage, PV and best-move telemetry.
+- Strict rejection of missing, shallow or incomplete output, with no `0.00` fallback.
+- Transient retries, stale-job recovery, atomic queue claims and serialized engine execution for shared hosting.
+- Compatible hardening for the existing Stockfish exercise-enrichment process.
 
 ---
 

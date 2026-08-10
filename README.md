@@ -14,11 +14,11 @@ play → import → analyze → review → learn → improve
 
 ## Current status
 
-Current stable baseline: **v1.4.15**
+Current stable baseline: **v1.4.16**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
-v1.4.15 makes analysis summaries and derived performance metrics consistently use only the authenticated player's moves. It also turns weekly opening work into a bounded objective of two related exercises and improves the Training action on mobile.
+v1.4.16 records the exact Stockfish 18 engine and search telemetry behind each analysis, evaluates plies from their complete move history and rejects incomplete engine output instead of treating it as `0.00`.
 
 ---
 
@@ -112,6 +112,8 @@ Includes:
 - Server-side Stockfish analysis
 - Configurable Stockfish path
 - Configurable depth / movetime / max halfmoves
+- Persistent UCI process with complete move history per ply
+- Engine identity, search telemetry, retries and failure diagnostics
 - Hosting-compatible approach
 - No external AI API dependency for chess analysis
 
@@ -467,10 +469,10 @@ For an existing installation, apply migrations in order from the current install
 
 Upload a Linux-compatible Stockfish binary to the server.
 
-Known working setup so far:
+Current production setup:
 
 ```text
-Stockfish 16 Linux 64-bit
+Stockfish 18 AVX2 + PGO
 ```
 
 Then configure the path in:
