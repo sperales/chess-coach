@@ -75,6 +75,17 @@ Both should match the release version.
 
 ---
 
+## Mobile Login Checks
+
+- Confirm the Nova background video plays muted and inline when motion is allowed.
+- Confirm the poster remains usable when video playback is unavailable or reduced motion is enabled.
+- Check the form at 360 px and 390 px widths without horizontal overflow.
+- Confirm password autofill fills the complete rounded input area on iOS.
+- Confirm the password visibility control updates its accessible state.
+- Submit an expired or invalid CSRF token and confirm authentication is rejected without exposing technical details.
+
+---
+
 ## Stockfish Analysis Pipeline Checks
 
 Run the dependency-free UCI protocol fixtures:
