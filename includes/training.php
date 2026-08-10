@@ -1618,12 +1618,34 @@ function training_engine_backfill_batch(int $userId, int $limit = 10): array {
   $alternativesRejected = 0;
   $errors = [];
   $runner = null;
+  $evaluationRetries = max(0, min(3, (int)(engine_config()['evaluation_retries'] ?? 1)));
+
+  if (!stockfish_process_lock_acquire()) {
+    return [
+      'ok' => false,
+      'processed' => 0,
+      'updated' => 0,
+      'mismatches' => 0,
+      'alternatives_accepted' => 0,
+      'alternatives_rejected' => 0,
+      'error_count' => 0,
+      'pending_before' => $pendingBefore,
+      'pending_after' => $pendingBefore,
+      'message' => 'Stockfish está ocupado analizando otra tarea. Inténtalo de nuevo más tarde.',
+      'errors' => [],
+    ];
+  }
 
   try {
     $runner = stockfish_runner();
-    foreach ($rows as $row) {
+    foreach ($rows as $rowIndex => $row) {
       try {
-        $evaluation = $runner->evalFen((string)$row['fen']);
+        if ($rowIndex > 0) $runner->newGame();
+        $evaluation = training_stockfish_evaluate_with_retry(
+          $runner,
+          fn(StockfishRunner $engine) => $engine->evalFen((string)$row['fen']),
+          $evaluationRetries
+        );
         $bestmove = strtolower(trim((string)($evaluation['bestmove'] ?? '')));
         $pv = is_array($evaluation['pv'] ?? null) ? $evaluation['pv'] : [];
         if (!training_valid_solution($bestmove) || !$pv || strtolower((string)$pv[0]) !== $bestmove) {
@@ -1635,7 +1657,11 @@ function training_engine_backfill_batch(int $userId, int $limit = 10): array {
         $originalEvaluation = $evaluation;
         $acceptedAlternative = null;
         if ($mismatch) {
-          $originalEvaluation = $runner->evalFenWithSearchMoves((string)$row['fen'], [$storedSolution]);
+          $originalEvaluation = training_stockfish_evaluate_with_retry(
+            $runner,
+            fn(StockfishRunner $engine) => $engine->evalFenWithSearchMoves((string)$row['fen'], [$storedSolution]),
+            $evaluationRetries
+          );
           $originalBestmove = strtolower(trim((string)($originalEvaluation['bestmove'] ?? '')));
           if ($originalBestmove !== $storedSolution) {
             throw new RuntimeException('Stockfish no pudo evaluar la solución original de forma controlada.');
@@ -1692,6 +1718,7 @@ function training_engine_backfill_batch(int $userId, int $limit = 10): array {
     $errors[] = public_error_message($e);
   } finally {
     if ($runner instanceof StockfishRunner) $runner->close();
+    stockfish_process_lock_release();
   }
 
   $pendingAfter = training_engine_backfill_pending_count($userId);
@@ -1710,4 +1737,22 @@ function training_engine_backfill_batch(int $userId, int $limit = 10): array {
       : 'Ejercicios enriquecidos con Stockfish correctamente.',
     'errors' => array_slice($errors, 0, 5),
   ];
+}
+
+function training_stockfish_evaluate_with_retry(
+  StockfishRunner &$runner,
+  callable $evaluation,
+  int $maxRetries
+): array {
+  $attempt = 0;
+  while (true) {
+    try {
+      return $evaluation($runner);
+    } catch (StockfishException $error) {
+      if ($attempt >= $maxRetries) throw $error;
+      $attempt++;
+      $runner->close();
+      $runner = stockfish_runner();
+    }
+  }
 }

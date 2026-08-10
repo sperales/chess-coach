@@ -67,6 +67,27 @@ Both should match the release version.
 
 ---
 
+## Stockfish Analysis Pipeline Checks
+
+Run the dependency-free UCI protocol fixtures:
+
+```powershell
+php tests\stockfish_protocol_test.php
+```
+
+For v1.4.16, after applying `sql/migrations/032_changes_1.4.16.sql`, confirm:
+
+- A new analysis stores the detected Stockfish version and optional configured build label.
+- `engine_search_mode`, `engine_search_value`, Threads and Hash match `config/engine.php`.
+- Completed plies have score type, depth, nodes, time, PV and best-move telemetry.
+- A timeout or killed process records an engine error and does not insert partial move analysis.
+- A transient evaluation failure is retried with a fresh engine process.
+- A stale running job is requeued or failed according to `analysis_max_attempts`.
+- Simultaneous cron/manual requests do not run overlapping Stockfish processes when serialization is enabled.
+- Existing historical analyses remain readable with NULL engine metadata until explicitly reanalyzed.
+
+---
+
 ## Training SAN Notation Checks
 
 Run the dependency-free notation fixtures:

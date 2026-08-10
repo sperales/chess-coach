@@ -76,7 +76,11 @@ function queue_missing_games(int $userId): array {
 }
 
 function queue_retry_errors(int $userId): array {
-  $st = db()->prepare('UPDATE game_analysis SET status="queued", error_message=NULL, current_ply=0, total_ply=0, completed_at=NULL, started_at=NULL, updated_at=NOW() WHERE user_id=? AND status IN ("error","cancelled")');
+  $st = db()->prepare('UPDATE game_analysis
+                       SET status="queued", error_message=NULL, current_ply=0, total_ply=0,
+                           completed_at=NULL, started_at=NULL, engine_exit_code=NULL,
+                           engine_error_code=NULL, engine_error_message=NULL, updated_at=NOW()
+                       WHERE user_id=? AND status IN ("error","cancelled")');
   $st->execute([$userId]);
   return ['ok' => true, 'updated' => $st->rowCount()];
 }
@@ -112,7 +116,8 @@ function queue_total_count(int $userId): int {
 function queue_list(int $userId, int $limit = 50, int $offset = 0): array {
   $limit = max(1, min(200, $limit));
   $offset = max(0, $offset);
-  $sql = 'SELECT a.id AS analysis_id, a.game_id, a.status, a.engine_name, a.engine_depth, a.current_ply, a.total_ply,
+  $sql = 'SELECT a.id AS analysis_id, a.game_id, a.status, a.engine_name, a.engine_version, a.engine_build,
+                 a.engine_depth, a.engine_threads, a.engine_hash_mb, a.current_ply, a.total_ply,
                  a.blunders, a.mistakes, a.inaccuracies, a.attempts, a.error_message, a.created_at, a.started_at, a.completed_at, a.updated_at,
                  g.white_player, g.black_player, g.result_raw, g.user_result, g.played_at, g.event_name, g.site, g.source
           FROM game_analysis a
@@ -126,6 +131,7 @@ function queue_list(int $userId, int $limit = 50, int $offset = 0): array {
 }
 
 function find_next_queued_analysis(?int $userId = null): ?array {
+  queue_recover_stale_analyses($userId);
   $params = [];
   $where = 'a.status="queued"';
   if ($userId !== null) { $where .= ' AND a.user_id=?'; $params[] = $userId; }
@@ -136,25 +142,123 @@ function find_next_queued_analysis(?int $userId = null): ?array {
   return $row ?: null;
 }
 
+function queue_recover_stale_analyses(?int $userId = null): array {
+  $cfg = engine_config();
+  $staleMinutes = max(5, (int)($cfg['queue_stale_minutes'] ?? 30));
+  $maxAttempts = max(1, (int)($cfg['analysis_max_attempts'] ?? 2));
+  $params = [];
+  $scope = '';
+  if ($userId !== null) {
+    $scope = ' AND user_id=?';
+    $params[] = $userId;
+  }
+
+  $failed = db()->prepare('UPDATE game_analysis
+                           SET status="error", completed_at=NOW(), updated_at=NOW(),
+                               error_message="El proceso de Stockfish quedó interrumpido y agotó sus reintentos.",
+                               engine_error_code="stale_worker",
+                               engine_error_message="Stale running analysis exceeded the configured job attempts."
+                           WHERE status="running" AND attempts>=?
+                             AND updated_at<DATE_SUB(NOW(), INTERVAL '.(int)$staleMinutes.' MINUTE)'.$scope);
+  $failed->execute(array_merge([$maxAttempts], $params));
+
+  $requeued = db()->prepare('UPDATE game_analysis
+                             SET status="queued", current_ply=0, completed_at=NULL, started_at=NULL,
+                                 updated_at=NOW(), error_message="Reintentando un análisis interrumpido.",
+                                 engine_error_code="stale_worker",
+                                 engine_error_message="Stale running analysis was automatically requeued."
+                             WHERE status="running" AND attempts<?
+                               AND updated_at<DATE_SUB(NOW(), INTERVAL '.(int)$staleMinutes.' MINUTE)'.$scope);
+  $requeued->execute(array_merge([$maxAttempts], $params));
+
+  return ['requeued' => $requeued->rowCount(), 'failed' => $failed->rowCount()];
+}
+
 function process_next_analysis_job(?int $userId = null): array {
   $next = find_next_queued_analysis($userId);
   if (!$next) return ['ok' => true, 'processed' => false, 'message' => 'No hay análisis pendientes.'];
   return process_analysis_job((int)$next['id'], (int)$next['user_id']);
 }
 
-function stockfish_eval_cached(string $fen, StockfishRunner &$runner, array &$cache, int &$evalCount, int $restartEvery): array {
-  if (!array_key_exists($fen, $cache)) {
-    if ($restartEvery > 0 && $evalCount > 0 && $evalCount % $restartEvery === 0) {
+function stockfish_eval_history_with_retry(
+  array $history,
+  StockfishRunner &$runner,
+  int &$evaluationCount,
+  int $restartEvery,
+  int $maxRetries,
+  int &$retryCount
+): array {
+  if ($restartEvery > 0 && $evaluationCount > 0 && $evaluationCount % $restartEvery === 0) {
+    $runner->close();
+    $runner = stockfish_runner();
+  }
+
+  $attempt = 0;
+  while (true) {
+    try {
+      $evaluation = $runner->evalMoves($history);
+      $evaluationCount++;
+      return $evaluation;
+    } catch (StockfishException $error) {
+      if ($attempt >= $maxRetries) throw $error;
+      $attempt++;
+      $retryCount++;
       $runner->close();
       $runner = stockfish_runner();
     }
-    $cache[$fen] = $runner->evalFen($fen);
-    $evalCount++;
   }
-  return $cache[$fen];
+}
+
+function stockfish_evaluation_metric(array $evaluation, string $key): ?int {
+  return array_key_exists($key, $evaluation) && $evaluation[$key] !== null
+    ? max(0, (int)$evaluation[$key])
+    : null;
+}
+
+function stockfish_evaluation_pv(array $evaluation): ?string {
+  $pv = is_array($evaluation['pv'] ?? null) ? $evaluation['pv'] : [];
+  return $pv ? implode(' ', $pv) : null;
+}
+
+function stockfish_failure_details(Throwable $error, ?StockfishRunner $runner = null): array {
+  $code = 'pipeline_error';
+  $exitCode = $runner?->exitCode();
+  $details = trim($error->getMessage());
+  if ($error instanceof StockfishException) {
+    $code = $error->reason();
+    $exitCode = $error->engineExitCode() ?? $exitCode;
+    $stderr = trim($error->stderrOutput());
+    if ($stderr !== '') $details .= "\n".$stderr;
+  } elseif ($runner instanceof StockfishRunner) {
+    $stderr = trim($runner->stderrOutput());
+    if ($stderr !== '') $details .= "\n".$stderr;
+  }
+  return [
+    'code' => substr($code, 0, 40),
+    'exit_code' => $exitCode,
+    'message' => substr($details, 0, 4000),
+  ];
 }
 
 function process_analysis_job(int $analysisId, int $userId): array {
+  if (!stockfish_process_lock_acquire()) {
+    return [
+      'ok' => true,
+      'processed' => false,
+      'analysis_id' => $analysisId,
+      'status' => 'busy',
+      'message' => 'Ya hay otro proceso de Stockfish en ejecución.',
+    ];
+  }
+
+  try {
+    return process_analysis_job_with_engine($analysisId, $userId);
+  } finally {
+    stockfish_process_lock_release();
+  }
+}
+
+function process_analysis_job_with_engine(int $analysisId, int $userId): array {
   $st = db()->prepare('SELECT a.*, g.pgn, g.white_player, g.black_player, u.username
                        FROM game_analysis a
                        JOIN games g ON g.id=a.game_id
@@ -165,9 +269,24 @@ function process_analysis_job(int $analysisId, int $userId): array {
   if (!$a) return ['ok' => false, 'error' => 'Análisis no encontrado.'];
   if ($a['status'] === 'done') return ['ok' => true, 'processed' => false, 'analysis_id' => $analysisId, 'status' => 'done'];
   if ($a['status'] === 'cancelled') return ['ok' => true, 'processed' => false, 'analysis_id' => $analysisId, 'status' => 'cancelled'];
+  if ($a['status'] !== 'queued') return ['ok' => true, 'processed' => false, 'analysis_id' => $analysisId, 'status' => $a['status']];
 
-  db()->prepare('UPDATE game_analysis SET status="running", attempts=attempts+1, started_at=COALESCE(started_at,NOW()), updated_at=NOW(), error_message=NULL, cancel_requested=0 WHERE id=?')->execute([$analysisId]);
+  $claim = db()->prepare('UPDATE game_analysis
+                          SET status="running", attempts=attempts+1, started_at=NOW(), completed_at=NULL,
+                              current_ply=0, updated_at=NOW(), error_message=NULL, cancel_requested=0,
+                              engine_evaluations=0, engine_retry_count=0, engine_nodes=0, engine_time_ms=0,
+                              engine_exit_code=NULL, engine_error_code=NULL, engine_error_message=NULL
+                          WHERE id=? AND user_id=? AND status="queued"');
+  $claim->execute([$analysisId, $userId]);
+  if ($claim->rowCount() !== 1) {
+    return ['ok' => true, 'processed' => false, 'analysis_id' => $analysisId, 'status' => 'running'];
+  }
 
+  $runner = null;
+  $engineRetryCount = 0;
+  $engineEvaluationCount = 0;
+  $engineNodes = 0;
+  $engineTimeMs = 0;
   try {
     $moves = pgn_to_uci_positions($a['pgn']);
     $cfg = engine_config();
@@ -177,68 +296,148 @@ function process_analysis_job(int $analysisId, int $userId): array {
     db()->prepare('UPDATE game_analysis SET total_ply=?, current_ply=0, updated_at=NOW() WHERE id=?')->execute([$total, $analysisId]);
 
     $rows = [];
-    $ply = 0;
-    $evalCache = [];
-    $evalCount = 0;
+    $history = [];
     $restartEvery = max(0, (int)($cfg['restart_after_evaluations'] ?? 40));
+    $evaluationRetries = max(0, min(3, (int)($cfg['evaluation_retries'] ?? 1)));
     $runner = stockfish_runner();
+    $identity = $runner->identity();
+    $profile = $runner->searchProfile();
+    db()->prepare('UPDATE game_analysis
+                   SET engine_name=?, engine_version=?, engine_build=?, engine_depth=?,
+                       engine_threads=?, engine_hash_mb=?, engine_search_mode=?, engine_search_value=?, updated_at=NOW()
+                   WHERE id=?')->execute([
+      $identity['name'],
+      $identity['version'],
+      $identity['build'],
+      (int)($cfg['depth'] ?? 10),
+      max(1, (int)($cfg['threads'] ?? 1)),
+      max(1, (int)($cfg['hash_mb'] ?? 32)),
+      $profile['mode'],
+      $profile['value'],
+      $analysisId,
+    ]);
+
     try {
-      foreach ($moves as $m) {
-      $cancel = db()->prepare('SELECT cancel_requested FROM game_analysis WHERE id=?');
-      $cancel->execute([$analysisId]);
-      if ((int)$cancel->fetchColumn() === 1) {
-        db()->prepare('UPDATE game_analysis SET status="cancelled", completed_at=NOW(), updated_at=NOW() WHERE id=?')->execute([$analysisId]);
-        return ['ok' => true, 'processed' => true, 'analysis_id' => $analysisId, 'status' => 'cancelled'];
-      }
+      $before = stockfish_eval_history_with_retry(
+        $history,
+        $runner,
+        $engineEvaluationCount,
+        $restartEvery,
+        $evaluationRetries,
+        $engineRetryCount
+      );
+      $engineNodes += (int)($before['nodes'] ?? 0);
+      $engineTimeMs += (int)($before['time_ms'] ?? 0);
 
-      $ply++;
-      $movingSide = strpos($m['fen_before'], ' w ') !== false ? 'w' : 'b';
-      $afterSide = strpos($m['fen_after'], ' w ') !== false ? 'w' : 'b';
+      foreach ($moves as $index => $move) {
+        $cancel = db()->prepare('SELECT cancel_requested FROM game_analysis WHERE id=?');
+        $cancel->execute([$analysisId]);
+        if ((int)$cancel->fetchColumn() === 1) {
+          $runner->close();
+          db()->prepare('UPDATE game_analysis
+                         SET status="cancelled", completed_at=NOW(), updated_at=NOW(),
+                             engine_evaluations=?, engine_retry_count=?, engine_nodes=?, engine_time_ms=?, engine_exit_code=?
+                         WHERE id=?')->execute([
+            $engineEvaluationCount,
+            $engineRetryCount,
+            $engineNodes,
+            $engineTimeMs,
+            $runner->exitCode(),
+            $analysisId,
+          ]);
+          return ['ok' => true, 'processed' => true, 'analysis_id' => $analysisId, 'status' => 'cancelled'];
+        }
 
-      $before = stockfish_eval_cached($m['fen_before'], $runner, $evalCache, $evalCount, $restartEvery);
-      $after = stockfish_eval_cached($m['fen_after'], $runner, $evalCache, $evalCount, $restartEvery);
+        $history[] = (string)$move['uci'];
+        $after = stockfish_eval_history_with_retry(
+          $history,
+          $runner,
+          $engineEvaluationCount,
+          $restartEvery,
+          $evaluationRetries,
+          $engineRetryCount
+        );
+        $engineNodes += (int)($after['nodes'] ?? 0);
+        $engineTimeMs += (int)($after['time_ms'] ?? 0);
 
-      // Stockfish devuelve la evaluación desde la perspectiva del bando que mueve
-      // en cada FEN. Primero la convertimos siempre a perspectiva de blancas.
-      // Después calculamos la pérdida desde la perspectiva del jugador que hizo la jugada.
-      $beforeWhite = normalize_eval_for_side($before, $movingSide);
-      $afterWhite = normalize_eval_for_side($after, $afterSide);
-      $loss = $movingSide === 'w'
-        ? max(0, $beforeWhite - $afterWhite)
-        : max(0, $afterWhite - $beforeWhite);
-      // Evitamos guardar pérdidas absurdas de 99.000 cp en posiciones de mate.
-      // Para clasificar sigue siendo omisión grave, pero el ACPL queda estable.
-      $loss = min($loss, 1000);
-      $class = classify_loss($loss);
-      $rows[] = [
-        'ply' => $ply,
-        'san' => $m['san'],
-        'uci' => $m['uci'],
-        'fen_before' => $m['fen_before'],
-        'fen_after' => $m['fen_after'],
-        'bestmove' => $before['bestmove'],
-        'score_before' => $before['score'],
-        'score_before_type' => $before['score_type'],
-        'score_after' => $after['score'],
-        'score_after_type' => $after['score_type'],
-        'centipawn_loss' => $loss,
-        'classification' => $class
-      ];
-      db()->prepare('UPDATE game_analysis SET current_ply=?, updated_at=NOW() WHERE id=?')->execute([$ply, $analysisId]);
+        $ply = $index + 1;
+        $movingSide = strpos($move['fen_before'], ' w ') !== false ? 'w' : 'b';
+        $afterSide = strpos($move['fen_after'], ' w ') !== false ? 'w' : 'b';
+        $beforeWhite = normalize_eval_for_side($before, $movingSide);
+        $afterWhite = normalize_eval_for_side($after, $afterSide);
+        $loss = $movingSide === 'w'
+          ? max(0, $beforeWhite - $afterWhite)
+          : max(0, $afterWhite - $beforeWhite);
+        $loss = min($loss, 1000);
+        $rows[] = [
+          'ply' => $ply,
+          'san' => $move['san'],
+          'uci' => $move['uci'],
+          'fen_before' => $move['fen_before'],
+          'fen_after' => $move['fen_after'],
+          'bestmove' => $before['bestmove'],
+          'bestmove_after' => $after['bestmove'],
+          'score_before' => $before['score'],
+          'score_before_type' => $before['score_type'],
+          'score_after' => $after['score'],
+          'score_after_type' => $after['score_type'],
+          'depth_before' => stockfish_evaluation_metric($before, 'depth'),
+          'depth_after' => stockfish_evaluation_metric($after, 'depth'),
+          'seldepth_before' => stockfish_evaluation_metric($before, 'seldepth'),
+          'seldepth_after' => stockfish_evaluation_metric($after, 'seldepth'),
+          'nodes_before' => stockfish_evaluation_metric($before, 'nodes'),
+          'nodes_after' => stockfish_evaluation_metric($after, 'nodes'),
+          'time_before_ms' => stockfish_evaluation_metric($before, 'time_ms'),
+          'time_after_ms' => stockfish_evaluation_metric($after, 'time_ms'),
+          'nps_before' => stockfish_evaluation_metric($before, 'nps'),
+          'nps_after' => stockfish_evaluation_metric($after, 'nps'),
+          'hashfull_before' => stockfish_evaluation_metric($before, 'hashfull'),
+          'hashfull_after' => stockfish_evaluation_metric($after, 'hashfull'),
+          'pv_before_uci' => stockfish_evaluation_pv($before),
+          'pv_after_uci' => stockfish_evaluation_pv($after),
+          'centipawn_loss' => $loss,
+          'classification' => classify_loss($loss),
+        ];
+        $before = $after;
+        db()->prepare('UPDATE game_analysis
+                       SET current_ply=?, engine_evaluations=?, engine_retry_count=?,
+                           engine_nodes=?, engine_time_ms=?, updated_at=NOW()
+                       WHERE id=?')->execute([
+          $ply,
+          $engineEvaluationCount,
+          $engineRetryCount,
+          $engineNodes,
+          $engineTimeMs,
+          $analysisId,
+        ]);
       }
     } finally {
       $runner->close();
     }
 
     db()->prepare('DELETE FROM game_move_analysis WHERE analysis_id=?')->execute([$analysisId]);
-    $mi = db()->prepare('INSERT INTO game_move_analysis (analysis_id,ply,san,uci,fen_before,fen_after,bestmove,score_before,score_before_type,score_after,score_after_type,centipawn_loss,classification) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)');
+    $mi = db()->prepare('INSERT INTO game_move_analysis
+      (analysis_id,ply,san,uci,fen_before,fen_after,bestmove,bestmove_after,
+       score_before,score_before_type,score_after,score_after_type,
+       depth_before,depth_after,seldepth_before,seldepth_after,nodes_before,nodes_after,
+       time_before_ms,time_after_ms,nps_before,nps_after,hashfull_before,hashfull_after,
+       pv_before_uci,pv_after_uci,centipawn_loss,classification)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
     $counts = ['blunder' => 0, 'mistake' => 0, 'inaccuracy' => 0];
     $playerSide = player_perspective_side($a, (string)($a['username'] ?? ''));
     foreach ($rows as $r) {
       if (player_perspective_is_own_move((int)$r['ply'], $playerSide) && isset($counts[$r['classification']])) {
         $counts[$r['classification']]++;
       }
-      $mi->execute([$analysisId,$r['ply'],$r['san'],$r['uci'],$r['fen_before'],$r['fen_after'],$r['bestmove'],$r['score_before'],$r['score_before_type'],$r['score_after'],$r['score_after_type'],$r['centipawn_loss'],$r['classification']]);
+      $mi->execute([
+        $analysisId,$r['ply'],$r['san'],$r['uci'],$r['fen_before'],$r['fen_after'],
+        $r['bestmove'],$r['bestmove_after'],$r['score_before'],$r['score_before_type'],
+        $r['score_after'],$r['score_after_type'],$r['depth_before'],$r['depth_after'],
+        $r['seldepth_before'],$r['seldepth_after'],$r['nodes_before'],$r['nodes_after'],
+        $r['time_before_ms'],$r['time_after_ms'],$r['nps_before'],$r['nps_after'],
+        $r['hashfull_before'],$r['hashfull_after'],$r['pv_before_uci'],$r['pv_after_uci'],
+        $r['centipawn_loss'],$r['classification'],
+      ]);
     }
 
     try {
@@ -256,7 +455,24 @@ function process_analysis_job(int $analysisId, int $userId): array {
     } catch (Throwable $trainingError) {
       // Training exercises are derived metadata; generation can be retried from the profile backfill.
     }
-    db()->prepare('UPDATE game_analysis SET status="done", completed_at=NOW(), updated_at=NOW(), blunders=?, mistakes=?, inaccuracies=?, current_ply=?, total_ply=? WHERE id=?')->execute([$counts['blunder'],$counts['mistake'],$counts['inaccuracy'],$total,$total,$analysisId]);
+    db()->prepare('UPDATE game_analysis
+                   SET status="done", completed_at=NOW(), updated_at=NOW(), blunders=?, mistakes=?, inaccuracies=?,
+                       current_ply=?, total_ply=?, engine_evaluations=?, engine_retry_count=?,
+                       engine_nodes=?, engine_time_ms=?, engine_exit_code=?, engine_error_code=NULL,
+                       engine_error_message=NULL
+                   WHERE id=?')->execute([
+      $counts['blunder'],
+      $counts['mistake'],
+      $counts['inaccuracy'],
+      $total,
+      $total,
+      $engineEvaluationCount,
+      $engineRetryCount,
+      $engineNodes,
+      $engineTimeMs,
+      $runner?->exitCode(),
+      $analysisId,
+    ]);
     try {
       player_progress_recalculate($userId, 'analysis_completed');
     } catch (Throwable $progressError) {
@@ -266,7 +482,23 @@ function process_analysis_job(int $analysisId, int $userId): array {
     return ['ok' => true, 'processed' => true, 'analysis_id' => $analysisId, 'status' => 'done', 'summary' => $counts];
   } catch (Throwable $e) {
     $publicMessage = public_error_message($e);
-    db()->prepare('UPDATE game_analysis SET status="error", error_message=?, completed_at=NOW(), updated_at=NOW() WHERE id=?')->execute([$publicMessage, $analysisId]);
+    if ($runner instanceof StockfishRunner) $runner->close();
+    $failure = stockfish_failure_details($e, $runner);
+    db()->prepare('UPDATE game_analysis
+                   SET status="error", error_message=?, completed_at=NOW(), updated_at=NOW(),
+                       engine_evaluations=?, engine_retry_count=?, engine_nodes=?, engine_time_ms=?,
+                       engine_exit_code=?, engine_error_code=?, engine_error_message=?
+                   WHERE id=?')->execute([
+      $publicMessage,
+      $engineEvaluationCount,
+      $engineRetryCount,
+      $engineNodes,
+      $engineTimeMs,
+      $failure['exit_code'],
+      $failure['code'],
+      $failure['message'],
+      $analysisId,
+    ]);
     return ['ok' => false, 'processed' => true, 'error' => $publicMessage, 'analysis_id' => $analysisId, 'status' => 'error'];
   }
 }

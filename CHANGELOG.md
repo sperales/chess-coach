@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## v1.4.16 - Stockfish 18 analysis confidence
+
+### Added
+
+- Persisted Stockfish version, build, search configuration, per-ply telemetry and process diagnostics.
+- Added strict UCI protocol fixtures for zero scores, incomplete output, minimum depth, terminal positions and full move history.
+
+### Changed
+
+- Evaluated every ply with the full `startpos moves` history while keeping one engine process alive per game.
+- Added transient evaluation retries, stale-job recovery, atomic queue claims and shared-hosting process serialization.
+- Hardened exercise enrichment to separate unrelated positions and recover from transient engine failures.
+- Bumped the app version and PWA cache to `1.4.16`.
+
+### Fixed
+
+- Prevented missing or partial Stockfish output from being stored as a valid `0.00` evaluation.
+- Prevented concurrent workers from analyzing the same queued game.
+
+### Database
+
+- SQL migration required: `sql/migrations/032_changes_1.4.16.sql`.
+
 ## v1.4.15 - Player-perspective metrics and bounded opening goals
 
 ### Fixed

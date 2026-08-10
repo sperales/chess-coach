@@ -1,3 +1,40 @@
+# Chess Coach v1.4.16 Update Notes
+
+## Release type
+
+Stockfish 18 analysis confidence and pipeline hardening.
+
+## Changes
+
+- Uses one persistent Stockfish process per game and sends `position startpos moves ...` with the complete UCI history for every evaluated ply.
+- Detects and stores the engine name, version and optional build label used by each analysis.
+- Stores search configuration and telemetry: depth, selective depth, nodes, time, NPS, hash usage, PV, best move, retries and process exit/error details.
+- Rejects missing, shallow or incomplete engine output instead of converting it to a false `0.00` evaluation.
+- Retries transient engine failures with a fresh process and recovers stale queue jobs within configured limits.
+- Serializes Stockfish processes through a MariaDB advisory lock by default to protect shared-hosting memory.
+- Prevents duplicate workers from claiming the same queued analysis atomically.
+- Applies the same strict result validation and process recovery to the exercise-enrichment backfill.
+- Bumps `config/version.php` and the PWA cache to `1.4.16`.
+
+## SQL migration
+
+Apply `sql/migrations/032_changes_1.4.16.sql` once after uploading the release. Existing analyses remain valid but keep empty engine identity and telemetry fields; reanalyze only the games whose Stockfish 18 data you want to refresh.
+
+## Configuration
+
+Keep the production binary path in `config/engine.php`. Add the new settings from `config/engine.example.php`; set `engine_build` to `AVX2+PGO` if you want that local build label stored alongside the automatically detected Stockfish version. Hash remains configurable and is not forced to 64 MB.
+
+## Verification
+
+- Run `php tests/stockfish_protocol_test.php`.
+- Analyze one game and confirm `game_analysis.engine_version` reports `18` and `engine_build` reports the configured build label.
+- Confirm every stored ply has non-NULL score types, depths, nodes, times and best-move telemetry.
+- Temporarily configure an unrealistically short timeout and confirm the analysis ends in `error`, records `engine_error_code`, and does not create partial move rows.
+- Trigger cron and manual processing together and confirm only one Stockfish process performs work.
+- Confirm `config/version.php` and `service-worker.js` both use `1.4.16`.
+
+---
+
 # Chess Coach v1.4.15 Update Notes
 
 ## Release type
