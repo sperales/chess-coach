@@ -6,18 +6,26 @@
 
 - Persisted Stockfish version, build, search configuration, per-ply telemetry and process diagnostics.
 - Added strict UCI protocol fixtures for zero scores, incomplete output, minimum depth, terminal positions and full move history.
+- Added a centralized chess-assessment helper with position-state transitions and pedagogical explanations.
+- Added explicit recent-form, coach-focus and stable-DNA windows with recency weighting.
+- Added per-dimension sample size and confidence to Player DNA.
 
 ### Changed
 
 - Evaluated every ply with the full `startpos moves` history while keeping one engine process alive per game.
 - Added transient evaluation retries, stale-job recovery, atomic queue claims and shared-hosting process serialization.
 - Hardened exercise enrichment to separate unrelated positions and recover from transient engine failures.
+- Unified move classifications consumed by Review, Dashboard and Player DNA.
+- Changed Player DNA from a volatile 10-game identity to a weighted sample of up to 50 games, while retaining 10 games for form and 15 for coach focus.
+- Refreshes Player DNA automatically after successful analysis completion.
 - Bumped the app version and PWA cache to `1.4.16`.
 
 ### Fixed
 
 - Prevented missing or partial Stockfish output from being stored as a valid `0.00` evaluation.
 - Prevented concurrent workers from analyzing the same queued game.
+- Prevented an exact Stockfish best move from being labelled merely good or offered as its own better alternative.
+- Prevented low-sample dimensions from being stated as categorical strengths or weaknesses.
 
 ### Database
 

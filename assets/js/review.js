@@ -375,6 +375,8 @@ function renderMove() {
   document.getElementById('moveSan').textContent = `${m.san || m.uci} es ${m.review_label.toLowerCase()}`;
   document.getElementById('moveEval').textContent = evalText(m);
   document.getElementById('moveExplanation').textContent = m.explanation || '';
+  const bestMoveBtn = document.getElementById('bestMoveBtn');
+  if (bestMoveBtn) bestMoveBtn.hidden = !m.has_relevant_alternative;
   renderTagList(ensureTagList('moveSmartTags', 'moveExplanation', 'move-tags'), filteredMoveTags(m));
   renderBoard(m.fen_after, m.uci);
   renderMoveList();
@@ -497,7 +499,7 @@ function resetMove(){ goMove(0); }
 function showBestMove(){
   const moves = (reviewData && reviewData.moves) || [];
   const m = moves[currentMoveIndex];
-  if (!m) return;
+  if (!m || !m.has_relevant_alternative) return;
   const explanation = document.getElementById('moveExplanation');
   const best = m.bestmove_display || m.bestmove_human || 'no disponible';
   bestMoveHighlight = (m.bestmove || '').toString().toLowerCase();

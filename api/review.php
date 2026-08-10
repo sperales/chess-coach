@@ -2,6 +2,7 @@
 require_once __DIR__.'/../includes/auth.php';
 require_once __DIR__.'/../includes/helpers.php';
 require_once __DIR__.'/../includes/chess_notation.php';
+require_once __DIR__.'/../includes/chess_evaluation.php';
 $u = require_login();
 $userId = (int)$u['id'];
 $gameId = (int)($_GET['id'] ?? 0);
@@ -48,17 +49,6 @@ function review_score_to_white(?int $score, string $type, ?string $fen): array {
   return ['cp' => $side === 'w' ? $raw : -$raw, 'type' => 'cp', 'mate' => null];
 }
 
-function review_move_bucket(array $m): string {
-  $class = $m['classification'] ?? 'ok';
-  $loss = (int)($m['centipawn_loss'] ?? 0);
-  if ($class === 'blunder') return 'blunder';
-  if ($class === 'mistake') return 'mistake';
-  if ($class === 'inaccuracy') return 'inaccuracy';
-  if ($loss <= 10) return 'best';
-  if ($loss <= 25) return 'excellent';
-  return 'good';
-}
-
 function review_bucket_label(string $bucket): string {
   return [
     'best' => 'Mejor',
@@ -68,25 +58,6 @@ function review_bucket_label(string $bucket): string {
     'mistake' => 'Error',
     'blunder' => 'Omisión grave',
   ][$bucket] ?? 'Jugada';
-}
-
-function review_explanation(array $m): string {
-  $bucket = review_move_bucket($m);
-  $loss = (int)($m['centipawn_loss'] ?? 0);
-  $best = trim((string)($m['bestmove'] ?? ''));
-  $bestHuman = trim((string)($m['bestmove_display'] ?? ''));
-  if ($best !== '' && $bestHuman === '') {
-    $bestHuman = chess_uci_display((string)($m['fen_before'] ?? ''), $best);
-  }
-  return match ($bucket) {
-    'best' => 'Muy buena decisión: mantiene prácticamente toda la ventaja disponible en la posición.',
-    'excellent' => 'Jugada excelente: mejora tu posición sin conceder opciones importantes al rival.',
-    'good' => 'Jugada correcta. Puede que hubiera una opción algo más precisa, pero no cambia de forma seria la evaluación.',
-    'inaccuracy' => 'Pequeña imprecisión. No pierde la partida, pero sí deja escapar parte de la iniciativa.',
-    'mistake' => $best ? "Aquí había una alternativa más fuerte: {$bestHuman}. La jugada permite al rival mejorar claramente." : 'Error importante: la evaluación cae bastante y el rival recibe una oportunidad clara.',
-    'blunder' => $best ? "Omisión grave. La mejor alternativa del motor era {$bestHuman}. Esta jugada cambia mucho el equilibrio de la posición." : 'Omisión grave: esta jugada cambia mucho el equilibrio de la posición.',
-    default => "Pérdida estimada: {$loss} centipawns.",
-  };
 }
 
 if ($gameId <= 0) json_response(['ok' => false, 'error' => 'Partida no indicada.']);
@@ -125,18 +96,25 @@ foreach ($moves as $row) {
   $row['eval_after_type'] = $afterEval['type'];
   $row['eval_before_mate'] = $beforeEval['mate'];
   $row['eval_after_mate'] = $afterEval['mate'];
-  $bucket = review_move_bucket($row);
+  $bestmove = trim((string)($row['bestmove'] ?? ''));
+  $row['bestmove_san'] = $bestmove === '' ? null : chess_uci_to_san((string)($row['fen_before'] ?? ''), $bestmove);
+  $row['bestmove_display'] = $bestmove === '' ? '' : ($row['bestmove_san'] ?? chess_uci_fallback($bestmove));
+  $assessment = chess_move_assessment($row);
+  $bucket = $assessment['bucket'];
   if (player_perspective_is_own_move((int)($row['ply'] ?? 0), $userSide)) {
     $counts[$bucket]++;
-    $totalLoss += review_loss_for_summary($row['centipawn_loss']);
+    $totalLoss += review_loss_for_summary((int)$assessment['effective_loss']);
     $summaryMoveCount++;
   }
   $row['review_bucket'] = $bucket;
   $row['review_label'] = review_bucket_label($bucket);
-  $bestmove = trim((string)($row['bestmove'] ?? ''));
-  $row['bestmove_san'] = $bestmove === '' ? null : chess_uci_to_san((string)($row['fen_before'] ?? ''), $bestmove);
-  $row['bestmove_display'] = $bestmove === '' ? '' : ($row['bestmove_san'] ?? chess_uci_fallback($bestmove));
-  $row['explanation'] = review_explanation($row);
+  $row['objective_classification'] = $assessment['objective_classification'];
+  $row['position_before_state'] = $assessment['before_state'];
+  $row['position_after_state'] = $assessment['after_state'];
+  $row['pedagogical_impact'] = $assessment['impact'];
+  $row['matches_bestmove'] = $assessment['matches_bestmove'];
+  $row['has_relevant_alternative'] = $assessment['has_relevant_alternative'];
+  $row['explanation'] = chess_move_explanation($row, $assessment);
   $row['bestmove_human'] = $row['bestmove_display'];
   $row['smart_tags'] = $moveTags[(int)$row['id']] ?? [];
   $reviewMoves[] = $row;

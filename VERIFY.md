@@ -383,3 +383,12 @@ When a deployment is available, verify:
 - Worker endpoint returns valid JSON when called with the configured token.
 - Review page loads for an analyzed game.
 - No stale PWA assets appear after hard refresh or PWA reinstall.
+
+## Chess Logic Checks
+
+```powershell
+php tests\chess_evaluation_test.php
+php tests\player_windows_test.php
+```
+
+Confirm an exact Stockfish best move is shown as `Mejor`, contributes effective CPL 0 and does not display a redundant alternative. After completing an analysis, confirm Player DNA refreshes automatically and labels dimensions with insufficient observations as `Muestra limitada`.

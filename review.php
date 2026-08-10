@@ -91,7 +91,7 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
       </div>
       <div class="review-controls">
         <button class="secondary" onclick="prevMove()">‹ Anterior</button>
-        <button class="secondary" onclick="showBestMove()">Mejor</button>
+        <button class="secondary" id="bestMoveBtn" onclick="showBestMove()">Mejor</button>
         <button class="secondary" onclick="resetMove()">Reiniciar</button>
         <button onclick="nextMove()">Siguiente ›</button>
       </div>

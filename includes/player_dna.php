@@ -2,9 +2,11 @@
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/dashboard.php';
+require_once __DIR__ . '/chess_evaluation.php';
+require_once __DIR__ . '/player_windows.php';
 
 function player_dna_period_size(): int {
-  return 10;
+  return PLAYER_RECENT_FORM_WINDOW;
 }
 
 function player_dna_minimum_games(): int {
@@ -12,7 +14,7 @@ function player_dna_minimum_games(): int {
 }
 
 function player_dna_baseline_limit(): int {
-  return 50;
+  return PLAYER_DNA_STABLE_WINDOW;
 }
 
 function player_dna_clamp(float $value, float $min = 0, float $max = 100): float {
@@ -80,20 +82,25 @@ function player_dna_month_analyzed_games(int $userId, string $monthStart, string
 function player_dna_moves_by_analysis(array $analysisIds): array {
   $analysisIds = array_values(array_unique(array_filter(array_map('intval', $analysisIds))));
   if (!$analysisIds) return [];
-
-  $placeholders = implode(',', array_fill(0, count($analysisIds), '?'));
-  $sql = "SELECT analysis_id, ply, san, uci, fen_after, score_after, score_after_type,
-                 centipawn_loss, classification
-          FROM game_move_analysis
-          WHERE analysis_id IN ($placeholders)
-          ORDER BY analysis_id ASC, ply ASC";
-  $st = db()->prepare($sql);
-  $st->execute($analysisIds);
-
-  $grouped = [];
-  foreach ($st->fetchAll() as $move) {
-    $grouped[(int)$move['analysis_id']][] = $move;
+  static $moveCache = [];
+  $missingIds = array_values(array_filter($analysisIds, fn($analysisId) => !array_key_exists($analysisId, $moveCache)));
+  if ($missingIds) {
+    $placeholders = implode(',', array_fill(0, count($missingIds), '?'));
+    $sql = "SELECT analysis_id, ply, san, uci, bestmove, fen_before, fen_after,
+                   score_before, score_before_type, score_after, score_after_type,
+                   centipawn_loss, classification
+            FROM game_move_analysis
+            WHERE analysis_id IN ($placeholders)
+            ORDER BY analysis_id ASC, ply ASC";
+    $st = db()->prepare($sql);
+    $st->execute($missingIds);
+    foreach ($missingIds as $analysisId) $moveCache[$analysisId] = [];
+    foreach ($st->fetchAll() as $move) {
+      $moveCache[(int)$move['analysis_id']][] = $move;
+    }
   }
+  $grouped = [];
+  foreach ($analysisIds as $analysisId) $grouped[$analysisId] = $moveCache[$analysisId] ?? [];
   return $grouped;
 }
 
@@ -122,7 +129,7 @@ function player_dna_material_total(?string $fen): ?int {
   return $total > 0 ? $total : null;
 }
 
-function player_dna_metric_pack(array $games, string $username): array {
+function player_dna_metric_pack(array $games, string $username, array $weights = []): array {
   $movesByAnalysis = player_dna_moves_by_analysis(array_column($games, 'analysis_id'));
   $summaryPack = dashboard_metrics_for_games($games, $username);
   $itemsByAnalysis = [];
@@ -137,9 +144,12 @@ function player_dna_metric_pack(array $games, string $username): array {
   $volatility = [];
   $materialAfter20 = [];
   $gamesAfterBlunder = ['total' => 0, 'non_losses' => 0];
+  $phaseObservations = ['opening' => 0, 'endgame' => 0];
+  $volatilityObservations = 0;
 
   foreach ($games as $game) {
     $analysisId = (int)$game['analysis_id'];
+    $weight = (float)($weights[$analysisId] ?? 1.0);
     $moves = $movesByAnalysis[$analysisId] ?? [];
     $userSide = dashboard_user_side($game, $username);
     $lastPly = 0;
@@ -149,39 +159,52 @@ function player_dna_metric_pack(array $games, string $username): array {
 
     $previousScore = null;
     $firstOwnBlunder = false;
+    $hasOpeningSample = false;
+    $hasEndgameSample = false;
     foreach ($moves as $move) {
       $ply = (int)($move['ply'] ?? 0);
       if (!player_perspective_is_own_move($ply, $userSide)) continue;
 
-      $class = (string)($move['classification'] ?? 'ok');
-      if ($ply <= 16 && isset($phase['opening'][$class])) $phase['opening'][$class]++;
+      $class = chess_move_assessment($move)['storage_classification'];
+      if ($ply <= 16) $hasOpeningSample = true;
+      if ($ply <= 16 && isset($phase['opening'][$class])) $phase['opening'][$class] += $weight;
       if ($lastPly > 0 && $ply >= max(1, (int)floor($lastPly * 0.72)) && isset($phase['endgame'][$class])) {
-        $phase['endgame'][$class]++;
+        $phase['endgame'][$class] += $weight;
+        $hasEndgameSample = true;
       }
       if ($class === 'blunder') $firstOwnBlunder = true;
 
       $score = player_dna_score_after_for_user($move, $userSide);
       if ($score !== null) {
-        if ($previousScore !== null) $volatility[] = min(800, abs($score - $previousScore));
+        if ($previousScore !== null) {
+          $volatility[] = min(800, abs($score - $previousScore)) * $weight;
+          $volatilityObservations += $weight;
+        }
         $previousScore = $score;
       }
 
       if ($ply >= 20 && $ply <= 24) {
         $material = player_dna_material_total($move['fen_after'] ?? null);
-        if ($material !== null) $materialAfter20[] = $material;
+        if ($material !== null) $materialAfter20[] = ['value' => $material, 'weight' => $weight];
       }
     }
+    if ($hasOpeningSample) $phaseObservations['opening']++;
+    if ($hasEndgameSample) $phaseObservations['endgame']++;
 
     if ($firstOwnBlunder) {
-      $gamesAfterBlunder['total']++;
-      if (($game['user_result'] ?? '') !== 'loss') $gamesAfterBlunder['non_losses']++;
+      $gamesAfterBlunder['total'] += $weight;
+      if (($game['user_result'] ?? '') !== 'loss') $gamesAfterBlunder['non_losses'] += $weight;
     }
   }
 
-  $summary = $summaryPack['summary'];
+  $summary = player_dna_weighted_summary($summaryPack['games'], $weights, $summaryPack['summary']);
   $summary['phase'] = $phase;
-  $summary['avg_volatility'] = $volatility ? round(array_sum($volatility) / count($volatility), 1) : null;
-  $summary['avg_material_after_20'] = $materialAfter20 ? round(array_sum($materialAfter20) / count($materialAfter20), 1) : null;
+  $summary['phase_observations'] = $phaseObservations;
+  $summary['avg_volatility'] = $volatilityObservations > 0 ? round(array_sum($volatility) / $volatilityObservations, 1) : null;
+  $summary['volatility_observations'] = (int)round($volatilityObservations);
+  $materialWeight = array_sum(array_column($materialAfter20, 'weight'));
+  $materialTotal = array_sum(array_map(fn($item) => $item['value'] * $item['weight'], $materialAfter20));
+  $summary['avg_material_after_20'] = $materialWeight > 0 ? round($materialTotal / $materialWeight, 1) : null;
   $summary['resilience_after_blunder'] = $gamesAfterBlunder;
   $summary['items'] = array_values($itemsByAnalysis);
 
@@ -189,6 +212,45 @@ function player_dna_metric_pack(array $games, string $username): array {
     'games' => $summaryPack['games'],
     'summary' => $summary,
   ];
+}
+
+function player_dna_weighted_summary(array $items, array $weights, array $fallback): array {
+  if (!$items || !$weights) return $fallback;
+  $totals = ['weight' => 0.0, 'wins' => 0.0, 'losses' => 0.0, 'draws' => 0.0, 'accuracy' => 0.0, 'acpl' => 0.0,
+    'metric_weight' => 0.0, 'blunders' => 0.0, 'mistakes' => 0.0, 'inaccuracies' => 0.0];
+  foreach ($items as $item) {
+    $weight = (float)($weights[(int)$item['analysis_id']] ?? 1.0);
+    $totals['weight'] += $weight;
+    $result = (string)($item['user_result'] ?? 'unknown');
+    if ($result === 'win') $totals['wins'] += $weight;
+    elseif ($result === 'loss') $totals['losses'] += $weight;
+    elseif ($result === 'draw') $totals['draws'] += $weight;
+    if ($item['accuracy'] !== null && $item['acpl'] !== null) {
+      $totals['accuracy'] += (float)$item['accuracy'] * $weight;
+      $totals['acpl'] += (float)$item['acpl'] * $weight;
+      $totals['metric_weight'] += $weight;
+    }
+    $totals['blunders'] += (int)$item['own_blunders'] * $weight;
+    $totals['mistakes'] += (int)$item['own_mistakes'] * $weight;
+    $totals['inaccuracies'] += (int)$item['own_inaccuracies'] * $weight;
+  }
+  $summary = $fallback;
+  $weight = max(0.001, $totals['weight']);
+  $summary['effective_games'] = round($totals['weight'], 1);
+  $summary['wins'] = round($totals['wins'], 1);
+  $summary['losses'] = round($totals['losses'], 1);
+  $summary['draws'] = round($totals['draws'], 1);
+  $summary['win_rate'] = round($totals['wins'] / $weight * 100);
+  $summary['score_rate'] = round(($totals['wins'] + $totals['draws'] * 0.5) / $weight * 100);
+  $summary['avg_accuracy'] = $totals['metric_weight'] > 0 ? round($totals['accuracy'] / $totals['metric_weight'], 1) : null;
+  $summary['avg_acpl'] = $totals['metric_weight'] > 0 ? round($totals['acpl'] / $totals['metric_weight'], 1) : null;
+  $summary['own_blunders'] = round($totals['blunders'], 1);
+  $summary['own_mistakes'] = round($totals['mistakes'], 1);
+  $summary['own_inaccuracies'] = round($totals['inaccuracies'], 1);
+  $summary['own_blunders_per_game'] = round($totals['blunders'] / $weight, 2);
+  $summary['own_mistakes_per_game'] = round($totals['mistakes'] / $weight, 2);
+  $summary['own_inaccuracies_per_game'] = round($totals['inaccuracies'] / $weight, 2);
+  return $summary;
 }
 
 function player_dna_tag_summary(int $userId, array $analysisIds): array {
@@ -222,9 +284,9 @@ function player_dna_tag_count(array $tags, array $codes): int {
   return $total;
 }
 
-function player_dna_dimension_scores(array $recent, array $previous, array $baselineTags): array {
-  $summary = $recent['summary'];
-  $games = max(1, (int)($summary['games'] ?? 0));
+function player_dna_dimension_scores(array $profile, array $recent, array $previous, array $baselineTags): array {
+  $summary = $profile['summary'];
+  $games = max(1.0, (float)($summary['effective_games'] ?? $summary['games'] ?? 0));
   $accuracy = $summary['avg_accuracy'] === null ? 65.0 : (float)$summary['avg_accuracy'];
   $acpl = $summary['avg_acpl'] === null ? 110.0 : (float)$summary['avg_acpl'];
 
@@ -243,8 +305,9 @@ function player_dna_dimension_scores(array $recent, array $previous, array $base
     ? ((int)$resilience['non_losses'] / max(1, (int)$resilience['total'])) * 100
     : 50;
 
+  $recentAccuracy = $recent['summary']['avg_accuracy'] ?? null;
   $previousAccuracy = $previous['summary']['avg_accuracy'] ?? null;
-  $accuracyDelta = $previousAccuracy === null ? 0 : ((float)$accuracy - (float)$previousAccuracy);
+  $accuracyDelta = $recentAccuracy === null || $previousAccuracy === null ? 0 : ((float)$recentAccuracy - (float)$previousAccuracy);
   $volatility = $summary['avg_volatility'] === null ? 220.0 : (float)$summary['avg_volatility'];
   $accuracyStdProxy = abs($accuracyDelta) + (($summary['own_blunders_per_game'] ?? 0) * 8) + (($summary['own_mistakes_per_game'] ?? 0) * 3);
 
@@ -299,9 +362,27 @@ function player_dna_dimension_scores(array $recent, array $previous, array $base
     ],
   ];
 
+  $dimensionSamples = [
+    'tactical_awareness' => [(int)($summary['games'] ?? 0), 12],
+    'opening_discipline' => [(int)($summary['phase_observations']['opening'] ?? 0), 12],
+    'calculation' => [(int)($summary['metric_games'] ?? $summary['games'] ?? 0), 12],
+    'endgame_skill' => [(int)($summary['phase_observations']['endgame'] ?? 0), 6],
+    'risk_management' => [(int)($summary['games'] ?? 0), 10],
+    'conversion' => [$converted + $lostWinning, 5],
+    'defensive_awareness' => [(int)($summary['games'] ?? 0), 10],
+    'consistency' => [min((int)($recent['summary']['games'] ?? 0), (int)($previous['summary']['games'] ?? 0)), 6],
+    'resilience' => [(int)round((float)($resilience['total'] ?? 0)), 5],
+  ];
+
   foreach ($dimensions as $code => &$dimension) {
     $dimension['code'] = $code;
-    $dimension['level'] = player_dna_score_level((int)$dimension['score']);
+    [$observations, $minimum] = $dimensionSamples[$code];
+    $dimension['observations'] = $observations;
+    $dimension['minimum_observations'] = $minimum;
+    $dimension['confidence'] = player_sample_confidence($observations, $minimum);
+    $dimension['level'] = $dimension['confidence'] === 'limited'
+      ? 'muestra_limitada'
+      : player_dna_score_level((int)$dimension['score']);
   }
   unset($dimension);
 
@@ -318,7 +399,7 @@ function player_dna_score_level(int $score): string {
 function player_dna_top_strengths(array $dimensions, array $tags): array {
   $items = [];
   foreach ($dimensions as $dimension) {
-    if ((int)$dimension['score'] >= 65) {
+    if (($dimension['confidence'] ?? 'sufficient') === 'sufficient' && (int)$dimension['score'] >= 65) {
       $items[] = [
         'code' => $dimension['code'],
         'source' => 'dimension',
@@ -330,6 +411,7 @@ function player_dna_top_strengths(array $dimensions, array $tags): array {
   }
   foreach ($tags as $tag) {
     if (($tag['category'] ?? '') !== 'positive') continue;
+    if ((int)($tag['total'] ?? 0) < 3) continue;
     $items[] = [
       'code' => (string)$tag['tag_code'],
       'source' => 'tag',
@@ -348,17 +430,22 @@ function player_dna_top_weaknesses(array $dimensions, array $tags): array {
   $items = [];
   foreach ($dimensions as $dimension) {
     if ((int)$dimension['score'] < 70) {
+      $limited = ($dimension['confidence'] ?? 'sufficient') !== 'sufficient';
       $items[] = [
         'code' => $dimension['code'],
         'source' => 'dimension',
-        'title' => $dimension['label'],
+        'title' => ($limited ? 'Posible foco: ' : '') . $dimension['label'],
         'score' => (int)$dimension['score'],
-        'evidence' => $dimension['evidence'][0] ?? 'Hay margen de mejora.',
+        'evidence' => $limited
+          ? 'Muestra limitada: ' . (int)($dimension['observations'] ?? 0) . '/' . (int)($dimension['minimum_observations'] ?? 0) . ' observaciones.'
+          : ($dimension['evidence'][0] ?? 'Hay margen de mejora.'),
+        'tentative' => $limited,
       ];
     }
   }
   foreach ($tags as $tag) {
     if (($tag['category'] ?? '') === 'positive') continue;
+    if ((int)($tag['total'] ?? 0) < 3) continue;
     $severityBonus = dashboard_severity_weight((string)($tag['severity'] ?? 'info')) * 4;
     $items[] = [
       'code' => (string)$tag['tag_code'],
@@ -498,7 +585,7 @@ function player_dna_summary_text(array $recentSummary, array $dimensions): strin
   if ($games === 0) return 'Aún no hay partidas analizadas suficientes para construir tu ADN de jugador.';
   $weakness = player_dna_top_weaknesses($dimensions, [])[0]['title'] ?? 'mantener consistencia';
   $strength = player_dna_top_strengths($dimensions, [])[0]['title'] ?? 'tu base actual';
-  return 'En tus últimas ' . $games . ' partidas analizadas, tu punto más sólido es ' . $strength . ' y el foco principal es ' . $weakness . '.';
+  return 'Con una muestra estable de ' . $games . ' partidas analizadas, tu punto más sólido es ' . $strength . ' y el foco principal es ' . $weakness . '.';
 }
 
 function player_dna_build_snapshot(int $userId, string $username, string $trigger = 'manual'): array {
@@ -507,6 +594,10 @@ function player_dna_build_snapshot(int $userId, string $username, string $trigge
   $rawGames = player_dna_latest_analyzed_games($userId, player_dna_baseline_limit());
   $recentRaw = array_slice($rawGames, 0, $periodSize);
   $previousRaw = array_slice($rawGames, $periodSize, $periodSize);
+  $weights = [];
+  foreach ($rawGames as $index => $game) {
+    $weights[(int)$game['analysis_id']] = player_recency_weight($index);
+  }
 
   $monthStart = date('Y-m-01');
   $nextMonthStart = date('Y-m-01', strtotime($monthStart . ' +1 month'));
@@ -514,7 +605,7 @@ function player_dna_build_snapshot(int $userId, string $username, string $trigge
 
   $recent = player_dna_metric_pack($recentRaw, $username);
   $previous = player_dna_metric_pack($previousRaw, $username);
-  $baseline = player_dna_metric_pack($rawGames, $username);
+  $baseline = player_dna_metric_pack($rawGames, $username, $weights);
   $currentMonth = player_dna_metric_pack(player_dna_month_analyzed_games($userId, $monthStart, $nextMonthStart), $username);
   $previousMonth = player_dna_metric_pack(player_dna_month_analyzed_games($userId, $previousMonthStart, $monthStart), $username);
 
@@ -522,10 +613,13 @@ function player_dna_build_snapshot(int $userId, string $username, string $trigge
   $baselineAnalysisIds = array_map('intval', array_column($rawGames, 'analysis_id'));
   $recentTags = player_dna_tag_summary($userId, $recentAnalysisIds);
   $baselineTags = player_dna_tag_summary($userId, $baselineAnalysisIds);
+  $previousTags = player_dna_tag_summary($userId, array_map('intval', array_column($previousRaw, 'analysis_id')));
 
-  $dimensions = player_dna_dimension_scores($recent, $previous, $recentTags);
-  $previousDimensions = player_dna_dimension_scores($previous, ['summary' => dashboard_empty_period_summary()], $baselineTags);
-  $extras = player_dna_improvement_and_problem($dimensions, $dimensions, $previousDimensions);
+  $dimensions = player_dna_dimension_scores($baseline, $recent, $previous, $baselineTags);
+  $recentDimensions = player_dna_dimension_scores($recent, $recent, $previous, $recentTags);
+  $emptyPeriod = ['summary' => dashboard_empty_period_summary()];
+  $previousDimensions = player_dna_dimension_scores($previous, $previous, $emptyPeriod, $previousTags);
+  $extras = player_dna_improvement_and_problem($dimensions, $recentDimensions, $previousDimensions);
 
   $latest = $rawGames[0] ?? null;
   $latestGameDate = $latest ? ($latest['played_at'] ?: ($latest['imported_at'] ? substr((string)$latest['imported_at'], 0, 10) : null)) : null;
@@ -533,7 +627,7 @@ function player_dna_build_snapshot(int $userId, string $username, string $trigge
   return [
     'user_id' => $userId,
     'trigger_source' => $trigger,
-    'period_size' => $periodSize,
+    'period_size' => player_dna_baseline_limit(),
     'minimum_games' => $minimumGames,
     'analyzed_games' => count($rawGames),
     'recent_games' => (int)$recent['summary']['games'],
@@ -546,13 +640,13 @@ function player_dna_build_snapshot(int $userId, string $username, string $trigge
     'latest_game_date' => $latestGameDate,
     'confidence' => player_dna_confidence((int)$recent['summary']['games'], (int)$baseline['summary']['games']),
     'profile_label' => player_dna_profile_label($dimensions),
-    'summary_text' => player_dna_summary_text($recent['summary'], $dimensions),
+    'summary_text' => player_dna_summary_text($baseline['summary'], $dimensions),
     'dimensions' => array_values($dimensions),
-    'style' => player_dna_style_indicators($recent['summary'], $dimensions),
-    'strengths' => player_dna_top_strengths($dimensions, $recentTags),
-    'weaknesses' => player_dna_top_weaknesses($dimensions, $recentTags),
+    'style' => player_dna_style_indicators($baseline['summary'], $dimensions),
+    'strengths' => player_dna_top_strengths($dimensions, $baselineTags),
+    'weaknesses' => player_dna_top_weaknesses($dimensions, $baselineTags),
     'comparisons' => player_dna_comparisons($recent, $previous, $currentMonth, $previousMonth, $baseline),
-    'recommendations' => player_dna_recommendations($dimensions, $recentTags, $extras),
+    'recommendations' => player_dna_recommendations($dimensions, $baselineTags, $extras),
     'overview' => [
       'recent' => $recent['summary'],
       'previous' => $previous['summary'],
@@ -673,11 +767,22 @@ function player_dna_payload(int $userId): array {
     'ok' => true,
     'snapshot' => player_dna_latest_snapshot($userId),
     'period' => [
-      'size' => player_dna_period_size(),
+      'size' => player_dna_baseline_limit(),
+      'recent_size' => player_dna_period_size(),
       'minimum_games' => player_dna_minimum_games(),
       'baseline_limit' => player_dna_baseline_limit(),
     ],
   ];
+}
+
+function player_dna_refresh_after_analysis(int $userId, string $username, int $analysisId): array {
+  $latest = player_dna_latest_snapshot($userId);
+  if (player_snapshot_matches_analysis($latest, $analysisId)) {
+    return ['ok' => true, 'refreshed' => false, 'reason' => 'already_current', 'snapshot' => $latest];
+  }
+  $result = player_dna_recalculate($userId, $username, 'analysis_completed:' . $analysisId);
+  $result['refreshed'] = true;
+  return $result;
 }
 
 function player_dna_recalculate(int $userId, string $username, string $trigger = 'manual'): array {

@@ -303,7 +303,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
       <div class="batch-row">
         <div>
           <strong>ADN del jugador</strong>
-          <p class="muted">Recalcula el perfil de estilo, fortalezas, debilidades y comparativas usando las partidas ya analizadas.</p>
+          <p class="muted">El perfil se actualiza automáticamente al completar un análisis. Usa este proceso solo para forzar una regeneración con las partidas ya analizadas.</p>
           <p class="muted" id="playerDnaStatus">
             <?php if ($latestPlayerDna): ?>
               Último snapshot: <?=e((string)$latestPlayerDna['generated_at'])?> · Confianza: <?=e($playerDnaConfidenceLabels[(string)$latestPlayerDna['confidence']] ?? (string)$latestPlayerDna['confidence'])?> · Partidas: <?= (int)$latestPlayerDna['analyzed_games'] ?>
@@ -312,7 +312,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
             <?php endif; ?>
           </p>
         </div>
-        <button type="button" onclick="runPlayerDnaRecompute()" id="playerDnaBtn">Recalcular ADN</button>
+        <button type="button" onclick="runPlayerDnaRecompute()" id="playerDnaBtn">Regenerar ADN</button>
       </div>
       <p class="muted" id="playerDnaResult"></p>
     </section>
