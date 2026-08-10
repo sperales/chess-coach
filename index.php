@@ -8,6 +8,7 @@ if (current_user()) {
 }
 
 $err = '';
+$assetVersion = (string)filemtime(__DIR__ . '/assets/css/app.css');
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (login_user(trim($_POST['username'] ?? ''), $_POST['password'] ?? '')) {
     header('Location: app.php');
@@ -23,14 +24,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Chess Coach Login</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="assets/css/app.css">
-  <link rel="icon" href="assets/icons/favicon.ico">
+  <link rel="stylesheet" href="assets/css/app.css?v=<?= e($assetVersion) ?>">
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="alternate icon" href="assets/icons/favicon.ico">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 </head>
 <body class="login-page">
   <main class="login-shell" aria-label="Acceso a Chess Coach">
     <section class="login-panel" aria-labelledby="loginTitle">
       <div class="login-brand">
-        <img src="assets/icons/logo-approved.png" alt="Chess Coach">
+        <img src="assets/brand/logo-horizontal-dark.svg" alt="Chess Coach">
         <p>Juega. Aprende. Mejora.</p>
       </div>
 

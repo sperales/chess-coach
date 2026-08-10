@@ -39,6 +39,14 @@ Expected result:
 No syntax errors detected ...
 ```
 
+### Nova Presentation Component
+
+```powershell
+php tests\nova_component_test.php
+```
+
+This verifies state fallback, compact rendering, HTML escaping and internal-only action links.
+
 ### Unix-Like Shells
 
 Run from the repository root:

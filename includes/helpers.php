@@ -129,7 +129,7 @@ function header_bar(string $title='Chess Coach'): void {
   $initial = strtoupper(substr($user['username'] ?? 'U', 0, 1));
   $elo = current_user_elo();
   echo '<header class="topbar">';
-  echo '<a class="brand" href="app.php" aria-label="Ir al inicio"><img class="brand-lockup" src="assets/icons/logo-approved.png" alt="Chess Coach"></a>';
+  echo '<a class="brand" href="app.php" aria-label="Ir al inicio"><img class="brand-lockup" src="assets/brand/logo-horizontal-dark.svg" alt="Chess Coach"></a>';
   echo '<div class="spacer"></div>';
   echo '<div class="user-pill"><div class="avatar">'.e($initial).'</div><div><strong>'.$displayName.'</strong><small>ELO '.$elo.'</small></div></div>';
   if (!empty($user['id'])) echo header_training_streak_html((int)$user['id']);
@@ -168,3 +168,5 @@ function public_error_message(Throwable $e, string $fallback = 'Se ha producido 
 
   return substr($message, 0, 240);
 }
+
+require_once __DIR__ . '/nova.php';

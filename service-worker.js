@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chess-coach-v1.4.16-chess-logic';
+const CACHE_NAME = 'chess-coach-v1.4.16-nova-foundation';
 const ASSETS = [
   './',
   './app.php',
@@ -12,6 +12,12 @@ const ASSETS = [
   './openings-lab.php',
   './player-dna.php',
   './assets/css/app.css',
+  './assets/brand/logo-horizontal-dark.svg',
+  './assets/brand/logo-stacked-dark.svg',
+  './assets/brand/symbol-currentColor.svg',
+  './assets/fonts/poppins-500.woff2',
+  './assets/fonts/poppins-600.woff2',
+  './assets/nova/nova-status-sprite.png',
   './assets/js/app.js',
   './assets/js/dashboard.js',
   './assets/js/games.js',
@@ -71,9 +77,12 @@ const ASSETS = [
   './assets/pieces/Set%203/wq.png',
   './assets/pieces/Set%203/wr.png',
   './assets/icons/favicon.ico',
+  './assets/icons/favicon.svg',
+  './assets/icons/apple-touch-icon.png',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
-  './assets/icons/logo-approved.png',
+  './assets/icons/maskable-192.png',
+  './assets/icons/maskable-512.png',
   './manifest.webmanifest'
 ];
 self.addEventListener('install', event => {
