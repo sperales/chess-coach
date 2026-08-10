@@ -18,7 +18,7 @@ function renderPlayerDna(period) {
   if (hero) hero.textContent = playerDnaSnapshot.summary_text || 'Perfil generado con tus partidas analizadas.';
 
   const periodEl = document.getElementById('playerDnaPeriod');
-  if (periodEl) periodEl.textContent = `${Number(playerDnaSnapshot.recent_games || 0)}/${Number(period.size || playerDnaSnapshot.period_size || 10)} recientes · confianza ${confidenceLabel(playerDnaSnapshot.confidence)}`;
+  if (periodEl) periodEl.textContent = `ADN ${Number(playerDnaSnapshot.analyzed_games || 0)}/${Number(period.size || playerDnaSnapshot.period_size || 50)} · forma reciente ${Number(playerDnaSnapshot.recent_games || 0)}/${Number(period.recent_size || 10)} · confianza ${confidenceLabel(playerDnaSnapshot.confidence)}`;
 
   renderSummary();
   renderDimensions();
@@ -31,20 +31,20 @@ function renderPlayerDna(period) {
 
 function renderPlayerDnaEmpty(period) {
   const hero = document.getElementById('playerDnaHeroText');
-  if (hero) hero.textContent = 'Genera tu primer snapshot desde Ajustes / Mi Perfil para ver tu ADN de jugador.';
+  if (hero) hero.textContent = 'Analiza una partida para generar automáticamente tu primer ADN de jugador.';
 
   const summary = document.getElementById('playerDnaSummary');
   if (summary) {
     summary.innerHTML = `<div class="empty-state">
       <strong>ADN del jugador pendiente</strong>
-      <span>Necesito un snapshot generado para mostrar fortalezas, debilidades, estilo y evolución. El recálculo no analiza con Stockfish: usa datos ya existentes.</span>
+      <span>Necesito una partida analizada para mostrar fortalezas, debilidades, estilo y evolución. También puedes forzar una regeneración desde Ajustes / Mi Perfil.</span>
       <a href="profile.php">Ir a procesos batch</a>
     </div>`;
   }
 
   ['playerDnaDimensions', 'playerDnaStrengths', 'playerDnaWeaknesses', 'playerDnaStyle', 'playerDnaComparisons', 'playerDnaNext'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.innerHTML = `<div class="empty-state compact"><strong>Sin datos todavía</strong><span>Genera el ADN desde perfil. Muestra recomendada: ${Number(period.minimum_games || 6)} partidas analizadas o más.</span></div>`;
+    if (el) el.innerHTML = `<div class="empty-state compact"><strong>Sin datos todavía</strong><span>Analiza una partida o regenera el ADN desde perfil. Muestra recomendada: ${Number(period.minimum_games || 6)} partidas analizadas o más.</span></div>`;
   });
 }
 
@@ -87,7 +87,7 @@ function renderDimensions() {
     return `<article class="player-dna-dimension">
       <div>
         <strong>${escapeHtml(dimension.label || dimension.code || 'Dimensión')}</strong>
-        <span>${escapeHtml(levelLabel(dimension.level))}</span>
+        <span>${escapeHtml(levelLabel(dimension.level))} · muestra ${Number(dimension.observations || 0)}/${Number(dimension.minimum_observations || 0)}</span>
       </div>
       <div class="player-dna-score ${scoreClass}" style="--score:${score}%"><b>${score}</b></div>
       <ul>${(dimension.evidence || []).slice(0, 2).map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
@@ -209,7 +209,8 @@ function levelLabel(value) {
     fortaleza: 'Fortaleza',
     estable: 'Estable',
     mejorable: 'Mejorable',
-    prioridad: 'Prioridad'
+    prioridad: 'Prioridad',
+    muestra_limitada: 'Muestra limitada'
   }[value] || value || '';
 }
 

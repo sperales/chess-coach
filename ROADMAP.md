@@ -38,6 +38,8 @@ v1.4.16 establishes Stockfish 18 as an auditable analysis baseline. Each game re
 
 The pipeline keeps one engine process alive per game, retries transient failures, recovers interrupted queue work and serializes Stockfish execution by default for shared-hosting safety.
 
+Review, Dashboard and Player DNA now share one pedagogical assessment model that combines CPL with position-state transitions. Recent form uses 10 games, coach focus uses 15, recent performance metrics use 20, and the stable Player DNA uses up to 50 games with recency weighting and confidence per dimension. DNA snapshots refresh automatically after completed analyses.
+
 It keeps Player DNA, Openings Lab and the Training Center as stable capabilities, including the autonomous 500-code ECO reference catalog, Spanish opening and representative variation labels, PGN-first metadata resolution and clearer opening identities without runtime APIs.
 
 The Training Experience now exposes a personal plan in Home and Training, keeps the streak and smart repetition system, and tracks a game review as completed only after enough distinct plies have actually been visited. This creates a deterministic data layer that a future AI Coach can interpret without inventing chess facts.

@@ -2,6 +2,8 @@
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/analysis_queue.php';
 require_once __DIR__ . '/training.php';
+require_once __DIR__ . '/chess_evaluation.php';
+require_once __DIR__ . '/player_windows.php';
 
 function dashboard_accuracy_from_acpl(float $acpl): float {
   if ($acpl <= 0) return 100.0;
@@ -52,6 +54,22 @@ function dashboard_analyzed_game_ids(int $userId, int $limit = 20): array {
   return array_map('intval', array_column($st->fetchAll(), 'analysis_id'));
 }
 
+function dashboard_games_for_analysis_ids(int $userId, array $analysisIds): array {
+  $analysisIds = array_values(array_unique(array_filter(array_map('intval', $analysisIds))));
+  if (!$analysisIds) return [];
+  $placeholders = implode(',', array_fill(0, count($analysisIds), '?'));
+  $sql = "SELECT g.id AS game_id, g.white_player, g.black_player, g.result_raw, g.user_result, g.played_at,
+                 g.imported_at, g.event_name, g.site, g.source,
+                 a.id AS analysis_id, a.completed_at, a.created_at AS analysis_created_at
+          FROM game_analysis a
+          JOIN games g ON g.id=a.game_id
+          WHERE a.user_id=? AND a.id IN ($placeholders)
+          ORDER BY COALESCE(g.played_at, DATE(g.imported_at)) DESC, g.id DESC";
+  $st = db()->prepare($sql);
+  $st->execute(array_merge([$userId], $analysisIds));
+  return $st->fetchAll();
+}
+
 function dashboard_metrics_for_games(array $games, string $username): array {
   if (!$games) {
     return [
@@ -60,19 +78,26 @@ function dashboard_metrics_for_games(array $games, string $username): array {
     ];
   }
 
+  static $moveCache = [];
   $analysisIds = array_map('intval', array_column($games, 'analysis_id'));
-  $placeholders = implode(',', array_fill(0, count($analysisIds), '?'));
-  $movesSql = "SELECT analysis_id, ply, centipawn_loss, classification
-               FROM game_move_analysis
-               WHERE analysis_id IN ($placeholders)
-               ORDER BY analysis_id, ply";
-  $st = db()->prepare($movesSql);
-  $st->execute($analysisIds);
-
-  $movesByAnalysis = [];
-  foreach ($st->fetchAll() as $move) {
-    $movesByAnalysis[(int)$move['analysis_id']][] = $move;
+  $missingIds = array_values(array_filter($analysisIds, fn($analysisId) => !array_key_exists($analysisId, $moveCache)));
+  if ($missingIds) {
+    $placeholders = implode(',', array_fill(0, count($missingIds), '?'));
+    $movesSql = "SELECT analysis_id, ply, uci, bestmove, fen_before, fen_after,
+                        score_before, score_before_type, score_after, score_after_type,
+                        centipawn_loss, classification
+                 FROM game_move_analysis
+                 WHERE analysis_id IN ($placeholders)
+                 ORDER BY analysis_id, ply";
+    $st = db()->prepare($movesSql);
+    $st->execute($missingIds);
+    foreach ($missingIds as $analysisId) $moveCache[$analysisId] = [];
+    foreach ($st->fetchAll() as $move) {
+      $moveCache[(int)$move['analysis_id']][] = $move;
+    }
   }
+  $movesByAnalysis = [];
+  foreach ($analysisIds as $analysisId) $movesByAnalysis[$analysisId] = $moveCache[$analysisId] ?? [];
 
   $items = [];
   $totals = [
@@ -101,9 +126,10 @@ function dashboard_metrics_for_games(array $games, string $username): array {
     foreach ($moves as $move) {
       $ply = (int)($move['ply'] ?? 0);
       if (!player_perspective_is_own_move($ply, $side)) continue;
-      $loss = min(max(0, (int)($move['centipawn_loss'] ?? 0)), 1000);
+      $assessment = chess_move_assessment($move);
+      $loss = min(max(0, (int)$assessment['effective_loss']), 1000);
       $ownLosses[] = $loss;
-      $classification = (string)($move['classification'] ?? 'ok');
+      $classification = $assessment['storage_classification'];
       if (isset($ownCounts[$classification])) $ownCounts[$classification]++;
     }
 
@@ -590,47 +616,46 @@ function dashboard_metric_history(int $userId, int $days = 10): array {
 }
 
 function dashboard_payload(int $userId, string $username): array {
-  $periodSize = 10;
-  $minimumGames = 6;
+  $windows = player_metric_windows();
+  $periodSize = $windows['recent_form'];
+  $focusSize = $windows['coach_focus'];
+  $metricSize = $windows['recent_metrics'];
+  $minimumGames = $windows['trend_minimum'];
   $recentGamesRaw = dashboard_latest_analyzed_games($userId, $periodSize);
-  $analysisIds = dashboard_analyzed_game_ids($userId, $periodSize * 2);
-  $recentAnalysisIds = array_slice($analysisIds, 0, $periodSize);
+  $analysisIds = dashboard_analyzed_game_ids($userId, $focusSize * 2);
   $previousAnalysisIds = array_slice($analysisIds, $periodSize, $periodSize);
+  $focusAnalysisIds = array_slice($analysisIds, 0, $focusSize);
+  $previousFocusAnalysisIds = array_slice($analysisIds, $focusSize, $focusSize);
 
   $recent = dashboard_metrics_for_games($recentGamesRaw, $username);
+  $recentMetrics = dashboard_metrics_for_games(dashboard_latest_analyzed_games($userId, $metricSize), $username);
 
-  $previousGamesRaw = [];
-  if ($previousAnalysisIds) {
-    $placeholders = implode(',', array_fill(0, count($previousAnalysisIds), '?'));
-    $sql = "SELECT g.id AS game_id, g.white_player, g.black_player, g.result_raw, g.user_result, g.played_at,
-                   g.imported_at, g.event_name, g.site, g.source,
-                   a.id AS analysis_id, a.completed_at, a.created_at AS analysis_created_at
-            FROM game_analysis a
-            JOIN games g ON g.id=a.game_id
-            WHERE a.user_id=? AND a.id IN ($placeholders)
-            ORDER BY COALESCE(g.played_at, DATE(g.imported_at)) DESC, g.id DESC";
-    $st = db()->prepare($sql);
-    $st->execute(array_merge([$userId], $previousAnalysisIds));
-    $previousGamesRaw = $st->fetchAll();
-  }
+  $previousGamesRaw = dashboard_games_for_analysis_ids($userId, $previousAnalysisIds);
   $previous = dashboard_metrics_for_games($previousGamesRaw, $username);
-  $tags = dashboard_recent_tag_summary($userId, $recentAnalysisIds);
-  $focus = dashboard_training_focus($recent['summary'], $previous['summary'], $tags, $minimumGames);
+  $focusGamesRaw = dashboard_games_for_analysis_ids($userId, $focusAnalysisIds);
+  $previousFocusGamesRaw = dashboard_games_for_analysis_ids($userId, $previousFocusAnalysisIds);
+  $focusMetrics = dashboard_metrics_for_games($focusGamesRaw, $username);
+  $previousFocusMetrics = dashboard_metrics_for_games($previousFocusGamesRaw, $username);
+  $tags = dashboard_recent_tag_summary($userId, $focusAnalysisIds);
+  $focus = dashboard_training_focus($focusMetrics['summary'], $previousFocusMetrics['summary'], $tags, $minimumGames);
 
   return [
     'ok' => true,
     'period' => [
       'type' => 'last_analyzed_games',
       'size' => $periodSize,
+      'focus_size' => $focusSize,
+      'metric_size' => $metricSize,
       'minimum_games_for_trend' => $minimumGames,
       'available_games' => (int)$recent['summary']['games'],
       'has_enough_data' => (int)$recent['summary']['games'] >= $minimumGames,
     ],
     'overview' => $recent['summary'],
+    'recent_metrics' => $recentMetrics['summary'],
     'previous_period' => $previous['summary'],
     'form' => dashboard_form_state($recent['summary'], $previous['summary'], $minimumGames),
     'training_focus' => $focus,
-    'strengths' => dashboard_strengths($recent['summary'], $tags),
+    'strengths' => dashboard_strengths($recentMetrics['summary'], $tags),
     'summary_text' => dashboard_recent_summary_text($recent['summary'], $focus),
     'training_experience' => training_experience_summary($userId),
     'recommended_reviews' => dashboard_recommended_reviews($recent['games'], $tags),

@@ -2,7 +2,7 @@
 
 ## Release type
 
-Stockfish 18 analysis confidence and pipeline hardening.
+Stockfish 18 analysis confidence, chess-logic consistency and pipeline hardening.
 
 ## Changes
 
@@ -14,11 +14,19 @@ Stockfish 18 analysis confidence and pipeline hardening.
 - Serializes Stockfish processes through a MariaDB advisory lock by default to protect shared-hosting memory.
 - Prevents duplicate workers from claiming the same queued analysis atomically.
 - Applies the same strict result validation and process recovery to the exercise-enrichment backfill.
+- Centralizes move assessment so Review, Dashboard and Player DNA use the same CPL thresholds and position-state transitions.
+- Recognizes the exact Stockfish best move as `Mejor`, gives it effective CPL 0 and hides a redundant “better alternative”.
+- Distinguishes objective engine loss from pedagogical impact: preserving a winning position is not treated like reversing an advantage or turning equality into a clear loss.
+- Uses the latest 10 analyzed games for recent form, 15 for coach focus, 20 for recent performance metrics and up to 50 with recency weighting for stable Player DNA.
+- Adds sample size and confidence to every Player DNA dimension; weak evidence is presented as tentative instead of categorical.
+- Refreshes Player DNA automatically after a completed analysis while retaining the profile action as a manual recovery tool.
 - Bumps `config/version.php` and the PWA cache to `1.4.16`.
 
 ## SQL migration
 
 Apply `sql/migrations/032_changes_1.4.16.sql` once after uploading the release. Existing analyses remain valid but keep empty engine identity and telemetry fields; reanalyze only the games whose Stockfish 18 data you want to refresh.
+
+This chess-logic PR adds no further SQL migration. Historical move rows are interpreted through the centralized assessment helper when Review, Dashboard and Player DNA are loaded.
 
 ## Configuration
 
@@ -27,8 +35,13 @@ Keep the production binary path in `config/engine.php`. Add the new settings fro
 ## Verification
 
 - Run `php tests/stockfish_protocol_test.php`.
+- Run `php tests/chess_evaluation_test.php`.
+- Run `php tests/player_windows_test.php`.
 - Analyze one game and confirm `game_analysis.engine_version` reports `18` and `engine_build` reports the configured build label.
 - Confirm every stored ply has non-NULL score types, depths, nodes, times and best-move telemetry.
+- Review a move that exactly matches `bestmove` and confirm it is `Mejor`, has CPL efectivo 0 and does not offer itself as an alternative.
+- Confirm Player DNA shows its stable sample, recent-form sample and per-dimension observation counts.
+- Complete one analysis and confirm a new Player DNA snapshot is generated without opening the ADN page.
 - Temporarily configure an unrealistically short timeout and confirm the analysis ends in `error`, records `engine_error_code`, and does not create partial move rows.
 - Trigger cron and manual processing together and confirm only one Stockfish process performs work.
 - Confirm `config/version.php` and `service-worker.js` both use `1.4.16`.

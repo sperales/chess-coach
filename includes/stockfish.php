@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__.'/config.php';
+require_once __DIR__.'/chess_evaluation.php';
 
 function stockfish_available(): array {
   $cfg = engine_config();
@@ -386,11 +387,4 @@ function normalize_eval_for_side(array $evaluation, string $turn): int {
     throw new UnexpectedValueException('El tipo de evaluación de Stockfish no es válido.');
   }
   return $turn === 'w' ? $centipawns : -$centipawns;
-}
-
-function classify_loss(int $loss): string {
-  if ($loss >= 300) return 'blunder';
-  if ($loss >= 150) return 'mistake';
-  if ($loss >= 70) return 'inaccuracy';
-  return 'ok';
 }

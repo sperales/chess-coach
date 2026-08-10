@@ -369,7 +369,7 @@ function process_analysis_job_with_engine(int $analysisId, int $userId): array {
           ? max(0, $beforeWhite - $afterWhite)
           : max(0, $afterWhite - $beforeWhite);
         $loss = min($loss, 1000);
-        $rows[] = [
+        $row = [
           'ply' => $ply,
           'san' => $move['san'],
           'uci' => $move['uci'],
@@ -396,8 +396,12 @@ function process_analysis_job_with_engine(int $analysisId, int $userId): array {
           'pv_before_uci' => stockfish_evaluation_pv($before),
           'pv_after_uci' => stockfish_evaluation_pv($after),
           'centipawn_loss' => $loss,
-          'classification' => classify_loss($loss),
+          'classification' => 'ok',
         ];
+        $assessment = chess_move_assessment($row);
+        $row['centipawn_loss'] = $assessment['effective_loss'];
+        $row['classification'] = $assessment['storage_classification'];
+        $rows[] = $row;
         $before = $after;
         db()->prepare('UPDATE game_analysis
                        SET current_ply=?, engine_evaluations=?, engine_retry_count=?,
@@ -478,6 +482,13 @@ function process_analysis_job_with_engine(int $analysisId, int $userId): array {
     } catch (Throwable $progressError) {
       // El progreso es derivado y no debe invalidar un analisis Stockfish completado.
       error_log('Player progress recalculation failed: ' . $progressError->getMessage());
+    }
+    try {
+      require_once __DIR__ . '/player_dna.php';
+      player_dna_refresh_after_analysis($userId, (string)($a['username'] ?? ''), $analysisId);
+    } catch (Throwable $dnaError) {
+      // El ADN es derivado y puede regenerarse manualmente desde el perfil.
+      error_log('Player DNA refresh failed: ' . $dnaError->getMessage());
     }
     return ['ok' => true, 'processed' => true, 'analysis_id' => $analysisId, 'status' => 'done', 'summary' => $counts];
   } catch (Throwable $e) {
