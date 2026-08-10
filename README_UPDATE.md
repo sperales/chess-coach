@@ -10,6 +10,7 @@ Stockfish 18 analysis confidence, chess-logic consistency and pipeline hardening
 - Introduces Nova through a lightweight local WebM background with a static poster and reduced-motion fallback.
 - Replaces session language with `entrenamiento de hoy` and keeps the internal training-session model invisible to the player.
 - Preserves native password-manager and iOS autofill behavior while adding explicit labels, accessible password visibility state and login CSRF protection.
+- Keeps iOS autofilled credentials visually consistent with the dark fields and provides stable username/password metadata so password managers recognize an existing login instead of repeatedly proposing an update.
 - Omits password-recovery and other inactive controls until a real workflow exists behind them.
 - Adds the shared Chess Coach visual identity foundation for the upcoming mobile-first redesign.
 - Replaces the legacy header and login logo with the new local SVG wordmark.

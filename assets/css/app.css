@@ -5614,9 +5614,19 @@ body.login-page::before {
 .login-page .login-field input:-webkit-autofill:hover,
 .login-page .login-field input:-webkit-autofill:focus {
   border-radius:7px;
-  -webkit-text-fill-color:#061014;
-  box-shadow:0 0 0 1000px #f4ffb8 inset;
-  caret-color:#061014
+  background-color:#020a0d!important;
+  -webkit-text-fill-color:#fff!important;
+  -webkit-box-shadow:0 0 0 1000px #020a0d inset!important;
+  box-shadow:0 0 0 1000px #020a0d inset!important;
+  caret-color:#fff;
+  transition:background-color 9999s ease-out 0s
+}
+.login-page .login-field input:autofill {
+  border-radius:7px;
+  background:#020a0d!important;
+  color:#fff!important;
+  box-shadow:0 0 0 1000px #020a0d inset!important;
+  caret-color:#fff
 }
 .login-page .login-eye {
   color:#b5c0c5

@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <p class="login-error" id="loginError" role="alert"><?= e($err) ?></p>
         <?php endif; ?>
 
-        <form class="login-form" method="post"<?= $err ? ' aria-describedby="loginError"' : '' ?>>
+        <form class="login-form" method="post" action="index.php" autocomplete="on" accept-charset="UTF-8"<?= $err ? ' aria-describedby="loginError"' : '' ?>>
           <?= csrf_field() ?>
           <div class="login-field">
             <label class="sr-only" for="loginUsername">Usuario</label>
@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <path d="M20 21a8 8 0 0 0-16 0"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
-            <input id="loginUsername" name="username" value="<?= e($username) ?>" placeholder="Usuario" autocomplete="username" required>
+            <input id="loginUsername" name="username" type="text" value="<?= e($username) ?>" placeholder="Usuario" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" required>
           </div>
 
           <div class="login-field">
@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <rect x="5" y="11" width="14" height="10" rx="2"></rect>
               <path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
             </svg>
-            <input id="loginPassword" name="password" type="password" placeholder="Contraseña" autocomplete="current-password" required>
+            <input id="loginPassword" name="password" type="password" placeholder="Contraseña" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go" required>
             <button class="login-eye" id="loginPasswordToggle" type="button" aria-label="Mostrar contraseña" aria-pressed="false" onclick="toggleLoginPassword()">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"></path>
