@@ -24,37 +24,37 @@ $greeting = $hour < 12 ? 'Buenos días' : ($hour < 21 ? 'Buenas tardes' : 'Buena
 <body class="dark-shell">
 <?php header_bar('Chess Coach'); ?>
 <div class="app-area">
-<main class="dashboard trainer-dashboard">
-  <section class="hero-card trainer-hero">
+<main class="dashboard trainer-dashboard home-mobile-first">
+  <section class="home-greeting">
     <div>
-      <h1><?=e($greeting)?>, <?=e($u['username'])?></h1>
+      <h1><?=e($greeting)?>, <?=e($u['username'])?>.</h1>
       <p id="trainerHeroText">Preparando tu panel de entrenamiento...</p>
     </div>
-    <div class="trainer-hero-focus" id="trainerHeroFocus" hidden>
-      <strong id="trainerHeroFocusLabel">Foco</strong>
-    </div>
   </section>
 
-  <section class="metric-grid" id="stats"></section>
-
-  <section class="panel trainer-summary-panel">
-    <div class="trainer-summary-content">
-      <div class="trainer-summary-main">
-        <h2>Resumen de rendimiento</h2>
-        <p class="trainer-summary-text" id="trainerSummary">Cargando resumen...</p>
-        <div class="trainer-mini-kpis" id="trainerMiniKpis"></div>
-      </div>
-      <div class="trainer-accuracy-ring" id="trainerAccuracyRing" aria-label="Accuracy media reciente">
-        <div>
-          <strong id="trainerAccuracyRingValue">--</strong>
-          <span>Accuracy media</span>
-        </div>
-      </div>
-    </div>
+  <section class="panel home-training-panel" id="homeToday">
+    <p class="muted">Nova est&aacute; preparando tu entrenamiento de hoy...</p>
   </section>
 
-  <section class="panel home-training-panel" id="homeTrainingExperience">
-    <p class="muted">Cargando progreso de entrenamiento...</p>
+  <section class="home-progress-panel" id="homeProgress">
+    <div class="home-progress-head">
+      <h2>Tu progreso</h2>
+      <div class="home-progress-period" role="group" aria-label="Periodo de progreso">
+        <button type="button" data-progress-period="7">7 d&iacute;as</button>
+        <button type="button" class="active" data-progress-period="30">30 d&iacute;as</button>
+        <button type="button" data-progress-period="all">Todo</button>
+      </div>
+    </div>
+    <div class="home-progress-metric" role="group" aria-label="M&eacute;trica de progreso">
+      <button type="button" class="active" data-progress-metric="accuracy">Accuracy</button>
+      <button type="button" data-progress-metric="win_rate">Win rate</button>
+      <button type="button" data-progress-metric="performance">Rendimiento</button>
+    </div>
+    <div class="home-progress-chart" id="homeProgressChart">
+      <p class="muted">Cargando evoluci&oacute;n...</p>
+    </div>
+    <section class="metric-grid home-progress-totals" id="stats"></section>
+    <section class="home-progress-focus" id="homeProgressFocus" aria-label="Foco actual"></section>
   </section>
 
   <section class="panel home-dna-panel" id="homePlayerDna">
@@ -105,6 +105,7 @@ $greeting = $hour < 12 ? 'Buenos días' : ($hour < 21 ? 'Buenas tardes' : 'Buena
         <tbody id="rows"></tbody>
       </table>
       <div class="pagination" id="pagination"></div>
+      <a class="home-games-all-mobile" href="games.php">Ver todas las partidas <span aria-hidden="true">›</span></a>
     </section>
 
     <section class="panel insight-card" id="smartTagInsight">
@@ -113,25 +114,12 @@ $greeting = $hour < 12 ? 'Buenos días' : ($hour < 21 ? 'Buenas tardes' : 'Buena
     </section>
   </section>
 
-  <section class="home-review-grid">
-    <section class="panel home-review-card" id="latestReviewCard">
-      <h2>Revisión de última partida</h2>
-      <p class="muted">Cargando última revisión...</p>
-    </section>
-
-    <section class="panel home-review-counts-card" id="latestReviewCountsCard">
-      <h2>Resumen</h2>
-      <p class="muted">Cargando resumen...</p>
-    </section>
-  </section>
-
   <section class="quick-panel-wrap">
     <section class="panel quick-panel">
       <h2>Acciones rápidas</h2>
-      <div class="quick-grid">
+      <div class="quick-grid home-quick-grid">
         <a class="quick-card green" href="import-chesscom.php"><span>⇩</span><strong>Importar partidas</strong><small>PGN o desde Chess.com</small></a>
         <button class="quick-card blue" type="button" onclick="analyzePendingVisible()"><span>▶</span><strong>Analizar pendientes</strong><small>Ver cola de análisis</small></button>
-        <button class="quick-card purple" type="button" onclick="reviewLastGame()"><span>⌕</span><strong>Revisar última partida</strong><small>Ver análisis completo</small></button>
         <a class="quick-card amber" href="training.php"><span>◎</span><strong>Entrenamiento</strong><small>Ejercicios personalizados</small></a>
       </div>
     </section>

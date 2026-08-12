@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chess-coach-v1.4.16-login-mobile-first';
+const CACHE_NAME = 'chess-coach-v1.4.16-home-mobile-first';
 const ASSETS = [
   './',
   './app.php',
@@ -18,6 +18,10 @@ const ASSETS = [
   './assets/fonts/poppins-500.woff2',
   './assets/fonts/poppins-600.woff2',
   './assets/nova/nova-status-sprite.png',
+  './assets/nova/nova-coach-pointing.png',
+  './assets/nova/core-streak/nova-core-off.svg',
+  './assets/nova/core-streak/nova-core-turn-on.svg',
+  './assets/nova/core-streak/nova-core-glow-loop.svg',
   './assets/js/app.js',
   './assets/js/dashboard.js',
   './assets/js/games.js',

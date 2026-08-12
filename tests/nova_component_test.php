@@ -29,4 +29,11 @@ $unsafeAction = nova_coach_html([
 ]);
 assert_nova(!str_contains($unsafeAction, '<a '), 'Nova actions must only accept internal URLs.');
 
+$helperSource = file_get_contents(__DIR__ . '/../includes/helpers.php');
+$layoutSource = file_get_contents(__DIR__ . '/../assets/js/layout.js');
+assert_nova(str_contains($helperSource, 'nova-streak-core'), 'The header must render Nova core streak state.');
+assert_nova(str_contains($helperSource, 'nova-core-off.svg'), 'The header must start from Nova inactive core.');
+assert_nova(str_contains($layoutSource, 'nova-core-turn-on.svg'), 'The streak activation transition must be available.');
+assert_nova(str_contains($layoutSource, 'nova-core-glow-loop.svg'), 'The active streak loop must be available.');
+
 echo "Nova component tests passed.\n";

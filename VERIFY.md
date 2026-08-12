@@ -84,6 +84,23 @@ Both should match the release version.
 - Confirm the password visibility control updates its accessible state.
 - Submit an expired or invalid CSRF token and confirm authentication is rejected without exposing technical details.
 
+## Mobile Home Checks
+
+- Check the Home at 360 px and 390 px without horizontal overflow.
+- Confirm the greeting has no card/background and Nova uses the dedicated pointing image.
+- Confirm the training CTA sits outside Nova's card and links to the first incomplete real goal.
+- Confirm `7 días`, `30 días`, `Todo`, `Accuracy`, `Win rate` and `Rendimiento` redraw the graph with real data.
+- Confirm the 7-day and 30-day charts contain one point per day and overlapping dates keep the same value.
+- Confirm the vertical axis adapts to each metric without exceeding its valid 0-100 or 0-1000 bounds.
+- Confirm the four headline metrics render as a 2x2 mobile grid and a single desktop row.
+- Confirm recent and recommended games render as mobile cards with large actions, while desktop retains the table layout.
+- Confirm each mobile game card shows whether the player used White or Black.
+- Confirm long opponent names are truncated cleanly and `Ver todas las partidas` has no partial underline.
+- Confirm Nova's header core is grey before completing today's goal, animates once on activation and then uses the active loop.
+- Confirm Player DNA and Top 3 focuses are hidden only on mobile.
+- Confirm the latest-game review block and duplicate quick action no longer appear.
+- Run `php tests/dashboard_progress_test.php` and confirm the Home history periods and series pass.
+
 ---
 
 ## Stockfish Analysis Pipeline Checks

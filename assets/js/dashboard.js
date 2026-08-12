@@ -1,7 +1,6 @@
 let games = [];
 let dashboardData = null;
 let playerDnaData = null;
-let latestReviewData = null;
 let playerProgressData = null;
 let trainingPlanData = null;
 let trainingDashboardExtrasLoaded = false;
@@ -11,6 +10,8 @@ let stats = { recent10: { total: 0, wins: 0, losses: 0, draws: 0 }, analysis_acc
 let analyzing = new Set();
 let pollTimer = null;
 let gamesPanelMode = 'latest';
+let homeProgressPeriod = '30';
+let homeProgressMetric = 'accuracy';
 
 async function dashboardGet(url) {
   const response = await fetch(url, { cache: 'no-store' });
@@ -61,32 +62,19 @@ async function load(page = currentPage) {
   dashboardData = trainerPayload;
   playerDnaData = playerDnaPayload;
   await loadTrainingPlanAndProgress();
-  latestReviewData = await loadLatestReview();
-
   render();
   schedulePollingIfNeeded();
 }
 
 function render() {
   renderStats();
+  renderHomeProgressChart();
   renderTrainerDashboard();
   renderHomePlayerDna();
   renderRows();
   renderPagination();
   renderPatterns();
-  renderLatestReview();
   updateGamesPanelTabs();
-}
-
-async function loadLatestReview() {
-  const latestDone = games.find(game => game.analysis_status === 'done');
-  if (!latestDone || !latestDone.id) return null;
-  try {
-    return await dashboardGet(`api/review.php?id=${Number(latestDone.id)}`);
-  } catch (error) {
-    console.warn(error);
-    return null;
-  }
 }
 
 function renderStats() {
@@ -94,35 +82,106 @@ function renderStats() {
   if (!el) return;
   const global = stats.global || { total: 0, wins: 0, losses: 0, draws: 0 };
   const accuracy = stats.analysis_accuracy || { average: null, analyzed_games: 0 };
-  const overview = (dashboardData && dashboardData.overview) || {};
-  const previous = (dashboardData && dashboardData.previous_period) || {};
-  const queue = (dashboardData && dashboardData.queue) || stats.queue || {};
   const winRate = global.total ? Math.round((global.wins || 0) * 100 / global.total) : 0;
-  const pending = typeof queue.pending_total !== 'undefined' ? queue.pending_total : ((stats.queue && typeof stats.queue.pending_total !== 'undefined') ? stats.queue.pending_total : 0);
-  const analyzedGames = Number(accuracy.analyzed_games || 0);
   const avgAccuracy = accuracy.average === null || typeof accuracy.average === 'undefined' ? null : Number(accuracy.average);
-  const trends = dashboardMetricTrends(overview, previous, queue, { winRate, avgAccuracy });
-  const analyzedLast10 = trends.analysesCompleted.reduce((total, value) => total + Number(value || 0), 0);
+  const streak = (dashboardData && dashboardData.training_experience && dashboardData.training_experience.streak) || {};
   const cards = [
-    { kind: 'pulse', label: 'Partidas', value: global.total || 0, detail: 'Ver todas', href: 'games.php', trend: trends.games, trendLabel: trendDeltaLabel(trends.gamesAdded, 'partidas') },
-    { kind: 'target', label: 'Win Rate', value: `${winRate}%`, detail: `${global.wins || 0} victorias / ${global.total || 0}`, trend: trends.winRate, trendLabel: trendDeltaLabel(trendDeltaFromValues(trends.winRate), 'puntos') },
-    { kind: 'star', label: 'Accuracy media', value: avgAccuracy === null ? '--' : `${avgAccuracy.toFixed(1)}%`, detail: analyzedGames ? `${analyzedGames} partidas analizadas` : 'sin partidas analizadas', trend: trends.accuracy, trendLabel: trendDeltaLabel(trendDeltaFromValues(trends.accuracy), 'puntos') },
-    { kind: 'clock', label: 'Pendientes de análisis', value: pending, detail: 'Ver cola', href: 'analysis-pending.php', trend: trends.analysesCompleted, trendLabel: `${analyzedLast10} analizadas en 10 días` }
+    { kind: 'games', label: 'Partidas', value: global.total || 0 },
+    { kind: 'wins', label: 'Win rate', value: `${winRate}%` },
+    { kind: 'accuracy', label: 'Accuracy media', value: avgAccuracy === null ? '--' : `${avgAccuracy.toFixed(1)}%` },
+    { kind: 'streak', label: 'Racha', value: Number(streak.days || 0) }
   ];
-  el.innerHTML = cards.map(card => {
-    const detail = card.href
-      ? `<a href="${escapeAttr(card.href)}">${escapeHtml(card.detail)}</a>`
-      : escapeHtml(card.detail);
-    return `<article class="metric-card ${card.kind}">
-      <div class="metric-card-top">
-        <div class="metric-icon">${iconFor(card.kind)}</div>
-        <div><span>${escapeHtml(card.label)}</span><b>${escapeHtml(card.value)}</b></div>
-      </div>
-      ${sparklineSvg(card.trend || [], card.kind)}
-      <small>${detail}</small>
-      <em class="${trendLabelClass(card.trendLabel)}">${escapeHtml(card.trendLabel || '')}</em>
-    </article>`;
-  }).join('');
+  el.innerHTML = cards.map(card => `<article class="metric-card home-total-card ${card.kind}">
+    <span class="home-total-icon" aria-hidden="true">${homeTotalIcon(card.kind)}</span>
+    <div><span>${escapeHtml(card.label)}</span><b>${escapeHtml(card.value)}</b></div>
+  </article>`).join('');
+}
+
+function homeTotalIcon(kind) {
+  if (kind === 'games') return '♙';
+  if (kind === 'wins') return '◎';
+  if (kind === 'accuracy') return '◉';
+  return 'ϟ';
+}
+
+function renderHomeProgressChart() {
+  const el = document.getElementById('homeProgressChart');
+  if (!el || !dashboardData) return;
+  const periods = dashboardData.progress_history || {};
+  const series = periods[homeProgressPeriod] && periods[homeProgressPeriod][homeProgressMetric];
+  document.querySelectorAll('[data-progress-period]').forEach(button => button.classList.toggle('active', button.dataset.progressPeriod === homeProgressPeriod));
+  document.querySelectorAll('[data-progress-metric]').forEach(button => button.classList.toggle('active', button.dataset.progressMetric === homeProgressMetric));
+  if (!series || !Array.isArray(series.values) || !series.values.some(value => value !== null && value !== '' && Number.isFinite(Number(value)))) {
+    el.innerHTML = '<div class="empty-state compact"><strong>Sin datos para este periodo.</strong><span>La gráfica aparecerá cuando haya actividad suficiente.</span></div>';
+    return;
+  }
+  el.innerHTML = homeProgressSvg(series, homeProgressMetric);
+}
+
+function homeProgressSvg(series, metric) {
+  const sourceLabels = Array.isArray(series.labels) ? series.labels : [];
+  const sourceValues = Array.isArray(series.values) ? series.values : [];
+  const points = sourceValues.map((value, index) => ({ raw: value, value: Number(value), label: sourceLabels[index] || '' })).filter(point => point.raw !== null && point.raw !== '' && Number.isFinite(point.value));
+  const width = 720;
+  const height = 250;
+  const left = 44;
+  const right = 18;
+  const top = 18;
+  const bottom = 38;
+  const chartWidth = width - left - right;
+  const chartHeight = height - top - bottom;
+  const absoluteMax = metric === 'performance' ? 1000 : 100;
+  const values = points.map(point => Math.max(0, Math.min(absoluteMax, point.value)));
+  const observedMin = Math.min(...values);
+  const observedMax = Math.max(...values);
+  const minimumSpan = metric === 'performance' ? 100 : 10;
+  const padding = Math.max(minimumSpan * .25, (observedMax - observedMin) * .2);
+  let minValue = Math.max(0, Math.floor((observedMin - padding) / 5) * 5);
+  let maxValue = Math.min(absoluteMax, Math.ceil((observedMax + padding) / 5) * 5);
+  if (maxValue - minValue < minimumSpan) {
+    const center = (observedMin + observedMax) / 2;
+    minValue = Math.max(0, Math.floor(center - minimumSpan / 2));
+    maxValue = Math.min(absoluteMax, minValue + minimumSpan);
+    minValue = Math.max(0, maxValue - minimumSpan);
+  }
+  if (maxValue <= minValue) maxValue = Math.min(absoluteMax, minValue + minimumSpan);
+  const valueSpan = Math.max(1, maxValue - minValue);
+  const coordinates = points.map((point, index) => ({
+    ...point,
+    x: left + (points.length === 1 ? chartWidth / 2 : (index / (points.length - 1)) * chartWidth),
+    y: top + chartHeight - ((Math.max(minValue, Math.min(maxValue, point.value)) - minValue) / valueSpan) * chartHeight,
+  }));
+  const polyline = coordinates.map(point => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(' ');
+  const ticks = [0, .25, .5, .75, 1];
+  const labelIndexes = [...new Set([0, Math.floor((points.length - 1) / 2), points.length - 1])];
+  const metricLabel = metric === 'accuracy' ? 'Accuracy' : (metric === 'win_rate' ? 'Win rate' : 'Índice de rendimiento');
+  const suffix = metric === 'performance' ? '' : '%';
+  return `<svg class="home-progress-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Evolución de ${escapeAttr(metricLabel)}">
+    ${ticks.map(tick => {
+      const y = top + chartHeight - tick * chartHeight;
+      return `<line x1="${left}" y1="${y}" x2="${width - right}" y2="${y}" class="home-progress-gridline"></line><text x="${left - 8}" y="${y + 4}" text-anchor="end">${Math.round(minValue + tick * valueSpan)}${suffix}</text>`;
+    }).join('')}
+    <polyline points="${polyline}" class="home-progress-line"></polyline>
+    ${coordinates.map(point => `<circle cx="${point.x}" cy="${point.y}" r="4" class="home-progress-point"><title>${escapeHtml(formatProgressDate(point.label))}: ${Number(point.value).toFixed(metric === 'performance' ? 0 : 1)}${suffix}</title></circle>`).join('')}
+    ${labelIndexes.map(index => `<text x="${coordinates[index].x}" y="${height - 10}" text-anchor="${index === 0 ? 'start' : (index === points.length - 1 ? 'end' : 'middle')}">${escapeHtml(formatProgressDate(points[index].label))}</text>`).join('')}
+  </svg>`;
+}
+
+function formatProgressDate(value) {
+  const parts = String(value || '').split('-');
+  if (parts.length !== 3) return String(value || '');
+  return `${Number(parts[2])}/${Number(parts[1])}`;
+}
+
+function initializeHomeProgressControls() {
+  document.querySelectorAll('[data-progress-period]').forEach(button => button.addEventListener('click', () => {
+    homeProgressPeriod = button.dataset.progressPeriod || '30';
+    renderHomeProgressChart();
+  }));
+  document.querySelectorAll('[data-progress-metric]').forEach(button => button.addEventListener('click', () => {
+    homeProgressMetric = button.dataset.progressMetric || 'accuracy';
+    renderHomeProgressChart();
+  }));
 }
 
 function iconFor(kind) {
@@ -213,9 +272,25 @@ function renderTrainerDashboard() {
   renderHero();
   renderFocus();
   renderState();
-  renderSummary();
   renderHomeTrainingExperience();
+  renderHomeProgressFocus();
   renderStrengths();
+}
+
+function renderHomeProgressFocus() {
+  const el = document.getElementById('homeProgressFocus');
+  if (!el) return;
+  const focus = (dashboardData.training_focus || [])[0] || null;
+  const strength = (dashboardData.strengths || [])[0] || null;
+  if (!focus && !strength) {
+    el.innerHTML = '<p class="muted">Analiza más partidas para descubrir tu foco actual.</p><a href="player-dna.php">Ver mi ADN <span aria-hidden="true">›</span></a>';
+    return;
+  }
+  el.innerHTML = `
+    ${focus ? `<div class="home-current-focus"><span>Foco actual</span><strong>${escapeHtml(focus.title || 'Entrenamiento')}</strong><small>↗ ${escapeHtml(focus.description || 'Sigue trabajando este patrón.')}</small></div>` : ''}
+    ${strength ? `<div class="home-current-strength"><span aria-hidden="true">♞</span><div><strong>Fortaleza</strong><small>${escapeHtml(strength.title || 'En progreso')}</small></div></div>` : ''}
+    <a href="player-dna.php">Ver mi ADN <span aria-hidden="true">›</span></a>
+  `;
 }
 
 function renderHero() {
@@ -236,7 +311,7 @@ function renderHero() {
     el.textContent = 'Importa y analiza partidas para construir tu primer plan de entrenamiento.';
     return;
   }
-  el.textContent = 'Cada partida es una oportunidad para mejorar.';
+  el.textContent = 'Nova ha preparado tu entrenamiento.';
 }
 
 function renderFocus() {
@@ -331,46 +406,38 @@ function renderSummary() {
 }
 
 function renderHomeTrainingExperience() {
-  const el = document.getElementById('homeTrainingExperience');
+  const el = document.getElementById('homeToday');
   if (!el) return;
   const experience = (dashboardData && dashboardData.training_experience) || {};
   const settings = experience.settings || {};
   const today = experience.today || {};
-  const week = experience.week || {};
-  const streak = experience.streak || {};
-  const repeatQueue = experience.repeat_queue || {};
-  const progress = playerProgressData || {};
-  const autonomy = progress.autonomy || {};
   const plan = trainingPlanData || { daily: [], weekly: [] };
-  const streakDays = Number(streak.days || 0);
-  const dueCount = Number(repeatQueue.due_count || 0);
+  const dailyGoals = Array.isArray(plan.daily) ? plan.daily : [];
+  const weeklyGoals = Array.isArray(plan.weekly) ? plan.weekly : [];
+  const primaryGoal = dailyGoals.find(goal => goal.status !== 'completed') || weeklyGoals.find(goal => goal.status !== 'completed') || dailyGoals[0] || weeklyGoals[0] || null;
+  const primaryProgress = primaryGoal ? homeTrainingProgressPercent(primaryGoal.progress_percent) : homeTrainingProgressPercent(homeTrainingTodayProgress(today, settings));
+  const primaryTitle = primaryGoal ? (primaryGoal.title || 'Entrenamiento recomendado') : 'Empieza tu entrenamiento de hoy';
+  const primaryAction = primaryGoal && primaryGoal.action_url ? primaryGoal.action_url : 'training.php';
+  const current = primaryGoal ? Number(primaryGoal.current_value || 0) : Number(today.exercises || 0);
+  const target = primaryGoal ? Number(primaryGoal.target_value || 1) : Math.max(1, Number(settings.daily_exercise_goal || 5));
+  const focusName = ((dashboardData.training_focus || [])[0] || {}).title || primaryTitle;
   el.innerHTML = `
-    <div class="home-training-head">
-      <div>
-        <span class="trainer-state-badge ${today.goal_met ? 'good' : (today.trained ? 'improving' : 'stable')}">Plan personal</span>
-        <h2>Tu progreso y próximos pasos</h2>
-        <p>${escapeHtml(homeTrainingMessage(today, streak))}</p>
+    <div class="home-nova-card">
+      <div class="home-nova-card__content">
+        <span class="home-nova-eyebrow">Tu entrenamiento de hoy</span>
+        <h2>${escapeHtml(primaryTitle)}</h2>
+        <strong class="home-nova-count">${current} de ${target}</strong>
+        <div class="home-training-progress" aria-label="Progreso ${primaryProgress}%"><i style="width:${primaryProgress}%"></i></div>
+        <blockquote>Hoy nos centraremos en ${escapeHtml(focusName.toLowerCase())}.</blockquote>
+        <a class="home-nova-dna" href="player-dna.php">Ver mi ADN <span aria-hidden="true">›</span></a>
       </div>
-      <a class="btn secondary small" href="training.php">Entrenar ahora</a>
+      <img class="home-nova-pointing" src="assets/nova/nova-coach-pointing.png" alt="Nova, tu entrenador">
     </div>
-    <div class="home-training-grid">
-      ${homeTrainingCard('racha', 'Racha', `${streakDays} día(s)`, streak.today_goal_met ? 'objetivo cumplido hoy' : 'objetivo diario pendiente', streakDays ? Math.min(100, streakDays * 20) : 0)}
-      ${homeTrainingCard('hoy', 'Hoy', homeTrainingTodayText(today, settings), homeTrainingGoalLabel(settings), homeTrainingProgressPercent(homeTrainingTodayProgress(today, settings)))}
-      ${homeTrainingCard('semana', 'Semana', homeTrainingWeekText(week, settings), 'progreso semanal', homeTrainingProgressPercent(homeTrainingWeekProgress(week, settings)))}
-      ${homeTrainingCard('repasos', 'Para repetir', dueCount ? `${dueCount}` : 'Al día', dueCount === 1 ? 'ejercicio vencido' : (dueCount > 1 ? 'ejercicios vencidos' : 'sin repeticiones vencidas'), dueCount ? 0 : 100)}
-    </div>
-    <div class="training-plan-overview">
-      ${homeProgressMetric('Índice de rendimiento', progress.available ? `${Number(progress.score || 0)}/1000` : '--', progress.available ? 'basado en tus ejercicios y partidas recientes' : 'calculando progreso', progress.available ? Number(progress.score || 0) / 10 : 0)}
-      ${homeProgressMetric('Autonomía', autonomy.score === null || typeof autonomy.score === 'undefined' ? '--' : `${Math.round(Number(autonomy.score))}%`, autonomy.calibrated ? 'resolución sin ayudas' : `calibrando ${Number(autonomy.samples || 0)}/${Number(autonomy.minimum_samples || 6)}`, autonomy.score || 0)}
-    </div>
-    <div class="training-plan-columns">
-      ${homePlanColumn('Hoy', plan.daily || [])}
-      ${homePlanColumn('Esta semana', plan.weekly || [])}
-    </div>
+    <a class="btn home-nova-primary" href="${escapeAttr(primaryAction)}">${today.goal_met ? 'Seguir entrenando' : 'Empezar entrenamiento'} <span aria-hidden="true">›</span></a>
   `;
 }
 
-function homeProgressMetric(label, value, detail, percent) {
+function legacyHomeProgressMetric(label, value, detail, percent) {
   const pct = homeTrainingProgressPercent(percent);
   return `<article class="training-progress-metric"><div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div><p>${escapeHtml(detail)}</p><div class="home-training-progress"><i style="width:${pct}%"></i></div></article>`;
 }
@@ -583,34 +650,79 @@ function renderRows() {
 
 function gameRow(game) {
   const actions = analysisActions(game);
-  return `<tr><td>${rivalCell(game)}</td><td>${resultBadge(game)}</td><td>${escapeHtml(game.event_name || rhythmFromSite(game.site) || '-')}</td><td class="hide-sm">${game.played_at || (game.imported_at || '').slice(0,10) || '-'}</td><td>${actions.meta}</td><td>${actions.primary}</td><td>${actions.secondary}</td></tr>`;
+  return `<tr><td data-label="Rival">${rivalCell(game)}</td><td data-label="Resultado">${resultBadge(game)}</td><td data-label="Ritmo">${escapeHtml(game.event_name || rhythmFromSite(game.site) || '-')}</td><td class="hide-sm" data-label="Fecha">${game.played_at || (game.imported_at || '').slice(0,10) || '-'}</td><td data-label="Análisis">${actions.meta}</td><td class="game-row-action">${actions.primary}</td><td class="game-row-action">${actions.secondary}</td></tr>`;
 }
 
 function recommendedRow(item) {
   return `
     <tr>
-      <td><a class="game-title-link" href="${escapeAttr(item.review_url || '#')}"><strong>${escapeHtml(item.title || 'Partida')}</strong></a><small class="recommend-reason">${escapeHtml(item.reason || '')}</small></td>
-      <td>${resultBadge(item)}</td>
-      <td>${item.accuracy === null || typeof item.accuracy === 'undefined' ? '--' : `${Number(item.accuracy).toFixed(1)}%`}</td>
-      <td class="hide-sm">${escapeHtml(item.played_at || '-')}</td>
-      <td>${analysisMeta(item)}</td>
-      <td><a class="btn small game-review-btn" href="${escapeAttr(item.review_url || '#')}">Revisar</a></td>
-      <td></td>
+      <td data-label="Partida"><a class="game-title-link" href="${escapeAttr(item.review_url || '#')}"><strong>${escapeHtml(item.title || 'Partida')}</strong></a><small class="recommend-reason">${escapeHtml(item.reason || '')}</small></td>
+      <td data-label="Resultado">${resultBadge(item)}</td>
+      <td data-label="Accuracy">${item.accuracy === null || typeof item.accuracy === 'undefined' ? '--' : `${Number(item.accuracy).toFixed(1)}%`}</td>
+      <td class="hide-sm" data-label="Fecha">${escapeHtml(item.played_at || '-')}</td>
+      <td data-label="Análisis">${analysisMeta(item)}</td>
+      <td class="game-row-action"><a class="btn small game-review-btn" href="${escapeAttr(item.review_url || '#')}">Revisar</a></td>
+      <td class="game-row-action"></td>
     </tr>
   `;
 }
 
 function rivalCell(game) {
-  return `<span class="rival-line">${opponentCell(game)}${gameTagsCell(game)}</span>`;
+  const side = gameUserSide(game);
+  const outcome = game.user_result === 'win' ? 'Ganaste' : (game.user_result === 'loss' ? 'Ganó el rival' : (game.user_result === 'draw' ? 'Tablas' : 'Resultado pendiente'));
+  const color = side === 'w' ? 'Blancas' : (side === 'b' ? 'Negras' : 'Color desconocido');
+  const piece = side === 'w' ? 'wp.png' : 'bp.png';
+  return `<span class="rival-line"><span class="home-game-color"><img src="assets/pieces/Set%201/${piece}" alt="${escapeAttr(color)}"></span><span class="home-game-main">${opponentCell(game)}<span class="home-game-outcome ${escapeAttr(game.user_result || '')}">${escapeHtml(outcome)} · ${escapeHtml(color)}</span>${homeGameDetails(game)}${gameTagsCell(game)}</span></span>`;
+}
+
+function homeGameDetails(game) {
+  const recent = ((dashboardData && dashboardData.recent_games) || []).find(item => Number(item.game_id) === Number(game.id));
+  const date = game.played_at || (game.imported_at || '').slice(0, 10);
+  if (!recent) {
+    const status = game.analysis_status === 'done' ? 'Análisis completado' : 'Pendiente de análisis';
+    return `<span class="home-game-details"><span>${escapeHtml(status)}</span><span>${escapeHtml(relativeGameDate(date))}</span></span>`;
+  }
+  const accuracy = recent.accuracy === null || typeof recent.accuracy === 'undefined'
+    ? '--'
+    : `${Number(recent.accuracy).toFixed(1)}%`;
+  const errors = Number(recent.own_blunders || 0) + Number(recent.own_mistakes || 0) + Number(recent.own_inaccuracies || 0);
+  return `<span class="home-game-details"><span>Accuracy ${escapeHtml(accuracy)} · ${escapeHtml(relativeGameDate(date))}</span><span>${errors} ${errors === 1 ? 'error propio' : 'errores propios'}</span></span>`;
+}
+
+function relativeGameDate(value) {
+  if (!value) return 'Sin fecha';
+  const date = new Date(`${String(value).slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Math.round((today.getTime() - date.getTime()) / 86400000);
+  if (days === 0) return 'Hoy';
+  if (days === 1) return 'Ayer';
+  if (days > 1 && days < 7) return `Hace ${days} días`;
+  return String(value).slice(0, 10);
+}
+
+function gameUserSide(game) {
+  const me = (window.CHESS_COACH_USERNAME || '').trim().toLowerCase();
+  if (!me) return '';
+  if ((game.white_player || '').trim().toLowerCase() === me) return 'w';
+  if ((game.black_player || '').trim().toLowerCase() === me) return 'b';
+  return '';
 }
 
 function opponentCell(game) {
   const me = (window.CHESS_COACH_USERNAME || '').toLowerCase();
   const white = (game.white_player || '').toLowerCase();
   const opponent = white === me ? game.black_player : game.white_player;
+  const opponentLabel = truncateOpponentName(opponent || 'Rival');
   const symbol = game.user_result === 'win' ? '★' : game.user_result === 'loss' ? 'x' : '=';
   const cls = game.user_result === 'win' ? 'win-dot' : game.user_result === 'loss' ? 'loss-dot' : 'draw-dot';
-  return `<span class="opponent"><i class="${cls}">${symbol}</i><span>vs. ${escapeHtml(opponent || 'Rival')}</span></span>`;
+  return `<span class="opponent"><i class="${cls}">${symbol}</i><span title="${escapeAttr(opponent || 'Rival')}">vs. ${escapeHtml(opponentLabel)}</span></span>`;
+}
+
+function truncateOpponentName(value) {
+  const characters = Array.from(String(value || ''));
+  return characters.length > 15 ? `${characters.slice(0, 15).join('')}...` : characters.join('');
 }
 
 function rhythmFromSite(site) {
@@ -721,94 +833,6 @@ function renderPatterns() {
   `;
 }
 
-function renderLatestReview() {
-  const card = document.getElementById('latestReviewCard');
-  const countsCard = document.getElementById('latestReviewCountsCard');
-  if (!card || !countsCard) return;
-  if (!latestReviewData || !latestReviewData.ok) {
-    const empty = `
-      <div class="empty-state compact">
-        <strong>Sin revisiones todavía.</strong>
-        <span>Analiza una partida para ver aquí el resumen de la última revisión.</span>
-        <a href="analysis-pending.php">Ver cola de análisis</a>
-      </div>
-    `;
-    card.innerHTML = `<h2>Revisión de última partida</h2>${empty}`;
-    countsCard.innerHTML = `<h2>Resumen</h2>${empty}`;
-    return;
-  }
-  const game = latestReviewData.game || {};
-  const summary = latestReviewData.summary || {};
-  const gameId = Number(game.id || 0);
-  const tags = (summary.smart_tags || []).slice(0, 2);
-  card.innerHTML = `
-    <div class="home-review-head">
-      <div>
-        <h2>Revisión de última partida</h2>
-        <p>${escapeHtml(latestReviewMeta(game))}</p>
-      </div>
-      ${gameId ? `<a class="home-review-piece" href="review.php?id=${gameId}" aria-label="Abrir revisión">♞</a>` : '<span class="home-review-piece">♞</span>'}
-    </div>
-    <div class="home-review-coach">
-      <div class="coach-avatar">♞</div>
-      <div>
-        <h3>${escapeHtml(summary.headline || 'Revisión de partida')}</h3>
-        <p>${escapeHtml(summary.comment || 'Vamos a revisar los momentos importantes.')}</p>
-        ${tags.length ? `<div class="smart-tag-list review-tags">${tags.map(smartTagChip).join('')}</div>` : ''}
-      </div>
-    </div>
-    <div class="review-kpis home-review-kpis">
-      <div><span>Accuracy</span><b>${formatReviewNumber(summary.accuracy)}</b></div>
-      <div><span>ACPL</span><b>${formatReviewNumber(summary.acpl)}</b></div>
-      <div><span>Jugadas</span><b>${Number(summary.moves || 0)}</b></div>
-    </div>
-  `;
-  const labels = [
-    ['best', 'Mejor'],
-    ['excellent', 'Excelente'],
-    ['good', 'Buena'],
-    ['inaccuracy', 'Imprecisión'],
-    ['mistake', 'Error'],
-    ['blunder', 'Omisión grave']
-  ];
-  const counts = summary.counts || {};
-  countsCard.innerHTML = `
-    <h2>Resumen</h2>
-    <div class="review-counts home-review-counts">
-      ${labels.map(([key, label]) => `
-        <div class="review-count ${key}">
-          <span>${homeBucketIcon(key)}</span>
-          <strong>${Number(counts[key] || 0)}</strong>
-          <small>${escapeHtml(label)}</small>
-        </div>
-      `).join('')}
-    </div>
-  `;
-}
-
-function latestReviewMeta(game) {
-  const white = game.white_player || 'Blancas';
-  const black = game.black_player || 'Negras';
-  const result = game.result_raw || '-';
-  const date = game.played_at || (game.imported_at || '').slice(0, 10) || '-';
-  return `${white} vs ${black} • ${result} • ${date}`;
-}
-
-function formatReviewNumber(value) {
-  const num = Number(value);
-  return Number.isFinite(num) ? num.toFixed(1).replace(/\.0$/, '') : '--';
-}
-
-function homeBucketIcon(bucket) {
-  if (bucket === 'best') return '★';
-  if (bucket === 'excellent') return '↑';
-  if (bucket === 'good') return '✓';
-  if (bucket === 'inaccuracy') return '?!';
-  if (bucket === 'mistake') return '?';
-  if (bucket === 'blunder') return '??';
-  return '•';
-}
-
 function setGamesPanelMode(mode) {
   gamesPanelMode = mode === 'recommended' ? 'recommended' : 'latest';
   renderRows();
@@ -882,6 +906,7 @@ function escapeAttr(value) {
 }
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js').catch(() => {});
+initializeHomeProgressControls();
 load(1).catch(error => {
   const hero = document.getElementById('trainerHeroText');
   if (hero) hero.textContent = error.message || 'No se pudo cargar el dashboard.';

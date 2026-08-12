@@ -6,6 +6,18 @@ Stockfish 18 analysis confidence, chess-logic consistency and pipeline hardening
 
 ## Changes
 
+- Rebuilds the Home to match the approved mobile-first reference: plain greeting, Nova training card, external training CTA, progress controls and recent-game cards.
+- Uses Nova's dedicated transparent pointing asset in the daily recommendation instead of a generic sprite state.
+- Adds functional `7 días`, `30 días` and `Todo` filters for Accuracy, Win rate and the existing performance index.
+- Uses one accumulated data point per calendar day, preserving the same value for overlapping dates across period filters.
+- Adapts the chart's vertical scale to the selected data so small but meaningful changes remain visible.
+- Adds exact historical progress series to the Dashboard payload, calculated from analyzed games and stored performance snapshots.
+- Places the four requested totals below the progress chart: games, Win rate, average Accuracy and training streak.
+- Converts recent and recommended game rows into readable mobile cards and shows the player's color with a local white or black piece.
+- Truncates long opponent names after 15 characters and keeps the complete name available as a tooltip.
+- Replaces the header streak symbol with Nova's inactive, activation-transition and active-loop core assets.
+- Hides Player DNA and Top 3 training focuses on mobile while retaining them on desktop.
+- Removes the latest-game review block and its duplicate quick action from Home on mobile and desktop.
 - Redesigns Login from a mobile-first layout and adapts the same composition for desktop instead of maintaining a separate desktop experience.
 - Introduces Nova through a lightweight local WebM background with a static poster and reduced-motion fallback.
 - Replaces session language with `entrenamiento de hoy` and keeps the internal training-session model invisible to the player.
@@ -48,9 +60,17 @@ Keep the production binary path in `config/engine.php`. Add the new settings fro
 
 ## Verification
 
+- Check Home at 360 px and 390 px: Nova's plan, 2x2 metrics and game cards must not produce horizontal overflow.
+- Check Home on desktop: headline metrics remain in one row and the games list remains a table.
+- Confirm the greeting is plain, Nova uses the dedicated pointing image and the CTA sits outside its card.
+- Confirm the period and metric controls redraw the graph with real data.
+- Confirm mobile game cards show whether the player used White or Black.
+- Confirm Player DNA and Top 3 focuses are hidden only on mobile.
+- Confirm the latest-game review block and duplicate quick action no longer appear.
 - Run `php tests/stockfish_protocol_test.php`.
 - Run `php tests/chess_evaluation_test.php`.
 - Run `php tests/player_windows_test.php`.
+- Run `php tests/dashboard_progress_test.php`.
 - Analyze one game and confirm `game_analysis.engine_version` reports `18` and `engine_build` reports the configured build label.
 - Confirm every stored ply has non-NULL score types, depths, nodes, times and best-move telemetry.
 - Review a move that exactly matches `bestmove` and confirm it is `Mejor`, has CPL efectivo 0 and does not offer itself as an alternative.
