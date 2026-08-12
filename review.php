@@ -39,8 +39,8 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
       <span id="reviewMobileWhite">Blancas</span>
       <strong id="reviewMobileResult">-</strong>
       <span id="reviewMobileBlack">Negras</span>
+      <span class="review-mobile-status" id="reviewMobileStatus" title="Revisión pendiente" aria-label="Revisión pendiente">✓</span>
     </div>
-    <div class="review-mobile-current" id="reviewMobileCurrent">Preparando jugada...</div>
   </section>
 
   <section class="hero-card compact review-hero">
@@ -107,6 +107,7 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
       <div class="review-mobile-move-banner">
         <span class="review-mobile-move-icon" id="reviewMobileMoveIcon" aria-hidden="true">•</span>
         <strong id="reviewMobileMoveSan">Jugada</strong>
+        <small id="reviewMobileCurrent">Preparando jugada...</small>
         <span id="reviewMobileMoveLabel">--</span>
         <b id="reviewMobileMoveEval">--</b>
       </div>

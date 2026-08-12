@@ -15,6 +15,7 @@ assert_review_mobile(str_contains($review, 'data-review-expanded="false"'), 'Mob
 preg_match_all('/<button[^>]+data-review-tab="[^"]+"/', $review, $tabButtons);
 assert_review_mobile(count($tabButtons[0]) === 4, 'Mobile review must expose exactly four analysis tabs.');
 assert_review_mobile(str_contains($review, 'review-mobile-feedback'), 'The current move explanation must remain visible below the mobile board.');
+assert_review_mobile(str_contains($review, 'reviewMobileStatus'), 'Mobile review must expose a compact completion status beside the players.');
 assert_review_mobile(str_contains($review, "nova_avatar_html('neutral'"), 'The Coach view must use the shared Nova component.');
 assert_review_mobile(str_contains($review, 'review-mobile-sheet-body'), 'Detailed review panels must render inside the mobile overlay sheet.');
 assert_review_mobile(substr_count($review, 'data-review-sheet-open') === 2, 'Both mobile analysis entry points must reopen the sheet without forcing a tab.');
@@ -22,6 +23,7 @@ assert_review_mobile(str_contains($script, "const allowed = ['summary', 'analysi
 assert_review_mobile(str_contains($script, 'setReviewMobileTab(reviewMobileTab, true)'), 'Reopening the sheet must preserve the last consulted tab.');
 assert_review_mobile(str_contains($script, 'renderReviewMobileSheet()'), 'Changing tabs must render dedicated content inside the mobile sheet.');
 assert_review_mobile(str_contains($script, 'sq-coordinate-rank'), 'Board coordinates must be rendered inside the mobile squares.');
+assert_review_mobile(str_contains($script, "mobileStatus.classList.toggle('completed', completed)"), 'Mobile review completion status must reflect persisted review progress.');
 assert_review_mobile(str_contains($styles, '@media(max-width:760px)'), 'Mobile review rules must be isolated from desktop layouts.');
 assert_review_mobile(str_contains($styles, '.review-shell .topbar'), 'The dedicated mobile app bar must replace the global header only in review.');
 assert_review_mobile(str_contains($styles, 'position:fixed') && str_contains($styles, '.review-mobile-sheet[aria-hidden="false"]'), 'The mobile analysis must open as an overlay sheet.');

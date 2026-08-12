@@ -6833,7 +6833,7 @@ body.login-page::before {
   }
   .review-mobile-players {
     display:grid;
-    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) 24px;
     gap:8px;
     align-items:center;
     color:#c7d0d7;
@@ -6846,14 +6846,33 @@ body.login-page::before {
     white-space:nowrap
   }
   .review-mobile-players span:last-child {
+    text-align:center
+  }
+  .review-mobile-players > span:nth-of-type(2) {
     text-align:right
   }
   .review-mobile-players strong {
     color:#fff
   }
+  .review-mobile-status {
+    display:grid;
+    width:22px;
+    height:22px;
+    place-items:center;
+    border:1px solid #647078;
+    border-radius:50%;
+    color:#7d888f;
+    font-size:13px;
+    font-weight:900
+  }
+  .review-mobile-status.completed {
+    border-color:#79c53b;
+    background:#24451c;
+    color:#a8ee70
+  }
   .review-mobile-current {
     color:#8fda43;
-    font-size:13px;
+    font-size:11px;
     font-weight:800
   }
   .review-page .review-hero,
@@ -6889,9 +6908,11 @@ body.login-page::before {
     flex-direction:column;
     gap:0;
     padding:0 0 14px;
-    border-radius:14px;
-    overflow:hidden;
-    background:#081318
+    border:0;
+    border-radius:0;
+    overflow:visible;
+    background:transparent;
+    box-shadow:none
   }
   .review-board-grid > .panel:first-child > .panel-head,
   .review-board-grid > .panel:first-child > .move-comment-card {
@@ -6900,13 +6921,13 @@ body.login-page::before {
   .review-mobile-move-banner {
     order:1;
     display:grid;
-    grid-template-columns:34px minmax(0,auto) minmax(0,1fr) auto;
+    grid-template-columns:30px auto auto minmax(0,1fr) auto;
     gap:8px;
     align-items:center;
     min-height:48px;
-    padding:8px 10px;
-    border-bottom:1px solid var(--line);
-    background:#0b171c
+    padding:8px 2px;
+    border:0;
+    background:transparent
   }
   .review-mobile-move-icon {
     display:grid;
@@ -6940,6 +6961,12 @@ body.login-page::before {
     color:#f7fafb;
     font-size:18px
   }
+  .review-mobile-move-banner small {
+    color:#9ca8af;
+    font-size:11px;
+    font-weight:700;
+    white-space:nowrap
+  }
   .review-mobile-move-banner > span:nth-of-type(2) {
     overflow:hidden;
     color:#9bdd00;
@@ -6957,6 +6984,8 @@ body.login-page::before {
   }
   .review-board-grid .board-wrap {
     order:2;
+    width:100vw;
+    margin-left:calc(50% - 50vw);
     padding:0
   }
   .review-board-grid .board-coordinate-frame {
@@ -6965,7 +6994,9 @@ body.login-page::before {
   }
   .review-board-grid .chess-board {
     width:100%;
-    border-radius:4px;
+    border-right:0;
+    border-left:0;
+    border-radius:0;
     box-shadow:none
   }
   .review-board-grid .board-rank-labels,

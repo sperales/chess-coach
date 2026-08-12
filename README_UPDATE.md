@@ -9,6 +9,8 @@ Stockfish 18 analysis confidence, chess-logic consistency and pipeline hardening
 - Rebuilds Review as a mobile-first flow with game context, current-move banner, full-width board and large previous/next controls.
 - Keeps the current move explanation directly below the board and opens dedicated `Resumen`, `Análisis`, `Jugadas` and `Coach` views in a bottom sheet above the board.
 - Places rank and file coordinates inside the edge squares on mobile so the board can use the complete available width.
+- Removes the mobile board container frame, expands the board to the viewport edges and combines move number, side, SAN and quality in one compact row.
+- Shows review completion beside the players with a muted pending check and a green completed state driven by saved review progress.
 - Reuses the existing summary, evaluation chart, move list, board navigation and progress tracking without introducing the future variation explorer.
 - Introduces Nova in the mobile Coach view while retaining the established desktop review composition.
 - Rebuilds the Home to match the approved mobile-first reference: plain greeting, Nova training card, external training CTA, progress controls and recent-game cards.

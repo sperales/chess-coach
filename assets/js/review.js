@@ -105,13 +105,22 @@ async function loadReviewProgress() {
 
 function renderReviewProgress() {
   const el = document.getElementById('reviewProgressPill');
-  if (!el || !reviewProgressData) return;
+  if (!reviewProgressData) return;
   const completed = Boolean(reviewProgressData.completed);
   const required = Number(reviewProgressData.required_plies || 0);
   const current = Math.min(Number(reviewProgressData.visited_plies_count || 0), required);
-  el.className = `review-progress-pill${completed ? ' completed' : ''}`;
-  el.textContent = completed ? 'Revisión completada' : `Revisión ${current}/${required}`;
-  el.hidden = false;
+  if (el) {
+    el.className = `review-progress-pill${completed ? ' completed' : ''}`;
+    el.textContent = completed ? 'Revisión completada' : `Revisión ${current}/${required}`;
+    el.hidden = false;
+  }
+  const mobileStatus = document.getElementById('reviewMobileStatus');
+  if (mobileStatus) {
+    const label = completed ? 'Revisión completada' : `Revisión pendiente: ${current}/${required}`;
+    mobileStatus.classList.toggle('completed', completed);
+    mobileStatus.title = label;
+    mobileStatus.setAttribute('aria-label', label);
+  }
 }
 
 function initialReviewMoveIndex(moves) {
@@ -548,7 +557,7 @@ function renderMove() {
   const side = Number(m.ply)%2===1 ? 'Blancas' : 'Negras';
   document.getElementById('moveTitle').textContent = `Movimiento ${moveNo} · ${side}`;
   const mobileCurrent = document.getElementById('reviewMobileCurrent');
-  if (mobileCurrent) mobileCurrent.textContent = `Jugada ${moveNo} · ${side}`;
+  if (mobileCurrent) mobileCurrent.textContent = `(Jugada ${moveNo} · ${side})`;
   const badge = document.getElementById('moveBadge');
   badge.className = `queue-status ${bucketClass(m.review_bucket)}`;
   badge.textContent = `${bucketIcon(m.review_bucket)} ${m.review_label}`;

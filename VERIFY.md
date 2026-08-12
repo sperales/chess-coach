@@ -106,6 +106,9 @@ Both should match the release version.
 - Check Review at 360 px and 390 px without horizontal overflow or a distorted board.
 - Confirm the first view prioritizes game context, current move, board, previous/next controls and the move explanation.
 - Confirm rank and file coordinates are drawn inside the edge squares and do not reduce board width.
+- Confirm the board reaches both viewport edges without horizontal scrolling and no outer panel frame remains around the solving area.
+- Confirm the move number and side appear in the same row as SAN and quality.
+- Confirm the review check beside the players is grey while pending and green once the required plies have been visited.
 - Confirm board orientation and coordinates remain correct when the player used White or Black and after using the mobile flip control.
 - Confirm `Abrir análisis` reveals a bottom sheet above the board with `Resumen`, `Análisis`, `Jugadas` and `Coach` tabs.
 - Confirm the sheet scrolls internally, closes from its handle/backdrop and changing tabs preserves the selected move and board position.
