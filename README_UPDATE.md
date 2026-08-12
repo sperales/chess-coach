@@ -9,9 +9,11 @@ Stockfish 18 analysis confidence, chess-logic consistency and pipeline hardening
 - Rebuilds the Home to match the approved mobile-first reference: plain greeting, Nova training card, external training CTA, progress controls and recent-game cards.
 - Uses Nova's dedicated transparent pointing asset in the daily recommendation instead of a generic sprite state.
 - Adds functional `7 días`, `30 días` and `Todo` filters for Accuracy, Win rate and the existing performance index.
+- Uses one accumulated data point per calendar day, preserving the same value for overlapping dates across period filters.
 - Adds exact historical progress series to the Dashboard payload, calculated from analyzed games and stored performance snapshots.
 - Places the four requested totals below the progress chart: games, Win rate, average Accuracy and training streak.
 - Converts recent and recommended game rows into readable mobile cards and shows the player's color with a local white or black piece.
+- Truncates long opponent names after 15 characters and keeps the complete name available as a tooltip.
 - Hides Player DNA and Top 3 training focuses on mobile while retaining them on desktop.
 - Removes the latest-game review block and its duplicate quick action from Home on mobile and desktop.
 - Redesigns Login from a mobile-first layout and adapts the same composition for desktop instead of maintaining a separate desktop experience.

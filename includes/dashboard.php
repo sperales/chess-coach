@@ -634,27 +634,59 @@ function dashboard_all_analyzed_games(int $userId): array {
   return $st->fetchAll();
 }
 
-function dashboard_progress_points(array $items, ?string $startDate): array {
-  $filtered = array_values(array_filter($items, static function(array $item) use ($startDate): bool {
+function dashboard_all_games_for_progress(int $userId): array {
+  $st = db()->prepare('SELECT id AS game_id, user_result, played_at, imported_at
+                       FROM games
+                       WHERE user_id=?
+                       ORDER BY COALESCE(played_at, DATE(imported_at)) ASC, id ASC');
+  $st->execute([$userId]);
+  return $st->fetchAll();
+}
+
+function dashboard_progress_points(array $items, string $startDate, string $endDate): array {
+  $byDay = [];
+  $accuracySum = 0.0;
+  $accuracyGames = 0;
+  $wins = 0;
+  $resultGames = 0;
+  foreach ($items as $item) {
     $date = substr((string)($item['played_at'] ?: $item['imported_at']), 0, 10);
-    return $date !== '' && ($startDate === null || $date >= $startDate);
-  }));
+    if ($date === '' || $date > $endDate) continue;
+    if ($date < $startDate) {
+      if (in_array(($item['user_result'] ?? ''), ['win', 'loss', 'draw'], true)) {
+        $resultGames++;
+        if (($item['user_result'] ?? '') === 'win') $wins++;
+      }
+      if (($item['accuracy'] ?? null) !== null) {
+        $accuracySum += (float)$item['accuracy'];
+        $accuracyGames++;
+      }
+      continue;
+    }
+    $byDay[$date][] = $item;
+  }
 
   $labels = [];
   $accuracy = [];
   $winRate = [];
-  $accuracySum = 0.0;
-  $accuracyGames = 0;
-  $wins = 0;
-  foreach ($filtered as $index => $item) {
-    $labels[] = substr((string)($item['played_at'] ?: $item['imported_at']), 0, 10);
-    if ($item['accuracy'] !== null) {
-      $accuracySum += (float)$item['accuracy'];
-      $accuracyGames++;
+  $day = new DateTimeImmutable($startDate);
+  $end = new DateTimeImmutable($endDate);
+  while ($day <= $end) {
+    $date = $day->format('Y-m-d');
+    foreach ($byDay[$date] ?? [] as $item) {
+      if (in_array(($item['user_result'] ?? ''), ['win', 'loss', 'draw'], true)) {
+        $resultGames++;
+        if (($item['user_result'] ?? '') === 'win') $wins++;
+      }
+      if (($item['accuracy'] ?? null) !== null) {
+        $accuracySum += (float)$item['accuracy'];
+        $accuracyGames++;
+      }
     }
-    if (($item['user_result'] ?? '') === 'win') $wins++;
+    $labels[] = $date;
     $accuracy[] = $accuracyGames ? round($accuracySum / $accuracyGames, 1) : null;
-    $winRate[] = round(($wins / ($index + 1)) * 100, 1);
+    $winRate[] = $resultGames ? round(($wins / $resultGames) * 100, 1) : null;
+    $day = $day->modify('+1 day');
   }
 
   return [
@@ -664,20 +696,44 @@ function dashboard_progress_points(array $items, ?string $startDate): array {
   ];
 }
 
-function dashboard_performance_points(int $userId, ?string $startDate): array {
+function dashboard_performance_points(int $userId): array {
   $sql = 'SELECT DATE(created_at) AS metric_day, progress_score
           FROM player_progress_snapshots
-          WHERE user_id=?' . ($startDate === null ? '' : ' AND created_at>=?') . '
+          WHERE user_id=?
           ORDER BY created_at ASC, id ASC';
   $st = db()->prepare($sql);
-  $params = [$userId];
-  if ($startDate !== null) $params[] = $startDate . ' 00:00:00';
-  $st->execute($params);
+  $st->execute([$userId]);
   $byDay = [];
   foreach ($st->fetchAll() as $row) {
     $byDay[(string)$row['metric_day']] = (int)$row['progress_score'];
   }
   return ['labels' => array_keys($byDay), 'values' => array_values($byDay)];
+}
+
+function dashboard_daily_snapshot_series(array $labels, array $values, string $startDate, string $endDate): array {
+  $byDay = [];
+  $current = null;
+  foreach ($labels as $index => $date) {
+    $date = substr((string)$date, 0, 10);
+    if ($date === '' || $date > $endDate) continue;
+    if ($date < $startDate) {
+      $current = $values[$index] ?? $current;
+    } else {
+      $byDay[$date] = $values[$index] ?? null;
+    }
+  }
+  $resultLabels = [];
+  $resultValues = [];
+  $day = new DateTimeImmutable($startDate);
+  $end = new DateTimeImmutable($endDate);
+  while ($day <= $end) {
+    $date = $day->format('Y-m-d');
+    if (array_key_exists($date, $byDay)) $current = $byDay[$date];
+    $resultLabels[] = $date;
+    $resultValues[] = $current;
+    $day = $day->modify('+1 day');
+  }
+  return ['labels' => $resultLabels, 'values' => $resultValues];
 }
 
 function dashboard_sample_series(array $labels, array $values, int $maximum = 32): array {
@@ -694,17 +750,31 @@ function dashboard_sample_series(array $labels, array $values, int $maximum = 32
 }
 
 function dashboard_progress_history(int $userId, string $username): array {
-  $games = dashboard_metrics_for_games(dashboard_all_analyzed_games($userId), $username)['games'];
+  $analyzedGames = dashboard_metrics_for_games(dashboard_all_analyzed_games($userId), $username)['games'];
+  $accuracyByGame = [];
+  foreach ($analyzedGames as $game) {
+    $accuracyByGame[(int)$game['game_id']] = $game['accuracy'];
+  }
+  $games = dashboard_all_games_for_progress($userId);
+  foreach ($games as &$game) {
+    $game['accuracy'] = $accuracyByGame[(int)$game['game_id']] ?? null;
+  }
+  unset($game);
   $today = new DateTimeImmutable('today');
+  $firstDate = $games
+    ? substr((string)($games[0]['played_at'] ?: $games[0]['imported_at']), 0, 10)
+    : $today->format('Y-m-d');
   $periods = [
     '7' => $today->modify('-6 days')->format('Y-m-d'),
     '30' => $today->modify('-29 days')->format('Y-m-d'),
-    'all' => null,
+    'all' => $firstDate,
   ];
+  $performancePoints = dashboard_performance_points($userId);
+  $endDate = $today->format('Y-m-d');
   $result = [];
   foreach ($periods as $key => $startDate) {
-    $gamePoints = dashboard_progress_points($games, $startDate);
-    $performance = dashboard_performance_points($userId, $startDate);
+    $gamePoints = dashboard_progress_points($games, $startDate, $endDate);
+    $performance = dashboard_daily_snapshot_series($performancePoints['labels'], $performancePoints['values'], $startDate, $endDate);
     $result[$key] = [
       'accuracy' => dashboard_sample_series($gamePoints['labels'], $gamePoints['accuracy']),
       'win_rate' => dashboard_sample_series($gamePoints['labels'], $gamePoints['win_rate']),

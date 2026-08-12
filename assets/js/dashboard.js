@@ -699,9 +699,15 @@ function opponentCell(game) {
   const me = (window.CHESS_COACH_USERNAME || '').toLowerCase();
   const white = (game.white_player || '').toLowerCase();
   const opponent = white === me ? game.black_player : game.white_player;
+  const opponentLabel = truncateOpponentName(opponent || 'Rival');
   const symbol = game.user_result === 'win' ? '★' : game.user_result === 'loss' ? 'x' : '=';
   const cls = game.user_result === 'win' ? 'win-dot' : game.user_result === 'loss' ? 'loss-dot' : 'draw-dot';
-  return `<span class="opponent"><i class="${cls}">${symbol}</i><span>vs. ${escapeHtml(opponent || 'Rival')}</span></span>`;
+  return `<span class="opponent"><i class="${cls}">${symbol}</i><span title="${escapeAttr(opponent || 'Rival')}">vs. ${escapeHtml(opponentLabel)}</span></span>`;
+}
+
+function truncateOpponentName(value) {
+  const characters = Array.from(String(value || ''));
+  return characters.length > 15 ? `${characters.slice(0, 15).join('')}...` : characters.join('');
 }
 
 function rhythmFromSite(site) {

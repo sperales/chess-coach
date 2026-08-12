@@ -6637,11 +6637,13 @@ body.login-page::before {
     margin-top:8px;
     color:#9bdd00;
     font-family:var(--font-brand);
-    font-weight:500
+    font-weight:500;
+    text-decoration:none
   }
   .home-games-all-mobile span {
     font-size:25px;
-    line-height:1
+    line-height:1;
+    text-decoration:none
   }
   .home-mobile-first .trainer-state-panel {
     order:4
