@@ -1,0 +1,24 @@
+<?php
+
+function assert_training_mobile(bool $condition, string $message): void {
+  if (!$condition) {
+    fwrite(STDERR, $message."\n");
+    exit(1);
+  }
+}
+
+$page = file_get_contents(__DIR__.'/../training.php');
+$script = file_get_contents(__DIR__.'/../assets/js/training.js');
+$styles = file_get_contents(__DIR__.'/../assets/css/app.css');
+
+assert_training_mobile(str_contains($page, 'training-mobile-first'), 'Training must use the mobile-first layout.');
+assert_training_mobile(str_contains($page, 'Nova te propone tu entrenamiento'), 'Training must include Nova recommendation.');
+assert_training_mobile(str_contains($page, 'Entrena por categoría'), 'Training must expose training categories.');
+assert_training_mobile(str_contains($page, 'Continuar entrenamiento'), 'Training must expose resumable exercises.');
+assert_training_mobile(!str_contains($page, 'Empezar sesión'), 'Training must not expose sessions in the UI.');
+assert_training_mobile(str_contains($script, "action: 'disabled'"), 'Scenarios must remain visibly disabled.');
+assert_training_mobile(str_contains($script, 'training-exercise.php?id='), 'Existing exercises must keep direct solver links.');
+assert_training_mobile(str_contains($styles, '.training-nova-proposal'), 'Nova recommendation styles must be present.');
+assert_training_mobile(str_contains($styles, '@media(max-width:680px)'), 'Training must have dedicated mobile layout rules.');
+
+echo "Training mobile layout tests passed.\n";

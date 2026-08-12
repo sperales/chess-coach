@@ -83,6 +83,7 @@ async function loadTraining(page = currentTrainingPage) {
   renderTrainingTypeOptions();
   renderTrainingStats();
   renderTrainingExperience();
+  renderTrainingLanding();
   renderTrainingExercises();
   renderTrainingPagination();
   renderTrainingStatus();
@@ -145,6 +146,93 @@ function renderTrainingStats() {
     ['clock', 'Tiempo medio', avgSeconds === null ? '--' : `${avgSeconds}s`, 'por intento'],
   ];
   el.innerHTML = cards.map(card => `<article class="metric-card compact-metric-card ${card[0]}"><div class="metric-icon">${trainingIconFor(card[0])}</div><span>${escapeHtml(card[1])}</span><b>${escapeHtml(card[2])}</b><small>${escapeHtml(card[3])}</small></article>`).join('');
+}
+
+function renderTrainingLanding() {
+  renderTrainingNovaProposal();
+  renderTrainingCategories();
+}
+
+function renderTrainingNovaProposal() {
+  const metrics = document.getElementById('trainingNovaMetrics');
+  if (!metrics) return;
+  const pending = Number(trainingStats.pending || 0);
+  const finalTypes = ['defend_position', 'convert_advantage'];
+  const finalCount = finalTypes.reduce((total, type) => total + Number(trainingTypeCounts[type]?.pending || 0), 0);
+  const flashCount = Math.min(6, pending);
+  const estimatedMinutes = Math.max(5, Math.round(flashCount * 1.5));
+  const focus = trainingPlan?.daily?.find(goal => goal.status !== 'completed') || null;
+  const focusTitle = (focus?.title || trainingTypes.recommended?.label || 'tu foco principal').replace(/^Entrenar\s+/i, '');
+  const message = document.getElementById('trainingNovaMessage');
+  const speech = document.getElementById('trainingNovaSpeech');
+  const start = document.getElementById('trainingNovaStart');
+  if (message) message.textContent = `He analizado tu progreso y he preparado un entrenamiento centrado en ${focusTitle.toLowerCase()}.`;
+  if (speech) speech.textContent = `¡Vamos a trabajar ${focusTitle.toLowerCase()}!`;
+  metrics.innerHTML = [
+    ['ϟ', flashCount, 'Flash'],
+    ['♟', 0, 'Escenarios'],
+    ['♚', Math.min(3, finalCount), 'Final'],
+    ['◷', `${estimatedMinutes} min`, 'Duración estimada'],
+  ].map(([icon, value, label]) => `<div><span>${icon}</span><strong>${escapeHtml(value)}</strong><small>${escapeHtml(label)}</small></div>`).join('');
+  const first = trainingExercises.find(trainingExerciseIsTrainable);
+  if (start) start.href = first ? `training-exercise.php?id=${Number(first.id || 0)}` : '#trainingContinue';
+  const tip = document.getElementById('trainingCoachTip');
+  if (tip) tip.textContent = focus?.rationale || 'Busca primero la idea de la posición y comprueba después las variantes.';
+}
+
+function renderTrainingCategories() {
+  const list = document.getElementById('trainingCategoryList');
+  if (!list) return;
+  const typeCount = type => Number(trainingTypeCounts[type]?.pending || 0);
+  const groups = [
+    {
+      key: 'recommended', icon: 'ϟ', title: 'Flash', chip: '1 movimiento',
+      description: 'Ejercicios rápidos para mejorar tu táctica y cálculo.',
+      detail: `${Number(trainingStats.pending || 0).toLocaleString('es-ES')} ejercicios`, tone: 'blue', action: 'filter',
+    },
+    {
+      key: 'scenarios', icon: '♟', title: 'Escenarios', chip: 'Varias jugadas',
+      description: 'Juega posiciones reales durante varios movimientos con el rival.',
+      detail: 'Próximamente', tone: 'purple', action: 'disabled',
+    },
+    {
+      key: 'openings', icon: '▤', title: 'Aperturas', chip: 'Líneas y repertorio',
+      description: 'Practica tus aperturas y mejora tu comprensión de las posiciones.',
+      detail: 'Abrir Lab de Aperturas', tone: 'green', action: 'link', href: 'openings-lab.php',
+    },
+    {
+      key: 'finals', icon: '♚', title: 'Finales', chip: 'Técnica y precisión',
+      description: 'Convierte finales ganados y defiende posiciones difíciles.',
+      detail: `${typeCount('defend_position') + typeCount('convert_advantage')} posiciones`, tone: 'gold', action: 'filter', type: 'convert_advantage',
+    },
+    {
+      key: 'topics', icon: '♧', title: 'Temas', chip: 'Conceptos clave',
+      description: 'Entrena conceptos específicos según tu plan de mejora y tu ADN.',
+      detail: 'Visión táctica · Defensa · Cálculo', tone: 'teal', action: 'filter', type: 'find_tactic',
+    },
+  ];
+  list.innerHTML = groups.map(item => {
+    const tag = item.action === 'link' ? 'a' : 'button';
+    const href = item.action === 'link' ? ` href="${escapeAttr(item.href)}"` : '';
+    const disabled = item.action === 'disabled' ? ' disabled aria-disabled="true"' : '';
+    const type = item.action === 'filter' ? ` data-training-type="${escapeAttr(item.type || item.key)}"` : '';
+    return `<${tag} class="training-category-card ${escapeAttr(item.tone)}${item.action === 'disabled' ? ' is-disabled' : ''}"${href}${disabled}${type}>
+      <span class="training-category-icon" aria-hidden="true">${item.icon}</span>
+      <span class="training-category-copy"><span class="training-category-title"><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.chip)}</small></span><span>${escapeHtml(item.description)}</span><em>${escapeHtml(item.detail)}</em></span>
+      <b aria-hidden="true">${item.action === 'disabled' ? '' : '›'}</b>
+    </${tag}>`;
+  }).join('');
+  list.querySelectorAll('[data-training-type]').forEach(button => {
+    button.addEventListener('click', () => selectTrainingCategory(button.dataset.trainingType || 'recommended'));
+  });
+}
+
+function selectTrainingCategory(type) {
+  const typeFilter = document.getElementById('trainingTypeFilter');
+  const statusFilter = document.getElementById('trainingStatusFilter');
+  if (typeFilter && trainingTypes[type]) typeFilter.value = type;
+  if (statusFilter) statusFilter.value = 'pending';
+  loadTraining(1).then(() => document.getElementById('trainingContinue')?.scrollIntoView({ behavior: 'smooth' })).catch(showTrainingError);
 }
 
 function renderTrainingExperience() {
@@ -371,7 +459,27 @@ function renderTrainingExercises() {
     `;
     return;
   }
-  el.innerHTML = trainingExercises.map((item, index) => trainingExerciseCard(item, currentTrainingPage === 1 && index === 0)).join('');
+  el.innerHTML = trainingExercises.slice(0, 2).map(item => trainingContinueCard(item)).join('');
+}
+
+function trainingContinueCard(item) {
+  const isTrainable = trainingExerciseIsTrainable(item);
+  const href = isTrainable ? `training-exercise.php?id=${Number(item.id || 0)}` : escapeAttr(item.review_url || '#');
+  const type = item.exercise_type || 'other';
+  const tone = ['convert_advantage', 'defend_position'].includes(type) ? 'purple' : 'blue';
+  const label = ['convert_advantage', 'defend_position'].includes(type) ? 'Final' : 'Flash';
+  const attempts = Number(item.attempt_count || 0);
+  const progress = item.resolved_at ? 100 : Math.min(85, attempts * 20);
+  return `<a class="training-continue-card ${tone}" href="${href}">
+    <span class="training-continue-preview">${trainingExercisePreviewBoard(item)}</span>
+    <span class="training-continue-copy">
+      <span class="training-continue-meta"><b>${label === 'Flash' ? 'ϟ' : '♟'} ${escapeHtml(label)}</b><em>${item.resolved_at ? 'Resuelto' : attempts ? 'En progreso' : 'Pendiente'}</em></span>
+      <strong>${escapeHtml(item.type_label || 'Encuentra la mejor jugada')}</strong>
+      <small>${escapeHtml(item.white_player || 'Blancas')} vs ${escapeHtml(item.black_player || 'Negras')} · Movimiento ${Math.floor((Number(item.ply || 1) - 1) / 2) + 1}</small>
+      <span class="training-continue-progress"><i style="width:${progress}%"></i></span>
+    </span>
+    <span class="training-continue-play" aria-hidden="true">▶</span>
+  </a>`;
 }
 
 function trainingExerciseCard(item, featured = false) {
