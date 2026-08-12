@@ -6728,3 +6728,24 @@ body.login-page::before {
     grid-template-columns:repeat(3,minmax(0,1fr))!important
   }
 }
+
+/* v1.4.16 mobile header optical alignment */
+.streak-pill .header-progress-metric.streak {
+  align-items:center
+}
+.streak-pill .nova-streak-core {
+  width:30px;
+  height:30px;
+  flex:0 0 30px
+}
+.streak-pill .header-progress-metric.streak strong {
+  display:inline-flex;
+  min-height:30px;
+  align-items:center;
+  line-height:1
+}
+@media(max-width:640px) {
+  .topbar .brand {
+    margin-left:-8px
+  }
+}
