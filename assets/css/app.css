@@ -324,6 +324,16 @@ a {
   color:#a5b0b8;
   font-weight:900
 }
+.streak-pill .nova-streak-core {
+  overflow:visible;
+  background:transparent
+}
+.nova-streak-core img {
+  display:block;
+  width:30px;
+  height:30px;
+  max-width:none
+}
 .streak-pill strong {
   font-size:18px;
   line-height:1
@@ -332,7 +342,7 @@ a {
   border-color:rgba(60,210,102,.32)
 }
 .streak-pill.trained .header-progress-metric.streak .header-progress-icon {
-  background:#07351f;
+  background:transparent;
   color:#35f26f
 }
 .header-progress-metric {

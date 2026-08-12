@@ -130,11 +130,26 @@ function homeProgressSvg(series, metric) {
   const bottom = 38;
   const chartWidth = width - left - right;
   const chartHeight = height - top - bottom;
-  const maxValue = metric === 'performance' ? Math.max(1000, ...points.map(point => point.value)) : 100;
+  const absoluteMax = metric === 'performance' ? 1000 : 100;
+  const values = points.map(point => Math.max(0, Math.min(absoluteMax, point.value)));
+  const observedMin = Math.min(...values);
+  const observedMax = Math.max(...values);
+  const minimumSpan = metric === 'performance' ? 100 : 10;
+  const padding = Math.max(minimumSpan * .25, (observedMax - observedMin) * .2);
+  let minValue = Math.max(0, Math.floor((observedMin - padding) / 5) * 5);
+  let maxValue = Math.min(absoluteMax, Math.ceil((observedMax + padding) / 5) * 5);
+  if (maxValue - minValue < minimumSpan) {
+    const center = (observedMin + observedMax) / 2;
+    minValue = Math.max(0, Math.floor(center - minimumSpan / 2));
+    maxValue = Math.min(absoluteMax, minValue + minimumSpan);
+    minValue = Math.max(0, maxValue - minimumSpan);
+  }
+  if (maxValue <= minValue) maxValue = Math.min(absoluteMax, minValue + minimumSpan);
+  const valueSpan = Math.max(1, maxValue - minValue);
   const coordinates = points.map((point, index) => ({
     ...point,
     x: left + (points.length === 1 ? chartWidth / 2 : (index / (points.length - 1)) * chartWidth),
-    y: top + chartHeight - (Math.max(0, Math.min(maxValue, point.value)) / maxValue) * chartHeight,
+    y: top + chartHeight - ((Math.max(minValue, Math.min(maxValue, point.value)) - minValue) / valueSpan) * chartHeight,
   }));
   const polyline = coordinates.map(point => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(' ');
   const ticks = [0, .25, .5, .75, 1];
@@ -144,7 +159,7 @@ function homeProgressSvg(series, metric) {
   return `<svg class="home-progress-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Evolución de ${escapeAttr(metricLabel)}">
     ${ticks.map(tick => {
       const y = top + chartHeight - tick * chartHeight;
-      return `<line x1="${left}" y1="${y}" x2="${width - right}" y2="${y}" class="home-progress-gridline"></line><text x="${left - 8}" y="${y + 4}" text-anchor="end">${Math.round(tick * maxValue)}${suffix}</text>`;
+      return `<line x1="${left}" y1="${y}" x2="${width - right}" y2="${y}" class="home-progress-gridline"></line><text x="${left - 8}" y="${y + 4}" text-anchor="end">${Math.round(minValue + tick * valueSpan)}${suffix}</text>`;
     }).join('')}
     <polyline points="${polyline}" class="home-progress-line"></polyline>
     ${coordinates.map(point => `<circle cx="${point.x}" cy="${point.y}" r="4" class="home-progress-point"><title>${escapeHtml(formatProgressDate(point.label))}: ${Number(point.value).toFixed(metric === 'performance' ? 0 : 1)}${suffix}</title></circle>`).join('')}

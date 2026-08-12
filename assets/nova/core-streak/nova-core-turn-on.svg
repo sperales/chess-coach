@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Núcleo de Nova encendiéndose">
+
+  <defs>
+    <radialGradient id="activeCenter" cx="38%" cy="34%">
+      <stop offset="0" stop-color="#ffffee"/>
+      <stop offset=".32" stop-color="#d8ff55"/>
+      <stop offset="1" stop-color="#9bdd00"/>
+    </radialGradient>
+    <linearGradient id="activeRing" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d1ff3e"/>
+      <stop offset=".55" stop-color="#9bdd00"/>
+      <stop offset="1" stop-color="#638f00"/>
+    </linearGradient>
+    <filter id="greenGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feFlood flood-color="#9bdd00" flood-opacity=".8"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <style>
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; }
+      #outer,#inner { fill:url(#activeRing); }
+      #center { fill:url(#activeCenter); }
+      #halo { opacity:.42; }
+    }
+    #outer { animation: outer-on 1.15s cubic-bezier(.2,.75,.25,1) forwards; }
+    #inner { animation: inner-on 1.15s .10s cubic-bezier(.2,.75,.25,1) forwards; }
+    #center { transform-origin:64px 64px; animation:center-on 1.15s .18s cubic-bezier(.15,.85,.25,1) forwards; }
+    #halo { transform-origin:64px 64px; animation:halo-on 1.35s .12s ease-out forwards; }
+    @keyframes outer-on { 0%,18%{fill:#737d78} 100%{fill:url(#activeRing)} }
+    @keyframes inner-on { 0%,18%{fill:#4e5752} 100%{fill:url(#activeRing)} }
+    @keyframes center-on {
+      0%,12%{fill:#545d58;transform:scale(.82)}
+      68%{fill:#f7ffd0;transform:scale(1.08)}
+      100%{fill:url(#activeCenter);transform:scale(1)}
+    }
+    @keyframes halo-on {
+      0%,18%{opacity:0;transform:scale(.55)}
+      65%{opacity:.78;transform:scale(1.15)}
+      100%{opacity:.42;transform:scale(1)}
+    }
+  </style>
+  <circle id="halo" cx="64" cy="64" r="38" fill="#9bdd00" opacity="0" filter="url(#greenGlow)"/>
+  <circle cx="64" cy="64" r="49" fill="#0b0f0e"/>
+  <circle id="outer" cx="64" cy="64" r="45.5" fill="#737d78"/>
+  <circle cx="64" cy="64" r="39" fill="#272e2b"/>
+  <circle id="inner" cx="64" cy="64" r="35.5" fill="#4e5752"/>
+  <circle cx="64" cy="64" r="29" fill="#1d2320"/>
+  <circle id="center" cx="64" cy="64" r="22.5" fill="#545d58"/>
+</svg>
