@@ -417,7 +417,6 @@ function renderHomeTrainingExperience() {
   const primaryGoal = dailyGoals.find(goal => goal.status !== 'completed') || weeklyGoals.find(goal => goal.status !== 'completed') || dailyGoals[0] || weeklyGoals[0] || null;
   const primaryProgress = primaryGoal ? homeTrainingProgressPercent(primaryGoal.progress_percent) : homeTrainingProgressPercent(homeTrainingTodayProgress(today, settings));
   const primaryTitle = primaryGoal ? (primaryGoal.title || 'Entrenamiento recomendado') : 'Empieza tu entrenamiento de hoy';
-  const primaryAction = primaryGoal && primaryGoal.action_url ? primaryGoal.action_url : 'training.php';
   const current = primaryGoal ? Number(primaryGoal.current_value || 0) : Number(today.exercises || 0);
   const target = primaryGoal ? Number(primaryGoal.target_value || 1) : Math.max(1, Number(settings.daily_exercise_goal || 5));
   const focusName = ((dashboardData.training_focus || [])[0] || {}).title || primaryTitle;
@@ -433,7 +432,7 @@ function renderHomeTrainingExperience() {
       </div>
       <img class="home-nova-pointing" src="assets/nova/nova-coach-pointing.png" alt="Nova, tu entrenador">
     </div>
-    <a class="btn home-nova-primary" href="${escapeAttr(primaryAction)}">${today.goal_met ? 'Seguir entrenando' : 'Empezar entrenamiento'} <span aria-hidden="true">›</span></a>
+    <a class="btn home-nova-primary" href="training.php">${today.goal_met ? 'Seguir entrenando' : 'Empezar entrenamiento'} <span aria-hidden="true">›</span></a>
   `;
 }
 

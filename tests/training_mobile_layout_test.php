@@ -20,5 +20,6 @@ assert_training_mobile(str_contains($script, "action: 'disabled'"), 'Scenarios m
 assert_training_mobile(str_contains($script, 'training-exercise.php?id='), 'Existing exercises must keep direct solver links.');
 assert_training_mobile(str_contains($styles, '.training-nova-proposal'), 'Nova recommendation styles must be present.');
 assert_training_mobile(str_contains($styles, '@media(max-width:680px)'), 'Training must have dedicated mobile layout rules.');
+assert_training_mobile(str_contains($styles, 'width:140px') && str_contains($styles, 'white-space:nowrap'), 'Category chips must use stable dimensions.');
 
 echo "Training mobile layout tests passed.\n";

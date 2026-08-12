@@ -5484,7 +5484,20 @@ a.training-plan-goal:hover {
 .training-category-copy {display:grid;gap:4px;min-width:0}
 .training-category-title {display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .training-category-title strong {font-size:23px}
-.training-category-title small {padding:3px 9px;border:1px solid currentColor;border-radius:999px;color:#a8b9ee}
+.training-category-title small {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:140px;
+  height:30px;
+  box-sizing:border-box;
+  padding:3px 9px;
+  border:1px solid currentColor;
+  border-radius:999px;
+  color:#a8b9ee;
+  line-height:1;
+  white-space:nowrap
+}
 .training-category-copy > span:not(.training-category-title) {color:#e0e7eb}
 .training-category-copy em {color:#aab5bd;font-style:normal}
 .training-category-card > b {font-size:36px;font-weight:400}
@@ -5540,18 +5553,19 @@ a.training-plan-goal:hover {
   .training-mobile-first {gap:18px;padding-inline:14px}
   .training-mobile-intro h1 {font-size:29px}
   .training-mobile-intro p {font-size:17px}
-  .training-nova-proposal {min-height:500px;padding:24px 20px 78px}
-  .training-nova-copy {width:72%}
+  .training-nova-proposal {min-height:710px;padding:24px 20px 82px}
+  .training-nova-copy {width:100%}
   .training-nova-copy h2 {font-size:23px}
-  .training-nova-copy > p {font-size:16px}
-  .training-nova-image {right:-16%;bottom:38px;width:85%;max-height:72%}
-  .training-nova-speech {top:152px;right:12px;width:145px;font-size:14px}
-  .training-nova-metrics {position:absolute;left:20px;bottom:82px;z-index:4;width:230px;margin:0}
+  .training-nova-copy > p {width:72%;font-size:16px}
+  .training-nova-image {right:-17%;bottom:48px;width:86%;max-height:58%}
+  .training-nova-speech {top:382px;right:12px;width:145px;font-size:14px}
+  .training-nova-metrics {position:relative;z-index:4;width:230px;margin-top:18px}
   .training-nova-start {left:20px;right:20px}
   .training-category-section > h2,.training-continue-section h2 {font-size:25px}
   .training-category-card {grid-template-columns:58px minmax(0,1fr) 18px;gap:12px;min-height:112px;padding:14px}
   .training-category-icon {width:54px;height:54px;font-size:29px}
   .training-category-title strong {font-size:20px}
+  .training-category-title small {width:132px;height:28px;font-size:12px}
   .training-category-copy > span:not(.training-category-title) {font-size:14px;line-height:1.35}
   .training-category-copy em {font-size:13px}
   .training-continue-card {grid-template-columns:82px minmax(0,1fr) 42px;gap:11px;padding:11px}

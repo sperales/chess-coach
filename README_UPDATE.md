@@ -11,6 +11,9 @@ Stockfish 18 analysis confidence, chess-logic consistency and pipeline hardening
 - Keeps internal sessions out of the player-facing interface and uses `entrenamiento` consistently.
 - Leaves the future multi-move `Escenarios` category visible but inactive until its exercise model is implemented.
 - Preserves direct access to current one-move exercises and Openings Lab without changing the solver or training APIs.
+- Keeps Home's primary `Empezar/Seguir entrenando` action anchored to Training even when the next plan goal points to a game review.
+- Reserves separate mobile areas for Nova's copy, metrics, coach image and speech so dynamic recommendation text cannot overlap them.
+- Gives all category chips stable dimensions for consistent alignment across short and long labels.
 - Rebuilds Review as a mobile-first flow with game context, current-move banner, full-width board and large previous/next controls.
 - Keeps the current move explanation directly below the board and opens dedicated `Resumen`, `Análisis`, `Jugadas` and `Coach` views in a bottom sheet above the board.
 - Places rank and file coordinates inside the edge squares on mobile so the board can use the complete available width.
