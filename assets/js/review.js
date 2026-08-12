@@ -156,8 +156,8 @@ function bindReviewMobileTabs() {
   page.querySelectorAll('[data-review-tab]').forEach(button => {
     button.addEventListener('click', () => setReviewMobileTab(button.dataset.reviewTab || 'summary', true));
   });
-  page.querySelectorAll('[data-review-tab-target]').forEach(button => {
-    button.addEventListener('click', () => setReviewMobileTab(button.dataset.reviewTabTarget || 'summary', true));
+  page.querySelectorAll('[data-review-sheet-open]').forEach(button => {
+    button.addEventListener('click', () => setReviewMobileTab(reviewMobileTab, true));
   });
   page.querySelectorAll('[data-review-sheet-close]').forEach(button => {
     button.addEventListener('click', closeReviewMobileSheet);

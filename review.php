@@ -29,7 +29,7 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
     <a href="games.php" aria-label="Volver a partidas">‹</a>
     <strong>Revisión de partida</strong>
     <div class="review-mobile-appbar-actions">
-      <button type="button" aria-label="Abrir análisis" data-review-tab-target="summary">↗</button>
+      <button type="button" aria-label="Abrir análisis" data-review-sheet-open>↗</button>
       <button type="button" aria-label="Girar tablero" onclick="document.getElementById('flipBoardBtn')?.click()">•••</button>
     </div>
   </header>
@@ -127,7 +127,7 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
         <strong id="reviewMobileFeedbackTitle">Comentario de la jugada</strong>
         <p id="reviewMobileFeedbackText">Selecciona una jugada para ver la explicación.</p>
       </section>
-      <button class="review-mobile-open-analysis" type="button" data-review-tab-target="summary">Abrir análisis</button>
+      <button class="review-mobile-open-analysis" type="button" data-review-sheet-open>Abrir análisis</button>
     </section>
 
     <section class="panel move-list-panel" data-review-panel="moves">
