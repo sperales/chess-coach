@@ -101,6 +101,17 @@ Both should match the release version.
 - Confirm the latest-game review block and duplicate quick action no longer appear.
 - Run `php tests/dashboard_progress_test.php` and confirm the Home history periods and series pass.
 
+## Mobile Review Checks
+
+- Check Review at 360 px and 390 px without horizontal overflow or a distorted board.
+- Confirm the first view prioritizes game context, current move, board, previous/next controls and the move explanation.
+- Confirm board orientation and coordinates remain correct when the player used White or Black and after using the mobile flip control.
+- Confirm `Abrir análisis` reveals the `Resumen`, `Análisis`, `Jugadas` and `Coach` tabs.
+- Confirm changing tabs preserves the selected move and board position.
+- Confirm `Mostrar mejor jugada` and `Volver a la jugada` retain the existing UCI/SAN behavior.
+- Confirm Nova appears in the mobile Coach view and the desktop Review layout remains unchanged.
+- Run `php tests/review_mobile_layout_test.php`.
+
 ---
 
 ## Stockfish Analysis Pipeline Checks

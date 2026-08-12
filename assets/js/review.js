@@ -8,6 +8,7 @@ const reviewVisitedPlies = new Set();
 const reviewPendingPlies = new Set();
 let reviewProgressTimer = null;
 let reviewProgressData = null;
+let reviewMobileTab = 'summary';
 
 const PIECE_IMAGES = {
   P: 'wp.png', N: 'wn.png', B: 'wb.png', R: 'wr.png', Q: 'wq.png', K: 'wk.png',
@@ -71,6 +72,7 @@ async function loadReview() {
     boardOrientation = data.user_side === 'b' ? 'black' : 'white';
     await loadReviewProgress();
     bindBoardControls();
+    bindReviewMobileTabs();
     renderSummary();
     renderChart();
     renderMoveList();
@@ -122,6 +124,14 @@ function renderSummary() {
   const s = reviewData.summary || {};
   const g = reviewData.game || {};
   document.getElementById('reviewIntro').textContent = `${g.white_player || 'Blancas'} vs ${g.black_player || 'Negras'} · ${g.result_raw || '-'} · ${g.played_at || ''}`;
+  const whiteRating = g.white_rating ? ` (${g.white_rating})` : '';
+  const blackRating = g.black_rating ? ` (${g.black_rating})` : '';
+  const mobileWhite = document.getElementById('reviewMobileWhite');
+  const mobileBlack = document.getElementById('reviewMobileBlack');
+  const mobileResult = document.getElementById('reviewMobileResult');
+  if (mobileWhite) mobileWhite.textContent = `${g.white_player || 'Blancas'}${whiteRating}`;
+  if (mobileBlack) mobileBlack.textContent = `${g.black_player || 'Negras'}${blackRating}`;
+  if (mobileResult) mobileResult.textContent = g.result_raw || '-';
   document.getElementById('reviewHeadline').textContent = s.headline || 'Revisión de partida';
   document.getElementById('reviewComment').textContent = s.comment || 'Vamos a revisar los momentos importantes.';
   renderTagList(ensureTagList('reviewSmartTags', 'reviewComment', 'review-tags'), s.smart_tags || []);
@@ -136,6 +146,38 @@ function renderSummary() {
   document.getElementById('reviewCounts').innerHTML = labels.map(([key,label]) => `
     <div class="review-count ${key}"><span>${bucketIcon(key)}</span><strong>${counts[key] || 0}</strong><small>${label}</small></div>
   `).join('');
+}
+
+function bindReviewMobileTabs() {
+  const page = document.querySelector('.review-page');
+  if (!page || page.dataset.reviewTabsBound === '1') return;
+  page.dataset.reviewTabsBound = '1';
+  page.querySelectorAll('[data-review-tab]').forEach(button => {
+    button.addEventListener('click', () => setReviewMobileTab(button.dataset.reviewTab || 'summary', true));
+  });
+  page.querySelectorAll('[data-review-tab-target]').forEach(button => {
+    button.addEventListener('click', () => setReviewMobileTab(button.dataset.reviewTabTarget || 'summary', true));
+  });
+  setReviewMobileTab(reviewMobileTab);
+}
+
+function setReviewMobileTab(tab, scrollToPanel = false) {
+  const allowed = ['summary', 'analysis', 'moves', 'coach'];
+  reviewMobileTab = allowed.includes(tab) ? tab : 'summary';
+  const page = document.querySelector('.review-page');
+  if (!page) return;
+  page.dataset.reviewTab = reviewMobileTab;
+  if (scrollToPanel) page.dataset.reviewExpanded = 'true';
+  page.querySelectorAll('[data-review-tab]').forEach(button => {
+    const active = button.dataset.reviewTab === reviewMobileTab;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  if (!scrollToPanel || window.matchMedia('(min-width: 761px)').matches) return;
+  window.requestAnimationFrame(() => {
+    const panel = page.querySelector(`[data-review-panel="${reviewMobileTab}"]`);
+    if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 }
 
 function ensureTagList(id, afterId, extraClass) {
@@ -369,9 +411,26 @@ function renderMove() {
   const moveNo = Math.floor((Number(m.ply)-1)/2)+1;
   const side = Number(m.ply)%2===1 ? 'Blancas' : 'Negras';
   document.getElementById('moveTitle').textContent = `Movimiento ${moveNo} · ${side}`;
+  const mobileCurrent = document.getElementById('reviewMobileCurrent');
+  if (mobileCurrent) mobileCurrent.textContent = `Jugada ${moveNo} · ${side}`;
   const badge = document.getElementById('moveBadge');
   badge.className = `queue-status ${bucketClass(m.review_bucket)}`;
   badge.textContent = `${bucketIcon(m.review_bucket)} ${m.review_label}`;
+  const mobileMoveIcon = document.getElementById('reviewMobileMoveIcon');
+  const mobileMoveSan = document.getElementById('reviewMobileMoveSan');
+  const mobileMoveLabel = document.getElementById('reviewMobileMoveLabel');
+  const mobileMoveEval = document.getElementById('reviewMobileMoveEval');
+  const mobileFeedbackTitle = document.getElementById('reviewMobileFeedbackTitle');
+  const mobileFeedbackText = document.getElementById('reviewMobileFeedbackText');
+  if (mobileMoveIcon) {
+    mobileMoveIcon.className = `review-mobile-move-icon ${m.review_bucket}`;
+    mobileMoveIcon.textContent = bucketIcon(m.review_bucket);
+  }
+  if (mobileMoveSan) mobileMoveSan.textContent = m.san || m.uci || '-';
+  if (mobileMoveLabel) mobileMoveLabel.textContent = m.review_label || 'Jugada';
+  if (mobileMoveEval) mobileMoveEval.textContent = evalText(m);
+  if (mobileFeedbackTitle) mobileFeedbackTitle.textContent = `${m.san || m.uci || 'La jugada'} es ${String(m.review_label || 'jugada').toLowerCase()}`;
+  if (mobileFeedbackText) mobileFeedbackText.textContent = m.explanation || 'Revisa la posición y compárala con la mejor alternativa.';
   document.getElementById('moveSan').textContent = `${m.san || m.uci} es ${m.review_label.toLowerCase()}`;
   document.getElementById('moveEval').textContent = evalText(m);
   document.getElementById('moveExplanation').textContent = m.explanation || '';

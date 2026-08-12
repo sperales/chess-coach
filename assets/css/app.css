@@ -6749,3 +6749,390 @@ body.login-page::before {
     margin-left:-8px
   }
 }
+
+/* v1.4.16 mobile-first review */
+.review-mobile-appbar,
+.review-mobile-game-context,
+.review-mobile-move-banner,
+.review-mobile-feedback,
+.review-mobile-coach-avatar,
+.review-mobile-open-analysis,
+.review-mobile-tabs,
+.review-mobile-analysis-actions {
+  display:none
+}
+@media(max-width:760px) {
+  .review-shell .topbar {
+    display:none
+  }
+  .review-page.dashboard {
+    display:flex;
+    flex-direction:column;
+    width:100%;
+    max-width:none;
+    padding:0 10px 28px
+  }
+  .review-mobile-appbar {
+    order:1;
+    position:sticky;
+    top:0;
+    z-index:6;
+    display:grid;
+    grid-template-columns:42px minmax(0,1fr) 42px;
+    min-height:58px;
+    align-items:center;
+    margin:0 -10px;
+    padding:6px 10px;
+    border-bottom:1px solid var(--line);
+    background:rgba(7,15,20,.96);
+    backdrop-filter:blur(12px)
+  }
+  .review-mobile-appbar strong {
+    overflow:hidden;
+    color:#f5f8fa;
+    font-size:15px;
+    text-align:center;
+    text-overflow:ellipsis;
+    white-space:nowrap
+  }
+  .review-mobile-appbar a,
+  .review-mobile-appbar button {
+    display:grid;
+    width:42px;
+    height:42px;
+    padding:0;
+    place-items:center;
+    border:0;
+    background:transparent;
+    color:#eef3f6;
+    font-family:Arial,sans-serif;
+    font-size:30px;
+    font-weight:400;
+    line-height:1;
+    text-decoration:none
+  }
+  .review-mobile-game-context {
+    order:2;
+    display:grid;
+    gap:8px;
+    padding:12px 2px 10px
+  }
+  .review-mobile-players {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+    gap:8px;
+    align-items:center;
+    color:#c7d0d7;
+    font-size:12px
+  }
+  .review-mobile-players span {
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap
+  }
+  .review-mobile-players span:last-child {
+    text-align:right
+  }
+  .review-mobile-players strong {
+    color:#fff
+  }
+  .review-mobile-current {
+    color:#8fda43;
+    font-size:13px;
+    font-weight:800
+  }
+  .review-page .review-hero,
+  .review-page > .review-summary-grid,
+  .review-page > .review-chart-panel,
+  .review-page > .review-bottom-panel,
+  .review-board-grid > .move-list-panel {
+    display:none
+  }
+  .review-page > .review-board-grid {
+    order:3
+  }
+  .review-page > [data-review-panel="summary"],
+  .review-page > [data-review-panel="analysis"],
+  .review-page > [data-review-panel="coach"] {
+    order:4
+  }
+  .review-page[data-review-expanded="true"][data-review-tab="summary"] > [data-review-panel="summary"],
+  .review-page[data-review-expanded="true"][data-review-tab="analysis"] > [data-review-panel="analysis"],
+  .review-page[data-review-expanded="true"][data-review-tab="coach"] > [data-review-panel="coach"],
+  .review-page[data-review-expanded="true"][data-review-tab="moves"] .review-board-grid > [data-review-panel="moves"] {
+    display:grid
+  }
+  .review-page > [data-review-panel] {
+    scroll-margin-top:70px
+  }
+  .review-board-grid {
+    display:block;
+    margin:0
+  }
+  .review-board-grid > .panel:first-child {
+    display:flex;
+    flex-direction:column;
+    gap:0;
+    padding:0 0 14px;
+    border-radius:14px;
+    overflow:hidden;
+    background:#081318
+  }
+  .review-board-grid > .panel:first-child > .panel-head,
+  .review-board-grid > .panel:first-child > .move-comment-card {
+    display:none
+  }
+  .review-mobile-move-banner {
+    order:1;
+    display:grid;
+    grid-template-columns:34px minmax(0,auto) minmax(0,1fr) auto;
+    gap:8px;
+    align-items:center;
+    min-height:48px;
+    padding:8px 10px;
+    border-bottom:1px solid var(--line);
+    background:#0b171c
+  }
+  .review-mobile-move-icon {
+    display:grid;
+    width:30px;
+    height:30px;
+    place-items:center;
+    border-radius:50%;
+    background:#26313a;
+    color:#dbe4ec;
+    font-weight:900
+  }
+  .review-mobile-move-icon.best,
+  .review-mobile-move-icon.excellent,
+  .review-mobile-move-icon.good {
+    background:#335f1f;
+    color:#d9ffc3
+  }
+  .review-mobile-move-icon.inaccuracy {
+    background:#5a4617;
+    color:#ffe47d
+  }
+  .review-mobile-move-icon.mistake {
+    background:#6b3514;
+    color:#ffc07d
+  }
+  .review-mobile-move-icon.blunder {
+    background:#682323;
+    color:#ffaaa5
+  }
+  .review-mobile-move-banner strong {
+    color:#f7fafb;
+    font-size:18px
+  }
+  .review-mobile-move-banner > span:nth-of-type(2) {
+    overflow:hidden;
+    color:#9bdd00;
+    font-size:12px;
+    font-weight:800;
+    text-overflow:ellipsis;
+    white-space:nowrap
+  }
+  .review-mobile-move-banner b {
+    padding:5px 8px;
+    border-radius:8px;
+    background:#26313a;
+    color:#f4f7f9;
+    font-size:13px
+  }
+  .review-board-grid .board-wrap {
+    order:2;
+    padding:0 6px
+  }
+  .review-board-grid .board-coordinate-frame {
+    width:100%;
+    grid-template-columns:18px minmax(0,1fr);
+    grid-template-rows:minmax(0,1fr) 18px
+  }
+  .review-board-grid .chess-board {
+    width:100%;
+    border-radius:4px;
+    box-shadow:none
+  }
+  .review-board-grid .board-rank-labels,
+  .review-board-grid .board-file-labels {
+    color:#8e999f;
+    font-size:10px
+  }
+  .review-controls {
+    order:3;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    padding:10px 10px 0
+  }
+  .review-controls button {
+    min-height:44px
+  }
+  .review-controls #bestMoveBtn,
+  .review-controls button:nth-child(3) {
+    display:none
+  }
+  .review-mobile-feedback {
+    order:4;
+    display:block;
+    margin:14px 10px 0;
+    padding:14px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:#0d171d
+  }
+  .review-mobile-feedback strong {
+    display:block;
+    margin-bottom:8px;
+    color:#f4f8fa;
+    font-size:16px
+  }
+  .review-mobile-feedback p {
+    margin:0;
+    color:#cbd5dc;
+    line-height:1.5
+  }
+  .review-mobile-open-analysis {
+    order:5;
+    display:block;
+    width:calc(100% - 20px);
+    min-height:46px;
+    margin:12px 10px 0;
+    background:#78bd3a;
+    color:#fff
+  }
+  .review-mobile-tabs {
+    order:6;
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    margin-top:14px;
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    background:#0b151a
+  }
+  .review-mobile-tabs button {
+    min-width:0;
+    min-height:46px;
+    padding:8px 4px;
+    border:0;
+    border-bottom:2px solid transparent;
+    border-radius:0;
+    background:transparent;
+    color:#aab4bb;
+    font-size:12px;
+    font-weight:700
+  }
+  .review-mobile-tabs button.active {
+    border-bottom-color:#9bdd00;
+    color:#9bdd00
+  }
+  .review-page > .review-summary-grid,
+  .review-page > .review-chart-panel,
+  .review-page > .review-bottom-panel,
+  .review-board-grid > .move-list-panel {
+    margin:12px 0 0
+  }
+  .review-summary-grid {
+    gap:10px
+  }
+  .review-summary-grid .panel {
+    padding:14px
+  }
+  .review-summary-grid .coach-comment {
+    display:block
+  }
+  .review-summary-grid .coach-avatar {
+    display:none
+  }
+  .review-summary-card h2 {
+    font-size:18px
+  }
+  .review-kpis {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:8px
+  }
+  .review-kpis div {
+    padding:10px
+  }
+  .review-kpis b {
+    font-size:22px
+  }
+  .review-counts {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px
+  }
+  .review-count {
+    gap:7px;
+    padding:9px
+  }
+  .review-count span {
+    width:30px;
+    height:30px
+  }
+  .review-count strong {
+    font-size:20px
+  }
+  .review-chart-panel {
+    padding:14px
+  }
+  .review-chart-panel .panel-head {
+    display:block
+  }
+  .review-chart-panel .panel-head h2 {
+    margin-bottom:4px
+  }
+  .review-chart-panel canvas {
+    height:150px
+  }
+  .review-mobile-analysis-actions {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:10px
+  }
+  .move-list-panel {
+    padding:14px
+  }
+  .move-list {
+    max-height:none;
+    overflow:visible
+  }
+  .move-list-row {
+    grid-template-columns:28px minmax(0,1fr);
+    gap:7px
+  }
+  .move-list-number {
+    grid-row:1 / span 2;
+    padding-top:12px
+  }
+  .move-list-cell {
+    grid-template-columns:minmax(0,1fr) auto
+  }
+  .review-bottom-panel {
+    gap:10px
+  }
+  .review-coach-tip {
+    grid-template-columns:58px minmax(0,1fr);
+    gap:12px;
+    padding:14px
+  }
+  .review-coach-tip .nova-avatar {
+    --nova-size:58px
+  }
+  .review-coach-tip > .review-tip-icon {
+    display:none
+  }
+  .review-mobile-coach-avatar {
+    display:block
+  }
+  .review-insights-grid {
+    grid-template-columns:1fr;
+    gap:8px
+  }
+  .review-insight-card {
+    min-height:88px;
+    padding:13px
+  }
+}
