@@ -9,6 +9,7 @@ const reviewPendingPlies = new Set();
 let reviewProgressTimer = null;
 let reviewProgressData = null;
 let reviewMobileTab = 'summary';
+let reviewMobileMoveFilter = 'all';
 
 const PIECE_IMAGES = {
   P: 'wp.png', N: 'wn.png', B: 'wb.png', R: 'wr.png', Q: 'wq.png', K: 'wk.png',
@@ -158,7 +159,27 @@ function bindReviewMobileTabs() {
   page.querySelectorAll('[data-review-tab-target]').forEach(button => {
     button.addEventListener('click', () => setReviewMobileTab(button.dataset.reviewTabTarget || 'summary', true));
   });
+  page.querySelectorAll('[data-review-sheet-close]').forEach(button => {
+    button.addEventListener('click', closeReviewMobileSheet);
+  });
+  const sheetBody = page.querySelector('.review-mobile-sheet-body');
+  if (sheetBody) sheetBody.addEventListener('click', handleReviewMobileSheetClick);
+  const desktopMedia = window.matchMedia('(min-width: 761px)');
+  const restoreOnDesktop = event => {
+    if (event.matches) closeReviewMobileSheet();
+  };
+  if (typeof desktopMedia.addEventListener === 'function') desktopMedia.addEventListener('change', restoreOnDesktop);
+  else if (typeof desktopMedia.addListener === 'function') desktopMedia.addListener(restoreOnDesktop);
   setReviewMobileTab(reviewMobileTab);
+}
+
+function closeReviewMobileSheet() {
+  const page = document.querySelector('.review-page');
+  const sheet = document.getElementById('reviewMobileSheet');
+  if (!page || !sheet) return;
+  page.dataset.reviewExpanded = 'false';
+  sheet.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('review-sheet-open');
 }
 
 function setReviewMobileTab(tab, scrollToPanel = false) {
@@ -167,17 +188,128 @@ function setReviewMobileTab(tab, scrollToPanel = false) {
   const page = document.querySelector('.review-page');
   if (!page) return;
   page.dataset.reviewTab = reviewMobileTab;
-  if (scrollToPanel) page.dataset.reviewExpanded = 'true';
+  const mobile = window.matchMedia('(max-width: 760px)').matches;
+  if (scrollToPanel && mobile) {
+    const sheet = document.getElementById('reviewMobileSheet');
+    const sheetBody = sheet?.querySelector('.review-mobile-sheet-body');
+    if (sheet && sheetBody) {
+      page.dataset.reviewExpanded = 'true';
+      sheet.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('review-sheet-open');
+      renderReviewMobileSheet();
+    }
+  }
   page.querySelectorAll('[data-review-tab]').forEach(button => {
     const active = button.dataset.reviewTab === reviewMobileTab;
     button.classList.toggle('active', active);
     button.setAttribute('aria-selected', active ? 'true' : 'false');
   });
-  if (!scrollToPanel || window.matchMedia('(min-width: 761px)').matches) return;
-  window.requestAnimationFrame(() => {
-    const panel = page.querySelector(`[data-review-panel="${reviewMobileTab}"]`);
-    if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (!mobile) closeReviewMobileSheet();
+}
+
+function handleReviewMobileSheetClick(event) {
+  const filter = event.target.closest('[data-review-move-filter]');
+  if (filter) {
+    reviewMobileMoveFilter = filter.dataset.reviewMoveFilter || 'all';
+    renderReviewMobileSheet();
+    return;
+  }
+  const moveButton = event.target.closest('[data-review-move-index]');
+  if (moveButton) {
+    goMove(Number(moveButton.dataset.reviewMoveIndex));
+    closeReviewMobileSheet();
+    return;
+  }
+  if (event.target.closest('[data-review-show-best]')) {
+    showBestMove();
+    closeReviewMobileSheet();
+  }
+}
+
+function renderReviewMobileSheet() {
+  const body = document.querySelector('.review-mobile-sheet-body');
+  if (!body || !reviewData) return;
+  if (reviewMobileTab === 'summary') body.innerHTML = reviewMobileSummaryHtml();
+  else if (reviewMobileTab === 'analysis') body.innerHTML = reviewMobileAnalysisHtml();
+  else if (reviewMobileTab === 'moves') body.innerHTML = reviewMobileMovesHtml();
+  else body.innerHTML = reviewMobileCoachHtml();
+  const chart = document.getElementById('reviewMobileEvalChart');
+  if (chart) drawReviewChart(chart);
+}
+
+function reviewMobileCurrentMoveHtml() {
+  const move = reviewData?.moves?.[currentMoveIndex];
+  if (!move) return '';
+  return `<div class="review-sheet-current ${rEscape(move.review_bucket || '')}">
+    <span>${bucketIcon(move.review_bucket)}</span>
+    <strong>Jugada ${Math.floor((Number(move.ply)-1)/2)+1} · ${rEscape(move.san || move.uci || '-')}</strong>
+    <small>${rEscape(move.review_label || 'Jugada')}</small>
+    <b>${rEscape(evalText(move))}</b>
+  </div>`;
+}
+
+function reviewMobileSummaryHtml() {
+  const summary = reviewData.summary || {};
+  const counts = summary.counts || {};
+  const result = reviewData.game?.result_raw || '-';
+  const errors = Number(counts.mistake || 0) + Number(counts.blunder || 0);
+  const good = Number(counts.best || 0) + Number(counts.excellent || 0) + Number(counts.good || 0);
+  return `${reviewMobileCurrentMoveHtml()}
+    <div class="review-sheet-metrics">
+      <div><span>Resultado</span><b>${rEscape(result)}</b></div>
+      <div><span>Accuracy</span><b>${rEscape(String(summary.accuracy ?? '--'))}</b></div>
+      <div><span>ACPL</span><b>${rEscape(String(summary.acpl ?? '--'))}</b></div>
+      <div><span>Errores</span><b class="danger">${errors}</b></div>
+    </div>
+    <p class="review-sheet-summary-text">${rEscape(summary.comment || '')}</p>
+    <h3>Evaluación de la partida</h3>
+    <canvas id="reviewMobileEvalChart" width="720" height="190" aria-label="Evaluación de la partida"></canvas>
+    <div class="review-sheet-highlights">
+      <article><strong>Lo mejor</strong><b>${good}</b><p>Jugadas sólidas en esta partida.</p></article>
+      <article class="warning"><strong>A mejorar</strong><b>${errors}</b><p>Decisiones que merecen revisión.</p></article>
+    </div>`;
+}
+
+function reviewMobileAnalysisHtml() {
+  const move = reviewData?.moves?.[currentMoveIndex];
+  if (!move) return '<p>No hay jugada seleccionada.</p>';
+  const best = move.bestmove_display || move.bestmove_human || 'No disponible';
+  return `${reviewMobileCurrentMoveHtml()}
+    <article class="review-sheet-explanation"><p>${rEscape(move.explanation || '')}</p></article>
+    <h3>Mejor línea</h3>
+    <button class="review-sheet-line" type="button" data-review-show-best ${move.has_relevant_alternative ? '' : 'disabled'}>
+      <span>${rEscape(best)}</span><b>›</b>
+    </button>
+    <h3>Etiquetas de la jugada</h3>
+    <div class="smart-tag-list">${filteredMoveTags(move).map(smartTagChip).join('') || '<span class="muted">Sin etiquetas adicionales.</span>'}</div>`;
+}
+
+function reviewMobileMovesHtml() {
+  const moves = reviewData.moves || [];
+  const filters = [['all','Todas'],['key','Claves'],['errors','Errores'],['good','Buenas']];
+  const visible = moves.map((move,index) => ({move,index})).filter(({move}) => {
+    if (reviewMobileMoveFilter === 'errors') return ['inaccuracy','mistake','blunder'].includes(move.review_bucket);
+    if (reviewMobileMoveFilter === 'good') return ['best','excellent','good'].includes(move.review_bucket);
+    if (reviewMobileMoveFilter === 'key') return move.has_relevant_alternative || ['mistake','blunder'].includes(move.review_bucket);
+    return true;
   });
+  return `<div class="review-sheet-filters">${filters.map(([key,label]) => `<button type="button" class="${reviewMobileMoveFilter===key?'active':''}" data-review-move-filter="${key}">${label}</button>`).join('')}</div>
+    <div class="review-sheet-move-head"><span>Jugada</span><span>Eval.</span><span>Calidad</span></div>
+    <div class="review-sheet-moves">${visible.map(({move,index}) => `<button type="button" class="${index===currentMoveIndex?'active':''}" data-review-move-index="${index}"><strong>${Math.floor((Number(move.ply)-1)/2)+1}${Number(move.ply)%2===1?'.':'...'}${rEscape(move.san || move.uci || '-')}</strong><span>${rEscape(evalText(move))}</span><em class="${rEscape(move.review_bucket || '')}">${bucketIcon(move.review_bucket)} ${rEscape(move.review_label || '')}</em><b>›</b></button>`).join('') || '<p class="muted">No hay jugadas para este filtro.</p>'}</div>`;
+}
+
+function reviewMobileCoachHtml() {
+  const summary = reviewData.summary || {};
+  const counts = summary.counts || {};
+  const good = Number(counts.best || 0) + Number(counts.excellent || 0) + Number(counts.good || 0);
+  const bad = Number(counts.mistake || 0) + Number(counts.blunder || 0);
+  const critical = (reviewData.moves || []).map((move,index) => ({move,index})).filter(({move}) => ['mistake','blunder'].includes(move.review_bucket)).slice(0,2);
+  return `<section class="review-sheet-coach-head"><span class="nova-avatar nova-avatar--neutral" role="img" aria-label="Nova"></span><div><strong>Diagnóstico de la partida</strong><p>${rEscape(summary.comment || '')}</p></div></section>
+    <article class="review-sheet-coach-note success"><strong>Lo que hiciste bien</strong><p>${good} jugadas mantuvieron o mejoraron tu posición.</p></article>
+    <article class="review-sheet-coach-note warning"><strong>Patrón a mejorar</strong><p>${bad ? `${bad} decisiones críticas cambiaron el rumbo de la partida.` : 'No aparecen errores graves propios.'}</p></article>
+    <h3>Momentos relacionados</h3>
+    <div class="review-sheet-related">${critical.map(({move,index}) => `<button type="button" data-review-move-index="${index}">Revisar jugada ${Math.floor((Number(move.ply)-1)/2)+1} ›</button>`).join('') || '<span class="muted">Sin momentos críticos pendientes.</span>'}</div>
+    <a class="review-sheet-training-link" href="training.php">Empezar entrenamiento ›</a>`;
 }
 
 function ensureTagList(id, afterId, extraClass) {
@@ -317,6 +449,10 @@ function reviewInsightIcon(type) {
 
 function renderChart() {
   const canvas = document.getElementById('evalChart');
+  drawReviewChart(canvas);
+}
+
+function drawReviewChart(canvas) {
   const moves = (reviewData && reviewData.moves) || [];
   if (!canvas || !moves.length) return;
   const ctx = canvas.getContext('2d');
@@ -439,6 +575,7 @@ function renderMove() {
   renderTagList(ensureTagList('moveSmartTags', 'moveExplanation', 'move-tags'), filteredMoveTags(m));
   renderBoard(m.fen_after, m.uci);
   renderMoveList();
+  if (document.querySelector('.review-page')?.dataset.reviewExpanded === 'true') renderReviewMobileSheet();
   queueReviewProgress(Number(m.ply || 0));
 }
 
@@ -483,9 +620,13 @@ function renderBoard(fen, uci, bestUci = '') {
   let html = '';
   const ranks = boardOrientation === 'black' ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
   const files = boardOrientation === 'black' ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
-  for (const r of ranks) {
-    for (const file of files) {
-      html += squareHtml(r, file, '', from, to, grid[r][file] || '', bestFrom, bestTo);
+  for (let rankIndex = 0; rankIndex < ranks.length; rankIndex++) {
+    const r = ranks[rankIndex];
+    for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
+      const file = files[fileIndex];
+      const rankLabel = fileIndex === 0 ? String(8 - r) : '';
+      const fileLabel = rankIndex === ranks.length - 1 ? String.fromCharCode(97 + file) : '';
+      html += squareHtml(r, file, '', from, to, grid[r][file] || '', bestFrom, bestTo, rankLabel, fileLabel);
     }
   }
   board.innerHTML = html;
@@ -521,12 +662,13 @@ function boardGridFromPlacement(placement) {
   return grid;
 }
 
-function squareHtml(r,file,piece,from,to,pieceCode='',bestFrom='',bestTo='') {
+function squareHtml(r,file,piece,from,to,pieceCode='',bestFrom='',bestTo='',rankLabel='',fileLabel='') {
   const sq = String.fromCharCode(97+file) + (8-r);
   const dark = (r+file)%2===1;
   const hl = sq === from ? ' from' : sq === to ? ' to' : '';
   const best = sq === bestFrom ? ' best-from' : sq === bestTo ? ' best-to' : '';
-  return `<div class="sq ${dark?'dark':'light'}${hl}${best}" data-sq="${sq}">${pieceImageHtml(pieceCode)}</div>`;
+  const coordinates = `${rankLabel ? `<span class="sq-coordinate sq-coordinate-rank">${rankLabel}</span>` : ''}${fileLabel ? `<span class="sq-coordinate sq-coordinate-file">${fileLabel}</span>` : ''}`;
+  return `<div class="sq ${dark?'dark':'light'}${hl}${best}" data-sq="${sq}">${pieceImageHtml(pieceCode)}${coordinates}</div>`;
 }
 
 function pieceImageHtml(pieceCode) {

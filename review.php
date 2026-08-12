@@ -28,7 +28,10 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
   <header class="review-mobile-appbar" aria-label="Navegación de revisión">
     <a href="games.php" aria-label="Volver a partidas">‹</a>
     <strong>Revisión de partida</strong>
-    <button type="button" class="review-mobile-flip" aria-label="Girar tablero" onclick="document.getElementById('flipBoardBtn')?.click()">↻</button>
+    <div class="review-mobile-appbar-actions">
+      <button type="button" aria-label="Abrir análisis" data-review-tab-target="summary">↗</button>
+      <button type="button" aria-label="Girar tablero" onclick="document.getElementById('flipBoardBtn')?.click()">•••</button>
+    </div>
   </header>
 
   <section class="review-mobile-game-context" aria-label="Partida revisada">
@@ -125,12 +128,6 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
         <p id="reviewMobileFeedbackText">Selecciona una jugada para ver la explicación.</p>
       </section>
       <button class="review-mobile-open-analysis" type="button" data-review-tab-target="summary">Abrir análisis</button>
-      <nav class="review-mobile-tabs" aria-label="Secciones de la revisión" role="tablist">
-        <button type="button" class="active" data-review-tab="summary" role="tab">Resumen</button>
-        <button type="button" data-review-tab="analysis" role="tab">Análisis</button>
-        <button type="button" data-review-tab="moves" role="tab">Jugadas</button>
-        <button type="button" data-review-tab="coach" role="tab">Coach</button>
-      </nav>
     </section>
 
     <section class="panel move-list-panel" data-review-panel="moves">
@@ -159,6 +156,18 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
       <div class="review-insights-grid" id="reviewInsights"></div>
     </section>
   </section>
+
+  <section class="review-mobile-sheet" id="reviewMobileSheet" aria-label="Análisis de la partida" aria-hidden="true">
+    <button class="review-mobile-sheet-handle" type="button" aria-label="Cerrar análisis" data-review-sheet-close><span></span></button>
+    <nav class="review-mobile-tabs" aria-label="Secciones de la revisión" role="tablist">
+      <button type="button" class="active" data-review-tab="summary" role="tab">Resumen</button>
+      <button type="button" data-review-tab="analysis" role="tab">Análisis</button>
+      <button type="button" data-review-tab="moves" role="tab">Jugadas</button>
+      <button type="button" data-review-tab="coach" role="tab">Coach</button>
+    </nav>
+    <div class="review-mobile-sheet-body"></div>
+  </section>
+  <div class="review-mobile-sheet-backdrop" data-review-sheet-close></div>
 </main>
 </div>
 <script>

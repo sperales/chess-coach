@@ -105,9 +105,10 @@ Both should match the release version.
 
 - Check Review at 360 px and 390 px without horizontal overflow or a distorted board.
 - Confirm the first view prioritizes game context, current move, board, previous/next controls and the move explanation.
+- Confirm rank and file coordinates are drawn inside the edge squares and do not reduce board width.
 - Confirm board orientation and coordinates remain correct when the player used White or Black and after using the mobile flip control.
-- Confirm `Abrir análisis` reveals the `Resumen`, `Análisis`, `Jugadas` and `Coach` tabs.
-- Confirm changing tabs preserves the selected move and board position.
+- Confirm `Abrir análisis` reveals a bottom sheet above the board with `Resumen`, `Análisis`, `Jugadas` and `Coach` tabs.
+- Confirm the sheet scrolls internally, closes from its handle/backdrop and changing tabs preserves the selected move and board position.
 - Confirm `Mostrar mejor jugada` and `Volver a la jugada` retain the existing UCI/SAN behavior.
 - Confirm Nova appears in the mobile Coach view and the desktop Review layout remains unchanged.
 - Run `php tests/review_mobile_layout_test.php`.
