@@ -18,6 +18,7 @@ $mutatingActions = [
   'training_backfill',
   'training_content_backfill',
   'training_engine_backfill',
+  'training_scenario_backfill',
   'process',
 ];
 if (in_array($action, $mutatingActions, true)) {
@@ -148,6 +149,19 @@ if ($action === 'training_engine_backfill') {
   $limit = max(1, min(10, (int)($body['limit'] ?? 10)));
   if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
   json_response(training_engine_backfill_batch($userId, $limit));
+}
+
+if ($action === 'training_scenario_backfill') {
+  ignore_user_abort(true);
+  @set_time_limit(300);
+  $body = request_json_body();
+  $limit = max(1, min(50, (int)($body['limit'] ?? 10)));
+  if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
+  json_response(training_scenario_backfill_batch($userId, $limit));
+}
+
+if ($action === 'training_scenario_backfill_status') {
+  json_response(['ok' => true, 'pending' => training_scenario_backfill_pending_count($userId)]);
 }
 
 if ($action === 'process') {

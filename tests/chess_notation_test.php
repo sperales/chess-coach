@@ -29,6 +29,14 @@ foreach ($fallbacks as [$label, $fen, $uci, $expected]) {
   if ($actual !== $expected) $failures[] = $label . ': esperado ' . $expected . ', recibido ' . var_export($actual, true);
 }
 
+$applied = chess_apply_uci_to_fen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'e2e4');
+if ($applied !== 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1') {
+  $failures[] = 'Aplicar UCI: FEN resultante inesperado ' . var_export($applied, true);
+}
+if (chess_apply_uci_to_fen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'e2e5') !== null) {
+  $failures[] = 'Aplicar UCI: una jugada ilegal no debe producir FEN.';
+}
+
 if ($failures) {
   fwrite(STDERR, "Fallos de notacion SAN:\n- " . implode("\n- ", $failures) . "\n");
   exit(1);

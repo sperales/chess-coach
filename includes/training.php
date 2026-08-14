@@ -6,6 +6,7 @@ require_once __DIR__ . '/chess_notation.php';
 require_once __DIR__ . '/training_progress.php';
 require_once __DIR__ . '/player_progress.php';
 require_once __DIR__ . '/coach_messages.php';
+require_once __DIR__ . '/training_scenarios.php';
 
 const TRAINING_EXERCISE_CONTENT_VERSION = 2;
 
@@ -1307,6 +1308,7 @@ function training_generate_for_analysis(int $analysisId, int $userId, ?string $f
     }
   }
 
+  $scenarioResult = training_generate_scenarios_for_analysis($analysisId, $userId, $focusCode);
   return [
     'ok' => !$errors,
     'processed_moves' => $processed,
@@ -1314,6 +1316,8 @@ function training_generate_for_analysis(int $analysisId, int $userId, ?string $f
     'skipped_existing' => $skipped,
     'error_count' => count($errors),
     'errors' => $errors,
+    'created_scenarios' => (int)($scenarioResult['created_scenarios'] ?? 0),
+    'scenario_candidates' => (int)($scenarioResult['processed_candidates'] ?? 0),
     'message' => $errors ? 'Generación de ejercicios completada con errores parciales.' : 'Ejercicios generados correctamente.',
   ];
 }
