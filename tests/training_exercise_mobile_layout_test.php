@@ -13,8 +13,8 @@ $styles = file_get_contents(__DIR__.'/../assets/css/app.css');
 
 assert_training_exercise_mobile(str_contains($page, 'training-mobile-progress'), 'Solver must expose compact exercise progress.');
 assert_training_exercise_mobile(str_contains($page, 'trainingMobileCoach'), 'Solver must include the mobile Nova coach card.');
-assert_training_exercise_mobile(str_contains($page, 'Explícame'), 'Solver must expose the explanation action.');
-assert_training_exercise_mobile(str_contains($page, 'Dame una pista'), 'Solver must expose progressive hints.');
+assert_training_exercise_mobile(str_contains($page, '¿Por qué?'), 'Solver must expose the explanation action.');
+assert_training_exercise_mobile(str_contains($page, 'Ayuda'), 'Solver must expose progressive hints.');
 assert_training_exercise_mobile(str_contains($page, 'Progreso del módulo'), 'Solver must show module progress.');
 assert_training_exercise_mobile(str_contains($page, 'Objetivos de hoy'), 'Solver must show daily progress.');
 assert_training_exercise_mobile(str_contains($script, 'trainingMobileCoachMessages = []'), 'Nova carousel must keep an exercise-scoped message history.');

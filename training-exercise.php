@@ -84,8 +84,8 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
 
     <div class="training-mobile-actions" id="trainingMobileActiveControls">
       <button class="training-mobile-check" type="button" onclick="submitTrainingMove()" id="trainingMobileSubmitBtn" disabled>Comprobar</button>
-      <button class="secondary" type="button" onclick="showTrainingExplanation()">Explícame</button>
-      <button class="secondary" type="button" onclick="showTrainingHint()" id="trainingMobileHintBtn">Dame una pista</button>
+      <button class="secondary" type="button" onclick="showTrainingExplanation()">¿Por qué?</button>
+      <button class="secondary" type="button" onclick="showTrainingHint()" id="trainingMobileHintBtn">Ayuda</button>
     </div>
     <div class="training-mobile-actions training-mobile-done" id="trainingMobileDoneControls" hidden>
       <button type="button" onclick="openNextTrainingExercise()">Siguiente ejercicio</button>

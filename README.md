@@ -135,11 +135,22 @@ Includes:
 - Exercises generated from analyzed games
 - Recommended and type-based exercise lists
 - Interactive board solver
-- Hints that reveal only the origin square
+- Three genuinely progressive hint levels plus a separate `¿Por qué?` explanation
 - Legal move indicators
 - Attempts, skip/fail/solve tracking
 - Automatic active training sessions
 - Link back to the original review position
+
+### Coach and Nova
+
+Training v2 keeps product decisions outside the visual avatar:
+
+- Chess Intelligence supplies Player DNA, recent form and Training Focus facts.
+- `includes/coach.php` selects and orders training items and stores the reason and evidence.
+- `includes/coach_messages.php` persists an ordered feed with semantic states such as `thinking`, `correct` or `error`.
+- Nova is only the UI representation of those messages; no selection or chess logic depends on the avatar or on presentation colors.
+- Existing one-move exercises are treated as `Flash` without rewriting their stored records.
+- Internal training sessions remain implementation detail and can contain ordered Flash and Scenario items.
 
 ### Smart Tags
 
@@ -719,24 +730,31 @@ Current planned direction:
 - Autonomía based on solving without assistance
 - Measurable personal plans and completed-review tracking
 
-### v1.5.0 — AI Coach MVP
+### v1.5.0 — Coach + Training v2
+
+- Coach plans grounded in Training Focus, Player DNA and recent training
+- Existing one-move exercises formalized as Flash
+- Multi-move conversion, defense and mate Scenarios
+- Ordered Coach Feed, progressive help and contextual explanations
+
+### v1.6.0 — AI Coach MVP
 
 - Higher-level coaching explanations
-- Grounded training summaries
+- Grounded training summaries and reports
 - Recommendations based on games, tags, exercises and Player DNA
 
-### v1.5.1 — AI Coach Plus
+### v1.6.1 — AI Coach Plus
 
 - Better reports
 - More precise training recommendations
 - Richer use of Training Experience data
 
-### v1.6.0 — Conversación con el entrenador
+### v1.7.0 — Conversación con el entrenador
 
 - Ask questions about games, training and weaknesses
 - Coach answers grounded in stored Chess Coach data
 
-### v1.7.0 — Automation
+### v1.8.0 — Automation
 
 - Automatic Chess.com Sync
 - Duplicate-safe recurring import

@@ -420,14 +420,20 @@ function renderHomeTrainingExperience() {
   const current = primaryGoal ? Number(primaryGoal.current_value || 0) : Number(today.exercises || 0);
   const target = primaryGoal ? Number(primaryGoal.target_value || 1) : Math.max(1, Number(settings.daily_exercise_goal || 5));
   const focusName = ((dashboardData.training_focus || [])[0] || {}).title || primaryTitle;
+  const coachPlan = dashboardData.coach_plan || null;
+  const coachTitle = coachPlan?.focus?.title || primaryTitle;
+  const coachCurrent = Number((coachPlan?.items || []).filter(item => item.status === 'completed').length || current);
+  const coachTarget = Number(coachPlan?.item_count || target);
+  const coachProgress = coachTarget > 0 ? homeTrainingProgressPercent((coachCurrent / coachTarget) * 100) : primaryProgress;
+  const coachRationale = coachPlan?.rationale || `Hoy nos centraremos en ${focusName.toLowerCase()}.`;
   el.innerHTML = `
     <div class="home-nova-card">
       <div class="home-nova-card__content">
         <span class="home-nova-eyebrow">Tu entrenamiento de hoy</span>
-        <h2>${escapeHtml(primaryTitle)}</h2>
-        <strong class="home-nova-count">${current} de ${target}</strong>
-        <div class="home-training-progress" aria-label="Progreso ${primaryProgress}%"><i style="width:${primaryProgress}%"></i></div>
-        <blockquote>Hoy nos centraremos en ${escapeHtml(focusName.toLowerCase())}.</blockquote>
+        <h2>${escapeHtml(coachTitle)}</h2>
+        <strong class="home-nova-count">${coachCurrent} de ${coachTarget}</strong>
+        <div class="home-training-progress" aria-label="Progreso ${coachProgress}%"><i style="width:${coachProgress}%"></i></div>
+        <blockquote>${escapeHtml(coachRationale)}</blockquote>
         <a class="home-nova-dna" href="player-dna.php">Ver mi ADN <span aria-hidden="true">›</span></a>
       </div>
       <img class="home-nova-pointing" src="assets/nova/nova-coach-pointing.png" alt="Nova, tu entrenador">
