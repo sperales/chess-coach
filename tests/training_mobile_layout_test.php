@@ -23,5 +23,7 @@ assert_training_mobile(str_contains($styles, '@media(max-width:680px)'), 'Traini
 assert_training_mobile(str_contains($styles, 'width:140px') && str_contains($styles, 'white-space:nowrap'), 'Category chips must use stable dimensions.');
 assert_training_mobile(str_contains($styles, 'aspect-ratio:1.44/1'), 'Nova card must preserve the approved compact mobile proportion.');
 assert_training_mobile(!str_contains($styles, '.training-nova-proposal {min-height:710px'), 'Nova card must not restore the oversized mobile layout.');
+assert_training_mobile(str_contains($styles, 'width:158px'), 'Nova metrics must leave enough room for long labels.');
+assert_training_mobile(str_contains($styles, 'right:9%'), 'Nova must keep clear of the speech bubble on mobile.');
 
 echo "Training mobile layout tests passed.\n";

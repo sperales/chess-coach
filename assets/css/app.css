@@ -5598,7 +5598,7 @@ a.training-plan-goal:hover {
     grid-row:4;
     align-self:end;
     z-index:4;
-    width:126px;
+    width:158px;
     max-width:100%;
     margin:7px 0 7px;
     translate:0 3px
@@ -5608,7 +5608,7 @@ a.training-plan-goal:hover {
   .training-nova-metrics strong {font-size:13px;line-height:1.1}
   .training-nova-metrics small {font-size:9px}
   .training-nova-image {
-    right:4%;
+    right:9%;
     bottom:42px;
     width:50%;
     max-height:74%;
