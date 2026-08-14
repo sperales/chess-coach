@@ -78,7 +78,7 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
       <div class="training-mobile-coach-copy">
         <div><strong id="trainingMobileCoachTitle">Objetivo</strong><span id="trainingMobileCoachStep">1 de 1</span></div>
         <p id="trainingMobileCoachText">Encuentra la mejor jugada en esta posición.</p>
-        <div class="training-mobile-coach-dots" id="trainingMobileCoachDots" aria-hidden="true"><i class="active"></i><i></i><i></i></div>
+        <div class="training-mobile-coach-dots" id="trainingMobileCoachDots" aria-label="Mensajes de Nova"><button type="button" class="active" aria-label="Mensaje 1 de 2"></button><button type="button" aria-label="Mensaje 2 de 2"></button></div>
       </div>
     </section>
 
@@ -102,14 +102,9 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
         <span class="training-mobile-mini-progress"><i id="trainingMobileTodayBar"></i></span>
         <b id="trainingMobileTodayProgress">0 de 0</b>
       </div>
-      <a class="training-mobile-summary-row" href="#trainingOriginDetails" id="trainingMobileOriginLink">
+      <a class="training-mobile-summary-row" href="#" id="trainingMobileOriginLink">
         <strong>Partida origen</strong>
         <span id="trainingMobileOpening">Apertura sin identificar</span>
-        <b aria-hidden="true">›</b>
-      </a>
-      <a class="training-mobile-summary-row" href="#trainingExerciseDetails">
-        <strong>Detalles del ejercicio</strong>
-        <span id="trainingMobileTheme">Entrenamiento personalizado</span>
         <b aria-hidden="true">›</b>
       </a>
     </section>

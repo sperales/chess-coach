@@ -19,8 +19,13 @@ assert_training_exercise_mobile(str_contains($page, 'Progreso del módulo'), 'So
 assert_training_exercise_mobile(str_contains($page, 'Objetivos de hoy'), 'Solver must show daily progress.');
 assert_training_exercise_mobile(str_contains($script, "trainingMobileCoachMode = data.solved ? 'success'"), 'Nova state must follow real attempt results.');
 assert_training_exercise_mobile(str_contains($script, 'renderTrainingMobileProgress'), 'Mobile progress must be data driven.');
+assert_training_exercise_mobile(str_contains($script, 'settings.daily_exercise_goal'), 'Top progress must use the configured daily goal.');
+assert_training_exercise_mobile(str_contains($script, 'bindTrainingMobileCoachSwipe'), 'Nova messages must support touch navigation.');
+assert_training_exercise_mobile(str_contains($script, "originLink.href = activeExercise.review_url"), 'Source game must link directly to Review.');
 assert_training_exercise_mobile(str_contains($styles, 'exact mobile training exercise composition'), 'Dedicated mobile solver styles must exist.');
 assert_training_exercise_mobile(str_contains($styles, '.training-board-frame .board-rank-labels'), 'Board coordinates must be positioned inside the mobile board.');
 assert_training_exercise_mobile(str_contains($styles, '.training-auto-submit .training-mobile-check'), 'Auto-submit preference must hide the redundant check action.');
+assert_training_exercise_mobile(str_contains($styles, '#trainingSolverHeroSide'), 'Duplicate side-to-move text must be hidden on mobile.');
+assert_training_exercise_mobile(substr_count($page, 'Detalles del ejercicio') === 1, 'Exercise details must only appear once.');
 
 echo "Training exercise mobile layout tests passed.\n";

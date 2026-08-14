@@ -5942,28 +5942,37 @@ a.training-plan-goal:hover {
     background:transparent
   }
   .training-exercise-page .streak-pill .header-progress-metric.streak {
-    gap:5px
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    height:30px
   }
   .training-exercise-page .streak-pill .nova-streak-core {
+    display:grid;
+    place-items:center;
+    width:25px;
+    height:25px;
+    line-height:1
+  }
+  .training-exercise-page .streak-pill .nova-streak-core img {
+    display:block;
     width:25px;
     height:25px
   }
   .training-exercise-page .streak-pill strong {
-    font-size:16px
+    display:block;
+    font-size:16px;
+    line-height:1
   }
   .training-exercise-page .topbar .hamb {
     width:40px;
     height:40px;
     min-width:40px;
     padding:0;
-    font-size:0;
+    font-size:22px;
+    line-height:1;
     border-radius:8px;
     background:#101b21
-  }
-  .training-exercise-page .topbar .hamb::before {
-    content:"⋮";
-    font-size:25px;
-    line-height:1
   }
   .training-exercise-page .app-area {
     width:100%;
@@ -6021,6 +6030,9 @@ a.training-plan-goal:hover {
   .training-solver-hero h1 {
     font-size:22px;
     line-height:1.15
+  }
+  .training-solver-hero #trainingSolverHeroSide {
+    display:none
   }
   .training-mobile-hero-meta {
     grid-column:1/-1;
@@ -6142,7 +6154,8 @@ a.training-plan-goal:hover {
     border:1px solid color-mix(in srgb,var(--coach-state) 50%,#263940);
     border-left:4px solid var(--coach-state);
     border-radius:8px;
-    background:linear-gradient(105deg,color-mix(in srgb,var(--coach-state) 11%,#0b171c),#0b151a 58%)
+    background:linear-gradient(105deg,color-mix(in srgb,var(--coach-state) 11%,#0b171c),#0b151a 58%);
+    touch-action:pan-y
   }
   .training-mobile-coach.nova-state-error,
   .training-mobile-coach.nova-state-solution {
@@ -6189,16 +6202,24 @@ a.training-plan-goal:hover {
     justify-content:center;
     padding-top:2px
   }
-  .training-mobile-coach-dots i {
+  .training-mobile-coach-dots button {
     width:4px;
     height:4px;
+    min-width:0;
+    min-height:0;
+    padding:0;
+    border:0;
     border-radius:50%;
-    background:#35434b
+    background:#35434b;
+    box-shadow:none
   }
-  .training-mobile-coach-dots i.active {
+  .training-mobile-coach-dots button.active {
     width:11px;
     border-radius:5px;
     background:var(--coach-state)
+  }
+  .training-mobile-coach.is-changing .training-mobile-coach-copy {
+    animation:trainingCoachSlideIn .2s ease-out
   }
   .training-mobile-actions {
     display:grid;
@@ -6310,6 +6331,11 @@ a.training-plan-goal:hover {
     margin-top:12px;
     padding-top:12px
   }
+}
+
+@keyframes trainingCoachSlideIn {
+  from {opacity:.35;transform:translateX(8px)}
+  to {opacity:1;transform:translateX(0)}
 }
 
 /* New horizontal identity uses a wider aspect ratio than the legacy lockup. */

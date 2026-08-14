@@ -9,6 +9,9 @@ Stockfish 18 analysis confidence, chess-logic consistency and pipeline hardening
 - Rebuilds the exercise solver from the approved five-state mobile reference while preserving the established desktop workspace.
 - Maximizes the mobile board, places coordinates inside its edge squares and keeps the exercise title, side to move, difficulty and timer visible without scrolling.
 - Connects Nova's objective, error, hint, explanation and success presentations to the real solver state.
+- Makes Nova's feedback a swipeable, paginated message carousel and keeps its dots available as direct navigation controls.
+- Uses the configured daily objective for the segmented progress line instead of presenting it as a Nova-generated exercise queue.
+- Opens the source game directly in Review, removes duplicate mobile labels and aligns the streak core with the standard three-line menu control.
 - Adds compact module and daily-goal progress, source-opening context and mobile actions; automatic validation hides the redundant `Comprobar` button.
 - Rebuilds the Training landing page from the approved mobile-first reference with a compact heading, focus selector, Nova recommendation, category cards, continuation exercises and coach advice.
 - Uses real exercise counts, current training-plan data and pending exercises instead of decorative sample values.
