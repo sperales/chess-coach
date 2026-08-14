@@ -57,21 +57,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form class="login-form" method="post" action="index.php" autocomplete="on" accept-charset="UTF-8"<?= $err ? ' aria-describedby="loginError"' : '' ?>>
           <?= csrf_field() ?>
           <div class="login-field">
-            <label class="sr-only" for="loginUsername">Usuario</label>
+            <label class="sr-only" for="username">Usuario</label>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M20 21a8 8 0 0 0-16 0"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
-            <input id="loginUsername" name="username" type="text" value="<?= e($username) ?>" placeholder="Usuario" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" required>
+            <input id="username" name="username" type="text" value="<?= e($username) ?>" placeholder="Usuario" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" aria-label="Nombre de usuario" required>
           </div>
 
           <div class="login-field">
-            <label class="sr-only" for="loginPassword">Contraseña</label>
+            <label class="sr-only" for="password">Contraseña</label>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <rect x="5" y="11" width="14" height="10" rx="2"></rect>
               <path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
             </svg>
-            <input id="loginPassword" name="password" type="password" placeholder="Contraseña" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go" required>
+            <input id="password" name="password" type="password" placeholder="Contraseña" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go" aria-label="Contraseña" required>
             <button class="login-eye" id="loginPasswordToggle" type="button" aria-label="Mostrar contraseña" aria-pressed="false" onclick="toggleLoginPassword()">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"></path>
@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </main>
   <script>
     function toggleLoginPassword() {
-      const input = document.getElementById('loginPassword');
+      const input = document.getElementById('password');
       const toggle = document.getElementById('loginPasswordToggle');
       if (!input) return;
       const show = input.type === 'password';

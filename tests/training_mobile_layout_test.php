@@ -21,5 +21,7 @@ assert_training_mobile(str_contains($script, 'training-exercise.php?id='), 'Exis
 assert_training_mobile(str_contains($styles, '.training-nova-proposal'), 'Nova recommendation styles must be present.');
 assert_training_mobile(str_contains($styles, '@media(max-width:680px)'), 'Training must have dedicated mobile layout rules.');
 assert_training_mobile(str_contains($styles, 'width:140px') && str_contains($styles, 'white-space:nowrap'), 'Category chips must use stable dimensions.');
+assert_training_mobile(str_contains($styles, 'aspect-ratio:1.44/1'), 'Nova card must preserve the approved compact mobile proportion.');
+assert_training_mobile(!str_contains($styles, '.training-nova-proposal {min-height:710px'), 'Nova card must not restore the oversized mobile layout.');
 
 echo "Training mobile layout tests passed.\n";

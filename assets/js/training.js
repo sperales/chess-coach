@@ -166,8 +166,12 @@ function renderTrainingNovaProposal() {
   const message = document.getElementById('trainingNovaMessage');
   const speech = document.getElementById('trainingNovaSpeech');
   const start = document.getElementById('trainingNovaStart');
-  if (message) message.textContent = `He analizado tu progreso y he preparado un entrenamiento centrado en ${focusTitle.toLowerCase()}.`;
-  if (speech) speech.textContent = `¡Vamos a trabajar ${focusTitle.toLowerCase()}!`;
+  if (message) message.textContent = 'He analizado tu progreso y he preparado tu entrenamiento de hoy.';
+  if (speech) {
+    speech.textContent = focusTitle.length <= 22
+      ? `¡Hoy trabajaremos ${focusTitle.toLowerCase()}!`
+      : '¡Vamos a por tu objetivo de hoy!';
+  }
   metrics.innerHTML = [
     ['ϟ', flashCount, 'Flash'],
     ['♟', 0, 'Escenarios'],
