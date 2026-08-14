@@ -18,6 +18,13 @@ return [
   'restart_after_evaluations' => 40,
   'max_halfmoves' => 90,
   'movetime_ms' => 800,
+  // Perfil ligero para validar decisiones durante escenarios multi-jugada.
+  'scenario_depth' => 12,
+  'scenario_movetime_ms' => 500,
+  'scenario_minimum_depth' => 1,
+  'scenario_timeout_seconds' => 20,
+  'scenario_retries' => 1,
+  'scenario_cache_hours' => 168,
   'queue_stale_minutes' => 30,
   'analysis_max_attempts' => 2,
   'worker_batch_size' => 1,

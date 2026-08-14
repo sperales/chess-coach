@@ -47,19 +47,30 @@ function chess_move_to_uci(array $move): string {
   return $uci;
 }
 
+function chess_legal_uci_move(string $fenBefore, string $uci): ?array {
+  $state = chess_state_from_fen($fenBefore);
+  $uci = strtolower(trim($uci));
+  if (!$state || !preg_match('/^[a-h][1-8][a-h][1-8][qrbn]?$/', $uci)) return null;
+  foreach (pseudo_moves($state) as $candidate) {
+    if (chess_move_to_uci($candidate) === $uci) return $candidate;
+  }
+  return null;
+}
+
+function chess_apply_uci_to_fen(string $fenBefore, string $uci): ?string {
+  $state = chess_state_from_fen($fenBefore);
+  $move = chess_legal_uci_move($fenBefore, $uci);
+  if (!$state || !$move) return null;
+  return fen_of(apply_move($state, $move));
+}
+
 function chess_uci_to_san(string $fenBefore, string $uci): ?string {
   $state = chess_state_from_fen($fenBefore);
   $uci = strtolower(trim($uci));
   if (!$state || !preg_match('/^[a-h][1-8][a-h][1-8][qrbn]?$/', $uci)) return null;
 
   $legalMoves = pseudo_moves($state);
-  $move = null;
-  foreach ($legalMoves as $candidate) {
-    if (chess_move_to_uci($candidate) === $uci) {
-      $move = $candidate;
-      break;
-    }
-  }
+  $move = chess_legal_uci_move($fenBefore, $uci);
   if (!$move) return null;
 
   $piece = $state['b'][$move['fr']][$move['ff']];

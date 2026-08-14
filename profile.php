@@ -17,6 +17,7 @@ $pendingSmartTags = smart_tag_backfill_pending_count((int)$u['id']);
 $pendingTrainingExercises = training_backfill_pending_count((int)$u['id']);
 $pendingTrainingContent = training_content_backfill_pending_count((int)$u['id']);
 $pendingTrainingEngine = training_engine_backfill_pending_count((int)$u['id']);
+$pendingTrainingScenarios = training_scenario_backfill_pending_count((int)$u['id']);
 $pendingOpeningProfiles = openings_profile_pending_count((int)$u['id']);
 $latestPlayerDna = player_dna_latest_snapshot((int)$u['id']);
 $playerDnaConfidenceLabels = ['low' => 'baja', 'medium' => 'media', 'high' => 'alta'];
@@ -293,6 +294,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
       <p class="muted" id="trainingEngineBackfillResult"></p>
       <div class="batch-row">
         <div>
+          <strong>Generar escenarios multi-jugada</strong>
+          <p class="muted">Detecta posiciones de conversión, defensa y mate en análisis anteriores. No vuelve a analizar partidas y procesa hasta 10 análisis por ejecución.</p>
+          <p class="muted" id="trainingScenarioBackfillPending">Pendientes: <?= (int)$pendingTrainingScenarios ?></p>
+        </div>
+        <button type="button" onclick="runTrainingScenarioBackfill()" id="trainingScenarioBackfillBtn">Generar escenarios</button>
+      </div>
+      <p class="muted" id="trainingScenarioBackfillResult"></p>
+      <div class="batch-row">
+        <div>
           <strong>Backfill de aperturas</strong>
           <p class="muted">Genera perfiles de apertura para partidas importadas o analizadas antes del Lab de Aperturas. Procesa hasta 25 partidas por ejecucion.</p>
           <p class="muted" id="openingsBackfillPending">Pendientes: <?= (int)$pendingOpeningProfiles ?></p>
@@ -435,6 +445,29 @@ async function runTrainingEngineBackfill() {
     if (result) result.textContent = errors.length ? `${summary} Errores: ${errors.join(' | ')}` : summary;
   } catch (e) {
     if (result) result.textContent = e.message || 'No se pudieron enriquecer los ejercicios con Stockfish.';
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function runTrainingScenarioBackfill() {
+  const btn = document.getElementById('trainingScenarioBackfillBtn');
+  const result = document.getElementById('trainingScenarioBackfillResult');
+  const pending = document.getElementById('trainingScenarioBackfillPending');
+  if (btn) btn.disabled = true;
+  if (result) result.textContent = 'Generando escenarios multi-jugada...';
+  try {
+    const response = await fetch('api/analyze.php?action=training_scenario_backfill', {
+      method: 'POST',
+      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ limit: 10 })
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.message || data.error || 'Backfill completado con errores.');
+    if (result) result.textContent = `${data.message} Análisis: ${data.processed_analyses || 0}. Escenarios nuevos: ${data.created_scenarios || 0}. Pendientes: ${data.pending || 0}.`;
+    if (pending) pending.textContent = `Pendientes: ${data.pending || 0}`;
+  } catch (error) {
+    if (result) result.textContent = error.message || 'No se pudieron generar los escenarios.';
   } finally {
     if (btn) btn.disabled = false;
   }

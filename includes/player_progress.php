@@ -186,13 +186,30 @@ function player_progress_event_samples(int $userId, string $eventType, int $limi
 }
 
 function player_progress_autonomy(int $userId): array {
-  $st = db()->prepare('SELECT status,attempts_count,highest_hint_level
+  $st = db()->prepare('SELECT id,status,attempts_count,highest_hint_level,completed_at
                        FROM training_solve_runs
                        WHERE user_id=? AND status IN ("solved","failed")
                        ORDER BY completed_at DESC,id DESC
                        LIMIT ' . PLAYER_PROGRESS_EXERCISE_WINDOW);
   $st->execute([$userId]);
   $rows = $st->fetchAll();
+  $scenarioSt = db()->prepare('SELECT id,status,attempts_count,player_moves_count,highest_hint_level,completed_at
+                               FROM training_scenario_runs
+                               WHERE user_id=? AND status IN ("completed","failed")
+                               ORDER BY completed_at DESC,id DESC
+                               LIMIT ' . PLAYER_PROGRESS_EXERCISE_WINDOW);
+  $scenarioSt->execute([$userId]);
+  foreach ($scenarioSt->fetchAll() as $scenario) {
+    $rows[] = [
+      'id' => (int)$scenario['id'],
+      'status' => $scenario['status'] === 'completed' ? 'solved' : 'failed',
+      'attempts_count' => 1 + max(0, (int)$scenario['attempts_count'] - (int)$scenario['player_moves_count']),
+      'highest_hint_level' => (int)$scenario['highest_hint_level'],
+      'completed_at' => (string)$scenario['completed_at'],
+    ];
+  }
+  usort($rows, static fn(array $a, array $b): int => strcmp((string)$b['completed_at'], (string)$a['completed_at']) ?: ((int)$b['id'] <=> (int)$a['id']));
+  $rows = array_slice($rows, 0, PLAYER_PROGRESS_EXERCISE_WINDOW);
   $samples = array_map(static fn(array $row): array => [
     'quality' => player_progress_autonomy_sample(
       (string)$row['status'],

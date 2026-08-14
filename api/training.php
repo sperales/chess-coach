@@ -4,11 +4,13 @@ require_once __DIR__.'/../includes/helpers.php';
 require_once __DIR__.'/../includes/training.php';
 require_once __DIR__.'/../includes/training_hints.php';
 require_once __DIR__.'/../includes/coach.php';
+require_once __DIR__.'/../includes/scenario_runtime.php';
 
 $u = require_login();
 $userId = (int)$u['id'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
-$mutatingActions = ['session_start', 'session_end', 'solve_start', 'hint', 'why', 'attempt', 'skip', 'goal_settings', 'progress_refresh'];
+$mutatingActions = ['session_start', 'session_end', 'solve_start', 'hint', 'why', 'attempt', 'skip', 'goal_settings', 'progress_refresh',
+  'scenario_start', 'scenario_move', 'scenario_hint', 'scenario_why', 'scenario_skip'];
 if (in_array($action, $mutatingActions, true)) {
   require_post_csrf();
 }
@@ -117,6 +119,73 @@ if ($action === 'get') {
     'ok' => true,
     'exercise' => training_public_exercise($exercise, $includeSolution),
   ]);
+}
+
+if ($action === 'scenario_get') {
+  $id = (int)($_GET['id'] ?? 0);
+  $scenario = $id > 0 ? training_scenario_for_user($id, $userId) : null;
+  if (!$scenario) json_response(['ok' => false, 'error' => 'Escenario no encontrado.']);
+  $runId = (int)($_GET['run_id'] ?? 0);
+  $run = $runId > 0 ? training_scenario_run_for_user($runId, $userId) : null;
+  json_response([
+    'ok' => true,
+    'scenario' => training_scenario_public($scenario, $run),
+    'events' => $run ? training_scenario_events_for_run((int)$run['id'], $userId) : [],
+  ]);
+}
+
+if ($action === 'scenario_start') {
+  $body = request_json_body();
+  try {
+    json_response(training_scenario_start($userId, (int)($body['scenario_id'] ?? 0), !empty($body['session_id']) ? (int)$body['session_id'] : null));
+  } catch (InvalidArgumentException|RuntimeException $e) {
+    json_response(['ok' => false, 'error' => $e->getMessage()]);
+  } catch (Throwable $e) {
+    error_log('Scenario start failed: ' . $e->getMessage());
+    json_response(['ok' => false, 'error' => 'No se ha podido iniciar el escenario.']);
+  }
+}
+
+if ($action === 'scenario_move') {
+  $body = request_json_body();
+  try {
+    json_response(training_scenario_move($userId, (int)($body['run_id'] ?? 0), (string)($body['move_uci'] ?? '')));
+  } catch (InvalidArgumentException|RuntimeException $e) {
+    json_response(['ok' => false, 'error' => $e->getMessage()]);
+  } catch (Throwable $e) {
+    error_log('Scenario move failed: ' . $e->getMessage());
+    json_response(['ok' => false, 'error' => 'No se ha podido validar la jugada.']);
+  }
+}
+
+if ($action === 'scenario_hint') {
+  $body = request_json_body();
+  try {
+    json_response(training_scenario_hint($userId, (int)($body['run_id'] ?? 0), (int)($body['level'] ?? 1)));
+  } catch (InvalidArgumentException|RuntimeException $e) {
+    json_response(['ok' => false, 'error' => $e->getMessage()]);
+  } catch (Throwable $e) {
+    error_log('Scenario hint failed: ' . $e->getMessage());
+    json_response(['ok' => false, 'error' => 'No se ha podido generar la pista.']);
+  }
+}
+
+if ($action === 'scenario_why') {
+  $body = request_json_body();
+  try {
+    json_response(training_scenario_why($userId, (int)($body['run_id'] ?? 0)));
+  } catch (InvalidArgumentException|RuntimeException $e) {
+    json_response(['ok' => false, 'error' => $e->getMessage()]);
+  }
+}
+
+if ($action === 'scenario_skip') {
+  $body = request_json_body();
+  try {
+    json_response(training_scenario_skip($userId, (int)($body['run_id'] ?? 0)));
+  } catch (InvalidArgumentException|RuntimeException $e) {
+    json_response(['ok' => false, 'error' => $e->getMessage()]);
+  }
 }
 
 if ($action === 'solve_start') {

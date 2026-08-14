@@ -98,15 +98,77 @@ function coach_select_flash_items(array $candidates, array $focus, int $limit, a
       ],
     ];
   }
+  if (count($selected) < $limit) {
+    $selectedIds = array_map('intval', array_column($selected, 'exercise_id'));
+    foreach ($candidates as $candidate) {
+      if (count($selected) >= $limit) break;
+      if (in_array((int)$candidate['id'], $selectedIds, true)) continue;
+      $tags = coach_candidate_tag_codes($candidate);
+      $selected[] = [
+        'position' => count($selected) + 1,
+        'item_type' => 'flash',
+        'exercise_id' => (int)$candidate['id'],
+        'scenario_id' => null,
+        'concept_code' => $tags[0] ?? (string)($candidate['exercise_type'] ?? 'general'),
+        'reason' => 'Completa el plan con variedad disponible para hoy.',
+        'evidence' => [
+          'priority_score' => (int)($candidate['priority_score'] ?? 0),
+          'difficulty' => (string)($candidate['difficulty'] ?? 'medium'),
+          'source_side' => (string)($candidate['source_side'] ?? 'user'),
+          'tag_codes' => $tags,
+        ],
+      ];
+      $selectedIds[] = (int)$candidate['id'];
+    }
+  }
   return $selected;
 }
 
-function coach_compose_training_blueprint(array $context, array $candidates, int $targetItems, array $recentExerciseIds = []): array {
+function coach_score_scenario_candidate(array $candidate, array $focusTagCodes): int {
+  $score = ['critical' => 180, 'hard' => 140, 'medium' => 100, 'easy' => 70][$candidate['difficulty'] ?? 'medium'] ?? 100;
+  $typeFocus = ['mate' => ['tactics', 'missed_mate'], 'defense' => ['defense', 'accuracy'], 'conversion' => ['conversion', 'endgame']];
+  if (array_intersect($focusTagCodes, $typeFocus[$candidate['scenario_type'] ?? ''] ?? [])) $score += 140;
+  if (!empty($candidate['last_failed_at'])) $score += 120;
+  return $score + min(100, (int)($candidate['initial_eval_cp'] ?? 0) / 10);
+}
+
+function coach_select_scenario_items(array $candidates, array $focus, int $limit = 2): array {
+  $limit = max(0, min(2, $limit));
+  foreach ($candidates as &$candidate) $candidate['_coach_score'] = coach_score_scenario_candidate($candidate, $focus['tag_codes'] ?? []);
+  unset($candidate);
+  usort($candidates, fn(array $a, array $b): int => ($b['_coach_score'] <=> $a['_coach_score']) ?: ((int)$b['id'] <=> (int)$a['id']));
+  $selected = [];
+  $types = [];
+  foreach ($candidates as $candidate) {
+    if (count($selected) >= $limit) break;
+    $type = (string)$candidate['scenario_type'];
+    if (isset($types[$type])) continue;
+    $types[$type] = true;
+    $selected[] = [
+      'position' => 0, 'item_type' => 'scenario', 'exercise_id' => null, 'scenario_id' => (int)$candidate['id'],
+      'concept_code' => $type, 'reason' => 'Practica varias decisiones contra la mejor respuesta de Stockfish.',
+      'evidence' => ['difficulty' => (string)$candidate['difficulty'], 'scenario_type' => $type, 'starting_ply' => (int)$candidate['starting_ply']],
+    ];
+  }
+  return $selected;
+}
+
+function coach_compose_training_blueprint(array $context, array $candidates, int $targetItems, array $recentExerciseIds = [], array $scenarioCandidates = []): array {
   $focus = coach_focus_from_context($context);
   $focusTitleLower = function_exists('mb_strtolower')
     ? mb_strtolower((string)$focus['title'], 'UTF-8')
     : strtolower((string)$focus['title']);
-  $items = coach_select_flash_items($candidates, $focus, $targetItems, $recentExerciseIds);
+  $scenarioLimit = $targetItems >= 5 ? 2 : ($targetItems >= 3 ? 1 : 0);
+  $scenarioItems = coach_select_scenario_items($scenarioCandidates, $focus, $scenarioLimit);
+  $flashItems = coach_select_flash_items($candidates, $focus, max(COACH_FLASH_MIN_ITEMS, $targetItems - count($scenarioItems)), $recentExerciseIds);
+  $items = [];
+  while ($flashItems || $scenarioItems) {
+    for ($i = 0; $i < 2 && $flashItems; $i++) $items[] = array_shift($flashItems);
+    if ($scenarioItems) $items[] = array_shift($scenarioItems);
+  }
+  $items = array_slice($items, 0, $targetItems);
+  foreach ($items as $index => &$item) $item['position'] = $index + 1;
+  unset($item);
   $evidence = $focus['evidence'];
   if (!empty($context['dna_confidence'])) $evidence[] = 'ADN del jugador: confianza ' . (string)$context['dna_confidence'];
   if (!empty($context['recent_training'])) $evidence[] = (int)$context['recent_training'] . ' ejercicios completados recientemente';
@@ -152,6 +214,19 @@ function coach_flash_candidates_for_user(int $userId, int $limit = 80): array {
   return $list['items'];
 }
 
+function coach_scenario_candidates_for_user(int $userId, int $limit = 20): array {
+  $limit = max(1, min(50, $limit));
+  $sql = 'SELECT s.*,
+            (SELECT MAX(r.completed_at) FROM training_scenario_runs r WHERE r.scenario_id=s.id AND r.user_id=s.user_id AND r.status="failed") AS last_failed_at
+          FROM training_scenarios s
+          WHERE s.user_id=? AND s.status="active"
+            AND NOT EXISTS (SELECT 1 FROM training_scenario_runs r WHERE r.scenario_id=s.id AND r.user_id=s.user_id AND r.status="completed")
+          ORDER BY s.updated_at DESC,s.id DESC LIMIT ' . $limit;
+  $st = db()->prepare($sql);
+  $st->execute([$userId]);
+  return $st->fetchAll();
+}
+
 function coach_recommendation_for_user(int $userId, array $trainingFocus = []): array {
   $settings = training_goal_settings_for_user($userId);
   $dna = coach_latest_dna_context($userId);
@@ -165,7 +240,7 @@ function coach_recommendation_for_user(int $userId, array $trainingFocus = []): 
     'sample_size' => $trainingFocus[0]['sample_size'] ?? ($dna['recent_games'] ?? 0),
     'dna_confidence' => $dna['confidence'] ?? null,
     'recent_training' => (int)$recentSt->fetchColumn(),
-  ], coach_flash_candidates_for_user($userId), $target, coach_recent_exercise_ids($userId));
+  ], coach_flash_candidates_for_user($userId), $target, coach_recent_exercise_ids($userId), coach_scenario_candidates_for_user($userId));
 }
 
 function coach_public_session_item(array $row): array {
