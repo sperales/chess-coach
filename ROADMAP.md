@@ -38,6 +38,8 @@ v1.4.16 establishes Stockfish 18 as an auditable analysis baseline. Each game re
 
 The pipeline keeps one engine process alive per game, retries transient failures, recovers interrupted queue work and serializes Stockfish execution by default for shared-hosting safety.
 
+The release also establishes the new mobile-first product shell across Login, Home, Review and Training. Nova becomes the visible coach, Dashboard progress can be explored by period and metric, Review uses a full-width board with overlay analysis panels, and exercise feedback remains available as an incremental swipeable conversation.
+
 Review, Dashboard and Player DNA now share one pedagogical assessment model that combines CPL with position-state transitions. Recent form uses 10 games, coach focus uses 15, recent performance metrics use 20, and the stable Player DNA uses up to 50 games with recency weighting and confidence per dimension. DNA snapshots refresh automatically after completed analyses.
 
 It keeps Player DNA, Openings Lab and the Training Center as stable capabilities, including the autonomous 500-code ECO reference catalog, Spanish opening and representative variation labels, PGN-first metadata resolution and clearer opening identities without runtime APIs.
@@ -742,6 +744,9 @@ Make every new engine evaluation traceable, complete and trustworthy before addi
 - Strict rejection of missing, shallow or incomplete output, with no `0.00` fallback.
 - Transient retries, stale-job recovery, atomic queue claims and serialized engine execution for shared hosting.
 - Compatible hardening for the existing Stockfish exercise-enrichment process.
+- Mobile-first Login, Home, Review, Training and exercise-solving flows, adapted back to desktop without parallel implementations.
+- Nova coaching presentation, daily recommendation and persistent exercise feedback carousel.
+- Historical Dashboard progress controls and mobile game summaries based on real stored data.
 
 ---
 
