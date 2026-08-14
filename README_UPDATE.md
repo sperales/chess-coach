@@ -6,6 +6,14 @@ Stockfish 18 analysis confidence, chess-logic consistency and pipeline hardening
 
 ## Changes
 
+- Rebuilds the Training landing page from the approved mobile-first reference with a compact heading, focus selector, Nova recommendation, category cards, continuation exercises and coach advice.
+- Uses real exercise counts, current training-plan data and pending exercises instead of decorative sample values.
+- Keeps internal sessions out of the player-facing interface and uses `entrenamiento` consistently.
+- Leaves the future multi-move `Escenarios` category visible but inactive until its exercise model is implemented.
+- Preserves direct access to current one-move exercises and Openings Lab without changing the solver or training APIs.
+- Keeps Home's primary `Empezar/Seguir entrenando` action anchored to Training even when the next plan goal points to a game review.
+- Reserves separate mobile areas for Nova's copy, metrics, coach image and speech so dynamic recommendation text cannot overlap them.
+- Gives all category chips stable dimensions for consistent alignment across short and long labels.
 - Rebuilds Review as a mobile-first flow with game context, current-move banner, full-width board and large previous/next controls.
 - Keeps the current move explanation directly below the board and opens dedicated `Resumen`, `Análisis`, `Jugadas` and `Coach` views in a bottom sheet above the board.
 - Places rank and file coordinates inside the edge squares on mobile so the board can use the complete available width.
@@ -67,6 +75,11 @@ Keep the production binary path in `config/engine.php`. Add the new settings fro
 
 ## Verification
 
+- Check Training at 360 px and 390 px against the approved reference and confirm no horizontal overflow.
+- Confirm Nova's primary action and continuation cards open real pending exercises.
+- Confirm Flash and Finales filter the existing exercise inventory, Aperturas opens Openings Lab and Escenarios remains inactive.
+- Confirm the Training page contains no player-facing session language.
+- Run `php tests/training_mobile_layout_test.php`.
 - Check Home at 360 px and 390 px: Nova's plan, 2x2 metrics and game cards must not produce horizontal overflow.
 - Check Home on desktop: headline metrics remain in one row and the games list remains a table.
 - Confirm the greeting is plain, Nova uses the dedicated pointing image and the CTA sits outside its card.

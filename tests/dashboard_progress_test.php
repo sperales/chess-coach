@@ -1,7 +1,12 @@
 <?php
 require_once __DIR__ . '/../includes/dashboard.php';
 
+$dashboardScript = file_get_contents(__DIR__ . '/../assets/js/dashboard.js');
+
 $failures = [];
+if (!str_contains($dashboardScript, 'class="btn home-nova-primary" href="training.php"')) {
+  $failures[] = 'El CTA principal de Nova debe abrir siempre Training.';
+}
 $items = [
   ['played_at' => '2026-07-01', 'imported_at' => null, 'accuracy' => 80.0, 'user_result' => 'win'],
   ['played_at' => '2026-07-05', 'imported_at' => null, 'accuracy' => 60.0, 'user_result' => 'loss'],

@@ -116,6 +116,18 @@ Both should match the release version.
 - Confirm Nova appears in the mobile Coach view and the desktop Review layout remains unchanged.
 - Run `php tests/review_mobile_layout_test.php`.
 
+## Mobile Training Checks
+
+- Check Training at 360 px and 390 px without horizontal overflow.
+- Confirm the page follows the supplied mobile composition: compact heading, focus selector, Nova recommendation, categories, continuation cards and coach advice.
+- Confirm Nova's primary action opens a real pending exercise.
+- Confirm `Escenarios` is visible but inactive until multi-move training is implemented.
+- Confirm Flash and Finales filter the current one-move exercise inventory.
+- Confirm Aperturas opens `openings-lab.php` and no user-facing text mentions sessions.
+- Confirm continuation cards use real exercises and open `training-exercise.php`.
+- Confirm the desktop layout remains readable as an expanded adaptation of the mobile composition.
+- Run `php tests/training_mobile_layout_test.php`.
+
 ---
 
 ## Stockfish Analysis Pipeline Checks
