@@ -750,72 +750,77 @@ Make every new engine evaluation traceable, complete and trustworthy before addi
 
 ---
 
-## v1.5.0 — AI Coach MVP
+## v1.5.0 — Coach + Training v2
 
 ### Goal
 
-Add a first AI-assisted coaching layer on top of Stockfish, Smart Tags, Player DNA and the Training Experience data.
+Formalize the Coach as the product layer that turns Stockfish, Smart Tags, Player DNA, recent form and Training Focus into personalized training. Nova remains its visual voice, not a chess or recommendation engine.
 
-This version should interpret already stored facts. It should not replace Stockfish or invent chess analysis.
+Evolve training from a flat exercise list into a coherent daily plan that combines existing one-move Flash exercises with dynamic multi-move Scenarios.
 
 ### Main features
 
-#### Coaching summaries
+#### Coach foundation
 
-Generate plain-language summaries of games.
+- Select and order training from existing Chess Intelligence outputs without duplicating them.
+- Persist the focus, rationale, evidence, duration estimate and ordered plan items.
+- Keep Coach logic independent from Nova and UI colors.
+- Provide an ordered semantic Coach Feed for introductions, feedback, hints, explanations and completion.
 
-Examples:
+#### Flash
 
-- What went wrong?
-- What was the turning point?
-- What should I learn from this game?
-- What should I train next?
+- Treat current one-move exercises as Flash without destructive backfill.
+- Preserve exact-move validation and current exercise history.
+- Separate progressive `Ayuda` from contextual `¿Por qué?` explanations.
 
-#### Weekly coaching report
+#### Scenarios
 
-Generate a training report from real stored activity.
+- Add conversion, defense and mate scenarios from real player positions.
+- Require between 2 and 6 player decisions according to difficulty and completion criteria.
+- Let Stockfish always choose the opponent's strongest response.
+- Accept several sufficiently good player moves instead of requiring one principal variation.
+- Retry harmful moves from the previous position and always allow skip.
 
-Possible sections:
+#### Personalized daily training
 
-- Games played.
-- Training days.
-- Daily goals completed.
-- Exercises solved.
-- Exercises to repeat.
-- Best game.
-- Worst mistake.
-- Recurring weakness.
-- Training focus.
-- Recommended exercises.
-- Encouragement / mindset note.
+- Allow Coach plans to combine Flash and Scenarios.
+- Explain why the plan was selected using traceable evidence.
+- Let Nova communicate the same plan consistently in Home, Training and the solver.
+- Keep internal session terminology out of the user-facing experience.
 
-#### Review explanations
+#### Compatibility and performance
 
-For key moves:
-
-- Explain why the move was bad.
-- Explain what the best move achieved.
-- Explain the opponent threat.
-- Suggest a simpler thinking rule.
-
-#### AI safety / quality constraints
-
-The AI should not replace Stockfish calculation.
-
-Use Stockfish and stored data as the factual base.
-
-The AI layer should explain, summarize and coach — not invent chess analysis.
+- Preserve all current Flash workflows and shared-hosting deployment.
+- Reuse Stockfish and cached analysis with a centralized interactive configuration.
+- Avoid external APIs, persistent workers and a second chess classifier.
 
 ### Acceptance criteria
 
-- AI explanations are grounded in stored analysis.
-- The user can distinguish engine facts from coaching interpretation.
-- Reports are useful and not generic.
-- No sensitive credentials or API keys are committed.
+- Coach recommendations are traceable to stored evidence and do not depend on Nova.
+- Existing exercises continue working as Flash.
+- Scenarios accept good alternatives, reject clearly harmful moves and never advance illegal moves.
+- Coach Feed messages remain ordered and use semantic states rather than presentation colors.
+- Hints progress from attention area to concept and concrete orientation without repeating the objective.
+- A daily plan can mix Flash and Scenarios and persist completion, failure, skip and abandonment.
 
 ---
 
-## v1.5.1 — AI Coach Plus
+## v1.6.0 — AI Coach MVP
+
+### Goal
+
+Add an AI-assisted explanation and reporting layer on top of the deterministic Coach, Stockfish and stored Chess Intelligence facts.
+
+### Main features
+
+- Plain-language game and training summaries grounded in stored evidence.
+- Review explanations that distinguish engine facts from coaching interpretation.
+- Recent-period coaching reports and actionable recommendations.
+- No replacement of Stockfish calculation and no invented chess facts.
+
+---
+
+## v1.6.1 — AI Coach Plus
 
 ### Goal
 
@@ -838,7 +843,7 @@ Improve the first AI Coach with better context, richer reports and more useful t
 
 ---
 
-## v1.6.0 — Conversación con el entrenador
+## v1.7.0 — Conversación con el entrenador
 
 ### Goal
 
@@ -859,7 +864,7 @@ Allow the user to ask questions about their own games, training progress and rec
 
 ---
 
-## v1.7.0 — Automation
+## v1.8.0 — Automation
 
 ### Goal
 

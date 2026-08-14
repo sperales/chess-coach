@@ -10,6 +10,7 @@ function expect_hint(bool $condition, string $message): void {
 
 $knightExercise = [
   'exercise_type' => 'find_best_move',
+  'prompt' => 'Encuentra la mejor jugada.',
   'fen' => 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
   'solution_uci' => 'g1f3',
 ];
@@ -17,12 +18,14 @@ $idea = training_hint_generate($knightExercise, 1);
 $piece = training_hint_generate($knightExercise, 2);
 $action = training_hint_generate($knightExercise, 3);
 
-expect_hint(($idea['type'] ?? '') === 'idea', 'El nivel 1 debe explicar la idea.');
+expect_hint(($idea['type'] ?? '') === 'attention_area', 'El nivel 1 debe dirigir la atención a una zona.');
 expect_hint(($idea['highlight_squares'] ?? null) === [], 'El nivel 1 no debe marcar casillas.');
 expect_hint(strpos((string)($piece['text'] ?? ''), 'caballo') !== false, 'El nivel 2 debe identificar el caballo.');
 expect_hint(($piece['highlight_squares'] ?? []) === ['g1'], 'El nivel 2 debe marcar solo la casilla origen.');
 expect_hint(strpos((string)($action['text'] ?? ''), 'flanco de rey') !== false, 'El nivel 3 debe indicar la zona.');
 expect_hint(($action['highlight_squares'] ?? []) === ['g1'], 'El nivel 3 debe conservar la marca de origen.');
+expect_hint(($idea['text'] ?? '') !== $knightExercise['prompt'], 'La primera pista no debe repetir el objetivo.');
+expect_hint(count(array_unique([$idea['text'], $piece['text'], $action['text']])) === 3, 'Cada nivel debe añadir orientación distinta.');
 
 foreach ([$idea, $piece, $action] as $index => $hint) {
   $serialized = json_encode($hint, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
