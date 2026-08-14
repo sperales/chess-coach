@@ -17,7 +17,9 @@ assert_training_exercise_mobile(str_contains($page, 'Explícame'), 'Solver must 
 assert_training_exercise_mobile(str_contains($page, 'Dame una pista'), 'Solver must expose progressive hints.');
 assert_training_exercise_mobile(str_contains($page, 'Progreso del módulo'), 'Solver must show module progress.');
 assert_training_exercise_mobile(str_contains($page, 'Objetivos de hoy'), 'Solver must show daily progress.');
-assert_training_exercise_mobile(str_contains($script, "trainingMobileCoachMode = data.solved ? 'success'"), 'Nova state must follow real attempt results.');
+assert_training_exercise_mobile(str_contains($script, 'trainingMobileCoachMessages = []'), 'Nova carousel must keep an exercise-scoped message history.');
+assert_training_exercise_mobile(str_contains($script, 'appendTrainingMobileCoachMessage'), 'Nova feedback must append to the existing carousel.');
+assert_training_exercise_mobile(str_contains($script, 'syncTrainingMobileHintMessages'), 'Progressive hints must join the existing carousel.');
 assert_training_exercise_mobile(str_contains($script, 'renderTrainingMobileProgress'), 'Mobile progress must be data driven.');
 assert_training_exercise_mobile(str_contains($script, 'settings.daily_exercise_goal'), 'Top progress must use the configured daily goal.');
 assert_training_exercise_mobile(str_contains($script, 'bindTrainingMobileCoachSwipe'), 'Nova messages must support touch navigation.');

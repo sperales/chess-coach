@@ -10,6 +10,7 @@ Stockfish 18 analysis confidence, chess-logic consistency and pipeline hardening
 - Maximizes the mobile board, places coordinates inside its edge squares and keeps the exercise title, side to move, difficulty and timer visible without scrolling.
 - Connects Nova's objective, error, hint, explanation and success presentations to the real solver state.
 - Makes Nova's feedback a swipeable, paginated message carousel and keeps its dots available as direct navigation controls.
+- Keeps Nova's carousel incremental throughout each exercise: explanations, hints and attempt feedback are appended and activated without replacing earlier messages.
 - Uses the configured daily objective for the segmented progress line instead of presenting it as a Nova-generated exercise queue.
 - Opens the source game directly in Review, removes duplicate mobile labels and aligns the streak core with the standard three-line menu control.
 - Adds compact module and daily-goal progress, source-opening context and mobile actions; automatic validation hides the redundant `Comprobar` button.

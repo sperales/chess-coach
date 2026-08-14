@@ -32,6 +32,7 @@ let trainingMoveSubmitting = false;
 let trainingMobileCoachMode = 'objective';
 let trainingMobileExplanation = '';
 let trainingMobileCoachSlideIndex = 0;
+let trainingMobileCoachMessages = [];
 const TRAINING_PIECE_ASSET_PATH = (window.CHESS_COACH_PIECE_PATH || 'assets/pieces/Set%201/').toString();
 const TRAINING_PREFERENCES = window.CHESS_TRAINING_PREFERENCES || {};
 const TRAINING_SHOW_LEGAL_MOVES = TRAINING_PREFERENCES.showLegalMoves !== false;
@@ -630,6 +631,7 @@ async function openTrainingExercise(id) {
   trainingMobileCoachMode = 'objective';
   trainingMobileExplanation = '';
   trainingMobileCoachSlideIndex = 0;
+  trainingMobileCoachMessages = [];
   trainingStartedAt = Date.now();
   startTrainingExerciseTimer();
   trainingBoardOrientation = trainingFenSideToMove(activeExercise.fen) === 'b' ? 'black' : 'white';
@@ -718,6 +720,8 @@ function closeTrainingSolver() {
   trainingHints = [];
   trainingHintLoading = false;
   trainingHintError = '';
+  trainingMobileCoachMessages = [];
+  trainingMobileCoachSlideIndex = 0;
   revealedTrainingSolution = '';
   revealedTrainingSolutionDisplay = '';
   completedTrainingMove = '';
@@ -872,50 +876,69 @@ function showTrainingExplanation() {
   if (!activeExercise || trainingExerciseFinished()) return;
   trainingMobileCoachMode = 'explanation';
   trainingMobileExplanation = trainingMobileExplanationText();
-  trainingMobileCoachSlideIndex = 0;
+  appendTrainingMobileCoachMessage({
+    key: 'explanation',
+    mode: 'explanation',
+    title: 'Por qué importa',
+    text: trainingMobileExplanation,
+    avatar: 'nova-avatar--focus',
+  });
   renderTrainingMobileCoach();
 }
 
-function trainingMobileCoachSlides() {
+function ensureTrainingMobileCoachMessages() {
+  if (!activeExercise || trainingMobileCoachMessages.length) return;
   const prompt = (activeExercise.prompt || 'Encuentra la mejor jugada.').replace(/\s*Juegan\s+(blancas|negras)\.?/i, '').trim();
-  const feedback = document.getElementById('trainingFeedback')?.textContent || '';
-  const explanation = trainingMobileExplanation || trainingMobileExplanationText();
-  const attemptTitle = attemptedTrainingMoveDisplays.length
-      ? `Jugaste ${attemptedTrainingMoveDisplays[attemptedTrainingMoveDisplays.length - 1] || ''}`.trim()
-      : 'Todavía no';
+  trainingMobileCoachMessages = [
+    { key: 'objective', mode: 'objective', title: 'Objetivo', text: prompt, avatar: 'nova-avatar--neutral' },
+    {
+      key: 'approach',
+      mode: 'objective',
+      title: 'Cómo empezar',
+      text: 'Antes de mover, revisa jaques, capturas y amenazas de ambos bandos.',
+      avatar: 'nova-avatar--focus',
+    },
+  ];
+}
 
-  if (trainingMobileCoachMode === 'hint' && trainingHints.length) {
-    return trainingHints.map((hint, index) => ({
-      title: `Pista ${Number(hint.level || index + 1)} de 3`,
+function appendTrainingMobileCoachMessage(message) {
+  ensureTrainingMobileCoachMessages();
+  const existingIndex = trainingMobileCoachMessages.findIndex(item => item.key === message.key);
+  if (existingIndex >= 0) {
+    trainingMobileCoachMessages[existingIndex] = { ...trainingMobileCoachMessages[existingIndex], ...message };
+    trainingMobileCoachSlideIndex = existingIndex;
+  } else {
+    trainingMobileCoachMessages.push(message);
+    trainingMobileCoachSlideIndex = trainingMobileCoachMessages.length - 1;
+  }
+}
+
+function syncTrainingMobileHintMessages() {
+  ensureTrainingMobileCoachMessages();
+  trainingHints.forEach((hint, index) => {
+    const level = Number(hint.level || index + 1);
+    const key = `hint-${level}`;
+    const existingIndex = trainingMobileCoachMessages.findIndex(item => item.key === key);
+    const message = {
+      key,
+      mode: 'hint',
+      title: `Pista ${level} de 3`,
       text: hint.text || 'Observa de nuevo las piezas activas.',
       avatar: 'nova-avatar--thinking',
-    }));
+    };
+    if (existingIndex >= 0) trainingMobileCoachMessages[existingIndex] = message;
+    else trainingMobileCoachMessages.push(message);
+  });
+  if (trainingHints.length) {
+    const latestLevel = Number(trainingHints[trainingHints.length - 1].level || trainingHints.length);
+    const latestIndex = trainingMobileCoachMessages.findIndex(item => item.key === `hint-${latestLevel}`);
+    if (latestIndex >= 0) trainingMobileCoachSlideIndex = latestIndex;
   }
-  if (trainingMobileCoachMode === 'explanation') {
-    return [{ title: 'Por qué importa', text: explanation, avatar: 'nova-avatar--focus' }];
-  }
-  if (trainingMobileCoachMode === 'error') {
-    return [
-      { title: attemptTitle, text: feedback || 'Esa jugada no resuelve la posición. Busca otra candidata.', avatar: 'nova-avatar--warning' },
-      { title: 'Prueba otra mirada', text: explanation, avatar: 'nova-avatar--thinking' },
-    ];
-  }
-  if (trainingMobileCoachMode === 'solution') {
-    return [
-      { title: 'Solución', text: feedback || `La continuación indicada por Stockfish es ${revealedTrainingSolutionDisplay || 'la solución'}.`, avatar: 'nova-avatar--error' },
-      { title: 'Por qué importa', text: explanation, avatar: 'nova-avatar--focus' },
-    ];
-  }
-  if (trainingMobileCoachMode === 'success') {
-    return [
-      { title: '¡Correcto!', text: feedback || 'Has encontrado la mejor continuación.', avatar: 'nova-avatar--success' },
-      { title: 'Qué has aprendido', text: explanation, avatar: 'nova-avatar--focus' },
-    ];
-  }
-  return [
-    { title: 'Objetivo', text: prompt, avatar: 'nova-avatar--neutral' },
-    { title: 'Cómo pensarlo', text: explanation, avatar: 'nova-avatar--focus' },
-  ];
+}
+
+function trainingMobileCoachSlides() {
+  ensureTrainingMobileCoachMessages();
+  return trainingMobileCoachMessages;
 }
 
 function changeTrainingMobileCoachSlide(index) {
@@ -951,7 +974,7 @@ function renderTrainingMobileCoach() {
   trainingMobileCoachSlideIndex = Math.max(0, Math.min(slides.length - 1, trainingMobileCoachSlideIndex));
   const slide = slides[trainingMobileCoachSlideIndex];
 
-  card.className = `training-mobile-coach nova-state-${trainingMobileCoachMode}`;
+  card.className = `training-mobile-coach nova-state-${slide.mode || trainingMobileCoachMode}`;
   avatar.className = `nova-avatar ${slide.avatar}`;
   setText('trainingMobileCoachTitle', slide.title);
   setText('trainingMobileCoachText', slide.text);
@@ -1578,6 +1601,7 @@ async function startTrainingSolveRun() {
     if (!data.ok) throw new Error(data.error || 'No se pudo preparar el sistema de pistas.');
     applyTrainingSolveRun(data.solve_run);
     if (trainingHintFrom) selectedTrainingSquare = trainingHintFrom;
+    syncTrainingMobileHintMessages();
     trainingHintError = '';
   } catch (error) {
     trainingHintError = error && error.message ? error.message : 'Las pistas no están disponibles temporalmente.';
@@ -1588,6 +1612,7 @@ async function startTrainingSolveRun() {
   renderTrainingBoard();
   updateTrainingDraft();
   renderTrainingControls();
+  renderTrainingMobileCoach();
 }
 
 async function showTrainingHint() {
@@ -1616,7 +1641,7 @@ async function showTrainingHint() {
     if (!data.ok) throw new Error(data.error || 'No se pudo obtener la pista.');
     applyTrainingSolveRun(data.solve_run);
     trainingMobileCoachMode = 'hint';
-    trainingMobileCoachSlideIndex = Math.max(0, trainingHints.length - 1);
+    syncTrainingMobileHintMessages();
     selectedTrainingSquare = trainingHintFrom || '';
     trainingSelectionMessage = '';
   } catch (error) {
@@ -1756,7 +1781,36 @@ function showTrainingFeedback(data) {
     feedback.textContent += ` Solución: ${revealedTrainingSolutionDisplay}.`;
   }
   trainingMobileCoachMode = data.solved ? 'success' : (data.solution_uci ? 'solution' : 'error');
-  trainingMobileCoachSlideIndex = 0;
+  const feedbackText = feedback.textContent || '';
+  const attemptNumber = Math.max(1, attemptedTrainingMoves.length);
+  const attemptTitle = attemptedTrainingMoveDisplays.length
+    ? `Jugaste ${attemptedTrainingMoveDisplays[attemptedTrainingMoveDisplays.length - 1] || ''}`.trim()
+    : `Intento ${attemptNumber}`;
+  if (data.solved) {
+    appendTrainingMobileCoachMessage({
+      key: `success-${attemptNumber}`,
+      mode: 'success',
+      title: '¡Correcto!',
+      text: feedbackText || 'Has encontrado la mejor continuación.',
+      avatar: 'nova-avatar--success',
+    });
+  } else if (data.solution_uci) {
+    appendTrainingMobileCoachMessage({
+      key: `solution-${attemptNumber}`,
+      mode: 'solution',
+      title: 'Solución',
+      text: feedbackText || `La continuación indicada por Stockfish es ${revealedTrainingSolutionDisplay || 'la solución'}.`,
+      avatar: 'nova-avatar--error',
+    });
+  } else {
+    appendTrainingMobileCoachMessage({
+      key: `error-${attemptNumber}`,
+      mode: 'error',
+      title: attemptTitle,
+      text: feedbackText || 'Esa jugada no resuelve la posición. Busca otra candidata.',
+      avatar: 'nova-avatar--warning',
+    });
+  }
   renderTrainingMobileCoach();
 }
 
