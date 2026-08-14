@@ -1,3 +1,60 @@
+# Chess Coach v1.5.0 Update Notes
+
+## Release type
+
+Coach foundation and Training v2 with mixed Flash and multi-move Scenarios.
+
+## Changes
+
+- Introduces a deterministic Coach layer that consumes Training Focus, Player DNA, recent form and stored training history without coupling decisions to Nova.
+- Persists the focus, rationale, evidence, estimated duration and ordered items of each prepared training.
+- Treats existing one-move exercises as Flash without destructive data conversion.
+- Adds conversion, defense and mate Scenarios generated from real positions in the player's analyzed games.
+- Classifies Scenarios by difficulty and requires between two and six player decisions.
+- Accepts Stockfish's best move and sufficiently good alternatives; clearly harmful moves are rejected without advancing the position.
+- Lets Stockfish always play the rival's strongest response while using a lower-latency, cached interactive engine profile.
+- Adds a dedicated mobile-first Scenario solver with responsive board, internal coordinates, source-game link and direct continuity through Nova's ordered plan.
+- Adds an incremental, swipeable Coach Feed for objective, accepted decisions, rival responses, errors, hints, explanations and completion.
+- Separates progressive `Ayuda` from contextual `¿Por qué?`; the three hints operate on the current Scenario position.
+- Keeps internal sessions out of player-facing copy and presents one coherent `Plan de hoy` progression in Flash and Scenario solvers.
+- Activates the `Escenarios` Training category when Nova has prepared one and routes the primary CTA to the first pending Flash or Scenario in order.
+- Records Scenario runs, decisions, retries, Stockfish responses, hints, explanations, duration, result and provenance for future progress analysis.
+- Uses the same red semantic color for Nova and the message border after a failed Flash or Scenario.
+- Bumps `config/version.php` and the PWA cache to `1.5.0`.
+
+## SQL migrations
+
+Apply these migrations once and in order after uploading the release:
+
+1. `sql/migrations/033_changes_1.5.0.sql`
+2. `sql/migrations/034_changes_1.5.0.sql`
+
+Migration `033` adds the Coach plan, ordered feed and Training v2 item foundation. Migration `034` adds Scenario definitions, generation history, runs, events and the interactive Stockfish cache.
+
+After applying them, use the existing Profile batch action to generate Scenarios for analyzed games.
+
+## Configuration
+
+Copy the new `scenario_*` values from `config/engine.example.php` into the production `config/engine.php` if you want to tune interactive latency. The defaults use the existing server-side Stockfish binary and remain compatible with shared hosting.
+
+## Verification
+
+- Run `php tests/coach_foundation_test.php`.
+- Run `php tests/training_scenarios_test.php`.
+- Run `php tests/training_scenario_ui_test.php`.
+- Run `php tests/training_mobile_layout_test.php`.
+- Run `php tests/training_exercise_mobile_layout_test.php`.
+- Generate Scenarios from Profile and confirm Nova's Training proposal includes both Flash and Scenarios.
+- Start the plan and confirm its first pending item opens regardless of type.
+- In a Scenario, verify that a good alternative advances, Stockfish replies, a harmful move restores the position and an illegal move never advances.
+- Request all three hints after advancing at least one decision and confirm they apply to the current position.
+- Confirm `¿Por qué?` adds an explanation without consuming a hint.
+- Complete and skip Scenarios and confirm the next pending item opens in plan order.
+- Confirm the top and lower progress indicators both represent the prepared plan, without duplicated daily-goal or session copy.
+- Confirm `config/version.php` and `service-worker.js` both use `1.5.0`.
+
+---
+
 # Chess Coach v1.4.16 Update Notes
 
 ## Release type

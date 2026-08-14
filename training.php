@@ -171,6 +171,7 @@ window.CHESS_TRAINING_PREFERENCES = <?= json_encode([
   'showLegalMoves' => !empty($trainingPreferences['show_legal_moves']),
   'autoSubmitMove' => !empty($trainingPreferences['auto_submit_move']),
 ], JSON_UNESCAPED_SLASHES) ?>;
+window.CHESS_TRAINING_INITIAL_PLAN_ID = 0;
 </script>
 <script src="assets/js/layout.js?v=<?=e($layoutJsVersion)?>"></script>
 <script src="assets/js/training.js?v=<?=e($trainingJsVersion)?>"></script>

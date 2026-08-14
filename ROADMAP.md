@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current stable baseline: **v1.4.16**
+Current release candidate: **v1.5.0**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -802,6 +802,15 @@ Evolve training from a flat exercise list into a coherent daily plan that combin
 - Coach Feed messages remain ordered and use semantic states rather than presentation colors.
 - Hints progress from attention area to concept and concrete orientation without repeating the objective.
 - A daily plan can mix Flash and Scenarios and persist completion, failure, skip and abandonment.
+
+### Delivered in the v1.5.0 candidate
+
+- Coach decisions and evidence are persisted independently from Nova.
+- Existing exercises remain compatible as Flash.
+- Real-game conversion, defense and mate Scenarios support two to six player decisions.
+- Stockfish validates alternatives, supplies the strongest rival response and reuses an interactive cache.
+- The mobile-first Scenario solver includes an incremental Coach Feed, contextual hints, `¿Por qué?`, retry, skip and ordered plan continuity.
+- Training and both solvers present the same prepared plan without exposing internal session terminology.
 
 ---
 

@@ -127,6 +127,9 @@ if ($action === 'scenario_get') {
   if (!$scenario) json_response(['ok' => false, 'error' => 'Escenario no encontrado.']);
   $runId = (int)($_GET['run_id'] ?? 0);
   $run = $runId > 0 ? training_scenario_run_for_user($runId, $userId) : null;
+  if ($run && (int)$run['scenario_id'] !== $id) {
+    json_response(['ok' => false, 'error' => 'El progreso no corresponde a este escenario.']);
+  }
   json_response([
     'ok' => true,
     'scenario' => training_scenario_public($scenario, $run),

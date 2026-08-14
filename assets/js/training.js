@@ -41,6 +41,31 @@ const TRAINING_AUTO_SUBMIT_MOVE = TRAINING_PREFERENCES.autoSubmitMove === true;
 const TRAINING_INITIAL_PARAMS = new URLSearchParams(window.location.search);
 const TRAINING_SOLVER_MODE = window.CHESS_TRAINING_SOLVER_MODE === true;
 const TRAINING_INITIAL_EXERCISE_ID = Number(window.CHESS_TRAINING_INITIAL_EXERCISE_ID || TRAINING_INITIAL_PARAMS.get('id') || TRAINING_INITIAL_PARAMS.get('exercise_id') || 0);
+const TRAINING_INITIAL_PLAN_ID = Number(window.CHESS_TRAINING_INITIAL_PLAN_ID || TRAINING_INITIAL_PARAMS.get('training_id') || 0);
+
+function trainingPlanItemUrl(item, trainingId = 0) {
+  if (!item) return 'training.php';
+  const params = new URLSearchParams();
+  const activeId = Number(trainingId || activeTrainingSession?.id || 0);
+  if (activeId > 0) params.set('training_id', String(activeId));
+  if (item.item_type === 'scenario' && Number(item.scenario_id || 0) > 0) {
+    params.set('id', String(Number(item.scenario_id)));
+    return `training-scenario.php?${params.toString()}`;
+  }
+  if (Number(item.exercise_id || 0) > 0) {
+    params.set('id', String(Number(item.exercise_id)));
+    return `training-exercise.php?${params.toString()}`;
+  }
+  return 'training.php';
+}
+
+function trainingNextPlanItem(currentType = '', currentId = 0) {
+  const items = Array.isArray(trainingCoachPlan?.items) ? trainingCoachPlan.items : [];
+  const current = items.find(item => item.item_type === currentType
+    && Number(currentType === 'scenario' ? item.scenario_id : item.exercise_id) === Number(currentId));
+  const after = current ? items.filter(item => Number(item.position || 0) > Number(current.position || 0)) : items;
+  return after.find(item => item.status === 'pending') || items.find(item => item.status === 'pending') || null;
+}
 
 const TRAINING_PIECE_IMAGES = {
   P: 'wp.png', N: 'wn.png', B: 'wb.png', R: 'wr.png', Q: 'wq.png', K: 'wk.png',
@@ -188,9 +213,11 @@ function renderTrainingNovaProposal() {
     ['♚', Math.min(3, finalCount), 'Final'],
     ['◷', `${estimatedMinutes} min`, 'Duración estimada'],
   ].map(([icon, value, label]) => `<div><span>${icon}</span><strong>${escapeHtml(value)}</strong><small>${escapeHtml(label)}</small></div>`).join('');
-  const plannedExerciseId = Number(coachItems.find(item => item.item_type === 'flash' && Number(item.exercise_id || 0))?.exercise_id || 0);
+  const plannedItem = coachItems.find(item => !item.status || item.status === 'pending') || null;
   const first = trainingExercises.find(trainingExerciseIsTrainable);
-  if (start) start.href = plannedExerciseId ? `training-exercise.php?id=${plannedExerciseId}` : (first ? `training-exercise.php?id=${Number(first.id || 0)}` : '#trainingContinue');
+  if (start) start.href = plannedItem
+    ? trainingPlanItemUrl(plannedItem, activeTrainingSession?.id)
+    : (first ? `training-exercise.php?id=${Number(first.id || 0)}` : '#trainingContinue');
   const tip = document.getElementById('trainingCoachTip');
   if (tip) tip.textContent = focus?.rationale || 'Busca primero la idea de la posición y comprueba después las variantes.';
 }
@@ -207,8 +234,8 @@ function renderTrainingCategories() {
     },
     {
       key: 'scenarios', icon: '♟', title: 'Escenarios', chip: 'Varias jugadas',
-      description: 'Juega posiciones reales durante varios movimientos con el rival.',
-      detail: 'Próximamente', tone: 'purple', action: 'disabled',
+      description: 'Juega posiciones reales durante varios movimientos contra la mejor defensa.',
+      detail: scenarioCountLabel(), tone: 'purple', action: coachItemsScenarioUrl() ? 'link' : 'disabled', href: coachItemsScenarioUrl(),
     },
     {
       key: 'openings', icon: '▤', title: 'Aperturas', chip: 'Líneas y repertorio',
@@ -240,6 +267,16 @@ function renderTrainingCategories() {
   list.querySelectorAll('[data-training-type]').forEach(button => {
     button.addEventListener('click', () => selectTrainingCategory(button.dataset.trainingType || 'recommended'));
   });
+}
+
+function coachItemsScenarioUrl() {
+  const item = (trainingCoachPlan?.items || []).find(candidate => candidate.item_type === 'scenario' && (!candidate.status || candidate.status === 'pending'));
+  return item ? trainingPlanItemUrl(item, activeTrainingSession?.id) : '';
+}
+
+function scenarioCountLabel() {
+  const count = (trainingCoachPlan?.items || []).filter(item => item.item_type === 'scenario' && (!item.status || item.status === 'pending')).length;
+  return count ? `${count} escenario${count === 1 ? '' : 's'} en tu plan` : 'Sin escenarios pendientes';
 }
 
 function selectTrainingCategory(type) {
@@ -647,6 +684,8 @@ async function openTrainingExercise(id) {
   if (TRAINING_SOLVER_MODE && activeExercise && activeExercise.id) {
     const url = new URL(window.location.href);
     url.searchParams.set('id', activeExercise.id);
+    const trainingId = Number(activeTrainingSession?.id || TRAINING_INITIAL_PLAN_ID || 0);
+    if (trainingId > 0) url.searchParams.set('training_id', String(trainingId));
     window.history.replaceState({}, '', url.toString());
   }
   const panel = document.getElementById('trainingSolverPanel');
@@ -840,34 +879,20 @@ function renderTrainingSolverChrome() {
 
 function renderTrainingMobileProgress() {
   if (!activeExercise) return;
-  const available = trainingExercises.filter(trainingExerciseIsTrainable);
-  const moduleTotal = Math.max(1, Math.min(10, available.length || 10));
-  const listIndex = available.findIndex(item => Number(item.id || 0) === Number(activeExercise.id || 0));
-  const position = Math.max(1, Math.min(moduleTotal, listIndex >= 0 ? listIndex + 1 : 1));
-  const settings = trainingExperience.settings || {};
-  const today = trainingExperience.today || {};
-  const mode = settings.daily_goal_mode || 'exercises';
-  const isMinutes = mode === 'minutes';
-  const goalCurrent = isMinutes ? Number(today.duration_minutes || 0) : Number(today.exercises || 0);
-  const goalTarget = Math.max(1, isMinutes ? Number(settings.daily_minutes_goal || 10) : Number(settings.daily_exercise_goal || 5));
-  const goalProgress = Math.min(goalTarget, goalCurrent);
-  const segmentCount = goalTarget <= 20 ? goalTarget : 10;
-  const completedSegments = Math.round((goalProgress / goalTarget) * segmentCount);
-  setText('trainingMobileExercisePosition', `${isMinutes ? 'Minuto' : 'Ejercicio'} ${goalProgress} de ${goalTarget}`);
+  const planItems = Array.isArray(trainingCoachPlan?.items) ? trainingCoachPlan.items : [];
+  const current = planItems.find(item => item.item_type === 'flash' && Number(item.exercise_id || 0) === Number(activeExercise.id || 0));
+  const moduleTotal = Math.max(1, Number(trainingCoachPlan?.item_count || planItems.length || 1));
+  const position = Math.max(1, Math.min(moduleTotal, Number(current?.position || 1)));
+  const completed = planItems.filter(item => item.status === 'completed').length;
+  setText('trainingMobileExercisePosition', `Ejercicio ${position} de ${moduleTotal}`);
   const track = document.getElementById('trainingMobileExerciseTrack');
   if (track) {
-    track.innerHTML = Array.from({ length: segmentCount }, (_, index) => `<i class="${index < completedSegments ? 'complete' : ''}${index === completedSegments ? ' current' : ''}"></i>`).join('');
+    track.innerHTML = Array.from({ length: moduleTotal }, (_, index) => `<i class="${index < completed ? 'complete' : ''}${index === position - 1 ? ' current' : ''}"></i>`).join('');
   }
 
   setText('trainingMobileModuleProgress', `${position} de ${moduleTotal}`);
   const moduleBar = document.getElementById('trainingMobileModuleBar');
   if (moduleBar) moduleBar.style.width = `${Math.round((position / moduleTotal) * 100)}%`;
-
-  const current = mode === 'minutes' ? Number(today.duration_minutes || 0) : Number(today.exercises || 0);
-  const target = mode === 'minutes' ? Number(settings.daily_minutes_goal || 10) : Number(settings.daily_exercise_goal || 5);
-  setText('trainingMobileTodayProgress', `${current} de ${target}`);
-  const todayBar = document.getElementById('trainingMobileTodayBar');
-  if (todayBar) todayBar.style.width = `${Math.min(100, Math.round((current / Math.max(1, target)) * 100))}%`;
 }
 
 function trainingCoachAvatar(state) {
@@ -1737,6 +1762,11 @@ function renderTrainingControls() {
 async function openNextTrainingExercise() {
   await loadTraining(currentTrainingPage);
   const currentId = activeExercise ? Number(activeExercise.id || 0) : 0;
+  const planned = trainingNextPlanItem('flash', currentId);
+  if (planned) {
+    window.location.href = trainingPlanItemUrl(planned, activeTrainingSession?.id || TRAINING_INITIAL_PLAN_ID);
+    return;
+  }
   const next = trainingExercises.find(item => trainingExerciseIsTrainable(item) && Number(item.id || 0) !== currentId);
   if (!next) {
     closeTrainingSolver();

@@ -15,13 +15,14 @@ assert_training_exercise_mobile(str_contains($page, 'training-mobile-progress'),
 assert_training_exercise_mobile(str_contains($page, 'trainingMobileCoach'), 'Solver must include the mobile Nova coach card.');
 assert_training_exercise_mobile(str_contains($page, '¿Por qué?'), 'Solver must expose the explanation action.');
 assert_training_exercise_mobile(str_contains($page, 'Ayuda'), 'Solver must expose progressive hints.');
-assert_training_exercise_mobile(str_contains($page, 'Progreso del módulo'), 'Solver must show module progress.');
-assert_training_exercise_mobile(str_contains($page, 'Objetivos de hoy'), 'Solver must show daily progress.');
+assert_training_exercise_mobile(str_contains($page, 'Plan de hoy'), 'Solver must show Coach plan progress.');
+assert_training_exercise_mobile(!str_contains($page, 'Objetivos de hoy'), 'Solver must not duplicate daily goals below the board.');
 assert_training_exercise_mobile(str_contains($script, 'trainingMobileCoachMessages = []'), 'Nova carousel must keep an exercise-scoped message history.');
 assert_training_exercise_mobile(str_contains($script, 'appendTrainingMobileCoachMessage'), 'Nova feedback must append to the existing carousel.');
 assert_training_exercise_mobile(str_contains($script, 'syncTrainingMobileHintMessages'), 'Progressive hints must join the existing carousel.');
 assert_training_exercise_mobile(str_contains($script, 'renderTrainingMobileProgress'), 'Mobile progress must be data driven.');
-assert_training_exercise_mobile(str_contains($script, 'settings.daily_exercise_goal'), 'Top progress must use the configured daily goal.');
+assert_training_exercise_mobile(str_contains($script, 'trainingCoachPlan?.item_count'), 'Top progress must use the prepared Coach plan.');
+assert_training_exercise_mobile(str_contains($script, "trainingNextPlanItem('flash'"), 'Next action must follow the mixed Coach plan.');
 assert_training_exercise_mobile(str_contains($script, 'bindTrainingMobileCoachSwipe'), 'Nova messages must support touch navigation.');
 assert_training_exercise_mobile(str_contains($script, "originLink.href = activeExercise.review_url"), 'Source game must link directly to Review.');
 assert_training_exercise_mobile(str_contains($styles, 'exact mobile training exercise composition'), 'Dedicated mobile solver styles must exist.');

@@ -467,4 +467,16 @@ php tests\chess_evaluation_test.php
 php tests\player_windows_test.php
 ```
 
+## Training v2 Checks
+
+```powershell
+php tests\coach_foundation_test.php
+php tests\training_scenarios_test.php
+php tests\training_scenario_ui_test.php
+php tests\training_mobile_layout_test.php
+php tests\training_exercise_mobile_layout_test.php
+```
+
+Confirm Nova's prepared plan can open a Flash followed by a Scenario, that Scenario retries do not advance the board, and that completing or skipping an item continues with the next pending plan item.
+
 Confirm an exact Stockfish best move is shown as `Mejor`, contributes effective CPL 0 and does not display a redundant alternative. After completing an analysis, confirm Player DNA refreshes automatically and labels dimensions with insufficient observations as `Muestra limitada`.

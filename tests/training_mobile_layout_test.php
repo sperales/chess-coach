@@ -16,7 +16,8 @@ assert_training_mobile(str_contains($page, 'Nova te propone tu entrenamiento'), 
 assert_training_mobile(str_contains($page, 'Entrena por categoría'), 'Training must expose training categories.');
 assert_training_mobile(str_contains($page, 'Continuar entrenamiento'), 'Training must expose resumable exercises.');
 assert_training_mobile(!str_contains($page, 'Empezar sesión'), 'Training must not expose sessions in the UI.');
-assert_training_mobile(str_contains($script, "action: 'disabled'"), 'Scenarios must remain visibly disabled.');
+assert_training_mobile(str_contains($script, "title: 'Escenarios'") && str_contains($script, "action: coachItemsScenarioUrl() ? 'link' : 'disabled'"), 'Scenarios must open when Nova has prepared one.');
+assert_training_mobile(str_contains($script, 'training-scenario.php?'), 'Training plans must route scenarios to their dedicated solver.');
 assert_training_mobile(str_contains($script, 'training-exercise.php?id='), 'Existing exercises must keep direct solver links.');
 assert_training_mobile(str_contains($styles, '.training-nova-proposal'), 'Nova recommendation styles must be present.');
 assert_training_mobile(str_contains($styles, '@media(max-width:680px)'), 'Training must have dedicated mobile layout rules.');

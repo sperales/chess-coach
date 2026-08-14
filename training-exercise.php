@@ -6,6 +6,7 @@ require_once __DIR__.'/includes/training.php';
 
 $u = require_login();
 $exerciseId = max(0, (int)($_GET['id'] ?? $_GET['exercise_id'] ?? 0));
+$trainingId = max(0, (int)($_GET['training_id'] ?? 0));
 $assetVersion = (string)filemtime(__DIR__.'/assets/css/app.css');
 $layoutJsVersion = (string)filemtime(__DIR__.'/assets/js/layout.js');
 $trainingJsVersion = (string)filemtime(__DIR__.'/assets/js/training.js');
@@ -93,14 +94,9 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
 
     <section class="training-mobile-summary">
       <div class="training-mobile-summary-row">
-        <strong>Progreso del módulo</strong>
+        <strong>Plan de hoy</strong>
         <span class="training-mobile-mini-progress"><i id="trainingMobileModuleBar"></i></span>
         <b id="trainingMobileModuleProgress">0 de 0</b>
-      </div>
-      <div class="training-mobile-summary-row">
-        <strong>Objetivos de hoy</strong>
-        <span class="training-mobile-mini-progress"><i id="trainingMobileTodayBar"></i></span>
-        <b id="trainingMobileTodayProgress">0 de 0</b>
       </div>
       <a class="training-mobile-summary-row" href="#" id="trainingMobileOriginLink">
         <strong>Partida origen</strong>
@@ -215,6 +211,7 @@ window.CHESS_TRAINING_PREFERENCES = <?= json_encode([
 ], JSON_UNESCAPED_SLASHES) ?>;
 window.CHESS_TRAINING_SOLVER_MODE = true;
 window.CHESS_TRAINING_INITIAL_EXERCISE_ID = <?= (int)$exerciseId ?>;
+window.CHESS_TRAINING_INITIAL_PLAN_ID = <?= (int)$trainingId ?>;
 if (window.matchMedia('(max-width: 760px)').matches) {
   document.getElementById('trainingExerciseDetails')?.removeAttribute('open');
 }

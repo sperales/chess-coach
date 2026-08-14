@@ -151,6 +151,8 @@ Training v2 keeps product decisions outside the visual avatar:
 - Nova is only the UI representation of those messages; no selection or chess logic depends on the avatar or on presentation colors.
 - Existing one-move exercises are treated as `Flash` without rewriting their stored records.
 - Internal training sessions remain implementation detail and can contain ordered Flash and Scenario items.
+- `training-scenario.php` resolves multi-move conversion, defense and mate positions while `assets/js/training-scenario.js` keeps Nova's Coach Feed, board state and ordered-plan navigation in the presentation layer.
+- Scenario alternatives are accepted from objective Stockfish loss thresholds; Nova never decides whether a move is valid.
 
 ### Smart Tags
 

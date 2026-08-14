@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chess-coach-v1.4.16';
+const CACHE_NAME = 'chess-coach-v1.5.0';
 const ASSETS = [
   './',
   './app.php',
@@ -9,6 +9,7 @@ const ASSETS = [
   './profile.php',
   './training.php',
   './training-exercise.php',
+  './training-scenario.php',
   './openings-lab.php',
   './player-dna.php',
   './assets/css/app.css',
@@ -26,6 +27,7 @@ const ASSETS = [
   './assets/js/dashboard.js',
   './assets/js/games.js',
   './assets/js/training.js',
+  './assets/js/training-scenario.js',
   './assets/js/openings_lab.js',
   './assets/js/player_dna.js',
   './assets/js/layout.js',
