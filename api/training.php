@@ -3,11 +3,12 @@ require_once __DIR__.'/../includes/auth.php';
 require_once __DIR__.'/../includes/helpers.php';
 require_once __DIR__.'/../includes/training.php';
 require_once __DIR__.'/../includes/training_hints.php';
+require_once __DIR__.'/../includes/coach.php';
 
 $u = require_login();
 $userId = (int)$u['id'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
-$mutatingActions = ['session_start', 'session_end', 'solve_start', 'hint', 'attempt', 'skip', 'goal_settings', 'progress_refresh'];
+$mutatingActions = ['session_start', 'session_end', 'solve_start', 'hint', 'why', 'attempt', 'skip', 'goal_settings', 'progress_refresh'];
 if (in_array($action, $mutatingActions, true)) {
   require_post_csrf();
 }
@@ -19,6 +20,10 @@ if ($action === 'list' || $action === 'dashboard') {
   $perPage = max(1, min(100, (int)($_GET['per_page'] ?? 20)));
   $list = training_list_exercises($userId, $type, $status, $page, $perPage);
   $session = training_active_session($userId, false);
+  $coachPlan = $session ? coach_session_plan($userId, (int)$session['id']) : null;
+  if (!$coachPlan || empty($coachPlan['focus']['code'])) {
+    $coachPlan = coach_recommendation_for_user($userId);
+  }
 
   json_response([
     'ok' => true,
@@ -27,6 +32,7 @@ if ($action === 'list' || $action === 'dashboard') {
     'stats' => training_stats_for_user($userId),
     'experience' => training_experience_summary($userId),
     'session' => $session,
+    'coach_plan' => $coachPlan,
     'exercises' => $list['items'],
     'pagination' => $list['pagination'],
     'filters' => $list['filters'],
@@ -83,9 +89,14 @@ if ($action === 'session_start') {
   $body = request_json_body();
   $type = (string)($body['type'] ?? 'recommended');
   $forceNew = !empty($body['force_new']);
-  json_response($forceNew
+  $result = $forceNew
     ? training_new_session($userId, $type, 'manual')
-    : training_ensure_active_session($userId, $type, 'manual'));
+    : training_ensure_active_session($userId, $type, 'manual');
+  if (!empty($result['session']['id'])) {
+    $result['coach_plan'] = coach_prepare_session($userId, (int)$result['session']['id']);
+    $result['session'] = training_session_for_user((int)$result['session']['id'], $userId);
+  }
+  json_response($result);
 }
 
 if ($action === 'session_end') {
@@ -142,6 +153,23 @@ if ($action === 'hint') {
   }
 }
 
+if ($action === 'why') {
+  $body = request_json_body();
+  $id = (int)($body['id'] ?? 0);
+  $runId = (int)($body['solve_run_id'] ?? 0);
+  $sessionId = (int)($body['session_id'] ?? 0);
+  try {
+    json_response($id > 0
+      ? training_coach_explanation($userId, $id, $runId, $sessionId ?: null)
+      : ['ok' => false, 'error' => 'Ejercicio no indicado.']);
+  } catch (InvalidArgumentException|RuntimeException $e) {
+    json_response(['ok' => false, 'error' => $e->getMessage()]);
+  } catch (Throwable $e) {
+    error_log('Coach explanation failed: ' . $e->getMessage());
+    json_response(['ok' => false, 'error' => 'No se ha podido generar la explicación.']);
+  }
+}
+
 if ($action === 'attempt') {
   $body = request_json_body();
   $id = (int)($body['id'] ?? 0);
@@ -164,6 +192,18 @@ if ($action === 'attempt') {
     unset($result['attempted_moves']);
     $result['exercise'] = training_public_exercise($result['exercise'], !empty($result['solved']) || !empty($result['solution_uci']));
   }
+  $recordedRunId = (int)($result['solve_run_id'] ?? $solveRunId);
+  if ($recordedRunId > 0 && !empty($result['feedback'])) {
+    try {
+      coach_record_run_message($userId, $recordedRunId, coach_message_payload(
+        'feedback', !empty($result['solved']) ? 'correct' : 'error', (string)$result['feedback'],
+        ['solved' => !empty($result['solved']), 'exhausted' => !empty($result['exhausted'])]
+      ));
+      $result['coach_feed'] = coach_messages_for_run($userId, $recordedRunId);
+    } catch (Throwable $coachError) {
+      error_log('Coach feedback recording failed: ' . $coachError->getMessage());
+    }
+  }
   json_response($result);
 }
 
@@ -178,6 +218,14 @@ if ($action === 'skip') {
   if (!empty($result['exercise']) && is_array($result['exercise'])) {
     $includeSolution = !empty($result['exercise']['resolved_at']) && empty($result['exercise']['is_repeat_due']);
     $result['exercise'] = training_public_exercise($result['exercise'], $includeSolution);
+  }
+  if ($solveRunId > 0 && !empty($result['feedback'])) {
+    try {
+      coach_record_run_message($userId, $solveRunId, coach_message_payload('completion', 'neutral', (string)$result['feedback'], ['status' => 'skipped']));
+      $result['coach_feed'] = coach_messages_for_run($userId, $solveRunId);
+    } catch (Throwable $coachError) {
+      error_log('Coach skip recording failed: ' . $coachError->getMessage());
+    }
   }
   json_response($result);
 }

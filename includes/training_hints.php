@@ -1,8 +1,9 @@
 <?php
 require_once __DIR__ . '/training.php';
 require_once __DIR__ . '/training_progress.php';
+require_once __DIR__ . '/coach.php';
 
-const TRAINING_HINT_GENERATOR_VERSION = 1;
+const TRAINING_HINT_GENERATOR_VERSION = 2;
 
 function training_hint_level_is_available(int $currentLevel, int $requestedLevel): bool {
   $currentLevel = training_progress_hint_level($currentLevel);
@@ -30,16 +31,25 @@ function training_hint_board_region(string $square): string {
   return 'el centro';
 }
 
-function training_hint_level_one_text(string $exerciseType): string {
+function training_hint_level_one_text(string $exerciseType, string $region): string {
   return match ($exerciseType) {
-    'avoid_blunder' => 'Busca una jugada que mantenga estable la posición y evite una pérdida inmediata.',
-    'find_mate' => 'Busca una secuencia forzada que limite por completo las respuestas del rey rival.',
-    'spot_threat' => 'Identifica primero la amenaza rival y encuentra una forma activa de neutralizarla.',
-    'find_tactic' => 'Busca un recurso forzante: jaques, capturas y amenazas merecen atención prioritaria.',
-    'defend_position' => 'Reduce las opciones del rival y busca la defensa que mantenga el equilibrio.',
-    'convert_advantage' => 'Conserva la iniciativa y evita conceder contrajuego innecesario.',
-    'other' => 'Compara las jugadas forzantes antes de elegir la continuación más precisa.',
-    default => 'Busca la jugada más activa sin descuidar la seguridad de tu posición.',
+    'find_mate' => "Centra tu atención en {$region} y en las casillas de escape del rey rival.",
+    'spot_threat', 'defend_position' => "Revisa qué pieza o casilla de {$region} sostiene la amenaza rival.",
+    'convert_advantage' => "Mira {$region}: allí está el elemento que puede reducir el contrajuego rival.",
+    'avoid_blunder' => "Comprueba primero qué queda vulnerable en {$region} después de cada candidata.",
+    'find_tactic' => "Hay una característica concreta de {$region} que permite un recurso forzante.",
+    'other' => "La decisión de la posición se concentra en {$region}.",
+    default => "Compara primero la actividad y las amenazas en {$region}.",
+  };
+}
+
+function training_hint_level_two_text(string $exerciseType, string $pieceName): string {
+  return match ($exerciseType) {
+    'find_mate' => "Tu {$pieceName} participa en la red que limita al rey rival.",
+    'spot_threat', 'defend_position' => "Tu {$pieceName} puede intervenir sobre el recurso principal del rival.",
+    'convert_advantage' => "Tu {$pieceName} es la pieza que puede mejorar el control de la posición.",
+    'find_tactic' => "Tu {$pieceName} puede crear el recurso forzante que buscas.",
+    default => "La pieza clave para ejecutar la idea es tu {$pieceName}.",
   };
 }
 
@@ -76,6 +86,7 @@ function training_hint_solution_context(array $exercise): ?array {
   return [
     'from' => substr($solution, 0, 2),
     'piece_name' => training_hint_piece_name($piece),
+    'region' => $region,
     'action_text' => $action,
   ];
 }
@@ -88,8 +99,8 @@ function training_hint_generate(array $exercise, int $level): ?array {
   if ($level === 1) {
     return [
       'level' => 1,
-      'type' => 'idea',
-      'text' => training_hint_level_one_text((string)($exercise['exercise_type'] ?? 'find_best_move')),
+      'type' => 'attention_area',
+      'text' => training_hint_level_one_text((string)($exercise['exercise_type'] ?? 'find_best_move'), $context['region']),
       'highlight_squares' => [],
     ];
   }
@@ -98,7 +109,7 @@ function training_hint_generate(array $exercise, int $level): ?array {
     return [
       'level' => 2,
       'type' => 'piece',
-      'text' => 'La pieza clave es tu ' . $context['piece_name'] . '.',
+      'text' => training_hint_level_two_text((string)($exercise['exercise_type'] ?? 'find_best_move'), $context['piece_name']),
       'highlight_squares' => [$context['from']],
     ];
   }
@@ -145,9 +156,18 @@ function training_hint_start_run(int $userId, int $exerciseId, ?int $sessionId =
   if (empty($exercise['is_trainable'])) throw new RuntimeException('Este ejercicio todavía no está disponible para repetirlo.');
 
   $run = training_progress_start_solve_run($userId, $exerciseId, $sessionId);
+  $feed = coach_messages_for_run($userId, (int)$run['id']);
+  if (!$feed && !empty($run['session_id'])) {
+    $objective = preg_replace('/\s*Juegan\s+(blancas|negras)\.?/iu', '', (string)($exercise['prompt'] ?? 'Encuentra la mejor jugada.'));
+    coach_record_run_message($userId, (int)$run['id'], coach_message_payload(
+      'selection', 'neutral', trim((string)$objective), ['exercise_type' => (string)$exercise['exercise_type']], (int)$exercise['ply']
+    ));
+    $feed = coach_messages_for_run($userId, (int)$run['id']);
+  }
   return [
     'ok' => true,
     'solve_run' => training_hint_public_run($run, $exercise),
+    'coach_feed' => $feed,
   ];
 }
 
@@ -190,6 +210,12 @@ function training_hint_request(
   $run = training_progress_run_for_user((int)$run['id'], $userId);
   if (!$run) throw new RuntimeException('No se ha podido recuperar la resolución.');
 
+  if ($level > $currentLevel) {
+    coach_record_run_message($userId, (int)$run['id'], coach_message_payload(
+      'hint', 'thinking', (string)$stored['hint_text'], ['hint_level' => $level, 'hint_type' => (string)$stored['hint_type']], (int)$exercise['ply']
+    ));
+  }
+
   $hint = [
     'level' => (int)$stored['hint_level'],
     'type' => (string)$stored['hint_type'],
@@ -201,5 +227,27 @@ function training_hint_request(
     'ok' => true,
     'hint' => $hint,
     'solve_run' => training_hint_public_run($run, $exercise),
+    'coach_feed' => coach_messages_for_run($userId, (int)$run['id']),
+  ];
+}
+
+function training_coach_explanation(int $userId, int $exerciseId, int $runId, ?int $sessionId = null): array {
+  $exercise = training_exercise_for_user($exerciseId, $userId);
+  if (!$exercise) throw new RuntimeException('Ejercicio no encontrado.');
+  $run = $runId > 0 ? training_progress_run_for_user($runId, $userId) : null;
+  if (!$run) $run = training_progress_start_solve_run($userId, $exerciseId, $sessionId);
+  if ((int)$run['exercise_id'] !== $exerciseId) throw new RuntimeException('La resolución no corresponde a este ejercicio.');
+  $attemptSt = db()->prepare('SELECT * FROM training_attempts WHERE user_id=? AND solve_run_id=? ORDER BY id DESC LIMIT 1');
+  $attemptSt->execute([$userId, (int)$run['id']]);
+  $attempt = $attemptSt->fetch() ?: null;
+  $text = coach_flash_explanation($exercise, $attempt);
+  coach_record_run_message($userId, (int)$run['id'], coach_message_payload(
+    'explanation', 'explaining', $text, ['does_not_consume_hint' => true], (int)$exercise['ply']
+  ));
+  return [
+    'ok' => true,
+    'explanation' => $text,
+    'solve_run' => training_hint_public_run($run, $exercise),
+    'coach_feed' => coach_messages_for_run($userId, (int)$run['id']),
   ];
 }

@@ -77,14 +77,28 @@ function training_progress_start_solve_run(int $userId, int $exerciseId, ?int $s
       return $active;
     }
 
+    $sessionItemId = null;
+    if ($validSessionId) {
+      $itemSt = $pdo->prepare('SELECT id FROM training_session_items
+                               WHERE session_id=? AND user_id=? AND exercise_id=? AND item_type="flash"
+                                 AND status IN ("pending","active")
+                               ORDER BY position LIMIT 1 FOR UPDATE');
+      $itemSt->execute([$validSessionId, $userId, $exerciseId]);
+      $sessionItemId = $itemSt->fetchColumn() ?: null;
+      if ($sessionItemId) {
+        $pdo->prepare('UPDATE training_session_items SET status="active",started_at=COALESCE(started_at,NOW()),updated_at=NOW() WHERE id=? AND user_id=?')
+          ->execute([(int)$sessionItemId, $userId]);
+      }
+    }
+
     $difficulty = in_array((string)$exercise['difficulty'], ['easy', 'medium', 'hard', 'critical'], true)
       ? (string)$exercise['difficulty']
       : 'medium';
     $weight = training_difficulty_evidence_weight($difficulty);
     $insert = $pdo->prepare('INSERT INTO training_solve_runs
-        (user_id,exercise_id,session_id,status,difficulty_snapshot,evidence_weight,scoring_version,started_at,created_at)
-        VALUES (?,?,?,"active",?,?,?,NOW(),NOW())');
-    $insert->execute([$userId, $exerciseId, $validSessionId, $difficulty, $weight, TRAINING_PROGRESS_RULE_VERSION]);
+        (user_id,exercise_id,session_id,session_item_id,status,difficulty_snapshot,evidence_weight,scoring_version,started_at,created_at)
+        VALUES (?,?,?, ?,"active",?,?,?,NOW(),NOW())');
+    $insert->execute([$userId, $exerciseId, $validSessionId, $sessionItemId, $difficulty, $weight, TRAINING_PROGRESS_RULE_VERSION]);
     $runId = (int)$pdo->lastInsertId();
     $run = training_progress_run_for_user($runId, $userId);
     $pdo->commit();
@@ -241,6 +255,17 @@ function training_progress_complete_solve_run(
         SET status=?,attempts_count=?,highest_hint_level=?,quality_score=?,evidence_weight=?,completed_at=NOW(),updated_at=NOW()
         WHERE id=? AND user_id=? AND status="active"');
     $update->execute([$status, $attemptsCount, $hintLevel, $quality, $weight, $runId, $userId]);
+
+    if (!empty($run['session_item_id'])) {
+      $itemStatus = match ($status) {
+        'solved' => 'completed',
+        'failed' => 'failed',
+        'skipped' => 'skipped',
+        default => 'abandoned',
+      };
+      $pdo->prepare('UPDATE training_session_items SET status=?,completed_at=NOW(),updated_at=NOW() WHERE id=? AND user_id=?')
+        ->execute([$itemStatus, (int)$run['session_item_id'], $userId]);
+    }
 
     if (in_array($status, ['solved', 'failed'], true)) {
       player_progress_record_event(

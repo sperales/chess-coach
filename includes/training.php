@@ -5,6 +5,7 @@ require_once __DIR__ . '/stockfish.php';
 require_once __DIR__ . '/chess_notation.php';
 require_once __DIR__ . '/training_progress.php';
 require_once __DIR__ . '/player_progress.php';
+require_once __DIR__ . '/coach_messages.php';
 
 const TRAINING_EXERCISE_CONTENT_VERSION = 2;
 
@@ -718,6 +719,11 @@ function training_public_session(array $session): array {
   $session['skipped_count'] = (int)($session['skipped_count'] ?? 0);
   $session['total_attempts'] = (int)($session['total_attempts'] ?? 0);
   $session['avg_time_ms'] = $session['avg_time_ms'] === null ? null : (int)$session['avg_time_ms'];
+  $session['coach_version'] = (int)($session['coach_version'] ?? 1);
+  $session['estimated_duration_min'] = $session['estimated_duration_min'] === null ? null : (int)$session['estimated_duration_min'];
+  $session['planned_item_count'] = (int)($session['planned_item_count'] ?? 0);
+  $session['coach_evidence'] = coach_decode_json($session['coach_evidence_json'] ?? null);
+  unset($session['coach_evidence_json']);
   return $session;
 }
 
@@ -1062,6 +1068,7 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
     'exhausted' => $isExhausted && !$isSolved,
     'attempts_count' => count($moves),
     'remaining_attempts' => max(0, 5 - count($moves)),
+    'solve_run_id' => $solveRunId,
     'solution_uci' => $isSolved ? $matchedSolution : ($isExhausted ? $solution : null),
     'attempted_moves' => $moves,
     'feedback' => training_attempt_feedback($exercise, $isSolved, $isExhausted, count($moves), $usedHint),

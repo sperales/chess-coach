@@ -5,6 +5,7 @@ let trainingStats = {};
 let trainingExperience = {};
 let trainingPlan = null;
 let trainingProgress = null;
+let trainingCoachPlan = null;
 let trainingExtrasLoaded = false;
 let activeTrainingSession = null;
 let trainingPagination = { page: 1, per_page: (window.CHESS_COACH_CONFIG && window.CHESS_COACH_CONFIG.trainingPerPage) || 20, total: 0, pages: 1 };
@@ -81,6 +82,7 @@ async function loadTraining(page = currentTrainingPage) {
   trainingStats = data.stats || {};
   trainingExperience = data.experience || {};
   activeTrainingSession = data.session || null;
+  trainingCoachPlan = data.coach_plan || trainingCoachPlan;
   trainingPagination = data.pagination || trainingPagination;
   currentTrainingPage = trainingPagination.page || currentTrainingPage;
   if (!trainingExtrasLoaded) await loadTrainingExtras();
@@ -161,16 +163,20 @@ function renderTrainingNovaProposal() {
   const metrics = document.getElementById('trainingNovaMetrics');
   if (!metrics) return;
   const pending = Number(trainingStats.pending || 0);
+  const coachItems = Array.isArray(trainingCoachPlan?.items) ? trainingCoachPlan.items : [];
   const finalTypes = ['defend_position', 'convert_advantage'];
   const finalCount = finalTypes.reduce((total, type) => total + Number(trainingTypeCounts[type]?.pending || 0), 0);
-  const flashCount = Math.min(6, pending);
-  const estimatedMinutes = Math.max(5, Math.round(flashCount * 1.5));
+  const flashCount = coachItems.length
+    ? coachItems.filter(item => item.item_type === 'flash').length
+    : Math.min(6, pending);
+  const scenarioCount = coachItems.filter(item => item.item_type === 'scenario').length;
+  const estimatedMinutes = Number(trainingCoachPlan?.estimated_duration_min || Math.max(5, Math.round(flashCount * 1.5)));
   const focus = trainingPlan?.daily?.find(goal => goal.status !== 'completed') || null;
-  const focusTitle = (focus?.title || trainingTypes.recommended?.label || 'tu foco principal').replace(/^Entrenar\s+/i, '');
+  const focusTitle = (trainingCoachPlan?.focus?.title || focus?.title || trainingTypes.recommended?.label || 'tu foco principal').replace(/^Entrenar\s+/i, '');
   const message = document.getElementById('trainingNovaMessage');
   const speech = document.getElementById('trainingNovaSpeech');
   const start = document.getElementById('trainingNovaStart');
-  if (message) message.textContent = 'He analizado tu progreso y he preparado tu entrenamiento de hoy.';
+  if (message) message.textContent = trainingCoachPlan?.rationale || 'He analizado tu progreso y he preparado tu entrenamiento de hoy.';
   if (speech) {
     speech.textContent = focusTitle.length <= 22
       ? `¡Hoy trabajaremos ${focusTitle.toLowerCase()}!`
@@ -178,12 +184,13 @@ function renderTrainingNovaProposal() {
   }
   metrics.innerHTML = [
     ['ϟ', flashCount, 'Flash'],
-    ['♟', 0, 'Escenarios'],
+    ['♟', scenarioCount, 'Escenarios'],
     ['♚', Math.min(3, finalCount), 'Final'],
     ['◷', `${estimatedMinutes} min`, 'Duración estimada'],
   ].map(([icon, value, label]) => `<div><span>${icon}</span><strong>${escapeHtml(value)}</strong><small>${escapeHtml(label)}</small></div>`).join('');
+  const plannedExerciseId = Number(coachItems.find(item => item.item_type === 'flash' && Number(item.exercise_id || 0))?.exercise_id || 0);
   const first = trainingExercises.find(trainingExerciseIsTrainable);
-  if (start) start.href = first ? `training-exercise.php?id=${Number(first.id || 0)}` : '#trainingContinue';
+  if (start) start.href = plannedExerciseId ? `training-exercise.php?id=${plannedExerciseId}` : (first ? `training-exercise.php?id=${Number(first.id || 0)}` : '#trainingContinue');
   const tip = document.getElementById('trainingCoachTip');
   if (tip) tip.textContent = focus?.rationale || 'Busca primero la idea de la posición y comprueba después las variantes.';
 }
@@ -659,6 +666,7 @@ async function startTrainingSession() {
   const data = await response.json();
   if (!data.ok) throw new Error(data.error || 'No se pudo iniciar la sesión.');
   activeTrainingSession = data.session || null;
+  trainingCoachPlan = data.coach_plan || trainingCoachPlan;
   renderTrainingExperience();
   return activeTrainingSession;
 }
@@ -676,6 +684,7 @@ async function newTrainingSession() {
     const data = await response.json();
     if (!data.ok) throw new Error(data.error || 'No se pudo crear una nueva sesión.');
     activeTrainingSession = data.session || null;
+    trainingCoachPlan = data.coach_plan || trainingCoachPlan;
     closeTrainingSolver();
     await loadTraining(currentTrainingPage);
   } finally {
@@ -861,28 +870,52 @@ function renderTrainingMobileProgress() {
   if (todayBar) todayBar.style.width = `${Math.min(100, Math.round((current / Math.max(1, target)) * 100))}%`;
 }
 
-function trainingMobileExplanationText() {
-  const themes = {
-    find_mate: 'Busca primero jaques, capturas y amenazas directas contra el rey.',
-    spot_threat: 'Identifica la amenaza rival antes de elegir tu respuesta.',
-    defend_position: 'Compara las defensas candidatas y elimina las que permiten recursos forzados.',
-    convert_advantage: 'Con ventaja, prioriza la seguridad y conserva el control de la posición.',
-    avoid_blunder: 'Revisa qué piezas quedan atacadas antes de confirmar la jugada.',
-  };
-  return themes[activeExercise?.exercise_type] || 'Compara tus jugadas candidatas y comprueba la respuesta más fuerte del rival.';
+function trainingCoachAvatar(state) {
+  return {
+    welcome: 'nova-avatar--success', neutral: 'nova-avatar--neutral', thinking: 'nova-avatar--thinking',
+    explaining: 'nova-avatar--focus', correct: 'nova-avatar--success', error: 'nova-avatar--error',
+  }[state] || 'nova-avatar--neutral';
 }
 
-function showTrainingExplanation() {
-  if (!activeExercise || trainingExerciseFinished()) return;
-  trainingMobileCoachMode = 'explanation';
-  trainingMobileExplanation = trainingMobileExplanationText();
-  appendTrainingMobileCoachMessage({
-    key: 'explanation',
-    mode: 'explanation',
-    title: 'Por qué importa',
-    text: trainingMobileExplanation,
-    avatar: 'nova-avatar--focus',
-  });
+function trainingCoachTitle(type) {
+  return {
+    intro: 'Plan de hoy', selection: 'Objetivo', feedback: 'Feedback', hint: 'Ayuda',
+    explanation: '¿Por qué?', completion: 'Completado', system: 'Coach',
+  }[type] || 'Coach';
+}
+
+function applyTrainingCoachFeed(feed) {
+  if (!Array.isArray(feed) || !feed.length) return;
+  trainingMobileCoachMessages = feed.map(message => ({
+    key: `coach-${Number(message.id || message.sequence || 0)}`,
+    mode: message.type === 'hint' ? 'hint' : (message.state || 'neutral'),
+    title: trainingCoachTitle(message.type),
+    text: message.text || '',
+    avatar: trainingCoachAvatar(message.state),
+  }));
+  trainingMobileCoachSlideIndex = trainingMobileCoachMessages.length - 1;
+}
+
+async function showTrainingExplanation() {
+  if (!activeExercise || trainingHintLoading) return;
+  if (!trainingSolveRun) await startTrainingSolveRun();
+  if (!trainingSolveRun) return;
+  trainingHintLoading = true;
+  renderTrainingControls();
+  try {
+    const data = await trainingPost('api/training.php?action=why', {
+      id: activeExercise.id,
+      solve_run_id: trainingSolveRun.id,
+      session_id: activeTrainingSession ? activeTrainingSession.id : 0,
+    });
+    trainingMobileExplanation = data.explanation || '';
+    applyTrainingCoachFeed(data.coach_feed);
+  } catch (error) {
+    trainingHintError = error?.message || 'No se pudo generar la explicación.';
+  } finally {
+    trainingHintLoading = false;
+  }
+  renderTrainingControls();
   renderTrainingMobileCoach();
 }
 
@@ -1600,8 +1633,9 @@ async function startTrainingSolveRun() {
     const data = await response.json();
     if (!data.ok) throw new Error(data.error || 'No se pudo preparar el sistema de pistas.');
     applyTrainingSolveRun(data.solve_run);
+    applyTrainingCoachFeed(data.coach_feed);
     if (trainingHintFrom) selectedTrainingSquare = trainingHintFrom;
-    syncTrainingMobileHintMessages();
+    if (!Array.isArray(data.coach_feed) || !data.coach_feed.length) syncTrainingMobileHintMessages();
     trainingHintError = '';
   } catch (error) {
     trainingHintError = error && error.message ? error.message : 'Las pistas no están disponibles temporalmente.';
@@ -1640,8 +1674,9 @@ async function showTrainingHint() {
     const data = await response.json();
     if (!data.ok) throw new Error(data.error || 'No se pudo obtener la pista.');
     applyTrainingSolveRun(data.solve_run);
+    applyTrainingCoachFeed(data.coach_feed);
     trainingMobileCoachMode = 'hint';
-    syncTrainingMobileHintMessages();
+    if (!Array.isArray(data.coach_feed) || !data.coach_feed.length) syncTrainingMobileHintMessages();
     selectedTrainingSquare = trainingHintFrom || '';
     trainingSelectionMessage = '';
   } catch (error) {
@@ -1738,6 +1773,7 @@ async function submitTrainingMove() {
     const data = await response.json();
     if (!data.ok) throw new Error(data.error || 'No se pudo registrar el intento.');
     if (data.exercise) activeExercise = data.exercise;
+    applyTrainingCoachFeed(data.coach_feed);
     if (data.session) activeTrainingSession = data.session;
     attemptedTrainingMoveDisplays = Array.isArray(data.attempted_moves_display)
       ? data.attempted_moves_display.map(item => item && item.display ? item.display.toString() : '')
