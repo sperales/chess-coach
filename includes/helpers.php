@@ -123,14 +123,14 @@ function header_training_streak_html(int $userId): string {
     return '';
   }
 }
-function header_bar(string $title='Chess Coach'): void {
+function header_bar(string $title='Chess Coach', string $brandHref='app.php'): void {
   $v = e(app_config()['app_version']);
   $user = current_user();
   $displayName = e($user['username'] ?? 'Usuario');
   $initial = strtoupper(substr($user['username'] ?? 'U', 0, 1));
   $elo = current_user_elo();
   echo '<header class="topbar">';
-  echo '<a class="brand" href="app.php" aria-label="Ir al inicio"><img class="brand-lockup" src="assets/brand/logo-horizontal-dark.svg" alt="Chess Coach"></a>';
+  echo '<a class="brand" href="'.e($brandHref).'" aria-label="'.($brandHref === 'app.php' ? 'Ir al inicio' : 'Volver').'"><img class="brand-lockup" src="assets/brand/logo-horizontal-dark.svg" alt="Chess Coach"></a>';
   echo '<div class="spacer"></div>';
   echo '<div class="user-pill"><div class="avatar">'.e($initial).'</div><div><strong>'.$displayName.'</strong><small>ELO '.$elo.'</small></div></div>';
   if (!empty($user['id'])) echo header_training_streak_html((int)$user['id']);

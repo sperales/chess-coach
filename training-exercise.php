@@ -23,11 +23,16 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
   <link rel="stylesheet" href="assets/css/app.css?v=<?=e($assetVersion)?>">
   <link rel="icon" href="assets/icons/favicon.ico">
 </head>
-<body class="dark-shell <?=e($boardThemeClass)?>">
-<?php header_bar('Chess Coach'); ?>
+<body class="dark-shell training-exercise-page <?=e($boardThemeClass)?>">
+<?php header_bar('Entrenamiento', 'training.php'); ?>
 <div class="app-area">
 <main class="dashboard training-solve-page <?=!empty($trainingPreferences['auto_submit_move']) ? 'training-auto-submit' : 'training-manual-submit'?>">
   <a class="training-back-link" href="training.php">← Entrenamiento</a>
+
+  <section class="training-mobile-progress" aria-label="Progreso del entrenamiento">
+    <div class="training-mobile-progress-track" id="trainingMobileExerciseTrack"></div>
+    <span id="trainingMobileExercisePosition">Ejercicio 1 de 1</span>
+  </section>
 
   <section class="hero-card compact training-hero training-solver-hero">
     <div class="training-solver-hero-copy">
@@ -39,6 +44,12 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
           <strong id="trainingSolverHeroSide">Juegan blancas</strong>
         </div>
       </div>
+    </div>
+    <div class="training-mobile-hero-meta">
+      <span><i aria-hidden="true"></i><strong id="trainingMobileSide">Juegan blancas</strong></span>
+      <span aria-hidden="true">·</span>
+      <span id="trainingMobileDifficulty">Intermedio</span>
+      <div class="training-exercise-timer" id="trainingMobileExerciseTimer">00:00</div>
     </div>
     <div class="hero-piece">◎</div>
   </section>
@@ -60,6 +71,47 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
           <div class="board-file-labels" id="trainingBoardFiles" aria-hidden="true"></div>
         </div>
       </div>
+    </div>
+
+    <section class="training-mobile-coach nova-state-objective" id="trainingMobileCoach" aria-live="polite">
+      <span class="nova-avatar nova-avatar--neutral" id="trainingMobileNova" aria-hidden="true"></span>
+      <div class="training-mobile-coach-copy">
+        <div><strong id="trainingMobileCoachTitle">Objetivo</strong><span id="trainingMobileCoachStep">1 de 1</span></div>
+        <p id="trainingMobileCoachText">Encuentra la mejor jugada en esta posición.</p>
+        <div class="training-mobile-coach-dots" id="trainingMobileCoachDots" aria-label="Mensajes de Nova"><button type="button" class="active" aria-label="Mensaje 1 de 2"></button><button type="button" aria-label="Mensaje 2 de 2"></button></div>
+      </div>
+    </section>
+
+    <div class="training-mobile-actions" id="trainingMobileActiveControls">
+      <button class="training-mobile-check" type="button" onclick="submitTrainingMove()" id="trainingMobileSubmitBtn" disabled>Comprobar</button>
+      <button class="secondary" type="button" onclick="showTrainingExplanation()">Explícame</button>
+      <button class="secondary" type="button" onclick="showTrainingHint()" id="trainingMobileHintBtn">Dame una pista</button>
+    </div>
+    <div class="training-mobile-actions training-mobile-done" id="trainingMobileDoneControls" hidden>
+      <button type="button" onclick="openNextTrainingExercise()">Siguiente ejercicio</button>
+    </div>
+
+    <section class="training-mobile-summary">
+      <div class="training-mobile-summary-row">
+        <strong>Progreso del módulo</strong>
+        <span class="training-mobile-mini-progress"><i id="trainingMobileModuleBar"></i></span>
+        <b id="trainingMobileModuleProgress">0 de 0</b>
+      </div>
+      <div class="training-mobile-summary-row">
+        <strong>Objetivos de hoy</strong>
+        <span class="training-mobile-mini-progress"><i id="trainingMobileTodayBar"></i></span>
+        <b id="trainingMobileTodayProgress">0 de 0</b>
+      </div>
+      <a class="training-mobile-summary-row" href="#" id="trainingMobileOriginLink">
+        <strong>Partida origen</strong>
+        <span id="trainingMobileOpening">Apertura sin identificar</span>
+        <b aria-hidden="true">›</b>
+      </a>
+    </section>
+
+    <div class="training-mobile-footer-actions">
+      <button class="secondary" type="button" onclick="clearTrainingSelection()" aria-label="Reiniciar selección">↺</button>
+      <button class="secondary" type="button" onclick="skipTrainingExercise()">Saltar ejercicio</button>
     </div>
 
     <aside class="training-solve-sidebar">
@@ -122,7 +174,7 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
     <a class="btn secondary small" href="training.php">Volver al listado</a>
   </section>
 
-  <details class="panel training-detail-panel" open>
+  <details class="panel training-detail-panel" id="trainingExerciseDetails" open>
     <summary>Detalles del ejercicio</summary>
     <div class="training-detail-grid">
       <div><span>Objetivo</span><strong id="trainingDetailsObjective">-</strong></div>
@@ -132,7 +184,7 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
     </div>
   </details>
 
-  <details class="panel training-detail-panel">
+  <details class="panel training-detail-panel" id="trainingOriginDetails">
     <summary>Partida origen</summary>
     <div class="training-origin-review-grid" id="trainingOriginReviewGrid">
       <div class="empty-state compact">
@@ -163,6 +215,9 @@ window.CHESS_TRAINING_PREFERENCES = <?= json_encode([
 ], JSON_UNESCAPED_SLASHES) ?>;
 window.CHESS_TRAINING_SOLVER_MODE = true;
 window.CHESS_TRAINING_INITIAL_EXERCISE_ID = <?= (int)$exerciseId ?>;
+if (window.matchMedia('(max-width: 760px)').matches) {
+  document.getElementById('trainingExerciseDetails')?.removeAttribute('open');
+}
 </script>
 <script src="assets/js/layout.js?v=<?=e($layoutJsVersion)?>"></script>
 <script src="assets/js/training.js?v=<?=e($trainingJsVersion)?>"></script>

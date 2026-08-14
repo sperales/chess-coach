@@ -29,6 +29,10 @@ let incorrectTrainingDestination = '';
 let trainingOriginReviewLoadedFor = 0;
 let trainingSelectionMessage = '';
 let trainingMoveSubmitting = false;
+let trainingMobileCoachMode = 'objective';
+let trainingMobileExplanation = '';
+let trainingMobileCoachSlideIndex = 0;
+let trainingMobileCoachMessages = [];
 const TRAINING_PIECE_ASSET_PATH = (window.CHESS_COACH_PIECE_PATH || 'assets/pieces/Set%201/').toString();
 const TRAINING_PREFERENCES = window.CHESS_TRAINING_PREFERENCES || {};
 const TRAINING_SHOW_LEGAL_MOVES = TRAINING_PREFERENCES.showLegalMoves !== false;
@@ -624,6 +628,10 @@ async function openTrainingExercise(id) {
   trainingHints = [];
   trainingHintLoading = false;
   trainingHintError = '';
+  trainingMobileCoachMode = 'objective';
+  trainingMobileExplanation = '';
+  trainingMobileCoachSlideIndex = 0;
+  trainingMobileCoachMessages = [];
   trainingStartedAt = Date.now();
   startTrainingExerciseTimer();
   trainingBoardOrientation = trainingFenSideToMove(activeExercise.fen) === 'b' ? 'black' : 'white';
@@ -712,6 +720,8 @@ function closeTrainingSolver() {
   trainingHints = [];
   trainingHintLoading = false;
   trainingHintError = '';
+  trainingMobileCoachMessages = [];
+  trainingMobileCoachSlideIndex = 0;
   revealedTrainingSolution = '';
   revealedTrainingSolutionDisplay = '';
   completedTrainingMove = '';
@@ -768,12 +778,11 @@ function stopTrainingExerciseTimer() {
 }
 
 function updateTrainingExerciseTimer() {
-  const el = document.getElementById('trainingExerciseTimer');
-  if (!el) return;
   const elapsedSeconds = trainingStartedAt ? Math.max(0, Math.floor((Date.now() - trainingStartedAt) / 1000)) : 0;
   const minutes = Math.floor(elapsedSeconds / 60);
   const seconds = elapsedSeconds % 60;
-  el.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  const value = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  ['trainingExerciseTimer', 'trainingMobileExerciseTimer'].forEach(id => setText(id, value));
 }
 
 function renderTrainingSolverChrome() {
@@ -798,6 +807,12 @@ function renderTrainingSolverChrome() {
   setText('trainingDetailsTheme', trainingThemeForType(activeExercise.exercise_type || ''));
   setText('trainingDetailsLevel', trainingDifficultyLabel(activeExercise.difficulty || 'medium'));
   setText('trainingDetailsPriority', activeExercise.priority_score || 0);
+  setText('trainingMobileSide', `Juegan ${side}`);
+  setText('trainingMobileDifficulty', trainingDifficultyLabel(activeExercise.difficulty || 'medium'));
+  const opening = [activeExercise.eco_code, activeExercise.opening_name].filter(Boolean).join(' - ');
+  setText('trainingMobileOpening', opening || gameTitle);
+  const originLink = document.getElementById('trainingMobileOriginLink');
+  if (originLink) originLink.href = activeExercise.review_url || `review.php?id=${Number(activeExercise.game_id || 0)}`;
   setText(
     'trainingCorrectMove',
     revealedTrainingSolutionDisplay
@@ -810,6 +825,164 @@ function renderTrainingSolverChrome() {
   if (status) status.className = `queue-status ${isTrainable ? 'queued' : 'done'}`;
   const difficulty = document.getElementById('trainingDifficultyBars');
   if (difficulty) difficulty.innerHTML = trainingDifficultyBars(activeExercise.difficulty || 'medium');
+  renderTrainingMobileProgress();
+  renderTrainingMobileCoach();
+}
+
+function renderTrainingMobileProgress() {
+  if (!activeExercise) return;
+  const available = trainingExercises.filter(trainingExerciseIsTrainable);
+  const moduleTotal = Math.max(1, Math.min(10, available.length || 10));
+  const listIndex = available.findIndex(item => Number(item.id || 0) === Number(activeExercise.id || 0));
+  const position = Math.max(1, Math.min(moduleTotal, listIndex >= 0 ? listIndex + 1 : 1));
+  const settings = trainingExperience.settings || {};
+  const today = trainingExperience.today || {};
+  const mode = settings.daily_goal_mode || 'exercises';
+  const isMinutes = mode === 'minutes';
+  const goalCurrent = isMinutes ? Number(today.duration_minutes || 0) : Number(today.exercises || 0);
+  const goalTarget = Math.max(1, isMinutes ? Number(settings.daily_minutes_goal || 10) : Number(settings.daily_exercise_goal || 5));
+  const goalProgress = Math.min(goalTarget, goalCurrent);
+  const segmentCount = goalTarget <= 20 ? goalTarget : 10;
+  const completedSegments = Math.round((goalProgress / goalTarget) * segmentCount);
+  setText('trainingMobileExercisePosition', `${isMinutes ? 'Minuto' : 'Ejercicio'} ${goalProgress} de ${goalTarget}`);
+  const track = document.getElementById('trainingMobileExerciseTrack');
+  if (track) {
+    track.innerHTML = Array.from({ length: segmentCount }, (_, index) => `<i class="${index < completedSegments ? 'complete' : ''}${index === completedSegments ? ' current' : ''}"></i>`).join('');
+  }
+
+  setText('trainingMobileModuleProgress', `${position} de ${moduleTotal}`);
+  const moduleBar = document.getElementById('trainingMobileModuleBar');
+  if (moduleBar) moduleBar.style.width = `${Math.round((position / moduleTotal) * 100)}%`;
+
+  const current = mode === 'minutes' ? Number(today.duration_minutes || 0) : Number(today.exercises || 0);
+  const target = mode === 'minutes' ? Number(settings.daily_minutes_goal || 10) : Number(settings.daily_exercise_goal || 5);
+  setText('trainingMobileTodayProgress', `${current} de ${target}`);
+  const todayBar = document.getElementById('trainingMobileTodayBar');
+  if (todayBar) todayBar.style.width = `${Math.min(100, Math.round((current / Math.max(1, target)) * 100))}%`;
+}
+
+function trainingMobileExplanationText() {
+  const themes = {
+    find_mate: 'Busca primero jaques, capturas y amenazas directas contra el rey.',
+    spot_threat: 'Identifica la amenaza rival antes de elegir tu respuesta.',
+    defend_position: 'Compara las defensas candidatas y elimina las que permiten recursos forzados.',
+    convert_advantage: 'Con ventaja, prioriza la seguridad y conserva el control de la posición.',
+    avoid_blunder: 'Revisa qué piezas quedan atacadas antes de confirmar la jugada.',
+  };
+  return themes[activeExercise?.exercise_type] || 'Compara tus jugadas candidatas y comprueba la respuesta más fuerte del rival.';
+}
+
+function showTrainingExplanation() {
+  if (!activeExercise || trainingExerciseFinished()) return;
+  trainingMobileCoachMode = 'explanation';
+  trainingMobileExplanation = trainingMobileExplanationText();
+  appendTrainingMobileCoachMessage({
+    key: 'explanation',
+    mode: 'explanation',
+    title: 'Por qué importa',
+    text: trainingMobileExplanation,
+    avatar: 'nova-avatar--focus',
+  });
+  renderTrainingMobileCoach();
+}
+
+function ensureTrainingMobileCoachMessages() {
+  if (!activeExercise || trainingMobileCoachMessages.length) return;
+  const prompt = (activeExercise.prompt || 'Encuentra la mejor jugada.').replace(/\s*Juegan\s+(blancas|negras)\.?/i, '').trim();
+  trainingMobileCoachMessages = [
+    { key: 'objective', mode: 'objective', title: 'Objetivo', text: prompt, avatar: 'nova-avatar--neutral' },
+    {
+      key: 'approach',
+      mode: 'objective',
+      title: 'Cómo empezar',
+      text: 'Antes de mover, revisa jaques, capturas y amenazas de ambos bandos.',
+      avatar: 'nova-avatar--focus',
+    },
+  ];
+}
+
+function appendTrainingMobileCoachMessage(message) {
+  ensureTrainingMobileCoachMessages();
+  const existingIndex = trainingMobileCoachMessages.findIndex(item => item.key === message.key);
+  if (existingIndex >= 0) {
+    trainingMobileCoachMessages[existingIndex] = { ...trainingMobileCoachMessages[existingIndex], ...message };
+    trainingMobileCoachSlideIndex = existingIndex;
+  } else {
+    trainingMobileCoachMessages.push(message);
+    trainingMobileCoachSlideIndex = trainingMobileCoachMessages.length - 1;
+  }
+}
+
+function syncTrainingMobileHintMessages() {
+  ensureTrainingMobileCoachMessages();
+  trainingHints.forEach((hint, index) => {
+    const level = Number(hint.level || index + 1);
+    const key = `hint-${level}`;
+    const existingIndex = trainingMobileCoachMessages.findIndex(item => item.key === key);
+    const message = {
+      key,
+      mode: 'hint',
+      title: `Pista ${level} de 3`,
+      text: hint.text || 'Observa de nuevo las piezas activas.',
+      avatar: 'nova-avatar--thinking',
+    };
+    if (existingIndex >= 0) trainingMobileCoachMessages[existingIndex] = message;
+    else trainingMobileCoachMessages.push(message);
+  });
+  if (trainingHints.length) {
+    const latestLevel = Number(trainingHints[trainingHints.length - 1].level || trainingHints.length);
+    const latestIndex = trainingMobileCoachMessages.findIndex(item => item.key === `hint-${latestLevel}`);
+    if (latestIndex >= 0) trainingMobileCoachSlideIndex = latestIndex;
+  }
+}
+
+function trainingMobileCoachSlides() {
+  ensureTrainingMobileCoachMessages();
+  return trainingMobileCoachMessages;
+}
+
+function changeTrainingMobileCoachSlide(index) {
+  const slides = trainingMobileCoachSlides();
+  trainingMobileCoachSlideIndex = Math.max(0, Math.min(slides.length - 1, Number(index) || 0));
+  renderTrainingMobileCoach();
+}
+
+function bindTrainingMobileCoachSwipe() {
+  const card = document.getElementById('trainingMobileCoach');
+  if (!card || card.dataset.swipeBound === '1') return;
+  card.dataset.swipeBound = '1';
+  let touchStartX = null;
+  card.addEventListener('touchstart', event => {
+    touchStartX = event.touches[0]?.clientX ?? null;
+  }, { passive: true });
+  card.addEventListener('touchend', event => {
+    if (touchStartX === null) return;
+    const touchEndX = event.changedTouches[0]?.clientX ?? touchStartX;
+    const distance = touchEndX - touchStartX;
+    touchStartX = null;
+    if (Math.abs(distance) < 36) return;
+    changeTrainingMobileCoachSlide(trainingMobileCoachSlideIndex + (distance < 0 ? 1 : -1));
+  }, { passive: true });
+}
+
+function renderTrainingMobileCoach() {
+  const card = document.getElementById('trainingMobileCoach');
+  const avatar = document.getElementById('trainingMobileNova');
+  const dots = document.getElementById('trainingMobileCoachDots');
+  if (!card || !avatar || !dots || !activeExercise) return;
+  const slides = trainingMobileCoachSlides();
+  trainingMobileCoachSlideIndex = Math.max(0, Math.min(slides.length - 1, trainingMobileCoachSlideIndex));
+  const slide = slides[trainingMobileCoachSlideIndex];
+
+  card.className = `training-mobile-coach nova-state-${slide.mode || trainingMobileCoachMode}`;
+  avatar.className = `nova-avatar ${slide.avatar}`;
+  setText('trainingMobileCoachTitle', slide.title);
+  setText('trainingMobileCoachText', slide.text);
+  setText('trainingMobileCoachStep', `${trainingMobileCoachSlideIndex + 1} de ${slides.length}`);
+  dots.innerHTML = slides.map((item, index) => `<button type="button" class="${index === trainingMobileCoachSlideIndex ? 'active' : ''}" onclick="changeTrainingMobileCoachSlide(${index})" aria-label="Mensaje ${index + 1} de ${slides.length}"></button>`).join('');
+  card.classList.remove('is-changing');
+  void card.offsetWidth;
+  card.classList.add('is-changing');
 }
 
 function setText(id, value) {
@@ -1350,6 +1523,7 @@ function selectTrainingSquare(square) {
 function updateTrainingDraft() {
   const draft = document.getElementById('trainingMoveDraft');
   const submit = document.getElementById('trainingSubmitBtn');
+  const mobileSubmit = document.getElementById('trainingMobileSubmitBtn');
   const complete = selectedTrainingSquare.length >= 4;
   const promotionWrap = document.getElementById('trainingPromotionWrap');
   const promotion = complete && trainingMoveNeedsPromotion(selectedTrainingSquare);
@@ -1361,6 +1535,7 @@ function updateTrainingDraft() {
     else draft.textContent = `Jugada seleccionada: ${trainingSelectedMoveText()}.`;
   }
   if (submit) submit.disabled = !complete || trainingExerciseFinished() || trainingMoveSubmitting;
+  if (mobileSubmit) mobileSubmit.disabled = !complete || trainingExerciseFinished() || trainingMoveSubmitting;
   renderTrainingControls();
 }
 
@@ -1426,6 +1601,7 @@ async function startTrainingSolveRun() {
     if (!data.ok) throw new Error(data.error || 'No se pudo preparar el sistema de pistas.');
     applyTrainingSolveRun(data.solve_run);
     if (trainingHintFrom) selectedTrainingSquare = trainingHintFrom;
+    syncTrainingMobileHintMessages();
     trainingHintError = '';
   } catch (error) {
     trainingHintError = error && error.message ? error.message : 'Las pistas no están disponibles temporalmente.';
@@ -1436,6 +1612,7 @@ async function startTrainingSolveRun() {
   renderTrainingBoard();
   updateTrainingDraft();
   renderTrainingControls();
+  renderTrainingMobileCoach();
 }
 
 async function showTrainingHint() {
@@ -1463,6 +1640,8 @@ async function showTrainingHint() {
     const data = await response.json();
     if (!data.ok) throw new Error(data.error || 'No se pudo obtener la pista.');
     applyTrainingSolveRun(data.solve_run);
+    trainingMobileCoachMode = 'hint';
+    syncTrainingMobileHintMessages();
     selectedTrainingSquare = trainingHintFrom || '';
     trainingSelectionMessage = '';
   } catch (error) {
@@ -1474,6 +1653,7 @@ async function showTrainingHint() {
   renderTrainingBoard();
   updateTrainingDraft();
   renderTrainingControls();
+  renderTrainingMobileCoach();
 }
 
 function renderTrainingHints() {
@@ -1497,15 +1677,25 @@ function renderTrainingControls() {
   const active = document.getElementById('trainingActiveControls');
   const done = document.getElementById('trainingDoneControls');
   const hint = document.getElementById('trainingHintBtn');
+  const mobileActive = document.getElementById('trainingMobileActiveControls');
+  const mobileDone = document.getElementById('trainingMobileDoneControls');
+  const mobileHint = document.getElementById('trainingMobileHintBtn');
   const finished = trainingExerciseFinished();
   if (active) active.hidden = finished;
   if (done) done.hidden = !finished;
+  if (mobileActive) mobileActive.hidden = finished;
+  if (mobileDone) mobileDone.hidden = !finished;
   if (hint) {
     const hintLevel = trainingSolveRun ? Number(trainingSolveRun.highest_hint_level || 0) : 0;
     hint.disabled = finished || trainingHintLoading || !trainingSolveRun || hintLevel >= 3;
     hint.textContent = trainingHintLoading
       ? 'Preparando pista...'
       : (hintLevel >= 3 ? 'Pistas completadas' : `${hintLevel > 0 ? 'Siguiente pista' : 'Pista'} ${hintLevel + 1}/3`);
+  }
+  if (mobileHint) {
+    const hintLevel = trainingSolveRun ? Number(trainingSolveRun.highest_hint_level || 0) : 0;
+    mobileHint.disabled = finished || trainingHintLoading || !trainingSolveRun || hintLevel >= 3;
+    mobileHint.textContent = hintLevel > 0 && hintLevel < 3 ? 'Siguiente pista' : (hintLevel >= 3 ? 'Pistas completadas' : 'Dame una pista');
   }
 }
 
@@ -1590,6 +1780,38 @@ function showTrainingFeedback(data) {
     revealedTrainingSolutionDisplay = data.solution_display || trainingUciFallback(data.solution_uci);
     feedback.textContent += ` Solución: ${revealedTrainingSolutionDisplay}.`;
   }
+  trainingMobileCoachMode = data.solved ? 'success' : (data.solution_uci ? 'solution' : 'error');
+  const feedbackText = feedback.textContent || '';
+  const attemptNumber = Math.max(1, attemptedTrainingMoves.length);
+  const attemptTitle = attemptedTrainingMoveDisplays.length
+    ? `Jugaste ${attemptedTrainingMoveDisplays[attemptedTrainingMoveDisplays.length - 1] || ''}`.trim()
+    : `Intento ${attemptNumber}`;
+  if (data.solved) {
+    appendTrainingMobileCoachMessage({
+      key: `success-${attemptNumber}`,
+      mode: 'success',
+      title: '¡Correcto!',
+      text: feedbackText || 'Has encontrado la mejor continuación.',
+      avatar: 'nova-avatar--success',
+    });
+  } else if (data.solution_uci) {
+    appendTrainingMobileCoachMessage({
+      key: `solution-${attemptNumber}`,
+      mode: 'solution',
+      title: 'Solución',
+      text: feedbackText || `La continuación indicada por Stockfish es ${revealedTrainingSolutionDisplay || 'la solución'}.`,
+      avatar: 'nova-avatar--error',
+    });
+  } else {
+    appendTrainingMobileCoachMessage({
+      key: `error-${attemptNumber}`,
+      mode: 'error',
+      title: attemptTitle,
+      text: feedbackText || 'Esa jugada no resuelve la posición. Busca otra candidata.',
+      avatar: 'nova-avatar--warning',
+    });
+  }
+  renderTrainingMobileCoach();
 }
 
 function renderTrainingAttempts() {
@@ -1614,6 +1836,7 @@ function renderTrainingStatsFromResponse(data) {
   if (data.session) activeTrainingSession = data.session;
   renderTrainingStats();
   renderTrainingExperience();
+  renderTrainingMobileProgress();
 }
 
 async function skipTrainingExercise() {
@@ -1693,6 +1916,7 @@ function escapeAttr(value) {
 }
 
 bindTrainingFilters();
+bindTrainingMobileCoachSwipe();
 loadTraining(1)
   .then(() => {
     if (Number.isInteger(TRAINING_INITIAL_EXERCISE_ID) && TRAINING_INITIAL_EXERCISE_ID > 0) {

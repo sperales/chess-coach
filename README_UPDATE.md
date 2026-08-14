@@ -6,6 +6,14 @@ Stockfish 18 analysis confidence, chess-logic consistency and pipeline hardening
 
 ## Changes
 
+- Rebuilds the exercise solver from the approved five-state mobile reference while preserving the established desktop workspace.
+- Maximizes the mobile board, places coordinates inside its edge squares and keeps the exercise title, side to move, difficulty and timer visible without scrolling.
+- Connects Nova's objective, error, hint, explanation and success presentations to the real solver state.
+- Makes Nova's feedback a swipeable, paginated message carousel and keeps its dots available as direct navigation controls.
+- Keeps Nova's carousel incremental throughout each exercise: explanations, hints and attempt feedback are appended and activated without replacing earlier messages.
+- Uses the configured daily objective for the segmented progress line instead of presenting it as a Nova-generated exercise queue.
+- Opens the source game directly in Review, removes duplicate mobile labels and aligns the streak core with the standard three-line menu control.
+- Adds compact module and daily-goal progress, source-opening context and mobile actions; automatic validation hides the redundant `Comprobar` button.
 - Rebuilds the Training landing page from the approved mobile-first reference with a compact heading, focus selector, Nova recommendation, category cards, continuation exercises and coach advice.
 - Uses real exercise counts, current training-plan data and pending exercises instead of decorative sample values.
 - Keeps internal sessions out of the player-facing interface and uses `entrenamiento` consistently.
@@ -75,6 +83,9 @@ Keep the production binary path in `config/engine.php`. Add the new settings fro
 
 ## Verification
 
+- Check `training-exercise.php` at 360 px and 390 px against all five approved states: initial, error, hint, explanation and success.
+- Confirm mobile coordinates remain inside the board, Nova changes with real attempts and desktop retains the two-column solver.
+- Run `php tests/training_exercise_mobile_layout_test.php`.
 - Check Training at 360 px and 390 px against the approved reference and confirm no horizontal overflow.
 - Confirm Nova's primary action and continuation cards open real pending exercises.
 - Confirm Flash and Finales filter the existing exercise inventory, Aperturas opens Openings Lab and Escenarios remains inactive.
