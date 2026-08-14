@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## v1.4.16 - Stockfish 18 analysis confidence
+## v1.4.16 - Analysis confidence and mobile coaching experience
 
 ### Added
 
@@ -9,6 +9,9 @@
 - Added a centralized chess-assessment helper with position-state transitions and pedagogical explanations.
 - Added explicit recent-form, coach-focus and stable-DNA windows with recency weighting.
 - Added per-dimension sample size and confidence to Player DNA.
+- Added Nova's reusable local presentation assets and coaching states.
+- Added real historical Dashboard series with selectable periods and metrics.
+- Added dedicated mobile layout verification for Login, Home, Review, Training and the exercise solver.
 
 ### Changed
 
@@ -18,6 +21,10 @@
 - Unified move classifications consumed by Review, Dashboard and Player DNA.
 - Changed Player DNA from a volatile 10-game identity to a weighted sample of up to 50 games, while retaining 10 games for form and 15 for coach focus.
 - Refreshes Player DNA automatically after successful analysis completion.
+- Rebuilt Login, Home, Review, Training and the exercise solver as mobile-first experiences while retaining their desktop workflows.
+- Made Nova's exercise feedback a swipeable, incremental carousel that preserves objectives, explanations, hints and attempt results.
+- Adapted the Review board and analysis panels for full-width mobile use without duplicating the desktop composition.
+- Kept sessions internal and uses daily-plan and training language throughout the player-facing interface.
 - Bumped the app version and PWA cache to `1.4.16`.
 
 ### Fixed
@@ -26,6 +33,8 @@
 - Prevented concurrent workers from analyzing the same queued game.
 - Prevented an exact Stockfish best move from being labelled merely good or offered as its own better alternative.
 - Prevented low-sample dimensions from being stated as categorical strengths or weaknesses.
+- Prevented iOS login autofill from losing the stored username metadata or replacing the intended dark field presentation.
+- Prevented mobile training recommendation content, category labels and Nova overlays from colliding at narrow widths.
 
 ### Database
 

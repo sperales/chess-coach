@@ -18,7 +18,7 @@ Current stable baseline: **v1.4.16**
 
 The project is currently a PHP + MariaDB PWA designed for shared hosting. It does not require npm, Node.js, Composer, Docker, or a build step.
 
-v1.4.16 records the exact Stockfish 18 engine and search telemetry behind each analysis, evaluates plies from their complete move history and rejects incomplete engine output instead of treating it as `0.00`.
+v1.4.16 records the exact Stockfish 18 engine and search telemetry behind each analysis, evaluates plies from their complete move history and rejects incomplete engine output instead of treating it as `0.00`. It also introduces Nova and the mobile-first Login, Home, Review and Training experience while preserving desktop and shared-hosting compatibility.
 
 ---
 

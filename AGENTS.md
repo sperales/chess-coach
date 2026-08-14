@@ -451,7 +451,7 @@ The current likely roadmap direction is:
 - v1.4.13 — SAN notation for review best moves (completed)
 - v1.4.14 — Completed training plan goal persistence (completed)
 - v1.4.15 — Player-perspective metrics and bounded opening goals (completed)
-- v1.4.16 — Stockfish 18 analysis confidence and telemetry (completed)
+- v1.4.16 — Stockfish 18 analysis confidence, Nova and mobile-first coaching UX (completed)
 - v1.5.0 — AI Coach MVP
 - v1.7.0 — Automation / Chess.com Sync
 

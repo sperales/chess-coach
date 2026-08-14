@@ -128,6 +128,19 @@ Both should match the release version.
 - Confirm the desktop layout remains readable as an expanded adaptation of the mobile composition.
 - Run `php tests/training_mobile_layout_test.php`.
 
+## Mobile Training Exercise Checks
+
+- Check `training-exercise.php` at 360 px and 390 px in initial, incorrect, hint, explanation, exhausted and solved states.
+- Confirm the board remains the primary element, its coordinates stay inside the squares and the configured piece/color preferences still apply.
+- Confirm the segmented header represents the configured daily objective rather than an artificial session.
+- Confirm Nova's messages can be swiped and selected by their dots.
+- Confirm `Explícame`, each progressive hint and every attempt append a new active slide without removing earlier messages.
+- Confirm the slide counter and dots update as the carousel grows.
+- Confirm the source-game action opens the corresponding Review page.
+- Confirm automatic validation hides only the redundant `Comprobar` action.
+- Confirm desktop retains the established two-column solver workspace.
+- Run `php tests/training_exercise_mobile_layout_test.php`.
+
 ---
 
 ## Stockfish Analysis Pipeline Checks
