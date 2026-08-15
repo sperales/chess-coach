@@ -30,7 +30,7 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
 <main class="dashboard training-solve-page <?=!empty($trainingPreferences['auto_submit_move']) ? 'training-auto-submit' : 'training-manual-submit'?>">
   <a class="training-back-link" href="training.php">← Entrenamiento</a>
 
-  <section class="training-mobile-progress" aria-label="Progreso del entrenamiento">
+  <section class="training-mobile-progress" id="trainingMobilePlanProgress" aria-label="Progreso del entrenamiento"<?= $trainingId > 0 ? '' : ' hidden' ?>>
     <div class="training-mobile-progress-track" id="trainingMobileExerciseTrack"></div>
     <span id="trainingMobileExercisePosition">Ejercicio 1 de 1</span>
   </section>
@@ -93,7 +93,7 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
     </div>
 
     <section class="training-mobile-summary">
-      <div class="training-mobile-summary-row">
+      <div class="training-mobile-summary-row" id="trainingMobilePlanSummary"<?= $trainingId > 0 ? '' : ' hidden' ?>>
         <strong>Plan de hoy</strong>
         <span class="training-mobile-mini-progress"><i id="trainingMobileModuleBar"></i></span>
         <b id="trainingMobileModuleProgress">0 de 0</b>

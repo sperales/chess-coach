@@ -19,6 +19,8 @@ assert_scenario_ui(str_contains($page, 'Partida origen'), 'Scenario must preserv
 assert_scenario_ui(str_contains($script, "scenarioPost('scenario_move'"), 'Scenario moves must use the Training v2 API.');
 assert_scenario_ui(str_contains($script, "scenarioPost('scenario_hint'") && str_contains($script, "scenarioPost('scenario_why'"), 'Scenario actions must call their independent endpoints.');
 assert_scenario_ui(str_contains($script, 'bindScenarioSwipe'), 'Coach Feed must support horizontal touch navigation.');
+assert_scenario_ui(str_contains($script, 'SCENARIO_PLAN_ID <= 0') && str_contains($page, '$trainingId > 0'), 'Isolated scenarios must not create or display a plan context.');
+assert_scenario_ui(str_contains($script, 'scenarioFeedAnimateAdvance'), 'New scenario messages must animate into view.');
 assert_scenario_ui(str_contains($script, "item.item_type === 'scenario'"), 'Plan navigation must support mixed Flash and Scenario items.');
 assert_scenario_ui(str_contains($script, 'scenarioWrongDestination'), 'Rejected decisions must remain visually identifiable.');
 assert_scenario_ui(str_contains($styles, '.training-scenario-board') && str_contains($styles, '.scenario-file-label'), 'Scenario board must be responsive and show internal coordinates.');

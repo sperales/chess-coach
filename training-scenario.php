@@ -28,7 +28,7 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
 <main class="dashboard training-solve-page training-scenario-solve-page">
   <a class="training-back-link" href="training.php">← Entrenamiento</a>
 
-  <section class="training-mobile-progress" aria-label="Progreso del plan de hoy">
+  <section class="training-mobile-progress" id="scenarioPlanHeader" aria-label="Progreso del plan de hoy"<?= $trainingId > 0 ? '' : ' hidden' ?>>
     <div class="training-mobile-progress-track" id="scenarioPlanTrack"></div>
     <span id="scenarioPlanPosition">Escenario</span>
   </section>
@@ -74,7 +74,7 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
     </div>
 
     <section class="training-mobile-summary training-scenario-summary">
-      <div class="training-mobile-summary-row">
+      <div class="training-mobile-summary-row" id="scenarioPlanSummary"<?= $trainingId > 0 ? '' : ' hidden' ?>>
         <strong>Plan de hoy</strong>
         <span class="training-mobile-mini-progress"><i id="scenarioPlanBar"></i></span>
         <b id="scenarioPlanProgress">0 de 0</b>

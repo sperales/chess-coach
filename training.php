@@ -57,7 +57,7 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
       <button class="secondary small" type="button" onclick="clearTrainingFilters()">Limpiar</button>
     </div>
     <div class="games-filter-grid">
-      <label>Tipo
+      <label>Plan de Nova
         <select id="trainingTypeFilter">
           <option value="recommended">Recomendado para mí</option>
         </select>
@@ -141,12 +141,15 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
   </section>
 
   <section class="panel training-continue-section" id="trainingContinue">
-    <div class="panel-head">
+    <div class="panel-head training-section-head">
       <div>
-        <h2>Continuar entrenamiento</h2>
-        <p>Retoma donde lo dejaste.</p>
+        <h2>Ejercicios disponibles</h2>
+        <p id="trainingAvailableDescription">Elige una posición para entrenar.</p>
       </div>
-      <span class="muted" id="trainingFilterStatus">Cargando...</span>
+      <div class="training-available-actions">
+        <a class="btn secondary small" id="trainingOpeningsLabLink" href="openings-lab.php" hidden>Abrir Lab de Aperturas</a>
+        <span class="muted" id="trainingFilterStatus">Cargando...</span>
+      </div>
     </div>
     <div class="training-list" id="trainingExerciseList"></div>
     <div class="pagination" id="trainingPagination"></div>

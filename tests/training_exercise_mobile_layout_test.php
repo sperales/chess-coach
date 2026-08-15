@@ -12,6 +12,7 @@ $script = file_get_contents(__DIR__.'/../assets/js/training.js');
 $styles = file_get_contents(__DIR__.'/../assets/css/app.css');
 
 assert_training_exercise_mobile(str_contains($page, 'training-mobile-progress'), 'Solver must expose compact exercise progress.');
+assert_training_exercise_mobile(str_contains($page, '$trainingId > 0'), 'Isolated exercises must hide plan-only progress UI.');
 assert_training_exercise_mobile(str_contains($page, 'trainingMobileCoach'), 'Solver must include the mobile Nova coach card.');
 assert_training_exercise_mobile(str_contains($page, '¿Por qué?'), 'Solver must expose the explanation action.');
 assert_training_exercise_mobile(str_contains($page, 'Ayuda'), 'Solver must expose progressive hints.');
@@ -24,6 +25,8 @@ assert_training_exercise_mobile(str_contains($script, 'renderTrainingMobileProgr
 assert_training_exercise_mobile(str_contains($script, 'trainingCoachPlan?.item_count'), 'Top progress must use the prepared Coach plan.');
 assert_training_exercise_mobile(str_contains($script, "trainingNextPlanItem('flash'"), 'Next action must follow the mixed Coach plan.');
 assert_training_exercise_mobile(str_contains($script, 'bindTrainingMobileCoachSwipe'), 'Nova messages must support touch navigation.');
+assert_training_exercise_mobile(str_contains($script, 'trainingMobileCoachAnimateAdvance'), 'New Nova messages must animate into view.');
+assert_training_exercise_mobile(str_contains($script, 'showTrainingFeedback(data, !hasCoachFeed)'), 'Persisted Coach feedback must not be duplicated locally.');
 assert_training_exercise_mobile(str_contains($script, "originLink.href = activeExercise.review_url"), 'Source game must link directly to Review.');
 assert_training_exercise_mobile(str_contains($styles, 'exact mobile training exercise composition'), 'Dedicated mobile solver styles must exist.');
 assert_training_exercise_mobile(str_contains($styles, '.training-board-frame .board-rank-labels'), 'Board coordinates must be positioned inside the mobile board.');

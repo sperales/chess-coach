@@ -7,6 +7,9 @@ const COACH_FLASH_MIN_ITEMS = 3;
 const COACH_FLASH_MAX_ITEMS = 10;
 
 function coach_focus_from_context(array $context): array {
+  $forcedFocus = is_array($context['forced_focus'] ?? null) ? $context['forced_focus'] : [];
+  if ($forcedFocus) return $forcedFocus;
+
   $focuses = is_array($context['training_focus'] ?? null) ? $context['training_focus'] : [];
   $focus = $focuses[0] ?? [];
   if ($focus) {
@@ -93,6 +96,7 @@ function coach_select_flash_items(array $candidates, array $focus, int $limit, a
       'evidence' => [
         'priority_score' => (int)($candidate['priority_score'] ?? 0),
         'difficulty' => (string)($candidate['difficulty'] ?? 'medium'),
+        'exercise_type' => (string)($candidate['exercise_type'] ?? 'other'),
         'source_side' => (string)($candidate['source_side'] ?? 'user'),
         'tag_codes' => $tags,
       ],
@@ -114,6 +118,7 @@ function coach_select_flash_items(array $candidates, array $focus, int $limit, a
         'evidence' => [
           'priority_score' => (int)($candidate['priority_score'] ?? 0),
           'difficulty' => (string)($candidate['difficulty'] ?? 'medium'),
+          'exercise_type' => (string)($candidate['exercise_type'] ?? 'other'),
           'source_side' => (string)($candidate['source_side'] ?? 'user'),
           'tag_codes' => $tags,
         ],
@@ -209,8 +214,10 @@ function coach_latest_dna_context(int $userId): array {
   ] : [];
 }
 
-function coach_flash_candidates_for_user(int $userId, int $limit = 80): array {
-  $list = training_list_exercises($userId, 'recommended', 'pending', 1, max(10, min(100, $limit)));
+function coach_flash_candidates_for_user(int $userId, int $limit = 80, string $selectedType = 'recommended'): array {
+  $types = training_exercise_types();
+  if (!isset($types[$selectedType])) $selectedType = 'recommended';
+  $list = training_list_exercises($userId, $selectedType, 'pending', 1, max(10, min(100, $limit)));
   return $list['items'];
 }
 
@@ -227,7 +234,35 @@ function coach_scenario_candidates_for_user(int $userId, int $limit = 20): array
   return $st->fetchAll();
 }
 
-function coach_recommendation_for_user(int $userId, array $trainingFocus = []): array {
+function coach_forced_focus(string $selectedType): array {
+  if ($selectedType === 'recommended') return [];
+  $types = training_exercise_types();
+  if (!isset($types[$selectedType])) return [];
+  return [
+    'code' => $selectedType,
+    'title' => (string)($types[$selectedType]['label'] ?? 'Entrenamiento personalizado'),
+    'description' => 'Plan preparado con el tipo de entrenamiento que has elegido.',
+    'evidence' => ['Selección manual del tipo de entrenamiento'],
+    'tag_codes' => [],
+    'sample_size' => 0,
+  ];
+}
+
+function coach_scenarios_for_selected_type(array $candidates, string $selectedType): array {
+  $scenarioType = match ($selectedType) {
+    'find_mate' => 'mate',
+    'defend_position', 'spot_threat', 'avoid_blunder' => 'defense',
+    'convert_advantage' => 'conversion',
+    default => null,
+  };
+  if ($selectedType === 'recommended') return $candidates;
+  if ($scenarioType === null) return [];
+  return array_values(array_filter($candidates, fn(array $item): bool => ($item['scenario_type'] ?? '') === $scenarioType));
+}
+
+function coach_recommendation_for_user(int $userId, array $trainingFocus = [], string $selectedType = 'recommended'): array {
+  $types = training_exercise_types();
+  if (!isset($types[$selectedType])) $selectedType = 'recommended';
   $settings = training_goal_settings_for_user($userId);
   $dna = coach_latest_dna_context($userId);
   $planFocus = training_plan_focus_candidate($userId);
@@ -235,12 +270,14 @@ function coach_recommendation_for_user(int $userId, array $trainingFocus = []): 
   $recentSt->execute([$userId]);
   $target = max(COACH_FLASH_MIN_ITEMS, min(COACH_FLASH_MAX_ITEMS, (int)$settings['daily_exercise_goal']));
   return coach_compose_training_blueprint([
+    'forced_focus' => coach_forced_focus($selectedType),
     'training_focus' => $trainingFocus,
     'plan_focus' => $planFocus,
     'sample_size' => $trainingFocus[0]['sample_size'] ?? ($dna['recent_games'] ?? 0),
     'dna_confidence' => $dna['confidence'] ?? null,
     'recent_training' => (int)$recentSt->fetchColumn(),
-  ], coach_flash_candidates_for_user($userId), $target, coach_recent_exercise_ids($userId), coach_scenario_candidates_for_user($userId));
+  ], coach_flash_candidates_for_user($userId, 80, $selectedType), $target, coach_recent_exercise_ids($userId),
+    coach_scenarios_for_selected_type(coach_scenario_candidates_for_user($userId), $selectedType));
 }
 
 function coach_public_session_item(array $row): array {
@@ -265,6 +302,8 @@ function coach_session_plan(int $userId, int $sessionId): ?array {
   $itemSt = db()->prepare('SELECT * FROM training_session_items WHERE session_id=? AND user_id=? ORDER BY position');
   $itemSt->execute([$sessionId, $userId]);
   return [
+    'training_id' => (int)$session['id'],
+    'selected_type' => (string)($session['selected_type'] ?? 'recommended'),
     'coach_version' => (int)($session['coach_version'] ?? 1),
     'focus' => [
       'code' => (string)($session['coach_focus_code'] ?? ''),
@@ -282,7 +321,10 @@ function coach_prepare_session(int $userId, int $sessionId, array $trainingFocus
   $existing = coach_session_plan($userId, $sessionId);
   if (!$existing) throw new RuntimeException('Entrenamiento no encontrado.');
   if ($existing['items'] || $existing['focus']['code'] !== '') return $existing;
-  $blueprint = coach_recommendation_for_user($userId, $trainingFocus);
+  $sessionSt = db()->prepare('SELECT selected_type FROM training_sessions WHERE id=? AND user_id=? LIMIT 1');
+  $sessionSt->execute([$sessionId, $userId]);
+  $selectedType = (string)($sessionSt->fetchColumn() ?: 'recommended');
+  $blueprint = coach_recommendation_for_user($userId, $trainingFocus, $selectedType);
   $pdo = db();
   $pdo->beginTransaction();
   try {
@@ -307,6 +349,15 @@ function coach_prepare_session(int $userId, int $sessionId, array $trainingFocus
     if ($pdo->inTransaction()) $pdo->rollBack();
     throw $e;
   }
+}
+
+function coach_current_plan_for_user(int $userId, array $trainingFocus = []): array {
+  $training = training_active_session($userId, false);
+  if ($training) {
+    $plan = coach_session_plan($userId, (int)$training['id']);
+    if ($plan && !empty($plan['items'])) return ['training' => $training, 'plan' => $plan];
+  }
+  return ['training' => $training, 'plan' => coach_recommendation_for_user($userId, $trainingFocus)];
 }
 
 function coach_flash_explanation(array $exercise, ?array $attempt = null): string {

@@ -8441,6 +8441,18 @@ body.login-page::before {
 .training-scenario-coach.nova-state-error,
 .training-mobile-coach.nova-state-error,
 .training-mobile-coach.nova-state-solution{--coach-state:#ef5350}
+.training-mobile-coach.nova-state-hint{--coach-state:#e58d2c}
+.training-mobile-coach.nova-state-explanation{--coach-state:#78ca35}
+.training-mobile-coach .nova-avatar{align-self:center;justify-self:center}
+.training-mobile-coach.is-advancing .training-mobile-coach-copy{animation:trainingCoachAdvance .34s cubic-bezier(.22,.8,.3,1)}
+.training-mobile-progress[hidden],
+.training-mobile-summary-row[hidden]{display:none!important}
+.training-category-card.is-selected{box-shadow:inset 0 0 0 2px #8bd22f,0 0 18px rgba(139,210,47,.12)}
+.training-available-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+@keyframes trainingCoachAdvance{
+  from{opacity:0;transform:translateX(42px)}
+  to{opacity:1;transform:translateX(0)}
+}
 @media(max-width:760px){
   .training-scenario-workspace{grid-template-columns:1fr}
   .training-scenario-workspace .training-solve-board{grid-row:auto}

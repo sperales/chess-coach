@@ -18,6 +18,8 @@ let scenarioWrongDestination = '';
 let scenarioHintOrigin = '';
 let scenarioLastMove = '';
 let scenarioFeedIndex = 0;
+let scenarioRenderedFeedLength = 0;
+let scenarioFeedAnimateAdvance = false;
 let scenarioStartedAt = Date.now();
 let scenarioBusy = false;
 let scenarioTimerHandle = null;
@@ -42,14 +44,14 @@ function scenarioPost(action, body = {}) {
 }
 
 async function loadScenarioPlan() {
+  if (SCENARIO_PLAN_ID <= 0) {
+    scenarioTraining = null;
+    scenarioPlan = null;
+    return;
+  }
   const data = await scenarioJson('api/training.php?action=list&type=recommended&status=pending&page=1&per_page=1', { cache: 'no-store' });
   scenarioTraining = data.session || null;
   scenarioPlan = data.coach_plan || null;
-  if (!scenarioTraining) {
-    const created = await scenarioPost('session_start', { type: 'recommended' });
-    scenarioTraining = created.session || null;
-    scenarioPlan = created.coach_plan || scenarioPlan;
-  }
 }
 
 async function startScenario() {
@@ -93,7 +95,11 @@ function renderScenario() {
   const side = scenario.player_color === 'b' ? 'negras' : 'blancas';
   const position = Number(currentScenarioPlanItem()?.position || 1);
   const total = Math.max(1, Number(scenarioPlan?.item_count || scenarioPlanItems().length || 1));
-  const completed = scenarioPlanItems().filter(item => item.status === 'completed').length;
+  const hasPlanContext = SCENARIO_PLAN_ID > 0 && !!currentScenarioPlanItem();
+  const planHeader = document.getElementById('scenarioPlanHeader');
+  const planSummary = document.getElementById('scenarioPlanSummary');
+  if (planHeader) planHeader.hidden = !hasPlanContext;
+  if (planSummary) planSummary.hidden = !hasPlanContext;
   setScenarioText('scenarioTitle', scenario.title);
   setScenarioText('scenarioPrompt', scenario.prompt.replace(/\s*Juegan\s+(blancas|negras)\.?/i, '').trim());
   setScenarioText('scenarioSide', `Juegan ${side}`);
@@ -109,7 +115,11 @@ function renderScenario() {
   const origin = document.getElementById('scenarioOriginLink');
   if (origin) origin.href = `review.php?id=${Number(scenario.source.game_id || 0)}&ply=${Number(scenario.source.ply || 0)}`;
   const track = document.getElementById('scenarioPlanTrack');
-  if (track) track.innerHTML = Array.from({ length: total }, (_, index) => `<i class="${index < completed ? 'complete' : ''}${index === position - 1 ? ' current' : ''}"></i>`).join('');
+  if (track) track.innerHTML = Array.from({ length: total }, (_, index) => {
+    const item = scenarioPlanItems()[index] || null;
+    const done = item && ['completed', 'failed', 'skipped'].includes(item.status);
+    return `<i class="${done ? 'complete' : ''}${index === position - 1 ? ' current' : ''}"></i>`;
+  }).join('');
   const bar = document.getElementById('scenarioPlanBar');
   if (bar) bar.style.width = `${Math.min(100, Math.round((position / total) * 100))}%`;
   renderScenarioBoard();
@@ -323,6 +333,11 @@ function scenarioFeed() {
 
 function renderScenarioFeed() {
   const feed = scenarioFeed();
+  if (scenarioRenderedFeedLength > 0 && feed.length > scenarioRenderedFeedLength) {
+    scenarioFeedIndex = feed.length - 1;
+    scenarioFeedAnimateAdvance = true;
+  }
+  scenarioRenderedFeedLength = feed.length;
   scenarioFeedIndex = Math.max(0, Math.min(feed.length - 1, scenarioFeedIndex));
   const message = feed[scenarioFeedIndex];
   const card = document.getElementById('scenarioCoach');
@@ -335,6 +350,12 @@ function renderScenarioFeed() {
   const dots = document.getElementById('scenarioCoachDots');
   if (dots) dots.innerHTML = feed.map((_, index) => `<button type="button" class="${index === scenarioFeedIndex ? 'active' : ''}" data-index="${index}" aria-label="Mensaje ${index + 1} de ${feed.length}"></button>`).join('');
   dots?.querySelectorAll('[data-index]').forEach(button => button.addEventListener('click', () => { scenarioFeedIndex = Number(button.dataset.index); renderScenarioFeed(); }));
+  if (card) {
+    card.classList.remove('is-changing', 'is-advancing');
+    void card.offsetWidth;
+    card.classList.add(scenarioFeedAnimateAdvance ? 'is-advancing' : 'is-changing');
+  }
+  scenarioFeedAnimateAdvance = false;
 }
 
 function bindScenarioSwipe() {

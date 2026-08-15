@@ -34,6 +34,41 @@ function training_scenario_events_for_run(int $runId, int $userId): array {
   }, $st->fetchAll());
 }
 
+function training_scenarios_available_for_user(int $userId, int $page = 1, int $perPage = 20): array {
+  $perPage = max(1, min(100, $perPage));
+  $count = db()->prepare('SELECT COUNT(*) FROM training_scenarios s
+    WHERE s.user_id=? AND s.status="active"
+      AND NOT EXISTS (SELECT 1 FROM training_scenario_runs r WHERE r.scenario_id=s.id AND r.user_id=s.user_id AND r.status="completed")');
+  $count->execute([$userId]);
+  $total = (int)$count->fetchColumn();
+  $pages = max(1, (int)ceil($total / $perPage));
+  $page = max(1, min($pages, $page));
+  $offset = ($page - 1) * $perPage;
+  $sql = 'SELECT s.id,s.game_id,s.starting_ply,s.player_color,s.scenario_type,s.difficulty,s.title,s.prompt,
+                 s.target_player_moves,s.max_player_moves,s.created_at,g.white_player,g.black_player,g.played_at,
+                 (SELECT r.status FROM training_scenario_runs r WHERE r.scenario_id=s.id AND r.user_id=s.user_id ORDER BY r.id DESC LIMIT 1) AS last_status,
+                 (SELECT COUNT(*) FROM training_scenario_runs r WHERE r.scenario_id=s.id AND r.user_id=s.user_id) AS run_count
+          FROM training_scenarios s
+          LEFT JOIN games g ON g.id=s.game_id
+          WHERE s.user_id=? AND s.status="active"
+            AND NOT EXISTS (SELECT 1 FROM training_scenario_runs r WHERE r.scenario_id=s.id AND r.user_id=s.user_id AND r.status="completed")
+          ORDER BY CASE s.difficulty WHEN "critical" THEN 0 WHEN "hard" THEN 1 WHEN "medium" THEN 2 ELSE 3 END,
+                   s.updated_at DESC,s.id DESC
+          LIMIT ' . (int)$perPage . ' OFFSET ' . (int)$offset;
+  $st = db()->prepare($sql);
+  $st->execute([$userId]);
+  $items = array_map(static function (array $row): array {
+    foreach (['id', 'game_id', 'starting_ply', 'target_player_moves', 'max_player_moves', 'run_count'] as $field) {
+      $row[$field] = (int)($row[$field] ?? 0);
+    }
+    return $row;
+  }, $st->fetchAll());
+  return [
+    'items' => $items,
+    'pagination' => ['page' => $page, 'per_page' => $perPage, 'total' => $total, 'pages' => $pages],
+  ];
+}
+
 function training_scenario_player_score(array $evaluation, string $fen, string $playerColor): ?int {
   $score = training_scenario_score_cp(isset($evaluation['score']) ? (int)$evaluation['score'] : null, $evaluation['score_type'] ?? null);
   if ($score === null) return null;
