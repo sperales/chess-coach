@@ -792,6 +792,7 @@ Evolve training from a flat exercise list into a coherent daily plan that combin
 
 - Preserve all current Flash workflows and shared-hosting deployment.
 - Reuse Stockfish and cached analysis with a centralized interactive configuration.
+- Analyze full games with a bounded baseline node budget and deepen only critical positions before deriving classifications and training data.
 - Avoid external APIs, persistent workers and a second chess classifier.
 
 ### Acceptance criteria
@@ -811,6 +812,7 @@ Evolve training from a flat exercise list into a coherent daily plan that combin
 - Stockfish validates alternatives, supplies the strongest rival response and reuses an interactive cache.
 - The mobile-first Scenario solver includes an incremental Coach Feed, contextual hints, `¿Por qué?`, retry, skip and ordered plan continuity.
 - Training and both solvers present the same prepared plan without exposing internal session terminology.
+- Full-game Stockfish analysis supports an auditable adaptive node strategy while retaining the previous depth/movetime mode as a configuration fallback.
 
 ---
 

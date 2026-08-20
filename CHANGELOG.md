@@ -10,6 +10,9 @@
 - Added persisted Scenario runs and events for moves, retries, opponent responses, hints, explanations, completion and skip.
 - Added an interactive Stockfish profile and FEN cache for shared-hosting-friendly Scenario validation.
 - Added a dedicated responsive Scenario solver and incremental swipeable Coach Feed.
+- Added adaptive two-pass Stockfish analysis with baseline and critical node budgets.
+- Added persisted adaptive-search budgets and deep-evaluation telemetry.
+- Added dependency-free fixtures for node commands and critical-position selection.
 
 ### Changed
 
@@ -19,10 +22,12 @@
 - The Training category for Scenarios becomes available when the current plan contains one.
 - Failed Nova feedback now uses a consistent red avatar and border.
 - Bumped the app version and PWA cache to `1.5.0`.
+- Reduced full-game engine work by deepening only tactically or evaluatively relevant positions.
+- Replaced fixed-delay UCI polling with event-driven pipe reads and reduced database progress traffic.
 
 ### Database
 
-- SQL migrations required: `sql/migrations/033_changes_1.5.0.sql` and `sql/migrations/034_changes_1.5.0.sql`.
+- SQL migrations required: `sql/migrations/033_changes_1.5.0.sql`, `sql/migrations/034_changes_1.5.0.sql` and `sql/migrations/035_changes_1.5.0.sql`.
 
 ## v1.4.16 - Analysis confidence and mobile coaching experience
 

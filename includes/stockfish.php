@@ -60,6 +60,19 @@ function stockfish_startpos_command(array $moves): string {
   return $history ? 'position startpos moves '.implode(' ', $history) : 'position startpos';
 }
 
+function stockfish_go_command(int $depth, int $movetime, int $nodes = 0, array $searchMoves = []): string {
+  if ($nodes > 0) {
+    $command = 'go nodes '.max(1, $nodes);
+  } elseif ($movetime > 0) {
+    $command = 'go movetime '.max(1, $movetime);
+  } else {
+    $command = 'go depth '.max(1, $depth);
+  }
+  $moves = stockfish_normalize_moves($searchMoves);
+  if ($moves) $command .= ' searchmoves '.implode(' ', array_values(array_unique($moves)));
+  return $command;
+}
+
 function stockfish_parse_engine_identity(string $output, ?string $configuredBuild = null): array {
   $name = 'Stockfish';
   if (preg_match('/^id name\s+(.+)$/mi', $output, $match)) {
@@ -154,6 +167,10 @@ class StockfishRunner {
     return $this->evaluatePosition(stockfish_startpos_command($moves), []);
   }
 
+  public function evalMovesWithNodes(array $moves, int $nodes): array {
+    return $this->evaluatePosition(stockfish_startpos_command($moves), [], max(1, $nodes));
+  }
+
   public function evalFen(string $fen): array {
     return $this->evalFenWithSearchMoves($fen, []);
   }
@@ -191,17 +208,17 @@ class StockfishRunner {
     $this->close();
   }
 
-  private function evaluatePosition(string $positionCommand, array $searchMoves): array {
+  private function evaluatePosition(string $positionCommand, array $searchMoves, int $nodes = 0): array {
     $this->send($positionCommand);
-    $go = $this->movetime > 0 ? 'go movetime '.$this->movetime : 'go depth '.$this->depth;
-    if ($searchMoves) $go .= ' searchmoves '.implode(' ', array_values(array_unique($searchMoves)));
-    $this->send($go);
-    $timeout = $this->movetime > 0
+    $this->send(stockfish_go_command($this->depth, $this->movetime, $nodes, $searchMoves));
+    $timeout = $nodes > 0
+      ? $this->searchTimeout
+      : ($this->movetime > 0
       ? max($this->searchTimeout, (int)ceil($this->movetime / 1000) + 10)
-      : $this->searchTimeout;
+      : $this->searchTimeout);
     $output = $this->readUntil('bestmove', $timeout);
     $evaluation = stockfish_parse_output($output);
-    stockfish_assert_complete_evaluation($evaluation, $this->minimumDepth);
+    stockfish_assert_complete_evaluation($evaluation, $nodes > 0 ? 1 : $this->minimumDepth);
     $evaluation['engine_name'] = $this->identity['name'];
     $evaluation['engine_version'] = $this->identity['version'];
     return $evaluation;
@@ -247,7 +264,17 @@ class StockfishRunner {
           substr($buffer, -2000)
         );
       }
-      usleep(50000);
+      $read = [];
+      if (isset($this->pipes[1]) && is_resource($this->pipes[1])) $read[] = $this->pipes[1];
+      if (isset($this->pipes[2]) && is_resource($this->pipes[2])) $read[] = $this->pipes[2];
+      if ($read) {
+        $write = null;
+        $except = null;
+        $selected = @stream_select($read, $write, $except, 0, 200000);
+        if ($selected === false) usleep(10000);
+      } else {
+        usleep(10000);
+      }
     }
     @fwrite($this->pipes[0], "stop\n");
     @fflush($this->pipes[0]);

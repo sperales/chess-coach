@@ -149,6 +149,7 @@ Run the dependency-free UCI protocol fixtures:
 
 ```powershell
 php tests\stockfish_protocol_test.php
+php tests\adaptive_analysis_test.php
 ```
 
 For v1.4.16, after applying `sql/migrations/032_changes_1.4.16.sql`, confirm:
@@ -161,6 +162,14 @@ For v1.4.16, after applying `sql/migrations/032_changes_1.4.16.sql`, confirm:
 - A stale running job is requeued or failed according to `analysis_max_attempts`.
 - Simultaneous cron/manual requests do not run overlapping Stockfish processes when serialization is enabled.
 - Existing historical analyses remain readable with NULL engine metadata until explicitly reanalyzed.
+
+For the v1.5.0 adaptive pipeline, after applying `sql/migrations/035_changes_1.5.0.sql`, confirm:
+
+- Production `config/engine.php` explicitly uses `analysis_strategy=adaptive_nodes` with the intended baseline and critical budgets.
+- A completed analysis stores `engine_search_mode=adaptive_nodes`, both node budgets and a non-negative deep-evaluation count.
+- The same PGN uses materially fewer nodes and less engine time than its fixed-depth reference analysis.
+- Move rows remain complete and Review, Accuracy, ACPL, Smart Tags and generated training still load normally.
+- Omitting `analysis_strategy` preserves the previous depth/movetime behavior.
 
 ---
 
