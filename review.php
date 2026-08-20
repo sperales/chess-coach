@@ -7,6 +7,7 @@ $u = require_login();
 $gameId = (int)($_GET['id'] ?? 0);
 $assetVersion = (string)filemtime(__DIR__.'/assets/css/app.css');
 $reviewJsVersion = (string)filemtime(__DIR__.'/assets/js/review.js');
+$interactiveJsVersion = (string)filemtime(__DIR__.'/assets/js/interactive-position.js');
 $layoutJsVersion = (string)filemtime(__DIR__.'/assets/js/layout.js');
 $pieceSetAssetPath = piece_set_asset_path($u['piece_set'] ?? null);
 $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
@@ -41,6 +42,32 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
       <span id="reviewMobileBlack">Negras</span>
       <span class="review-mobile-status" id="reviewMobileStatus" title="Revisión pendiente" aria-label="Revisión pendiente">✓</span>
     </div>
+  </section>
+
+  <section class="review-variation-panel" id="reviewVariationPanel" hidden aria-label="Exploración de variante">
+    <div class="review-variation-origin">
+      <div><strong>Explorando variante</strong><small id="variationOriginText">Stockfish</small></div>
+      <button class="secondary small" id="variationReturn" type="button">Volver a la jugada</button>
+    </div>
+    <div class="review-variation-selected">
+      <small>Alternativa seleccionada</small>
+      <div><strong id="variationMove">--</strong><span id="variationEval">--</span></div>
+    </div>
+    <div class="chess-board review-variation-board" id="variationBoard" aria-label="Tablero de la variante"></div>
+    <div class="review-variation-navigation">
+      <button class="secondary" id="variationPrev" type="button" aria-label="Posición anterior">‹</button>
+      <span id="variationCounter">1 / 1</span>
+      <button class="secondary" id="variationNext" type="button" aria-label="Posición siguiente">›</button>
+    </div>
+    <section class="review-variation-analysis">
+      <nav class="review-mobile-tabs" aria-label="Información de la variante">
+        <span>Resumen</span><strong>Análisis</strong><span>Jugadas</span><span>Coach</span>
+      </nav>
+      <article><small>Variación Stockfish</small><p id="variationPv">--</p></article>
+      <article><small>Por qué es mejor</small><p id="variationWhy">--</p></article>
+      <a class="review-variation-open-board" id="variationOpenBoard" href="analysis-board.php">Abrir en Tablero de análisis</a>
+      <button class="secondary" id="variationExit" type="button">Salir de la variante</button>
+    </section>
   </section>
 
   <section class="hero-card compact review-hero">
@@ -121,8 +148,9 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
       <div class="review-controls">
         <button class="secondary" onclick="prevMove()">‹ Anterior</button>
         <button class="secondary" id="bestMoveBtn" onclick="showBestMove()">Mejor</button>
-        <button class="secondary" onclick="resetMove()">Reiniciar</button>
         <button onclick="nextMove()">Siguiente ›</button>
+        <button class="secondary" id="exploreVariationBtn" onclick="startExploreVariation()">Explorar variante</button>
+        <button class="secondary" onclick="resetMove()">Reiniciar</button>
       </div>
       <section class="review-mobile-feedback">
         <strong id="reviewMobileFeedbackTitle">Comentario de la jugada</strong>
@@ -177,6 +205,7 @@ window.CHESS_COACH_PIECE_PATH = <?= json_encode($pieceSetAssetPath, JSON_UNESCAP
 </script>
 <?= csrf_script() ?>
 <script src="assets/js/layout.js?v=<?=e($layoutJsVersion)?>"></script>
+<script src="assets/js/interactive-position.js?v=<?=e($interactiveJsVersion)?>"></script>
 <script src="assets/js/review.js?v=<?=e($reviewJsVersion)?>"></script>
 </body>
 </html>

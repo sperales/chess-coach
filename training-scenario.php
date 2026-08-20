@@ -65,7 +65,6 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
 
     <div class="training-scenario-draft" id="scenarioDraft">Selecciona origen y destino en el tablero.</div>
     <div class="training-mobile-actions training-scenario-primary-actions" id="scenarioActiveControls">
-      <button type="button" id="scenarioSubmit" disabled>Comprobar</button>
       <button class="secondary" type="button" id="scenarioWhy">¿Por qué?</button>
       <button class="secondary" type="button" id="scenarioHint">Ayuda</button>
     </div>

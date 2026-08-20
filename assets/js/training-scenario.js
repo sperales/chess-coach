@@ -23,6 +23,8 @@ let scenarioFeedAnimateAdvance = false;
 let scenarioStartedAt = Date.now();
 let scenarioBusy = false;
 let scenarioTimerHandle = null;
+let scenarioMoveSequence = 0;
+let scenarioMoveController = null;
 
 function scenarioEscape(value) {
   return (value == null ? '' : String(value)).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
@@ -35,11 +37,11 @@ async function scenarioJson(url, options = {}) {
   return data;
 }
 
-function scenarioPost(action, body = {}) {
+function scenarioPost(action, body = {}, signal = null) {
   return scenarioJson(`api/training.php?action=${encodeURIComponent(action)}`, {
     method: 'POST',
     headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify(body),
+    body: JSON.stringify(body), signal,
   });
 }
 
@@ -222,6 +224,7 @@ function selectScenarioSquare(square) {
   setScenarioDraft(scenarioSelection.length >= 4 ? `Jugada seleccionada: ${scenarioSelection.slice(0, 2)} → ${scenarioSelection.slice(2, 4)}.` : 'Ahora selecciona la casilla de destino.');
   renderScenarioBoard();
   renderScenarioControls();
+  if (scenarioSelection.length >= 4) window.setTimeout(submitScenarioMove, 0);
 }
 
 function scenarioMoveUci() {
@@ -234,9 +237,13 @@ function scenarioMoveUci() {
 async function submitScenarioMove() {
   if (scenarioSelection.length < 4 || scenarioBusy) return;
   scenarioBusy = true;
+  const sequence = ++scenarioMoveSequence;
+  if (scenarioMoveController) scenarioMoveController.abort();
+  scenarioMoveController = new AbortController();
   const move = scenarioMoveUci();
   try {
-    const data = await scenarioPost('scenario_move', { run_id: scenarioRun.id, move_uci: move });
+    const data = await scenarioPost('scenario_move', { run_id: scenarioRun.id, move_uci: move }, scenarioMoveController.signal);
+    if (sequence !== scenarioMoveSequence) return;
     if (!data.accepted) {
       scenarioWrongDestination = move.slice(2, 4);
       scenarioSelection = '';
@@ -260,10 +267,13 @@ async function submitScenarioMove() {
     scenarioFeedIndex = Math.max(0, scenarioFeed().length - 1);
     renderScenarioFeed();
   } catch (error) {
+    if (error?.name === 'AbortError') return;
     setScenarioDraft(error.message, true);
   } finally {
-    scenarioBusy = false;
-    renderScenarioControls();
+    if (sequence === scenarioMoveSequence) {
+      scenarioBusy = false;
+      renderScenarioControls();
+    }
   }
 }
 
@@ -374,8 +384,6 @@ function bindScenarioSwipe() {
 
 function renderScenarioControls() {
   const finished = scenarioRun && scenarioRun.status !== 'active';
-  const submit = document.getElementById('scenarioSubmit');
-  if (submit) submit.disabled = scenarioBusy || scenarioSelection.length < 4 || finished;
   const hint = document.getElementById('scenarioHint');
   if (hint) {
     const level = Number(scenarioRun?.highest_hint_level || 0);
@@ -430,7 +438,6 @@ function startScenarioTimer() {
   scenarioTimerHandle = setInterval(update, 1000);
 }
 
-document.getElementById('scenarioSubmit')?.addEventListener('click', submitScenarioMove);
 document.getElementById('scenarioHint')?.addEventListener('click', requestScenarioHint);
 document.getElementById('scenarioWhy')?.addEventListener('click', requestScenarioWhy);
 document.getElementById('scenarioSkip')?.addEventListener('click', skipScenario);
@@ -438,3 +445,7 @@ document.getElementById('scenarioNext')?.addEventListener('click', goToNextScena
 document.getElementById('scenarioFlip')?.addEventListener('click', () => { scenarioOrientation = scenarioOrientation === 'white' ? 'black' : 'white'; renderScenarioBoard(); });
 bindScenarioSwipe();
 startScenario().catch(error => setScenarioDraft(error.message || 'No se pudo iniciar el escenario.', true));
+window.addEventListener('pagehide', () => {
+  scenarioMoveSequence++;
+  scenarioMoveController?.abort();
+});

@@ -41,6 +41,14 @@ function chess_state_from_fen(string $fen): ?array {
   ];
 }
 
+function chess_validate_strict_fen(string $fen): ?string {
+  $fen = trim($fen);
+  $parts = preg_split('/\s+/', $fen);
+  if (!$parts || count($parts) !== 6 || !chess_state_from_fen($fen)) return null;
+  if (!preg_match('/^\d+$/', $parts[4]) || !preg_match('/^[1-9]\d*$/', $parts[5])) return null;
+  return fen_of(chess_state_from_fen($fen));
+}
+
 function chess_move_to_uci(array $move): string {
   $uci = rf_to_sq($move['fr'], $move['ff']) . rf_to_sq($move['tr'], $move['tf']);
   if (!empty($move['promo'])) $uci .= strtolower((string)$move['promo']);
@@ -62,6 +70,44 @@ function chess_apply_uci_to_fen(string $fenBefore, string $uci): ?string {
   $move = chess_legal_uci_move($fenBefore, $uci);
   if (!$state || !$move) return null;
   return fen_of(apply_move($state, $move));
+}
+
+function chess_legal_uci_moves(string $fen): array {
+  $state = chess_state_from_fen($fen);
+  if (!$state) return [];
+  $moves = [];
+  foreach (pseudo_moves($state) as $move) {
+    $uci = chess_move_to_uci($move);
+    $moves[] = [
+      'uci' => $uci,
+      'san' => chess_uci_to_san($fen, $uci) ?? chess_uci_fallback($uci),
+    ];
+  }
+  return $moves;
+}
+
+function chess_position_is_terminal(string $fen): bool {
+  $state = chess_state_from_fen($fen);
+  return $state !== null && count(pseudo_moves($state)) === 0;
+}
+
+function chess_normalize_pv(string $fen, array|string $pv, int $maxPlies = 12): array {
+  $moves = is_array($pv) ? $pv : preg_split('/\s+/', trim($pv));
+  $currentFen = trim($fen);
+  $normalized = [];
+  foreach (array_slice(array_values(array_filter($moves)), 0, max(1, $maxPlies)) as $uci) {
+    $uci = strtolower(trim((string)$uci));
+    $nextFen = chess_apply_uci_to_fen($currentFen, $uci);
+    if ($nextFen === null) break;
+    $normalized[] = [
+      'uci' => $uci,
+      'san' => chess_uci_to_san($currentFen, $uci) ?? chess_uci_fallback($uci),
+      'fen_before' => $currentFen,
+      'fen_after' => $nextFen,
+    ];
+    $currentFen = $nextFen;
+  }
+  return $normalized;
 }
 
 function chess_uci_to_san(string $fenBefore, string $uci): ?string {

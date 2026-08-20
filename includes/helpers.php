@@ -89,6 +89,7 @@ function coach_menu_items(): array {
     ['import-chesscom.php', '⇩', 'Importar partidas', false],
     ['analysis-pending.php', '◷', 'Análisis pendientes', false],
     ['training.php', '◎', 'Entrenamiento', false],
+    ['analysis-board.php', '⌗', 'Tablero de análisis', false],
     ['openings-lab.php', '▤', 'Lab de Aperturas', false],
     ['player-dna.php', '◈', 'ADN del jugador', false],
     ['profile.php', '⚙', 'Ajustes / Mi Perfil', false],

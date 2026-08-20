@@ -6,6 +6,50 @@
   font-display:swap
 }
 
+/* v1.5.1: interactive position analysis */
+.analysis-board-workspace{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr);gap:18px;align-items:start}
+.analysis-board-stage,.analysis-board-sidebar{min-width:0}
+.analysis-position-board,.review-variation-board{display:grid;grid-template-columns:repeat(8,1fr);aspect-ratio:1;width:min(100%,760px);overflow:hidden;border:1px solid var(--line);border-radius:8px;background:#071216}
+.analysis-position-board .sq,.review-variation-board .sq{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%;padding:0;border:0;border-radius:0;box-shadow:none;appearance:none}
+.analysis-position-board .sq.light,.review-variation-board .sq.light{background:var(--board-light)}
+.analysis-position-board .sq.dark,.review-variation-board .sq.dark{background:var(--board-dark)}
+.analysis-position-board .sq.selected,.review-variation-board .sq.selected{box-shadow:inset 0 0 0 4px #6dc7f3}
+.analysis-position-board .sq.from,.analysis-position-board .sq.to,.review-variation-board .sq.from,.review-variation-board .sq.to{background:#b8d343}
+.analysis-position-board .sq.legal-target::after,.review-variation-board .sq.legal-target::after{content:"";position:absolute;width:25%;height:25%;border-radius:50%;background:var(--board-legal-marker);z-index:2}
+.analysis-position-board .board-piece,.review-variation-board .board-piece{position:relative;z-index:1;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.analysis-file-label,.analysis-rank-label{position:absolute;z-index:3;color:rgba(15,29,24,.7);font:800 11px/1 Arial,sans-serif;pointer-events:none}
+.sq.dark .analysis-file-label,.sq.dark .analysis-rank-label{color:rgba(244,248,250,.75)}
+.analysis-file-label{right:3px;bottom:3px}.analysis-rank-label{left:3px;top:3px}
+.analysis-board-nav,.analysis-board-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.analysis-board-sidebar{display:grid;gap:18px}
+.analysis-board-sidebar textarea{width:100%;resize:vertical}
+.analysis-status-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.analysis-status-row strong{font-size:26px;color:#80d83d}.analysis-history{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.analysis-history span{padding:6px 9px;border:1px solid var(--line);border-radius:6px;color:var(--muted)}
+.analysis-history span.active{border-color:#80d83d;color:#80d83d;background:#142512}
+.error-text{color:#ff6b6b!important}
+.review-variation-panel{display:grid;gap:14px;max-width:780px;margin:0 auto;padding:14px}
+.review-variation-origin{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px dashed #47bce8;border-radius:7px;background:#09202a}
+.review-variation-origin small{display:block;color:#7bcbe8;margin-top:3px}
+.review-variation-selected>small,.review-variation-analysis article small{color:#73c9ea}
+.review-variation-selected>div{display:flex;justify-content:space-between;align-items:center;margin-top:6px}.review-variation-selected strong{font-size:22px}
+.review-variation-selected span{padding:5px 8px;border-radius:5px;background:#1d2a31}
+.review-variation-navigation{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:12px;text-align:center}
+.review-variation-analysis{display:grid;gap:10px;padding:0 2px 8px}.review-variation-analysis article{padding:12px;border:1px solid var(--line);border-radius:7px;background:#0b171d}.review-variation-analysis p{margin:7px 0 0;line-height:1.5}
+.review-variation-open-board{display:block;padding:11px;border:1px solid #47bce8;border-radius:7px;text-align:center;color:#73c9ea;text-decoration:none}
+.review-page.variation-active>.review-hero,.review-page.variation-active>.review-summary-grid,.review-page.variation-active>.review-chart-panel,.review-page.variation-active>.review-board-grid,.review-page.variation-active>.review-bottom-panel,.review-page.variation-active>.review-mobile-sheet,.review-page.variation-active>.review-mobile-sheet-backdrop{display:none!important}
+.review-page.variation-active .review-mobile-game-context{display:block}
+.review-sheet-explore{width:100%;margin-top:9px;background:#123447;color:#73c9ea;border:1px solid #28789b}
+
+@media(max-width:760px){
+  .analysis-board-workspace{grid-template-columns:1fr}.analysis-board-stage,.analysis-board-sidebar{padding:10px}.analysis-position-board{width:calc(100% + 20px);margin-left:-10px;border-left:0;border-right:0;border-radius:0}
+  .review-variation-panel{padding:10px 0}.review-variation-origin,.review-variation-selected,.review-variation-analysis{margin-left:10px;margin-right:10px}.review-variation-board{width:100%;border-left:0;border-right:0;border-radius:0}
+  .review-variation-navigation{padding:0 10px}
+  .review-controls{grid-template-columns:repeat(3,1fr)}
+  .review-controls #bestMoveBtn,.review-controls button:nth-child(3){display:block}
+  .review-controls #exploreVariationBtn,.review-controls button:nth-child(5){grid-column:span 3}
+}
+
 /* Training v2 scenario solver */
 .training-scenario-kicker{display:block;margin-bottom:6px;color:#8bd22f;font-size:12px;font-weight:700;text-transform:uppercase}
 .training-scenario-workspace{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr);gap:14px;align-items:start}
@@ -8457,4 +8501,13 @@ body.login-page::before {
   .training-scenario-workspace{grid-template-columns:1fr}
   .training-scenario-workspace .training-solve-board{grid-row:auto}
   .training-scenario-workspace [hidden]{display:none!important}
+  .review-controls{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .review-controls #bestMoveBtn,
+  .review-controls button:nth-child(3){display:block}
+  .review-controls #exploreVariationBtn,
+  .review-controls button:nth-child(5){display:block;grid-column:span 3}
 }
+.review-variation-panel[hidden]{display:none!important}
+.review-controls{grid-template-columns:repeat(5,minmax(0,1fr))}
+.analysis-branches{display:flex;flex-wrap:wrap;gap:7px}.analysis-branches small{flex-basis:100%;color:var(--muted)}
+.analysis-return-review{display:block;padding:11px;border:1px solid #80d83d;border-radius:7px;text-align:center;color:#80d83d;text-decoration:none}.analysis-return-review[hidden]{display:none}
