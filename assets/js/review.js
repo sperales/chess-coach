@@ -8,8 +8,10 @@ const reviewVisitedPlies = new Set();
 const reviewPendingPlies = new Set();
 let reviewProgressTimer = null;
 let reviewProgressData = null;
-let reviewMobileTab = 'summary';
+let reviewMobileTab = ['summary','analysis','moves','coach'].includes(INITIAL_REVIEW_PARAMS.get('tab')) ? INITIAL_REVIEW_PARAMS.get('tab') : 'summary';
 let reviewMobileMoveFilter = 'all';
+let reviewVariation = null;
+const reviewVariationCoordinator = window.ChessInteractive ? new ChessInteractive.RequestCoordinator() : null;
 
 const PIECE_IMAGES = {
   P: 'wp.png', N: 'wn.png', B: 'wb.png', R: 'wr.png', Q: 'wq.png', K: 'wk.png',
@@ -232,6 +234,11 @@ function handleReviewMobileSheetClick(event) {
   if (event.target.closest('[data-review-show-best]')) {
     showBestMove();
     closeReviewMobileSheet();
+    return;
+  }
+  if (event.target.closest('[data-review-explore]')) {
+    closeReviewMobileSheet();
+    startExploreVariation();
   }
 }
 
@@ -286,9 +293,10 @@ function reviewMobileAnalysisHtml() {
   return `${reviewMobileCurrentMoveHtml()}
     <article class="review-sheet-explanation"><p>${rEscape(move.explanation || '')}</p></article>
     <h3>Mejor línea</h3>
-    <button class="review-sheet-line" type="button" data-review-show-best ${move.has_relevant_alternative ? '' : 'disabled'}>
+    <button class="review-sheet-line" type="button" data-review-show-best ${move.can_show_bestmove ? '' : 'disabled'}>
       <span>${rEscape(best)}</span><b>›</b>
     </button>
+    <button class="review-sheet-explore" type="button" data-review-explore ${move.can_show_bestmove ? '' : 'disabled'}>Explorar variante</button>
     <h3>Etiquetas de la jugada</h3>
     <div class="smart-tag-list">${filteredMoveTags(move).map(smartTagChip).join('') || '<span class="muted">Sin etiquetas adicionales.</span>'}</div>`;
 }
@@ -580,7 +588,12 @@ function renderMove() {
   document.getElementById('moveEval').textContent = evalText(m);
   document.getElementById('moveExplanation').textContent = m.explanation || '';
   const bestMoveBtn = document.getElementById('bestMoveBtn');
-  if (bestMoveBtn) bestMoveBtn.hidden = !m.has_relevant_alternative;
+  if (bestMoveBtn) {
+    bestMoveBtn.hidden = false;
+    bestMoveBtn.disabled = !m.can_show_bestmove;
+  }
+  const exploreBtn = document.getElementById('exploreVariationBtn');
+  if (exploreBtn) exploreBtn.disabled = !m.can_show_bestmove;
   renderTagList(ensureTagList('moveSmartTags', 'moveExplanation', 'move-tags'), filteredMoveTags(m));
   renderBoard(m.fen_after, m.uci);
   renderMoveList();
@@ -709,13 +722,153 @@ function resetMove(){ goMove(0); }
 function showBestMove(){
   const moves = (reviewData && reviewData.moves) || [];
   const m = moves[currentMoveIndex];
-  if (!m || !m.has_relevant_alternative) return;
+  if (!m || !m.can_show_bestmove || !m.bestmove_fen_after) return;
   const explanation = document.getElementById('moveExplanation');
   const best = m.bestmove_display || m.bestmove_human || 'no disponible';
   bestMoveHighlight = (m.bestmove || '').toString().toLowerCase();
-  if (bestMoveHighlight.length >= 4) renderBoard(m.fen_before || m.fen_after, '', bestMoveHighlight);
+  if (bestMoveHighlight.length >= 4) renderBoard(m.bestmove_fen_after, bestMoveHighlight, bestMoveHighlight);
   explanation.textContent = `Mejor alternativa según Stockfish: ${best}. Úsalo como pista, no como una línea para memorizar.`;
 }
+
+function variationEvalText(analysis, fallbackMove) {
+  if (analysis?.score == null) return fallbackMove ? evalText(fallbackMove) : '--';
+  if (analysis.score_type === 'mate') return `${Number(analysis.score) >= 0 ? '' : '-'}M${Math.abs(Number(analysis.score))}`;
+  return `${Number(analysis.score) > 0 ? '+' : ''}${(Number(analysis.score) / 100).toFixed(2)}`;
+}
+
+async function startExploreVariation() {
+  const move = reviewData?.moves?.[currentMoveIndex];
+  if (!move?.can_show_bestmove || !window.ChessInteractive) return;
+  const rootFen = move.fen_before;
+  const stored = Array.isArray(move.pv_before_moves) && move.pv_before_moves[0]?.uci === move.bestmove
+    ? move.pv_before_moves : [];
+  reviewVariationCoordinator.cancel();
+  reviewVariation = {
+    originIndex: currentMoveIndex, originTab: reviewMobileTab, move,
+    tree: new ChessInteractive.PositionTree(rootFen), selected: '', legalMoves: [], analysis: null,
+  };
+  document.querySelector('.review-page')?.classList.add('variation-active');
+  document.getElementById('reviewVariationPanel').hidden = false;
+  document.getElementById('variationOriginText').textContent = `Stockfish · desde jugada ${Math.floor((Number(move.ply)-1)/2)+1}`;
+  document.getElementById('variationMove').textContent = move.bestmove_display || move.bestmove;
+  document.getElementById('variationWhy').textContent = move.explanation || 'La alternativa conserva una evaluación superior y reduce las opciones activas del rival.';
+  try {
+    const originAnalysis = await reviewVariationCoordinator.run(signal => ChessInteractive.api({
+      action: 'analyze', fen: rootFen, game_id: Number(window.CHESS_REVIEW_GAME_ID || 0),
+      ply: Number(move.ply || 0), first_move: move.bestmove,
+    }, signal));
+    if (originAnalysis) reviewVariation.analysis = originAnalysis.analysis;
+    let line = Array.isArray(originAnalysis?.analysis?.pv_moves) && originAnalysis.analysis.pv_moves[0]?.uci === move.bestmove
+      ? originAnalysis.analysis.pv_moves
+      : stored;
+    if (line.length < 2) {
+      let first = line[0] || null;
+      if (!first) {
+        const applied = await ChessInteractive.api({ action: 'apply', fen: rootFen, move_uci: move.bestmove });
+        first = { uci: applied.move_uci, san: applied.move_san, fen_before: rootFen, fen_after: applied.fen_after };
+      }
+      line = [first];
+      const continuation = await reviewVariationCoordinator.run(signal => ChessInteractive.api({ action: 'analyze', fen: first.fen_after }, signal));
+      if (continuation) line.push(...(continuation.analysis.pv_moves || []));
+    }
+    line.forEach(item => reviewVariation.tree.play(item.fen_after, item.uci, item.san));
+    const path = reviewVariation.tree.line();
+    reviewVariation.tree.currentId = path[Math.min(1, path.length - 1)].id;
+    await refreshReviewVariation(false);
+  } catch (error) {
+    document.getElementById('variationPv').textContent = error.message;
+  }
+}
+
+async function refreshReviewVariation(analyzeCurrent = false) {
+  if (!reviewVariation) return;
+  const node = reviewVariation.tree.current();
+  if (analyzeCurrent) {
+    const data = await reviewVariationCoordinator.run(signal => ChessInteractive.api({ action: 'analyze', fen: node.fen }, signal));
+    if (data && node === reviewVariation.tree.current()) node.analysis = data.analysis;
+  }
+  try {
+    const moves = await ChessInteractive.api({ action: 'moves', fen: node.fen });
+    if (!reviewVariation || node !== reviewVariation.tree.current()) return;
+    reviewVariation.legalMoves = moves.moves || [];
+  } catch (error) { reviewVariation.legalMoves = []; }
+  renderReviewVariation();
+}
+
+function renderReviewVariation() {
+  if (!reviewVariation) return;
+  const node = reviewVariation.tree.current();
+  const path = reviewVariation.tree.line();
+  const selected = reviewVariation.selected;
+  const targets = selected ? reviewVariation.legalMoves.filter(move => move.uci.startsWith(selected)).map(move => move.uci.slice(2,4)) : [];
+  ChessInteractive.renderBoard(document.getElementById('variationBoard'), node.fen, {
+    orientation: boardOrientation, selected, targets, lastMove: node.uci || '', onSquare: selectVariationSquare,
+  });
+  document.getElementById('variationCounter').textContent = `${Math.max(1, path.length - 1)} / ${Math.max(1, variationMainLength())}`;
+  document.getElementById('variationPrev').disabled = !node.parentId || node.parentId === reviewVariation.tree.rootId;
+  document.getElementById('variationNext').disabled = !(node.children || []).length;
+  const analysis = node.analysis || reviewVariation.analysis;
+  document.getElementById('variationEval').textContent = variationEvalText(analysis, reviewVariation.move);
+  document.getElementById('variationPv').textContent = variationLineSan() || 'Explora una continuación sobre el tablero.';
+  document.getElementById('variationOpenBoard').href = `analysis-board.php?fen=${encodeURIComponent(node.fen)}&from_review=${Number(window.CHESS_REVIEW_GAME_ID || 0)}&ply=${Number(reviewVariation.move.ply || 0)}`;
+}
+
+function variationMainLength() {
+  let count = 0;
+  let node = reviewVariation.tree.nodes.get(reviewVariation.tree.rootId);
+  while (node?.children?.length) { count++; node = reviewVariation.tree.nodes.get(node.children[0]); }
+  return count;
+}
+
+function variationLineSan() {
+  const root = reviewVariation.tree.nodes.get(reviewVariation.tree.rootId);
+  const labels = [];
+  let node = root;
+  while (node?.children?.length) { node = reviewVariation.tree.nodes.get(node.children[0]); if (node?.san) labels.push(node.san); }
+  return labels.join(' ');
+}
+
+async function selectVariationSquare(square) {
+  if (!reviewVariation) return;
+  if (!reviewVariation.selected) {
+    if (!reviewVariation.legalMoves.some(move => move.uci.startsWith(square))) return;
+    reviewVariation.selected = square; renderReviewVariation(); return;
+  }
+  if (square === reviewVariation.selected) { reviewVariation.selected = ''; renderReviewVariation(); return; }
+  const candidates = reviewVariation.legalMoves.filter(move => move.uci.startsWith(reviewVariation.selected + square));
+  if (!candidates.length) {
+    reviewVariation.selected = reviewVariation.legalMoves.some(move => move.uci.startsWith(square)) ? square : '';
+    renderReviewVariation(); return;
+  }
+  const chosen = candidates.find(move => !move.uci[4] || move.uci[4] === 'q') || candidates[0];
+  const applied = await ChessInteractive.api({ action: 'apply', fen: reviewVariation.tree.current().fen, move_uci: chosen.uci });
+  reviewVariation.tree.play(applied.fen_after, applied.move_uci, applied.move_san);
+  reviewVariation.selected = '';
+  await refreshReviewVariation(true);
+}
+
+function leaveReviewVariation() {
+  if (!reviewVariation) return;
+  reviewVariationCoordinator.cancel();
+  const originIndex = reviewVariation.originIndex;
+  const originTab = reviewVariation.originTab;
+  reviewVariation = null;
+  document.getElementById('reviewVariationPanel').hidden = true;
+  document.querySelector('.review-page')?.classList.remove('variation-active');
+  currentMoveIndex = originIndex;
+  reviewMobileTab = originTab;
+  renderMove();
+  setReviewMobileTab(originTab);
+}
+
+document.getElementById('variationReturn')?.addEventListener('click', leaveReviewVariation);
+document.getElementById('reviewMobileBack')?.addEventListener('click', event => {
+  if (!reviewVariation) return;
+  event.preventDefault();
+  leaveReviewVariation();
+});
+document.getElementById('variationPrev')?.addEventListener('click', () => { reviewVariation.tree.back(); refreshReviewVariation(); });
+document.getElementById('variationNext')?.addEventListener('click', () => { reviewVariation.tree.forward(); refreshReviewVariation(); });
 
 window.addEventListener('load', loadReview);
 window.addEventListener('pagehide', () => flushReviewProgress(true));

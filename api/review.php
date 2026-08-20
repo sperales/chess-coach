@@ -114,6 +114,15 @@ foreach ($moves as $row) {
   $row['pedagogical_impact'] = $assessment['impact'];
   $row['matches_bestmove'] = $assessment['matches_bestmove'];
   $row['has_relevant_alternative'] = $assessment['has_relevant_alternative'];
+  $row['can_show_bestmove'] = chess_should_offer_best_move($row, $assessment);
+  $row['bestmove_fen_after'] = $row['can_show_bestmove']
+    ? chess_apply_uci_to_fen((string)$row['fen_before'], $bestmove)
+    : null;
+  $row['pv_before_moves'] = chess_normalize_pv(
+    (string)($row['fen_before'] ?? ''),
+    (string)($row['pv_before_uci'] ?? ''),
+    max(2, (int)(app_config()['interactive_pv_max_plies'] ?? 12))
+  );
   $row['explanation'] = chess_move_explanation($row, $assessment);
   $row['bestmove_human'] = $row['bestmove_display'];
   $row['smart_tags'] = $moveTags[(int)$row['id']] ?? [];

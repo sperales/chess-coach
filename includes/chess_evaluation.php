@@ -153,6 +153,17 @@ function chess_move_assessment(array $move): array {
   ];
 }
 
+function chess_should_offer_best_move(array $move, ?array $assessment = null): bool {
+  $assessment ??= chess_move_assessment($move);
+  if (!in_array((string)($assessment['bucket'] ?? ''), ['inaccuracy', 'mistake', 'blunder'], true)) return false;
+  if (empty($assessment['has_relevant_alternative'])) return false;
+  $fen = trim((string)($move['fen_before'] ?? ''));
+  $bestmove = strtolower(trim((string)($move['bestmove'] ?? '')));
+  $played = strtolower(trim((string)($move['uci'] ?? '')));
+  if ($fen === '' || $bestmove === '' || $bestmove === $played) return false;
+  return function_exists('chess_apply_uci_to_fen') && chess_apply_uci_to_fen($fen, $bestmove) !== null;
+}
+
 function chess_move_explanation(array $move, ?array $assessment = null): string {
   $assessment ??= chess_move_assessment($move);
   $best = trim((string)($move['bestmove_display'] ?? $move['bestmove'] ?? ''));

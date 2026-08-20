@@ -17,6 +17,9 @@ assert_scenario_ui(str_contains($page, '¿Por qué?') && str_contains($page, 'Ay
 assert_scenario_ui(str_contains($page, 'Plan de hoy') && !str_contains($page, 'Sesión'), 'Scenario UI must expose the plan without internal session wording.');
 assert_scenario_ui(str_contains($page, 'Partida origen'), 'Scenario must preserve provenance and direct Review access.');
 assert_scenario_ui(str_contains($script, "scenarioPost('scenario_move'"), 'Scenario moves must use the Training v2 API.');
+assert_scenario_ui(!str_contains($page, 'id="scenarioSubmit"'), 'Realtime Scenario must not display a Check button.');
+assert_scenario_ui(str_contains($script, 'window.setTimeout(submitScenarioMove, 0)'), 'Selecting a destination must validate the Scenario automatically.');
+assert_scenario_ui(str_contains($script, 'scenarioMoveSequence') && str_contains($script, 'AbortController'), 'Scenario must ignore stale move responses.');
 assert_scenario_ui(str_contains($script, "scenarioPost('scenario_hint'") && str_contains($script, "scenarioPost('scenario_why'"), 'Scenario actions must call their independent endpoints.');
 assert_scenario_ui(str_contains($script, 'bindScenarioSwipe'), 'Coach Feed must support horizontal touch navigation.');
 assert_scenario_ui(str_contains($script, 'SCENARIO_PLAN_ID <= 0') && str_contains($page, '$trainingId > 0'), 'Isolated scenarios must not create or display a plan context.');

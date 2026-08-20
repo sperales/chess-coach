@@ -437,11 +437,10 @@ function renderHomeTrainingExperience() {
         <strong class="home-nova-count">${coachCurrent} de ${coachTarget}</strong>
         <div class="home-training-progress" aria-label="Progreso ${coachProgress}%"><i style="width:${coachProgress}%"></i></div>
         <blockquote>${escapeHtml(coachRationale)}</blockquote>
-        <a class="home-nova-dna" href="player-dna.php">Ver mi ADN <span aria-hidden="true">›</span></a>
+        <a class="btn home-nova-primary" href="${escapeAttr(trainingHref)}">${hasActiveTraining ? 'Seguir entrenando' : 'Empezar entrenamiento'} <span aria-hidden="true">›</span></a>
       </div>
       <img class="home-nova-pointing" src="assets/nova/nova-coach-pointing.png" alt="Nova, tu entrenador">
     </div>
-    <a class="btn home-nova-primary" href="${escapeAttr(trainingHref)}">${hasActiveTraining ? 'Seguir entrenando' : 'Empezar entrenamiento'} <span aria-hidden="true">›</span></a>
   `;
 }
 
