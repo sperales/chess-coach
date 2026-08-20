@@ -1,5 +1,14 @@
 # VERIFY.md
 
+## v1.5.1 interactive analysis
+
+```powershell
+php tests\interactive_position_test.php
+php tests\review_variation_ui_test.php
+php tests\training_scenario_ui_test.php
+node tests\interactive_position_js_test.js
+```
+
 ## Purpose
 
 This file documents lightweight verification steps for Chess Coach releases.

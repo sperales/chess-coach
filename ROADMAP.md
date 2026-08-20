@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current release candidate: **v1.5.0**
+Current release candidate: **v1.5.1**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,7 +32,13 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v1.4.16
+## Current baseline — v1.5.1
+
+v1.5.1 connects Review and Training to a shared interactive position-analysis layer. Review can apply the real best move, explore a Stockfish variation without losing its context and transfer any position to an independent analysis board. The board supports strict FEN input, legal play for both colors and temporary branches.
+
+Scenario training now validates every selected move immediately and automatically applies the rival's strongest response, while preserving Nova, progressive help, accepted alternatives and autonomy tracking. Stored Review analysis and the existing interactive cache are reused before launching a new Stockfish search.
+
+### Previous analysis baseline — v1.4.16
 
 v1.4.16 establishes Stockfish 18 as an auditable analysis baseline. Each game records its engine identity, search configuration, telemetry and process diagnostics; every ply is evaluated from the complete UCI history, and incomplete output can no longer masquerade as a neutral score.
 

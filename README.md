@@ -732,6 +732,13 @@ Current planned direction:
 - Autonomía based on solving without assistance
 - Measurable personal plans and completed-review tracking
 
+### v1.5.1 — Interactive Review and analysis
+
+- Review can apply the best move and explore a temporary Stockfish variation without losing the original game context.
+- `Tablero de análisis` supports strict FEN input, legal play for both colors, evaluation, PV and in-memory branches.
+- Scenario training validates immediately after selecting a destination and automatically continues with the rival's strongest response.
+- Interactive analysis reuses stored Review data and the shared cache before starting Stockfish.
+
 ### v1.5.0 — Coach + Training v2
 
 - Coach plans grounded in Training Focus, Player DNA and recent training

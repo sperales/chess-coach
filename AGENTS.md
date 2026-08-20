@@ -10,7 +10,7 @@ This file defines the working rules for Codex and other coding agents. Follow th
 
 ## Current stable baseline
 
-Current release candidate: **1.5.0**
+Current release candidate: **1.5.1**
 
 The app is deployed manually to shared hosting and must remain compatible with that environment.
 
@@ -452,7 +452,8 @@ The current likely roadmap direction is:
 - v1.4.14 — Completed training plan goal persistence (completed)
 - v1.4.15 — Player-perspective metrics and bounded opening goals (completed)
 - v1.4.16 — Stockfish 18 analysis confidence, Nova and mobile-first coaching UX (completed)
-- v1.5.0 — Coach + Training v2 (in progress)
+- v1.5.0 — Coach + Training v2 (completed)
+- v1.5.1 — Review variations, analysis board and realtime Scenarios (release candidate)
 - v1.6.0 — AI Coach MVP
 - v1.7.0 — Conversación con el entrenador
 - v1.8.0 — Automation / Chess.com Sync

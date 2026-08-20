@@ -1,3 +1,41 @@
+# Chess Coach v1.5.1 Update Notes
+
+## Release type
+
+Review best moves, variation exploration, independent analysis board and realtime Scenarios.
+
+## Changes
+
+- Makes `Mejor` a stable Review control and applies the alternative move to its preceding FEN instead of only highlighting squares.
+- Enables the control only for valid inaccuracy, mistake and blunder alternatives.
+- Adds the approved integrated Review variation mode with selected alternative, board, PV navigation, deterministic explanation and exact return context.
+- Reuses stored Review PV first, the interactive cache second and Stockfish only when needed.
+- Adds `Tablero de análisis` to the hamburger menu with strict FEN loading, legal play for both colors, evaluation, best move, PV, navigation and retained in-memory branches.
+- Adds direct transfer between Review variation and the independent board.
+- Makes Scenario validate immediately after the destination square and removes the redundant Check button.
+- Prevents stale interactive responses from replacing a newer position.
+- Centralizes interactive Stockfish use in `PositionAnalysisService` while preserving the existing Scenario adapter and cache.
+- Adds dependency-free domain, state-tree, concurrency and UI contract tests.
+- Bumps the app version and PWA cache to `1.5.1`.
+
+## SQL migrations
+
+No SQL migration is required.
+
+## Verification
+
+- Run `php tests/interactive_position_test.php`.
+- Run `node tests/interactive_position_js_test.js`.
+- Run `php tests/review_variation_ui_test.php`.
+- Run `php tests/training_scenario_ui_test.php`.
+- Review an imprecision, error and blunder and confirm `Mejor` applies the alternative and normal navigation restores the game.
+- Explore a stored variation, create a legal branch and return to the same Review ply and tab.
+- Open `Tablero de análisis`, load/copy a FEN, create two branches and navigate both.
+- In Scenario, confirm the second square validates automatically, rejected moves retry and accepted moves receive the rival response.
+- Confirm `config/version.php` and `service-worker.js` both use `1.5.1`.
+
+---
+
 # Chess Coach v1.5.0 Update Notes
 
 ## Release type

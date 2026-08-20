@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chess-coach-v1.5.0';
+const CACHE_NAME = 'chess-coach-v1.5.1';
 const ASSETS = [
   './',
   './app.php',
@@ -6,6 +6,7 @@ const ASSETS = [
   './import-chesscom.php',
   './analysis-pending.php',
   './review.php',
+  './analysis-board.php',
   './profile.php',
   './training.php',
   './training-exercise.php',
@@ -34,6 +35,8 @@ const ASSETS = [
   './assets/js/chesscom.js',
   './assets/js/analysis_queue.js',
   './assets/js/review.js',
+  './assets/js/interactive-position.js',
+  './assets/js/analysis-board.js',
   './assets/images/analysis_background.jpg',
   './assets/images/login-nova-background-poster.jpg',
   './assets/images/login-nova-background.webm',

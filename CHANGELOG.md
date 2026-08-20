@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## v1.5.1 - Review variations and interactive analysis
+
+### Added
+
+- Added integrated Review variation exploration with PV navigation and retained temporary branches.
+- Added an independent analysis board with strict FEN loading, legal moves, Stockfish evaluation and in-memory history.
+- Added a shared interactive position-analysis service and endpoint with stored-result and cache reuse.
+- Added request cancellation and stale-response protection for interactive analysis.
+
+### Changed
+
+- Review's Best control now applies the engine move and is enabled only for valid problematic alternatives.
+- Scenario moves are validated automatically after selecting their destination.
+- Added `Tablero de análisis` to the application menu.
+- Bumped the app version and PWA cache to `1.5.1`.
+
+### Database
+
+- No SQL migration required.
+
 ## v1.5.0 - Coach and Training v2
 
 ### Added
