@@ -45,9 +45,6 @@
   .analysis-board-workspace{grid-template-columns:1fr}.analysis-board-stage,.analysis-board-sidebar{padding:10px}.analysis-position-board{width:calc(100% + 20px);margin-left:-10px;border-left:0;border-right:0;border-radius:0}
   .review-variation-panel{padding:10px 0}.review-variation-origin,.review-variation-selected,.review-variation-analysis{margin-left:10px;margin-right:10px}.review-variation-board{width:100%;border-left:0;border-right:0;border-radius:0}
   .review-variation-navigation{padding:0 10px}
-  .review-controls{grid-template-columns:repeat(3,1fr)}
-  .review-controls #bestMoveBtn,.review-controls button:nth-child(3){display:block}
-  .review-controls #exploreVariationBtn,.review-controls button:nth-child(5){grid-column:span 3}
 }
 
 /* Training v2 scenario solver */
@@ -8501,13 +8498,61 @@ body.login-page::before {
   .training-scenario-workspace{grid-template-columns:1fr}
   .training-scenario-workspace .training-solve-board{grid-row:auto}
   .training-scenario-workspace [hidden]{display:none!important}
-  .review-controls{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .review-controls #bestMoveBtn,
-  .review-controls button:nth-child(3){display:block}
-  .review-controls #exploreVariationBtn,
-  .review-controls button:nth-child(5){display:block;grid-column:span 3}
 }
 .review-variation-panel[hidden]{display:none!important}
-.review-controls{grid-template-columns:repeat(5,minmax(0,1fr))}
 .analysis-branches{display:flex;flex-wrap:wrap;gap:7px}.analysis-branches small{flex-basis:100%;color:var(--muted)}
 .analysis-return-review{display:block;padding:11px;border:1px solid #80d83d;border-radius:7px;text-align:center;color:#80d83d;text-decoration:none}.analysis-return-review[hidden]{display:none}
+
+/* v1.5.1 feedback: exact mobile analysis, variation and board composition. */
+.review-controls{grid-template-columns:minmax(0,4fr) minmax(48px,1fr) minmax(0,4fr)}
+.review-best-icon{padding-inline:0;font-size:21px;line-height:1}
+.analysis-board-mobile-head{display:none}
+.analysis-live-panel{display:grid;gap:8px;padding:10px;border:1px solid var(--line);border-radius:8px;background:#0a1419}
+.analysis-live-eval{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.analysis-live-eval strong{font-size:22px}.analysis-live-eval span{color:var(--muted);font-size:12px}
+.analysis-live-lines{display:grid;gap:6px;overflow:hidden}
+.analysis-live-lines>div{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center;min-height:34px}
+.analysis-live-lines b{padding:4px 7px;border-radius:5px;background:#f2f4f5;color:#202326}
+.analysis-live-lines span{overflow:hidden;color:#d7dde1;text-overflow:ellipsis;white-space:nowrap}
+.analysis-history button{padding:6px 9px;border:1px solid var(--line);border-radius:6px;background:#111d23;color:var(--muted);box-shadow:none}
+.analysis-history button.active{border-color:#80d83d;color:#80d83d;background:#142512}
+.analysis-branches{display:block}.analysis-branches ol{display:grid;gap:5px;margin:6px 0 0;padding-left:18px;list-style:none}
+.analysis-branches>ol{padding-left:0}.analysis-branches li{position:relative}
+.analysis-branches li li::before{content:"";position:absolute;top:-5px;left:-11px;width:8px;height:22px;border-left:1px solid #425059;border-bottom:1px solid #425059}
+.analysis-tree-move{display:flex;width:100%;min-height:36px;align-items:center;justify-content:space-between;gap:10px;padding:6px 9px;border:1px solid var(--line);border-radius:6px;background:#101a20;color:#eef2f4;text-align:left}
+.analysis-tree-move.active{border-color:#80d83d;background:#172713}.analysis-tree-move small{color:#aeb8be}
+.home-nova-card__content>.home-nova-primary{display:flex;width:min(230px,138%);min-height:42px;margin-top:10px;align-items:center;justify-content:center;gap:8px;border-radius:8px;background:linear-gradient(135deg,#8bc53f,#5cae2f);color:#fff;text-decoration:none}
+.home-nova-card__content>.home-nova-primary span{margin-left:auto}
+
+@media(max-width:760px){
+  .review-page>.review-variation-panel{order:3;width:100vw;max-width:none;margin:0 0 0 calc(50% - 50vw);padding:0 0 18px}
+  .review-variation-origin,.review-variation-selected{margin:10px 12px 0}
+  .review-variation-board{width:100vw;margin:0;border:0;border-radius:0}
+  .review-variation-navigation{padding:10px 12px}
+  .review-variation-analysis{margin:0;padding:0 12px 8px}
+  .review-variation-analysis .review-mobile-tabs{display:grid;margin:0 -12px 2px}
+  .review-controls{grid-template-columns:minmax(0,4fr) minmax(50px,1fr) minmax(0,4fr);padding:10px 12px 0}
+  .review-controls #bestMoveBtn,.review-controls button:nth-child(3){display:block}
+  .review-controls button{min-width:0}
+
+  .training-scenario-page .training-solve-page{width:100%;max-width:none;padding-inline:10px}
+  .training-scenario-workspace .training-solve-board{width:100vw;margin-left:calc(50% - 50vw)}
+  .training-scenario-board{width:100vw;border-right:0;border-left:0;border-radius:0}
+
+  .analysis-board-page .topbar{display:none}
+  .analysis-board-dashboard{width:100%;max-width:none;padding:0 0 24px}
+  .analysis-board-hero{display:none}
+  .analysis-board-workspace{display:flex;flex-direction:column;gap:0;margin:0}
+  .analysis-board-stage{display:flex;flex-direction:column;width:100%;padding:0;border:0;border-radius:0;background:transparent}
+  .analysis-board-mobile-head{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;min-height:58px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line);background:#081217}
+  .analysis-board-mobile-head strong{text-align:center}
+  .analysis-board-mobile-head a,.analysis-board-mobile-head button{display:grid;width:42px;height:42px;padding:0;place-items:center;border:0;background:transparent;color:#eef3f6;font-size:28px;text-decoration:none}
+  .analysis-live-panel{order:2;margin:0;border-right:0;border-left:0;border-radius:0}
+  .analysis-position-board{order:3;width:100vw;margin:0;border:0;border-radius:0}
+  .analysis-board-nav{order:4;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;margin:0;padding:10px}
+  .analysis-board-sidebar{width:100%;padding:12px;border:0;border-radius:0}
+  .analysis-board-sidebar>.analysis-status-row,.analysis-board-sidebar>div:nth-child(2),.analysis-board-sidebar>div:nth-child(3){display:none}
+  .analysis-tree-panel{order:1}
+
+  .home-nova-card__content>.home-nova-primary{width:142%;margin-top:10px;padding-inline:14px}
+}

@@ -175,6 +175,13 @@ class StockfishRunner {
     return $this->evalFenWithSearchMoves($fen, []);
   }
 
+  public function evalFenProgressive(string $fen, callable $onUpdate): array {
+    if (preg_match('/[\r\n]/', $fen) || count(preg_split('/\s+/', trim($fen)) ?: []) < 4) {
+      throw new InvalidArgumentException('La posición FEN no es válida.');
+    }
+    return $this->evaluatePosition('position fen '.trim($fen), [], 0, $onUpdate);
+  }
+
   public function evalFenWithSearchMoves(string $fen, array $moves): array {
     if (preg_match('/[\r\n]/', $fen) || count(preg_split('/\s+/', trim($fen)) ?: []) < 4) {
       throw new InvalidArgumentException('La posición FEN no es válida.');
@@ -208,7 +215,7 @@ class StockfishRunner {
     $this->close();
   }
 
-  private function evaluatePosition(string $positionCommand, array $searchMoves, int $nodes = 0): array {
+  private function evaluatePosition(string $positionCommand, array $searchMoves, int $nodes = 0, ?callable $onUpdate = null): array {
     $this->send($positionCommand);
     $this->send(stockfish_go_command($this->depth, $this->movetime, $nodes, $searchMoves));
     $timeout = $nodes > 0
@@ -216,7 +223,18 @@ class StockfishRunner {
       : ($this->movetime > 0
       ? max($this->searchTimeout, (int)ceil($this->movetime / 1000) + 10)
       : $this->searchTimeout);
-    $output = $this->readUntil('bestmove', $timeout);
+    $lastProgressKey = '';
+    $output = $this->readUntil('bestmove', $timeout, function (string $buffer) use ($onUpdate, &$lastProgressKey): void {
+      if ($onUpdate === null) return;
+      $progress = stockfish_parse_output($buffer);
+      if ($progress['score'] === null || $progress['depth'] === null) return;
+      $key = $progress['depth'].'|'.$progress['score_type'].'|'.$progress['score'].'|'.implode(' ', $progress['pv']);
+      if ($key === $lastProgressKey) return;
+      $lastProgressKey = $key;
+      $progress['engine_name'] = $this->identity['name'];
+      $progress['engine_version'] = $this->identity['version'];
+      $onUpdate($progress);
+    });
     $evaluation = stockfish_parse_output($output);
     stockfish_assert_complete_evaluation($evaluation, $nodes > 0 ? 1 : $this->minimumDepth);
     $evaluation['engine_name'] = $this->identity['name'];
@@ -239,13 +257,14 @@ class StockfishRunner {
     }
   }
 
-  private function readUntil(string $needle, int $timeout = 8): string {
+  private function readUntil(string $needle, int $timeout = 8, ?callable $onOutput = null): string {
     $buffer = '';
     $start = microtime(true);
     while ((microtime(true) - $start) < $timeout) {
       $chunk = stream_get_contents($this->pipes[1]);
       if ($chunk !== false && $chunk !== '') {
         $buffer .= $chunk;
+        if ($onOutput !== null) $onOutput($buffer);
         if (strpos($buffer, $needle) !== false) {
           $this->drainStderr();
           return $buffer;

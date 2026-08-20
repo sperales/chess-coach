@@ -73,6 +73,39 @@
     return data;
   }
 
+  async function streamAnalysis(fen, onUpdate, signal) {
+    const response = await fetch('api/position-analysis-stream.php', {
+      method: 'POST',
+      headers: global.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ fen }), signal,
+    });
+    if (!response.ok || !response.body?.getReader) {
+      const data = await api({ action: 'analyze', fen }, signal);
+      onUpdate?.({ type: 'final', analysis: data.analysis });
+      return data;
+    }
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let final = null;
+    while (true) {
+      const chunk = await reader.read();
+      buffer += decoder.decode(chunk.value || new Uint8Array(), { stream: !chunk.done });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const event = JSON.parse(line);
+        if (event.type === 'error') throw new Error(event.error || 'No se pudo analizar la posición.');
+        onUpdate?.(event);
+        if (event.type === 'final') final = event;
+      }
+      if (chunk.done) break;
+    }
+    if (!final) throw new Error('El motor no devolvió un resultado completo.');
+    return { ok: true, analysis: final.analysis };
+  }
+
   function fenGrid(fen) {
     return String(fen || '').split(' ')[0].split('/').map(rank => {
       const row = [];
@@ -112,6 +145,6 @@
     }
   }
 
-  global.ChessInteractive = { RequestCoordinator, PositionTree, api, fenGrid, renderBoard };
+  global.ChessInteractive = { RequestCoordinator, PositionTree, api, streamAnalysis, fenGrid, renderBoard };
   if (typeof module !== 'undefined' && module.exports) module.exports = { RequestCoordinator, PositionTree, fenGrid };
 })(typeof window !== 'undefined' ? window : globalThis);

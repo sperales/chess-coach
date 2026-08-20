@@ -22,12 +22,21 @@ $themeClass = board_theme_class($u['board_theme'] ?? null);
 </head>
 <body class="dark-shell analysis-board-page <?=e($themeClass)?>">
 <?php header_bar('Tablero de análisis'); ?>
-<div class="app-area"><main class="dashboard">
+<div class="app-area"><main class="dashboard analysis-board-dashboard">
   <section class="hero-card compact analysis-board-hero">
     <div><h1>Tablero de análisis</h1><p>Explora una posición, prueba ideas y compara variantes sin modificar tus partidas.</p></div>
   </section>
   <section class="analysis-board-workspace">
     <section class="panel analysis-board-stage">
+      <header class="analysis-board-mobile-head">
+        <button class="secondary" id="analysisClose" type="button" aria-label="Cerrar tablero de análisis">×</button>
+        <strong>Tablero de análisis</strong>
+        <button class="secondary" id="analysisMobileFlip" type="button" aria-label="Girar tablero">↻</button>
+      </header>
+      <section class="analysis-live-panel" aria-live="polite">
+        <div class="analysis-live-eval"><strong id="analysisLiveEval">--</strong><span id="analysisLiveDepth">Esperando motor</span></div>
+        <div class="analysis-live-lines" id="analysisLiveLines"></div>
+      </section>
       <div class="chess-board analysis-position-board" id="analysisBoard" aria-label="Tablero de análisis"></div>
       <div class="analysis-board-nav">
         <button class="secondary" id="analysisBack" type="button" title="Posición anterior">‹</button>
@@ -40,8 +49,9 @@ $themeClass = board_theme_class($u['board_theme'] ?? null);
       <div class="analysis-status-row"><span id="analysisStatus">Preparando posición...</span><strong id="analysisEval">--</strong></div>
       <div><small>Mejor jugada</small><h2 id="analysisBest">--</h2></div>
       <div><small>Variación principal</small><p id="analysisPv">--</p></div>
-      <div><small>Historial y ramas</small><div id="analysisHistory" class="analysis-history"></div></div>
-      <div id="analysisBranches" class="analysis-branches" aria-label="Ramas disponibles"></div>
+      <div class="analysis-tree-panel"><small>Historial y ramas</small><div id="analysisHistory" class="analysis-history"></div>
+        <div id="analysisBranches" class="analysis-branches" aria-label="Árbol de variantes"></div>
+      </div>
       <label for="analysisFen">FEN</label>
       <textarea id="analysisFen" rows="3" spellcheck="false"></textarea>
       <div class="analysis-board-actions">

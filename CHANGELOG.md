@@ -14,6 +14,8 @@
 - Review's Best control now applies the engine move and is enabled only for valid problematic alternatives.
 - Scenario moves are validated automatically after selecting their destination.
 - Added `Tablero de análisis` to the application menu.
+- Streams Stockfish depth, evaluation and principal variation while the Analysis Board search is running, with synchronous fallback support.
+- Refined the mobile Review, variation, scenario and Analysis Board layouts around full-width chessboards and compact controls.
 - Bumped the app version and PWA cache to `1.5.1`.
 
 ### Database

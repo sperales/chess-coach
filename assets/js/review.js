@@ -857,8 +857,19 @@ function leaveReviewVariation() {
 
 document.getElementById('variationReturn')?.addEventListener('click', leaveReviewVariation);
 document.getElementById('variationExit')?.addEventListener('click', leaveReviewVariation);
+document.getElementById('reviewMobileBack')?.addEventListener('click', event => {
+  if (!reviewVariation) return;
+  event.preventDefault();
+  leaveReviewVariation();
+});
 document.getElementById('variationPrev')?.addEventListener('click', () => { reviewVariation.tree.back(); refreshReviewVariation(); });
 document.getElementById('variationNext')?.addEventListener('click', () => { reviewVariation.tree.forward(); refreshReviewVariation(); });
+document.querySelectorAll('[data-variation-tab]').forEach(button => button.addEventListener('click', () => {
+  const tab = button.dataset.variationTab || 'analysis';
+  if (tab === 'analysis') return;
+  leaveReviewVariation();
+  setReviewMobileTab(tab, true);
+}));
 
 window.addEventListener('load', loadReview);
 window.addEventListener('pagehide', () => flushReviewProgress(true));

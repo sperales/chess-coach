@@ -27,7 +27,7 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
 <div class="app-area">
 <main class="dashboard review-page" data-game-id="<?= (int)$gameId ?>" data-review-tab="summary" data-review-expanded="false">
   <header class="review-mobile-appbar" aria-label="Navegación de revisión">
-    <a href="games.php" aria-label="Volver a partidas">‹</a>
+    <a href="games.php" id="reviewMobileBack" aria-label="Volver a partidas">‹</a>
     <strong>Revisión de partida</strong>
     <div class="review-mobile-appbar-actions">
       <button type="button" aria-label="Abrir análisis" data-review-sheet-open>↗</button>
@@ -61,7 +61,10 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
     </div>
     <section class="review-variation-analysis">
       <nav class="review-mobile-tabs" aria-label="Información de la variante">
-        <span>Resumen</span><strong>Análisis</strong><span>Jugadas</span><span>Coach</span>
+        <button type="button" data-variation-tab="summary">Resumen</button>
+        <button class="active" type="button" data-variation-tab="analysis">Análisis</button>
+        <button type="button" data-variation-tab="moves">Jugadas</button>
+        <button type="button" data-variation-tab="coach">Coach</button>
       </nav>
       <article><small>Variación Stockfish</small><p id="variationPv">--</p></article>
       <article><small>Por qué es mejor</small><p id="variationWhy">--</p></article>
@@ -147,10 +150,8 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
       </div>
       <div class="review-controls">
         <button class="secondary" onclick="prevMove()">‹ Anterior</button>
-        <button class="secondary" id="bestMoveBtn" onclick="showBestMove()">Mejor</button>
+        <button class="secondary review-best-icon" id="bestMoveBtn" onclick="showBestMove()" aria-label="Mostrar mejor jugada" title="Mejor jugada">★</button>
         <button onclick="nextMove()">Siguiente ›</button>
-        <button class="secondary" id="exploreVariationBtn" onclick="startExploreVariation()">Explorar variante</button>
-        <button class="secondary" onclick="resetMove()">Reiniciar</button>
       </div>
       <section class="review-mobile-feedback">
         <strong id="reviewMobileFeedbackTitle">Comentario de la jugada</strong>

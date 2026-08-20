@@ -10,7 +10,7 @@ Review best moves, variation exploration, independent analysis board and realtim
 - Enables the control only for valid inaccuracy, mistake and blunder alternatives.
 - Adds the approved integrated Review variation mode with selected alternative, board, PV navigation, deterministic explanation and exact return context.
 - Reuses stored Review PV first, the interactive cache second and Stockfish only when needed.
-- Adds `Tablero de análisis` to the hamburger menu with strict FEN loading, legal play for both colors, evaluation, best move, PV, navigation and retained in-memory branches.
+- Adds `Tablero de análisis` to the hamburger menu with strict FEN loading, legal play for both colors, progressive Stockfish output, evaluation, best move, PV and a navigable in-memory variation tree.
 - Adds direct transfer between Review variation and the independent board.
 - Makes Scenario validate immediately after the destination square and removes the redundant Check button.
 - Prevents stale interactive responses from replacing a newer position.

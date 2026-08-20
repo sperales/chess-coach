@@ -32,20 +32,30 @@ class PositionAnalysisService {
     $this->profileHash = position_analysis_profile_hash($this->config);
   }
 
-  public function analyze(string $fen): array {
+  public function analyze(string $fen, ?callable $onUpdate = null): array {
     $normalizedFen = chess_validate_strict_fen($fen);
     if ($normalizedFen === null) throw new InvalidArgumentException('FEN no válido.');
     $cached = $this->cached($normalizedFen);
-    if ($cached) return $this->present($normalizedFen, $cached + ['cached' => true, 'source' => 'cache']);
+    if ($cached) {
+      $result = $this->present($normalizedFen, $cached + ['cached' => true, 'source' => 'cache']);
+      if ($onUpdate !== null) $onUpdate($result, true);
+      return $result;
+    }
 
     $runner = $this->runner();
     $attempts = max(1, 1 + (int)($this->config['evaluation_retries'] ?? 1));
     $lastError = null;
     for ($attempt = 1; $attempt <= $attempts; $attempt++) {
       try {
-        $result = $runner->evalFen($normalizedFen);
+        $result = $onUpdate === null
+          ? $runner->evalFen($normalizedFen)
+          : $runner->evalFenProgressive($normalizedFen, function (array $progress) use ($normalizedFen, $onUpdate): void {
+              $onUpdate($this->present($normalizedFen, $progress + ['cached' => false, 'source' => 'engine']), false);
+            });
         $this->store($normalizedFen, $result);
-        return $this->present($normalizedFen, $result + ['cached' => false, 'source' => 'engine']);
+        $presented = $this->present($normalizedFen, $result + ['cached' => false, 'source' => 'engine']);
+        if ($onUpdate !== null) $onUpdate($presented, true);
+        return $presented;
       } catch (Throwable $error) {
         $lastError = $error;
         if ($attempt < $attempts) {
