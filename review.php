@@ -30,8 +30,8 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
     <a href="games.php" id="reviewMobileBack" aria-label="Volver a partidas">‹</a>
     <strong>Revisión de partida</strong>
     <div class="review-mobile-appbar-actions">
-      <button type="button" aria-label="Abrir análisis" data-review-sheet-open>▥</button>
-      <button type="button" aria-label="Girar tablero" onclick="document.getElementById('flipBoardBtn')?.click()">↻</button>
+      <button class="review-mobile-analysis-icon" type="button" aria-label="Abrir análisis" data-review-sheet-open>▂▅▇</button>
+      <button class="review-mobile-rotate-icon" type="button" aria-label="Girar tablero" onclick="document.getElementById('flipBoardBtn')?.click()">↻</button>
     </div>
   </header>
 
