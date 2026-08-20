@@ -5,6 +5,51 @@
   font-weight:500;
   font-display:swap
 }
+
+/* Training v2 scenario solver */
+.training-scenario-kicker{display:block;margin-bottom:6px;color:#8bd22f;font-size:12px;font-weight:700;text-transform:uppercase}
+.training-scenario-workspace{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr);gap:14px;align-items:start}
+.training-scenario-workspace .training-solve-board{grid-row:1/8}
+.training-scenario-board{display:grid;width:100%;max-width:720px;aspect-ratio:1;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));overflow:hidden;border-radius:8px}
+.training-scenario-board .sq{position:relative;min-width:0;min-height:0;padding:0;border:0;border-radius:0;box-shadow:none}
+.training-scenario-board .sq.light{background:var(--board-light,#e9eccb)}
+.training-scenario-board .sq.dark{background:var(--board-dark,#71995f)}
+.training-scenario-board .sq.selected{box-shadow:inset 0 0 0 4px #72c9f3}
+.training-scenario-board .sq.incorrect-destination{box-shadow:inset 0 0 0 5px #ef5350;background:#d97878}
+.training-scenario-board .sq.hint{box-shadow:inset 0 0 0 5px #f0b34a}
+.training-scenario-board .sq.from,.training-scenario-board .sq.to{background:#afd642}
+.training-scenario-board .board-piece{width:100%;height:100%;object-fit:contain;pointer-events:none}
+.scenario-file-label,.scenario-rank-label{position:absolute;z-index:3;color:rgba(12,25,29,.78);font-size:10px;font-weight:800;line-height:1;pointer-events:none}
+.scenario-file-label{right:3px;bottom:2px}
+.scenario-rank-label{left:3px;top:2px}
+.training-scenario-draft{min-height:42px;padding:10px 12px;border:1px solid #263940;border-radius:7px;background:#0a151a;color:#b9c3ca;font-size:13px}
+.training-scenario-draft.is-error{border-color:#b83a3a;color:#ff8d8d}
+.training-scenario-primary-actions{grid-template-columns:1fr 1fr}
+.training-scenario-primary-actions #scenarioSubmit{grid-column:1/-1}
+.training-scenario-summary{display:grid}
+.training-scenario-workspace .training-mobile-footer-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.training-scenario-coach.nova-state-hint{--coach-state:#e58d2c}
+.training-scenario-coach.nova-state-error,.training-mobile-coach.nova-state-error,.training-mobile-coach.nova-state-solution{--coach-state:#ef5350}
+.training-scenario-coach.nova-state-success{--coach-state:#78ca35}
+.training-scenario-coach.nova-state-explanation{--coach-state:#8f74df}
+
+@media(max-width:760px){
+  .training-scenario-page .training-solve-page{gap:0}
+  .training-scenario-page .training-scenario-hero{padding-bottom:10px}
+  .training-scenario-page .training-scenario-hero h1{font-size:20px}
+  .training-scenario-page .training-scenario-hero p{display:none}
+  .training-scenario-workspace{display:grid;grid-template-columns:1fr;gap:10px;padding:0;border:0;background:transparent}
+  .training-scenario-workspace .training-solve-board{grid-row:auto;padding:0;border-radius:9px}
+  .training-scenario-board{max-width:none;border-radius:8px}
+  .training-scenario-coach{display:grid}
+  .training-scenario-workspace .training-mobile-actions,.training-scenario-workspace .training-mobile-summary,.training-scenario-workspace .training-mobile-footer-actions{display:grid}
+  .training-scenario-workspace [hidden]{display:none!important}
+  .training-scenario-primary-actions{grid-template-columns:1fr 1fr}
+  .training-scenario-primary-actions #scenarioSubmit{grid-column:1/-1}
+  .training-scenario-summary{border:1px solid #263940;border-radius:8px;overflow:hidden}
+  .training-scenario-draft{font-size:12px}
+  .scenario-file-label,.scenario-rank-label{font-size:8px}
+}
 @font-face {
   font-family:"Poppins CC";
   src:url("../fonts/poppins-600.woff2") format("woff2");
@@ -8377,4 +8422,39 @@ body.login-page::before {
     min-height:88px;
     padding:13px
   }
+}
+
+/* Keep Training v2 scenario layout after legacy responsive rules. */
+.training-scenario-workspace{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr)}
+.training-scenario-workspace .training-scenario-coach,
+.training-scenario-workspace .training-mobile-actions,
+.training-scenario-workspace .training-mobile-summary,
+.training-scenario-workspace .training-mobile-footer-actions{display:grid}
+.training-scenario-workspace .training-mobile-summary{border:1px solid #263940;border-radius:8px;overflow:hidden}
+.training-scenario-workspace .training-mobile-summary-row{display:grid;grid-template-columns:minmax(92px,auto) minmax(0,1fr) auto;gap:10px;align-items:center;min-height:48px;padding:10px 12px;border-bottom:1px solid #263940;color:#b9c3ca;text-decoration:none}
+.training-scenario-workspace .training-mobile-summary-row:last-child{border-bottom:0}
+.training-scenario-workspace .training-mobile-summary-row strong{color:#f5f7fb;font-size:13px}
+.training-scenario-workspace .training-mobile-summary-row b{color:#dce4e9;font-size:12px;white-space:nowrap}
+.training-scenario-workspace .training-mobile-mini-progress{height:5px;overflow:hidden;border-radius:5px;background:#263940}
+.training-scenario-workspace .training-mobile-mini-progress i{display:block;height:100%;border-radius:inherit;background:#8bd22f}
+.training-scenario-workspace .training-mobile-footer-actions button{min-height:42px}
+.training-scenario-coach.nova-state-error,
+.training-mobile-coach.nova-state-error,
+.training-mobile-coach.nova-state-solution{--coach-state:#ef5350}
+.training-mobile-coach.nova-state-hint{--coach-state:#e58d2c}
+.training-mobile-coach.nova-state-explanation{--coach-state:#78ca35}
+.training-mobile-coach .nova-avatar{align-self:center;justify-self:center}
+.training-mobile-coach.is-advancing .training-mobile-coach-copy{animation:trainingCoachAdvance .34s cubic-bezier(.22,.8,.3,1)}
+.training-mobile-progress[hidden],
+.training-mobile-summary-row[hidden]{display:none!important}
+.training-category-card.is-selected{box-shadow:inset 0 0 0 2px #8bd22f,0 0 18px rgba(139,210,47,.12)}
+.training-available-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+@keyframes trainingCoachAdvance{
+  from{opacity:0;transform:translateX(42px)}
+  to{opacity:1;transform:translateX(0)}
+}
+@media(max-width:760px){
+  .training-scenario-workspace{grid-template-columns:1fr}
+  .training-scenario-workspace .training-solve-board{grid-row:auto}
+  .training-scenario-workspace [hidden]{display:none!important}
 }

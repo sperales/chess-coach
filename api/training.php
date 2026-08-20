@@ -18,14 +18,14 @@ if (in_array($action, $mutatingActions, true)) {
 if ($action === 'list' || $action === 'dashboard') {
   $type = (string)($_GET['type'] ?? 'recommended');
   $status = (string)($_GET['status'] ?? 'pending');
+  $category = (string)($_GET['category'] ?? '');
   $page = max(1, (int)($_GET['page'] ?? 1));
   $perPage = max(1, min(100, (int)($_GET['per_page'] ?? 20)));
-  $list = training_list_exercises($userId, $type, $status, $page, $perPage);
-  $session = training_active_session($userId, false);
-  $coachPlan = $session ? coach_session_plan($userId, (int)$session['id']) : null;
-  if (!$coachPlan || empty($coachPlan['focus']['code'])) {
-    $coachPlan = coach_recommendation_for_user($userId);
-  }
+  $scenarioList = $category === 'scenarios' ? training_scenarios_available_for_user($userId, $page, $perPage) : null;
+  $list = $scenarioList ?: training_list_exercises($userId, $type, $status, $page, $perPage, $category);
+  $currentTraining = coach_current_plan_for_user($userId);
+  $session = $currentTraining['training'];
+  $coachPlan = $currentTraining['plan'];
 
   json_response([
     'ok' => true,
@@ -35,9 +35,12 @@ if ($action === 'list' || $action === 'dashboard') {
     'experience' => training_experience_summary($userId),
     'session' => $session,
     'coach_plan' => $coachPlan,
-    'exercises' => $list['items'],
+    'exercises' => $scenarioList ? [] : $list['items'],
+    'scenarios' => $scenarioList ? $list['items'] : [],
     'pagination' => $list['pagination'],
-    'filters' => $list['filters'],
+    'filters' => $scenarioList
+      ? ['type' => 'recommended', 'status' => 'pending', 'category' => 'scenarios']
+      : $list['filters'],
   ]);
 }
 
@@ -127,6 +130,9 @@ if ($action === 'scenario_get') {
   if (!$scenario) json_response(['ok' => false, 'error' => 'Escenario no encontrado.']);
   $runId = (int)($_GET['run_id'] ?? 0);
   $run = $runId > 0 ? training_scenario_run_for_user($runId, $userId) : null;
+  if ($run && (int)$run['scenario_id'] !== $id) {
+    json_response(['ok' => false, 'error' => 'El progreso no corresponde a este escenario.']);
+  }
   json_response([
     'ok' => true,
     'scenario' => training_scenario_public($scenario, $run),
@@ -264,8 +270,9 @@ if ($action === 'attempt') {
   $recordedRunId = (int)($result['solve_run_id'] ?? $solveRunId);
   if ($recordedRunId > 0 && !empty($result['feedback'])) {
     try {
+      $completed = !empty($result['solved']) || !empty($result['exhausted']) || !empty($result['solution_uci']);
       coach_record_run_message($userId, $recordedRunId, coach_message_payload(
-        'feedback', !empty($result['solved']) ? 'correct' : 'error', (string)$result['feedback'],
+        $completed ? 'completion' : 'feedback', !empty($result['solved']) ? 'correct' : 'error', (string)$result['feedback'],
         ['solved' => !empty($result['solved']), 'exhausted' => !empty($result['exhausted'])]
       ));
       $result['coach_feed'] = coach_messages_for_run($userId, $recordedRunId);

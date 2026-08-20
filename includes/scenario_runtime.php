@@ -34,6 +34,41 @@ function training_scenario_events_for_run(int $runId, int $userId): array {
   }, $st->fetchAll());
 }
 
+function training_scenarios_available_for_user(int $userId, int $page = 1, int $perPage = 20): array {
+  $perPage = max(1, min(100, $perPage));
+  $count = db()->prepare('SELECT COUNT(*) FROM training_scenarios s
+    WHERE s.user_id=? AND s.status="active"
+      AND NOT EXISTS (SELECT 1 FROM training_scenario_runs r WHERE r.scenario_id=s.id AND r.user_id=s.user_id AND r.status="completed")');
+  $count->execute([$userId]);
+  $total = (int)$count->fetchColumn();
+  $pages = max(1, (int)ceil($total / $perPage));
+  $page = max(1, min($pages, $page));
+  $offset = ($page - 1) * $perPage;
+  $sql = 'SELECT s.id,s.game_id,s.starting_ply,s.player_color,s.scenario_type,s.difficulty,s.title,s.prompt,
+                 s.target_player_moves,s.max_player_moves,s.created_at,g.white_player,g.black_player,g.played_at,
+                 (SELECT r.status FROM training_scenario_runs r WHERE r.scenario_id=s.id AND r.user_id=s.user_id ORDER BY r.id DESC LIMIT 1) AS last_status,
+                 (SELECT COUNT(*) FROM training_scenario_runs r WHERE r.scenario_id=s.id AND r.user_id=s.user_id) AS run_count
+          FROM training_scenarios s
+          LEFT JOIN games g ON g.id=s.game_id
+          WHERE s.user_id=? AND s.status="active"
+            AND NOT EXISTS (SELECT 1 FROM training_scenario_runs r WHERE r.scenario_id=s.id AND r.user_id=s.user_id AND r.status="completed")
+          ORDER BY CASE s.difficulty WHEN "critical" THEN 0 WHEN "hard" THEN 1 WHEN "medium" THEN 2 ELSE 3 END,
+                   s.updated_at DESC,s.id DESC
+          LIMIT ' . (int)$perPage . ' OFFSET ' . (int)$offset;
+  $st = db()->prepare($sql);
+  $st->execute([$userId]);
+  $items = array_map(static function (array $row): array {
+    foreach (['id', 'game_id', 'starting_ply', 'target_player_moves', 'max_player_moves', 'run_count'] as $field) {
+      $row[$field] = (int)($row[$field] ?? 0);
+    }
+    return $row;
+  }, $st->fetchAll());
+  return [
+    'items' => $items,
+    'pagination' => ['page' => $page, 'per_page' => $perPage, 'total' => $total, 'pages' => $pages],
+  ];
+}
+
 function training_scenario_player_score(array $evaluation, string $fen, string $playerColor): ?int {
   $score = training_scenario_score_cp(isset($evaluation['score']) ? (int)$evaluation['score'] : null, $evaluation['score_type'] ?? null);
   if ($score === null) return null;
@@ -107,6 +142,15 @@ function training_scenario_start(int $userId, int $scenarioId, ?int $sessionId =
       ->execute([$scenarioId, $userId, $sessionId, $itemId, $scenario['starting_fen'], $playerEval]);
     $run = training_scenario_run_for_user((int)db()->lastInsertId(), $userId);
     training_scenario_event((int)$run['id'], $userId, 'system', 'start', ['fen_after' => $scenario['starting_fen'], 'score_after_cp' => $playerEval]);
+  } elseif ($sessionId && empty($run['session_item_id'])) {
+    $item = db()->prepare('SELECT id FROM training_session_items WHERE session_id=? AND user_id=? AND scenario_id=? LIMIT 1');
+    $item->execute([$sessionId, $userId, $scenarioId]);
+    $itemId = $item->fetchColumn() ?: null;
+    if ($itemId) {
+      db()->prepare('UPDATE training_scenario_runs SET session_id=?,session_item_id=?,updated_at=NOW() WHERE id=?')
+        ->execute([$sessionId, $itemId, (int)$run['id']]);
+      $run = training_scenario_run_for_user((int)$run['id'], $userId);
+    }
   }
   return ['ok' => true, 'scenario' => training_scenario_public($scenario, $run)];
 }
@@ -130,14 +174,17 @@ function training_scenario_move(int $userId, int $runId, string $moveUci): array
   $decision = training_scenario_decision($beforeCp, $afterCp, (int)$scenario['acceptance_loss_cp'], strtolower($moveUci) === strtolower((string)($before['bestmove'] ?? '')));
   $attempts = (int)$run['attempts_count'] + 1;
   $san = chess_uci_to_san($fen, $moveUci) ?? chess_uci_fallback($moveUci);
+  $moveFeedback = $decision['accepted']
+    ? ($decision['bucket'] === 'optimal' ? 'Muy buena decisión. Mantienes todo el potencial de la posición.' : 'Buena alternativa. Mantiene el objetivo del escenario.')
+    : 'La jugada cede demasiado valor. La posición se mantiene para que pruebes otra idea.';
   training_scenario_event($runId, $userId, 'user', $decision['accepted'] ? 'move' : 'retry', [
     'fen_before' => $fen, 'fen_after' => $fenAfterUser, 'move_uci' => strtolower($moveUci), 'move_san' => $san,
     'score_before_cp' => $beforeCp, 'score_after_cp' => $afterCp, 'centipawn_loss' => $decision['loss_cp'],
-    'decision_bucket' => $decision['bucket'], 'accepted' => $decision['accepted'],
+    'decision_bucket' => $decision['bucket'], 'accepted' => $decision['accepted'], 'feedback_text' => $moveFeedback,
   ]);
   if (!$decision['accepted']) {
     db()->prepare('UPDATE training_scenario_runs SET attempts_count=?,updated_at=NOW() WHERE id=?')->execute([$attempts, $runId]);
-    return ['ok' => true, 'accepted' => false, 'decision' => $decision, 'fen' => $fen, 'feedback' => 'La jugada cede demasiado valor. La posición se mantiene para que pruebes otra idea.'];
+    return ['ok' => true, 'accepted' => false, 'decision' => $decision, 'fen' => $fen, 'feedback' => $moveFeedback];
   }
 
   $playerMoves = (int)$run['player_moves_count'] + 1;
@@ -199,7 +246,7 @@ function training_scenario_move(int $userId, int $runId, string $moveUci): array
   $updated = training_scenario_run_for_user($runId, $userId);
   return [
     'ok' => true, 'accepted' => true, 'decision' => $decision, 'player_move' => ['uci' => strtolower($moveUci), 'san' => $san],
-    'opponent_move' => $opponent, 'completed' => $completed, 'failed' => $failed, 'scenario' => training_scenario_public($scenario, $updated),
+    'opponent_move' => $opponent, 'player_fen' => $fenAfterUser, 'completed' => $completed, 'failed' => $failed, 'scenario' => training_scenario_public($scenario, $updated),
     'feedback' => $completed ? 'Objetivo completado ante la mejor defensa de Stockfish.' : ($failed ? 'Se alcanzó el límite del escenario sin cumplir el objetivo.' : 'Buena decisión. Stockfish ha respondido con su mejor defensa.'),
   ];
 }

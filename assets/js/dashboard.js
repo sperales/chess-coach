@@ -426,6 +426,9 @@ function renderHomeTrainingExperience() {
   const coachTarget = Number(coachPlan?.item_count || target);
   const coachProgress = coachTarget > 0 ? homeTrainingProgressPercent((coachCurrent / coachTarget) * 100) : primaryProgress;
   const coachRationale = coachPlan?.rationale || `Hoy nos centraremos en ${focusName.toLowerCase()}.`;
+  const trainingHref = homeTrainingActionUrl(coachPlan, dashboardData.active_training);
+  const hasActiveTraining = Number(dashboardData.active_training?.id || 0) > 0
+    && (coachPlan?.items || []).some(item => item.status === 'pending' || item.status === 'active');
   el.innerHTML = `
     <div class="home-nova-card">
       <div class="home-nova-card__content">
@@ -438,8 +441,24 @@ function renderHomeTrainingExperience() {
       </div>
       <img class="home-nova-pointing" src="assets/nova/nova-coach-pointing.png" alt="Nova, tu entrenador">
     </div>
-    <a class="btn home-nova-primary" href="training.php">${today.goal_met ? 'Seguir entrenando' : 'Empezar entrenamiento'} <span aria-hidden="true">›</span></a>
+    <a class="btn home-nova-primary" href="${escapeAttr(trainingHref)}">${hasActiveTraining ? 'Seguir entrenando' : 'Empezar entrenamiento'} <span aria-hidden="true">›</span></a>
   `;
+}
+
+function homeTrainingActionUrl(plan, activeTraining) {
+  const trainingId = Number(activeTraining?.id || plan?.training_id || 0);
+  const pending = (plan?.items || []).find(item => item.status === 'active' || item.status === 'pending');
+  if (!pending || trainingId <= 0) return 'training.php?start=1';
+  const params = new URLSearchParams({ training_id: String(trainingId) });
+  if (pending.item_type === 'scenario' && Number(pending.scenario_id || 0) > 0) {
+    params.set('id', String(Number(pending.scenario_id)));
+    return `training-scenario.php?${params.toString()}`;
+  }
+  if (Number(pending.exercise_id || 0) > 0) {
+    params.set('id', String(Number(pending.exercise_id)));
+    return `training-exercise.php?${params.toString()}`;
+  }
+  return 'training.php?start=1';
 }
 
 function legacyHomeProgressMetric(label, value, detail, percent) {

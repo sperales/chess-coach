@@ -6,6 +6,15 @@ return [
   'stockfish_path' => __DIR__ . '/../bin/stockfish',
   // Etiqueta informativa opcional; la versión real se detecta mediante el handshake UCI.
   'engine_build' => null,
+  // Estrategia recomendada para partidas completas. Elimina esta clave para conservar
+  // el comportamiento legacy basado en movetime_ms/depth.
+  'analysis_strategy' => 'adaptive_nodes',
+  'baseline_nodes' => 40000,
+  'critical_nodes' => 200000,
+  'critical_loss_cp' => 40,
+  'critical_threshold_margin_cp' => 20,
+  'minimum_baseline_depth' => 12,
+  'max_critical_positions' => 32,
   'depth' => 10,
   // Solo se usa como criterio mínimo cuando movetime_ms es mayor que cero.
   'minimum_depth' => 1,
@@ -16,6 +25,10 @@ return [
   // Evita que dos llamadas HTTP simultáneas levanten dos motores en el hosting compartido.
   'serialize_stockfish_processes' => true,
   'restart_after_evaluations' => 40,
+  // En modo adaptativo se conserva un único proceso durante toda la partida.
+  // Configura un valor mayor que cero solo si el hosting muestra degradación real.
+  'adaptive_restart_after_evaluations' => 0,
+  'progress_update_every_plies' => 5,
   'max_halfmoves' => 90,
   'movetime_ms' => 800,
   // Perfil ligero para validar decisiones durante escenarios multi-jugada.

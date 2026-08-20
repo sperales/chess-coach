@@ -1,3 +1,89 @@
+# Chess Coach v1.5.0 Update Notes
+
+## Release type
+
+Coach foundation and Training v2 with mixed Flash and multi-move Scenarios.
+
+## Changes
+
+- Introduces a deterministic Coach layer that consumes Training Focus, Player DNA, recent form and stored training history without coupling decisions to Nova.
+- Persists the focus, rationale, evidence, estimated duration and ordered items of each prepared training.
+- Treats existing one-move exercises as Flash without destructive data conversion.
+- Adds conversion, defense and mate Scenarios generated from real positions in the player's analyzed games.
+- Classifies Scenarios by difficulty and requires between two and six player decisions.
+- Accepts Stockfish's best move and sufficiently good alternatives; clearly harmful moves are rejected without advancing the position.
+- Lets Stockfish always play the rival's strongest response while using a lower-latency, cached interactive engine profile.
+- Adds a dedicated mobile-first Scenario solver with responsive board, internal coordinates, source-game link and direct continuity through Nova's ordered plan.
+- Adds an incremental, swipeable Coach Feed for objective, accepted decisions, rival responses, errors, hints, explanations and completion.
+- Separates progressive `Ayuda` from contextual `¿Por qué?`; the three hints operate on the current Scenario position.
+- Keeps internal sessions out of player-facing copy and presents one coherent `Plan de hoy` progression in Flash and Scenario solvers.
+- Activates the `Escenarios` Training category when Nova has prepared one and routes the primary CTA to the first pending Flash or Scenario in order.
+- Records Scenario runs, decisions, retries, Stockfish responses, hints, explanations, duration, result and provenance for future progress analysis.
+- Uses the same red semantic color for Nova and the message border after a failed Flash or Scenario.
+- Replaces fixed-depth full-game analysis with an optional two-pass adaptive node budget: every position receives a baseline search and only critical positions are deepened.
+- Selects critical positions from evaluation loss, state changes, mate scores, classification boundaries and unexpectedly shallow baseline searches.
+- Calculates final CPL, classifications, Accuracy, Smart Tags and generated training only after deep evaluations have replaced their preliminary results.
+- Keeps the complete UCI move history, one serialized Stockfish process per game, strict output validation and automatic retries.
+- Reduces worker overhead with event-driven pipe reads, prepared progress statements and configurable progress updates.
+- Records baseline and critical node budgets plus the number of deep evaluations for controlled server comparisons.
+- Bumps `config/version.php` and the PWA cache to `1.5.0`.
+
+## SQL migrations
+
+Apply these migrations once and in order after uploading the release:
+
+1. `sql/migrations/033_changes_1.5.0.sql`
+2. `sql/migrations/034_changes_1.5.0.sql`
+3. `sql/migrations/035_changes_1.5.0.sql`
+
+Migration `033` adds the Coach plan, ordered feed and Training v2 item foundation. Migration `034` adds Scenario definitions, generation history, runs, events and the interactive Stockfish cache. Migration `035` extends analysis telemetry with the adaptive strategy, its secondary node budget and the number of deep evaluations.
+
+After applying them, use the existing Profile batch action to generate Scenarios for analyzed games.
+
+## Configuration
+
+Copy the new `scenario_*` values from `config/engine.example.php` into the production `config/engine.php` if you want to tune interactive latency. The defaults use the existing server-side Stockfish binary and remain compatible with shared hosting.
+
+To enable adaptive full-game analysis, add these values to production `config/engine.php`:
+
+```php
+'analysis_strategy' => 'adaptive_nodes',
+'baseline_nodes' => 40000,
+'critical_nodes' => 200000,
+'critical_loss_cp' => 40,
+'critical_threshold_margin_cp' => 20,
+'minimum_baseline_depth' => 12,
+'max_critical_positions' => 32,
+'adaptive_restart_after_evaluations' => 0,
+'progress_update_every_plies' => 5,
+```
+
+If `analysis_strategy` is omitted, the existing `movetime_ms`/`depth` behavior remains active. Keep `threads=1`, `hash_mb=64`, serialization and a worker batch size of one for the first shared-hosting benchmark.
+
+## Verification
+
+- Run `php tests/coach_foundation_test.php`.
+- Run `php tests/training_scenarios_test.php`.
+- Run `php tests/training_scenario_ui_test.php`.
+- Run `php tests/training_mobile_layout_test.php`.
+- Run `php tests/training_exercise_mobile_layout_test.php`.
+- Run `php tests/stockfish_protocol_test.php`.
+- Run `php tests/adaptive_analysis_test.php`.
+- Generate Scenarios from Profile and confirm Nova's Training proposal includes both Flash and Scenarios.
+- Start the plan and confirm its first pending item opens regardless of type.
+- In a Scenario, verify that a good alternative advances, Stockfish replies, a harmful move restores the position and an illegal move never advances.
+- Request all three hints after advancing at least one decision and confirm they apply to the current position.
+- Confirm `¿Por qué?` adds an explanation without consuming a hint.
+- Complete and skip Scenarios and confirm the next pending item opens in plan order.
+- Confirm the top and lower progress indicators both represent the prepared plan, without duplicated daily-goal or session copy.
+- Analyze the same reference PGN used for the fixed-depth benchmark and compare total wall time, `engine_time_ms`, `engine_nodes`, `engine_evaluations` and `engine_deep_evaluations`.
+- Confirm the analysis stores `engine_search_mode=adaptive_nodes`, `engine_search_value=40000` and `engine_secondary_search_value=200000`.
+- Confirm every final move row uses the deep evaluation wherever either adjacent position was selected, while non-critical positions retain their baseline evaluation.
+- Confirm disabling `analysis_strategy` restores the previous depth/movetime pipeline without code changes.
+- Confirm `config/version.php` and `service-worker.js` both use `1.5.0`.
+
+---
+
 # Chess Coach v1.4.16 Update Notes
 
 ## Release type

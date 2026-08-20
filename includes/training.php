@@ -850,10 +850,11 @@ function training_public_exercise(array $item, bool $includeSolution = false): a
   return $item;
 }
 
-function training_list_exercises(int $userId, string $type = 'recommended', string $status = 'pending', int $page = 1, int $perPage = 20): array {
+function training_list_exercises(int $userId, string $type = 'recommended', string $status = 'pending', int $page = 1, int $perPage = 20, string $category = ''): array {
   $types = training_exercise_types();
   if (!isset($types[$type])) $type = 'recommended';
   if (!in_array($status, ['pending', 'failed', 'resolved', 'all'], true)) $status = 'pending';
+  if (!in_array($category, ['', 'flash', 'openings', 'finals', 'topics'], true)) $category = '';
 
   $perPage = max(1, min(100, $perPage));
   $where = ['te.user_id=?', 'te.status="active"'];
@@ -862,6 +863,15 @@ function training_list_exercises(int $userId, string $type = 'recommended', stri
   if ($type !== 'recommended') {
     $where[] = 'te.exercise_type=?';
     $params[] = $type;
+  }
+  if ($category === 'flash') {
+    $where[] = 'te.exercise_type NOT IN ("defend_position","convert_advantage")';
+  } elseif ($category === 'openings') {
+    $where[] = 'te.ply<=16';
+  } elseif ($category === 'finals') {
+    $where[] = 'te.exercise_type IN ("defend_position","convert_advantage")';
+  } elseif ($category === 'topics') {
+    $where[] = 'te.exercise_type IN ("find_best_move","avoid_blunder","find_mate","spot_threat","find_tactic")';
   }
   if ($status === 'pending') {
     $where[] = '(te.resolved_at IS NULL OR (te.next_due_at IS NOT NULL AND te.next_due_at <= NOW()))';
@@ -935,6 +945,7 @@ function training_list_exercises(int $userId, string $type = 'recommended', stri
     'filters' => [
       'type' => $type,
       'status' => $status,
+      'category' => $category,
     ],
   ];
 }

@@ -36,6 +36,14 @@ expect_coach(in_array('3 omisiones graves en 8 partidas', $plan['evidence'], tru
 expect_coach($plan['intro_message']['state'] === 'welcome', 'El Coach debe emitir un estado semántico, no un color.');
 expect_coach(!array_key_exists('color', $plan['intro_message']), 'La lógica del Coach no debe contener decisiones visuales.');
 
+$forced = coach_forced_focus('find_mate');
+expect_coach(($forced['code'] ?? '') === 'find_mate', 'El selector de plan debe forzar el foco elegido por el usuario.');
+$filteredScenarios = coach_scenarios_for_selected_type([
+  ['id' => 10, 'scenario_type' => 'mate'],
+  ['id' => 11, 'scenario_type' => 'defense'],
+], 'find_mate');
+expect_coach(array_column($filteredScenarios, 'id') === [10], 'El plan forzado debe conservar solo escenarios compatibles.');
+
 $message = coach_message_payload('hint', 'thinking', 'Mira el flanco de rey.', ['hint_level' => 1]);
 expect_coach($message['type'] === 'hint' && $message['state'] === 'thinking', 'El contrato de mensajes debe conservar tipo y estado.');
 expect_coach(coach_message_payload('bad', 'orange', 'Fallback')['state'] === 'neutral', 'Estados de UI o inválidos deben normalizarse.');

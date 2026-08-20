@@ -66,6 +66,13 @@ assert_stockfish_value(
   stockfish_startpos_command(['e2e4', 'e7e5', 'g1f3']),
   'position startpos moves e2e4 e7e5 g1f3'
 );
+assert_stockfish_value('Búsqueda legacy por profundidad', stockfish_go_command(18, 0), 'go depth 18');
+assert_stockfish_value('Búsqueda legacy por tiempo', stockfish_go_command(18, 800), 'go movetime 800');
+assert_stockfish_value(
+  'Presupuesto de nodos tiene prioridad',
+  stockfish_go_command(18, 800, 40000, ['e2e4']),
+  'go nodes 40000 searchmoves e2e4'
+);
 
 $invalidHistoryRejected = false;
 try {
