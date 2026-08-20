@@ -52,14 +52,17 @@ $themeClass = board_theme_class($u['board_theme'] ?? null);
       <div class="analysis-tree-panel"><small>Historial y ramas</small><div id="analysisHistory" class="analysis-history"></div>
         <div id="analysisBranches" class="analysis-branches" aria-label="Árbol de variantes"></div>
       </div>
-      <label for="analysisFen">FEN</label>
-      <textarea id="analysisFen" rows="3" spellcheck="false"></textarea>
-      <div class="analysis-board-actions">
-        <button id="analysisLoad" type="button">Cargar FEN</button>
-        <button class="secondary" id="analysisCopy" type="button">Copiar FEN</button>
-        <button class="secondary" id="analysisStart" type="button">Posición inicial</button>
-      </div>
       <a class="analysis-return-review" id="analysisReturnReview" href="review.php" hidden>Volver a Review</a>
+      <details class="analysis-fen-panel">
+        <summary>Mostrar herramientas FEN</summary>
+        <label for="analysisFen">FEN actual</label>
+        <textarea id="analysisFen" rows="3" spellcheck="false"></textarea>
+        <div class="analysis-board-actions">
+          <button id="analysisLoad" type="button">Cargar FEN</button>
+          <button class="secondary" id="analysisCopy" type="button">Copiar FEN</button>
+          <button class="secondary" id="analysisStart" type="button">Posición inicial</button>
+        </div>
+      </details>
     </aside>
   </section>
 </main></div>

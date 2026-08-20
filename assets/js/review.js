@@ -753,21 +753,27 @@ async function startExploreVariation() {
   document.getElementById('variationMove').textContent = move.bestmove_display || move.bestmove;
   document.getElementById('variationWhy').textContent = move.explanation || 'La alternativa conserva una evaluación superior y reduce las opciones activas del rival.';
   try {
-    let line = stored;
-    if (!line.length) {
-      const applied = await ChessInteractive.api({ action: 'apply', fen: rootFen, move_uci: move.bestmove });
-      line = [{ uci: applied.move_uci, san: applied.move_san, fen_before: rootFen, fen_after: applied.fen_after }];
-      const continuation = await reviewVariationCoordinator.run(signal => ChessInteractive.api({ action: 'analyze', fen: applied.fen_after }, signal));
-      if (continuation) line.push(...(continuation.analysis.pv_moves || []));
-    }
-    line.forEach(item => reviewVariation.tree.play(item.fen_after, item.uci, item.san));
-    const path = reviewVariation.tree.line();
-    reviewVariation.tree.currentId = path[Math.min(1, path.length - 1)].id;
     const originAnalysis = await reviewVariationCoordinator.run(signal => ChessInteractive.api({
       action: 'analyze', fen: rootFen, game_id: Number(window.CHESS_REVIEW_GAME_ID || 0),
       ply: Number(move.ply || 0), first_move: move.bestmove,
     }, signal));
     if (originAnalysis) reviewVariation.analysis = originAnalysis.analysis;
+    let line = Array.isArray(originAnalysis?.analysis?.pv_moves) && originAnalysis.analysis.pv_moves[0]?.uci === move.bestmove
+      ? originAnalysis.analysis.pv_moves
+      : stored;
+    if (line.length < 2) {
+      let first = line[0] || null;
+      if (!first) {
+        const applied = await ChessInteractive.api({ action: 'apply', fen: rootFen, move_uci: move.bestmove });
+        first = { uci: applied.move_uci, san: applied.move_san, fen_before: rootFen, fen_after: applied.fen_after };
+      }
+      line = [first];
+      const continuation = await reviewVariationCoordinator.run(signal => ChessInteractive.api({ action: 'analyze', fen: first.fen_after }, signal));
+      if (continuation) line.push(...(continuation.analysis.pv_moves || []));
+    }
+    line.forEach(item => reviewVariation.tree.play(item.fen_after, item.uci, item.san));
+    const path = reviewVariation.tree.line();
+    reviewVariation.tree.currentId = path[Math.min(1, path.length - 1)].id;
     await refreshReviewVariation(false);
   } catch (error) {
     document.getElementById('variationPv').textContent = error.message;
@@ -856,7 +862,6 @@ function leaveReviewVariation() {
 }
 
 document.getElementById('variationReturn')?.addEventListener('click', leaveReviewVariation);
-document.getElementById('variationExit')?.addEventListener('click', leaveReviewVariation);
 document.getElementById('reviewMobileBack')?.addEventListener('click', event => {
   if (!reviewVariation) return;
   event.preventDefault();
@@ -864,12 +869,6 @@ document.getElementById('reviewMobileBack')?.addEventListener('click', event => 
 });
 document.getElementById('variationPrev')?.addEventListener('click', () => { reviewVariation.tree.back(); refreshReviewVariation(); });
 document.getElementById('variationNext')?.addEventListener('click', () => { reviewVariation.tree.forward(); refreshReviewVariation(); });
-document.querySelectorAll('[data-variation-tab]').forEach(button => button.addEventListener('click', () => {
-  const tab = button.dataset.variationTab || 'analysis';
-  if (tab === 'analysis') return;
-  leaveReviewVariation();
-  setReviewMobileTab(tab, true);
-}));
 
 window.addEventListener('load', loadReview);
 window.addEventListener('pagehide', () => flushReviewProgress(true));

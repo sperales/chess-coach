@@ -30,8 +30,8 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
     <a href="games.php" id="reviewMobileBack" aria-label="Volver a partidas">‹</a>
     <strong>Revisión de partida</strong>
     <div class="review-mobile-appbar-actions">
-      <button type="button" aria-label="Abrir análisis" data-review-sheet-open>↗</button>
-      <button type="button" aria-label="Girar tablero" onclick="document.getElementById('flipBoardBtn')?.click()">•••</button>
+      <button type="button" aria-label="Abrir análisis" data-review-sheet-open>▥</button>
+      <button type="button" aria-label="Girar tablero" onclick="document.getElementById('flipBoardBtn')?.click()">↻</button>
     </div>
   </header>
 
@@ -60,16 +60,9 @@ $boardThemeClass = board_theme_class($u['board_theme'] ?? null);
       <button class="secondary" id="variationNext" type="button" aria-label="Posición siguiente">›</button>
     </div>
     <section class="review-variation-analysis">
-      <nav class="review-mobile-tabs" aria-label="Información de la variante">
-        <button type="button" data-variation-tab="summary">Resumen</button>
-        <button class="active" type="button" data-variation-tab="analysis">Análisis</button>
-        <button type="button" data-variation-tab="moves">Jugadas</button>
-        <button type="button" data-variation-tab="coach">Coach</button>
-      </nav>
       <article><small>Variación Stockfish</small><p id="variationPv">--</p></article>
       <article><small>Por qué es mejor</small><p id="variationWhy">--</p></article>
       <a class="review-variation-open-board" id="variationOpenBoard" href="analysis-board.php">Abrir en Tablero de análisis</a>
-      <button class="secondary" id="variationExit" type="button">Salir de la variante</button>
     </section>
   </section>
 
