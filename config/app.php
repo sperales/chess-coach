@@ -10,4 +10,7 @@ return [
   'interactive_pv_min_plies' => 6,
   'interactive_pv_target_plies' => 8,
   'interactive_pv_max_plies' => 10,
+  // legacy keeps Selection v2 disabled, shadow compares without changing UX, active enables it explicitly.
+  'training_selection_mode' => 'shadow',
+  'training_foundation_backfill_batch_size' => 100,
 ];
