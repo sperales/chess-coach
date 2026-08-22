@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icons/favicon.ico">
 </head>
-<body class="dark-shell <?=e(board_theme_class($currentBoardTheme))?>">
+<body class="dark-shell profile-page <?=e(board_theme_class($currentBoardTheme))?>">
 <?php header_bar('Chess Coach'); ?>
 <div class="app-area">
   <main class="wrap">

@@ -134,10 +134,16 @@ function homeProgressSvg(series, metric) {
   const values = points.map(point => Math.max(0, Math.min(absoluteMax, point.value)));
   const observedMin = Math.min(...values);
   const observedMax = Math.max(...values);
-  const minimumSpan = metric === 'performance' ? 100 : 10;
-  const padding = Math.max(minimumSpan * .25, (observedMax - observedMin) * .2);
-  let minValue = Math.max(0, Math.floor((observedMin - padding) / 5) * 5);
-  let maxValue = Math.min(absoluteMax, Math.ceil((observedMax + padding) / 5) * 5);
+  const observedRange = observedMax - observedMin;
+  const minimumSpan = metric === 'performance'
+    ? Math.max(30, Math.min(120, Math.ceil(Math.max(1, observedRange) * 1.35)))
+    : metric === 'accuracy'
+      ? Math.max(4, Math.min(14, Math.ceil(Math.max(1, observedRange) * 1.45)))
+      : Math.max(8, Math.min(30, Math.ceil(Math.max(1, observedRange) * 1.35)));
+  const tickStep = metric === 'performance' ? 10 : (minimumSpan <= 8 ? 1 : 2);
+  const padding = Math.max(tickStep, observedRange * .18);
+  let minValue = Math.max(0, Math.floor((observedMin - padding) / tickStep) * tickStep);
+  let maxValue = Math.min(absoluteMax, Math.ceil((observedMax + padding) / tickStep) * tickStep);
   if (maxValue - minValue < minimumSpan) {
     const center = (observedMin + observedMax) / 2;
     minValue = Math.max(0, Math.floor(center - minimumSpan / 2));

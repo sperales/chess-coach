@@ -8485,14 +8485,35 @@ body.login-page::before {
 .training-mobile-coach.nova-state-hint{--coach-state:#e58d2c}
 .training-mobile-coach.nova-state-explanation{--coach-state:#78ca35}
 .training-mobile-coach .nova-avatar{align-self:center;justify-self:center}
-.training-mobile-coach.is-advancing .training-mobile-coach-copy{animation:trainingCoachAdvance .34s cubic-bezier(.22,.8,.3,1)}
+.training-mobile-coach.is-advancing .training-mobile-coach-copy,
+.training-scenario-coach.is-advancing .training-mobile-coach-copy{animation:trainingCoachAdvance .85s cubic-bezier(.2,.75,.25,1)}
 .training-mobile-progress[hidden],
 .training-mobile-summary-row[hidden]{display:none!important}
 .training-category-card.is-selected{box-shadow:inset 0 0 0 2px #8bd22f,0 0 18px rgba(139,210,47,.12)}
 .training-available-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
 @keyframes trainingCoachAdvance{
-  from{opacity:0;transform:translateX(42px)}
+  0%{opacity:.05;transform:translateX(68px)}
+  55%{opacity:.72;transform:translateX(12px)}
   to{opacity:1;transform:translateX(0)}
+}
+.training-completion-panel{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:center;border-color:#429b45;background:linear-gradient(110deg,#0a2b20,#0c171c)}
+.training-completion-panel[hidden]{display:none!important}
+.training-completion-nova .nova-avatar{width:92px;height:92px}
+.training-completion-panel .eyebrow{color:#8bd22f;font-weight:800;text-transform:uppercase;font-size:12px}
+.training-completion-panel h2{margin:5px 0}.training-completion-panel p{color:var(--muted)}
+.training-completion-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:16px 0}
+.training-completion-kpis div{display:grid;gap:4px;padding:12px;border:1px solid var(--line);border-radius:8px;background:#081419}
+.training-completion-kpis span{color:var(--muted);font-size:12px}.training-completion-kpis strong{font-size:20px}
+.training-history-list{display:grid;gap:10px}.training-history-item{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px;border:1px solid var(--line);border-radius:8px;background:#09151a}
+.training-history-item>div{display:grid;gap:3px;min-width:0}.training-history-item span,.training-history-item small{color:var(--muted)}
+.profile-page,.profile-page .app-area,.profile-page main,.profile-page .panel,.profile-page form{max-width:100%;min-width:0}
+@media(max-width:760px){
+  .training-completion-panel{grid-template-columns:1fr}.training-completion-nova{display:none}.training-completion-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .training-history-item{align-items:stretch;flex-direction:column}.training-history-item button{width:100%}
+  .profile-page{overflow-x:hidden}.profile-page .wrap,.profile-page .dashboard{width:100%;overflow-x:clip}
+  .profile-page .board-theme-options{grid-template-columns:minmax(0,1fr)}
+  .profile-page input,.profile-page select,.profile-page textarea,.profile-page button{min-width:0;max-width:100%}
+  .profile-page .batch-row>*{min-width:0;overflow-wrap:anywhere}
 }
 @media(max-width:760px){
   .training-scenario-workspace{grid-template-columns:1fr}
