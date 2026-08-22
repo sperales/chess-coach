@@ -543,7 +543,7 @@ function process_analysis_job_with_engine(int $analysisId, int $userId): array {
     try {
       training_generate_for_analysis($analysisId, $userId);
     } catch (Throwable $trainingError) {
-      // Training exercises are derived metadata; generation can be retried from the profile backfill.
+      // Training exercises are derived metadata; a generation failure must not invalidate the analysis.
     }
     db()->prepare('UPDATE game_analysis
                    SET status="done", completed_at=NOW(), updated_at=NOW(), blunders=?, mistakes=?, inaccuracies=?,
@@ -580,7 +580,7 @@ function process_analysis_job_with_engine(int $analysisId, int $userId): array {
       require_once __DIR__ . '/player_dna.php';
       player_dna_refresh_after_analysis($userId, (string)($a['username'] ?? ''), $analysisId);
     } catch (Throwable $dnaError) {
-      // El ADN es derivado y puede regenerarse manualmente desde el perfil.
+      // El ADN es derivado y se volverá a actualizar con el siguiente análisis completado.
       error_log('Player DNA refresh failed: ' . $dnaError->getMessage());
     }
     return ['ok' => true, 'processed' => true, 'analysis_id' => $analysisId, 'status' => 'done', 'summary' => $counts];

@@ -18,6 +18,8 @@
 - Finalized Flash and Scenario activity now share the same streak and daily/weekly progress semantics.
 - Review training links now require a current published canonical opportunity.
 - Player DNA no longer presents a recommendation that competes with the current Coach Decision.
+- Removed obsolete manual Smart Tag, exercise, content, Stockfish enrichment, Scenario and Player DNA backfill controls from Profile; these derived records are created automatically for new analyses.
+- Profile now contains its grids and controls without horizontal overflow on narrow screens.
 - The roadmap now prioritizes training transfer before conversational AI.
 - Bumped the app version and PWA cache to `1.6.0`.
 

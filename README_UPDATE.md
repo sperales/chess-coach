@@ -17,6 +17,8 @@ Training Quality & Coach Foundation with controlled shadow rollout.
 - Aligns streaks and daily/weekly progress with genuinely finalized Flash or Scenario activity.
 - Adds factual training closure, structured Nova states and subtle reactive animations with reduced-motion support.
 - Adds a bounded, repeatable Profile backfill and compact quality/selector diagnostics for shared hosting.
+- Removes obsolete Profile backfill controls now covered automatically by completed analysis, while keeping the v1.6 quality foundation and historical opening processes.
+- Tightens Profile's narrow-screen containment to remove the remaining horizontal scroll.
 - Archives the previous roadmap and replaces it with an outcome-oriented roadmap grounded in the product audit.
 - Bumps the app version and PWA cache to `1.6.0`.
 
@@ -29,6 +31,7 @@ Run `sql/migrations/037_changes_1.6.0.sql` once after uploading the release. It 
 - Keep `training_selection_mode` set to `shadow` initially.
 - Run the new Training foundation backfill from Profile in bounded batches until it reports zero pending items.
 - Review rejection, duplicate and shadow-comparison metrics shown beside the batch action.
+- Confirm Profile only exposes the quality/concepts and openings maintenance processes.
 - Change the mode to `active` only after explicitly validating production data. Set it to `legacy` for an immediate functional rollback without deleting new evidence.
 
 ## Verification
@@ -38,6 +41,7 @@ Run `sql/migrations/037_changes_1.6.0.sql` once after uploading the release. It 
 - Confirm shadow mode does not alter the visible legacy plan or its order.
 - Complete both a Flash and a Scenario and confirm Mastery, Recent Performance, deferred review, daily goals and streak use finalized activity.
 - Confirm Home, Training, Nova and the focus objective report the same Coach Decision.
+- Open Profile on a narrow mobile viewport and confirm there is no horizontal scroll.
 - Confirm Review only offers training when a current canonical opportunity is published and delivered.
 - Confirm Nova reacts to real processing and respects `prefers-reduced-motion`.
 - Confirm `config/version.php` and `service-worker.js` both use `1.6.0`.

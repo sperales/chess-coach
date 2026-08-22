@@ -8526,14 +8526,23 @@ body.login-page::before {
 .training-completion-kpis span{color:var(--muted);font-size:12px}.training-completion-kpis strong{font-size:20px}
 .training-history-list{display:grid;gap:10px}.training-history-item{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px;border:1px solid var(--line);border-radius:8px;background:#09151a}
 .training-history-item>div{display:grid;gap:3px;min-width:0}.training-history-item span,.training-history-item small{color:var(--muted)}
-.profile-page,.profile-page .app-area,.profile-page main,.profile-page .panel,.profile-page form{max-width:100%;min-width:0}
+.profile-page,.profile-page .app-area,.profile-page main,.profile-page .panel,.profile-page .card,.profile-page form{max-width:100%;min-width:0}
+.profile-page .piece-set-options,.profile-page .piece-set-option,.profile-page .piece-set-option>span,
+.profile-page .piece-set-preview,.profile-page .board-theme-options,.profile-page .board-theme-option,
+.profile-page .training-preferences-grid,.profile-page .training-preference-option,
+.profile-page .training-goal-grid,.profile-page .training-goal-field,
+.profile-page .training-plan-overview,.profile-page .training-progress-metric{min-width:0;max-width:100%}
 @media(max-width:760px){
   .training-completion-panel{grid-template-columns:1fr}.training-completion-nova{display:none}.training-completion-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
   .training-history-item{align-items:stretch;flex-direction:column}.training-history-item button{width:100%}
-  .profile-page{overflow-x:hidden}.profile-page .wrap,.profile-page .dashboard{width:100%;overflow-x:clip}
+  .profile-page,.profile-page .app-area{width:100%;overflow-x:hidden}
+  .profile-page .wrap,.profile-page .dashboard{width:100%;max-width:100%;padding-left:12px;padding-right:12px;overflow-x:hidden}
+  .profile-page .card{width:100%;padding-left:16px;padding-right:16px}
+  .profile-page .panel-head{align-items:flex-start;flex-wrap:wrap;gap:12px}
   .profile-page .board-theme-options{grid-template-columns:minmax(0,1fr)}
+  .profile-page .training-goal-grid{grid-template-columns:minmax(0,1fr)}
   .profile-page input,.profile-page select,.profile-page textarea,.profile-page button{min-width:0;max-width:100%}
-  .profile-page .batch-row>*{min-width:0;overflow-wrap:anywhere}
+  .profile-page .batch-row>*,.profile-page .training-progress-metric>*{min-width:0;overflow-wrap:anywhere}
 }
 @media(prefers-reduced-motion:reduce){
   .nova-avatar[data-nova-state]{animation:none!important;transform:none!important}
