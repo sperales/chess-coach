@@ -1,5 +1,33 @@
 # CHANGELOG
 
+## v1.6.0 - Training Quality & Coach Foundation
+
+### Added
+
+- Added the versioned ten-concept training taxonomy and canonical Training Opportunity domain.
+- Added auditable hard filters, Pedagogical Score, source deduplication and Flash/Scenario routing.
+- Added Training Selection v2 with persisted shadow comparisons and structured selection reasons.
+- Added concept Mastery, Recent Performance, observed difficulty and deterministic deferred review.
+- Added one persisted Coach Decision consumed by Home, Training, Nova and training objectives.
+- Added quality-first short, standard and long composition plus limited within-training adaptation.
+- Added bounded Profile backfill, inventory metrics and selector diagnostics.
+- Added semantic and reactive Nova states with reduced-motion support.
+
+### Changed
+
+- Finalized Flash and Scenario activity now share the same streak and daily/weekly progress semantics.
+- Review training links now require a current published canonical opportunity.
+- Player DNA no longer presents a recommendation that competes with the current Coach Decision.
+- Removed obsolete manual Smart Tag, exercise, content, Stockfish enrichment, Scenario and Player DNA backfill controls from Profile; these derived records are created automatically for new analyses.
+- Profile now contains its grids and controls without horizontal overflow on narrow screens.
+- Fixed the Training Quality foundation backfill upsert so its MariaDB column and value counts match, and retained partial batch diagnostics in Profile.
+- The roadmap now prioritizes training transfer before conversational AI.
+- Bumped the app version and PWA cache to `1.6.0`.
+
+### Database
+
+- Added migration `037_changes_1.6.0.sql` with additive taxonomy, opportunity, audit, selection, mastery, Coach Decision and backfill structures.
+
 ## v1.5.2 - Training completion and stability
 
 ### Added

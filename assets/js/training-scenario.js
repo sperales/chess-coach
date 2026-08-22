@@ -25,6 +25,7 @@ let scenarioBusy = false;
 let scenarioTimerHandle = null;
 let scenarioMoveSequence = 0;
 let scenarioMoveController = null;
+let scenarioNovaThinkingTimer = null;
 
 function scenarioEscape(value) {
   return (value == null ? '' : String(value)).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
@@ -37,12 +38,40 @@ async function scenarioJson(url, options = {}) {
   return data;
 }
 
-function scenarioPost(action, body = {}, signal = null) {
-  return scenarioJson(`api/training.php?action=${encodeURIComponent(action)}`, {
-    method: 'POST',
-    headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify(body), signal,
-  });
+function scenarioBeginNovaProcessing() {
+  window.clearTimeout(scenarioNovaThinkingTimer);
+  scenarioNovaThinkingTimer = window.setTimeout(() => {
+    const card = document.getElementById('scenarioCoach');
+    const avatar = document.getElementById('scenarioNova');
+    if (card) {
+      card.dataset.novaState = 'thinking';
+      card.classList.add('nova-state-thinking');
+    }
+    if (avatar) {
+      avatar.dataset.novaState = 'thinking';
+      avatar.className = 'nova-avatar nova-avatar--thinking';
+    }
+  }, 220);
+}
+
+function scenarioEndNovaProcessing() {
+  window.clearTimeout(scenarioNovaThinkingTimer);
+  scenarioNovaThinkingTimer = null;
+  document.getElementById('scenarioCoach')?.classList.remove('nova-state-thinking');
+}
+
+async function scenarioPost(action, body = {}, signal = null) {
+  const reactive = ['scenario_move', 'scenario_hint', 'scenario_why'].includes(action);
+  if (reactive) scenarioBeginNovaProcessing();
+  try {
+    return await scenarioJson(`api/training.php?action=${encodeURIComponent(action)}`, {
+      method: 'POST',
+      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(body), signal,
+    });
+  } finally {
+    if (reactive) scenarioEndNovaProcessing();
+  }
 }
 
 async function loadScenarioPlan() {
@@ -353,7 +382,9 @@ function renderScenarioFeed() {
   const card = document.getElementById('scenarioCoach');
   const avatar = document.getElementById('scenarioNova');
   if (card) card.className = `training-mobile-coach training-scenario-coach nova-state-${message.state}`;
+  if (card) card.dataset.novaState = message.state === 'success' ? 'correct' : message.state;
   if (avatar) avatar.className = `nova-avatar ${message.state === 'success' ? 'nova-avatar--success' : message.state === 'error' ? 'nova-avatar--error' : message.state === 'hint' ? 'nova-avatar--warning' : message.state === 'explanation' ? 'nova-avatar--focus' : 'nova-avatar--neutral'}`;
+  if (avatar) avatar.dataset.novaState = message.state === 'success' ? 'correct' : message.state;
   setScenarioText('scenarioCoachTitle', message.title);
   setScenarioText('scenarioCoachText', message.text);
   setScenarioText('scenarioCoachStep', `${scenarioFeedIndex + 1} de ${feed.length}`);

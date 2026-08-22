@@ -2,6 +2,7 @@
 require_once __DIR__.'/../includes/auth.php';
 require_once __DIR__.'/../includes/helpers.php';
 require_once __DIR__.'/../includes/analysis_queue.php';
+require_once __DIR__.'/../includes/training_metrics.php';
 
 $u = require_login();
 $userId = (int)$u['id'];
@@ -20,6 +21,7 @@ $mutatingActions = [
   'training_content_backfill',
   'training_engine_backfill',
   'training_scenario_backfill',
+  'training_foundation_backfill',
   'process',
 ];
 if (in_array($action, $mutatingActions, true)) {
@@ -168,6 +170,22 @@ if ($action === 'training_scenario_backfill') {
 
 if ($action === 'training_scenario_backfill_status') {
   json_response(['ok' => true, 'pending' => training_scenario_backfill_pending_count($userId)]);
+}
+
+if ($action === 'training_foundation_backfill') {
+  ignore_user_abort(true);
+  @set_time_limit(300);
+  $body = request_json_body();
+  $limit = max(1, min(250, (int)($body['limit'] ?? (app_config()['training_foundation_backfill_batch_size'] ?? 100))));
+  if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
+  $result = training_opportunity_backfill_batch($userId, $limit);
+  try {
+    $result['metrics'] = training_foundation_metrics($userId);
+  } catch (Throwable $metricsError) {
+    error_log('Training foundation metrics unavailable: ' . $metricsError->getMessage());
+    $result['metrics'] = null;
+  }
+  json_response($result);
 }
 
 if ($action === 'process') {

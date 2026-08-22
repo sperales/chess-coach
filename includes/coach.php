@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/training_plan.php';
 require_once __DIR__ . '/coach_messages.php';
+require_once __DIR__ . '/training_selection_v2.php';
+require_once __DIR__ . '/coach_decision.php';
 
 const COACH_TRAINING_VERSION = 1;
 const COACH_FLASH_MIN_ITEMS = 3;
@@ -9,6 +11,19 @@ const COACH_FLASH_MAX_ITEMS = 10;
 function coach_focus_from_context(array $context): array {
   $forcedFocus = is_array($context['forced_focus'] ?? null) ? $context['forced_focus'] : [];
   if ($forcedFocus) return $forcedFocus;
+
+  $decision = is_array($context['coach_decision'] ?? null) ? $context['coach_decision'] : [];
+  if ($decision) {
+    return [
+      'code' => (string)$decision['primary_concept_code'],
+      'title' => (string)$decision['primary_label'],
+      'description' => (string)$decision['reason'],
+      'evidence' => [(string)$decision['session_objective']],
+      'tag_codes' => [],
+      'sample_size' => 0,
+      'decision_id' => (int)$decision['id'],
+    ];
+  }
 
   $focuses = is_array($context['training_focus'] ?? null) ? $context['training_focus'] : [];
   $focus = $focuses[0] ?? [];
@@ -269,8 +284,16 @@ function coach_recommendation_for_user(int $userId, array $trainingFocus = [], s
   $recentSt = db()->prepare('SELECT COUNT(*) FROM training_solve_runs WHERE user_id=? AND status IN ("solved","failed") AND completed_at>=DATE_SUB(NOW(),INTERVAL 14 DAY)');
   $recentSt->execute([$userId]);
   $target = max(COACH_FLASH_MIN_ITEMS, min(COACH_FLASH_MAX_ITEMS, (int)$settings['daily_exercise_goal']));
+  $coachDecision = null;
+  try {
+    $coachDecision = coach_decision_public(coach_decision_for_user($userId));
+  } catch (Throwable $decisionError) {
+    // Compatibility: a missing 1.6 migration must not break legacy Training during rollout.
+    error_log('Coach Decision unavailable: ' . $decisionError->getMessage());
+  }
   return coach_compose_training_blueprint([
     'forced_focus' => coach_forced_focus($selectedType),
+    'coach_decision' => $coachDecision,
     'training_focus' => $trainingFocus,
     'plan_focus' => $planFocus,
     'sample_size' => $trainingFocus[0]['sample_size'] ?? ($dna['recent_games'] ?? 0),
@@ -287,8 +310,11 @@ function coach_public_session_item(array $row): array {
     'item_type' => (string)$row['item_type'],
     'exercise_id' => $row['exercise_id'] === null ? null : (int)$row['exercise_id'],
     'scenario_id' => $row['scenario_id'] === null ? null : (int)$row['scenario_id'],
+    'opportunity_id' => $row['opportunity_id'] === null ? null : (int)$row['opportunity_id'],
     'concept_code' => (string)($row['concept_code'] ?? ''),
     'reason' => (string)($row['reason'] ?? ''),
+    'selection_reason_code' => (string)($row['selection_reason_code'] ?? ''),
+    'selection_version' => (int)($row['selection_version'] ?? 1),
     'evidence' => coach_decode_json($row['evidence_json'] ?? null),
     'status' => (string)$row['status'],
   ];
@@ -325,6 +351,13 @@ function coach_prepare_session(int $userId, int $sessionId, array $trainingFocus
   $sessionSt->execute([$sessionId, $userId]);
   $selectedType = (string)($sessionSt->fetchColumn() ?: 'recommended');
   $blueprint = coach_recommendation_for_user($userId, $trainingFocus, $selectedType);
+  try {
+    $selection = training_selection_shadow_compare($userId, $blueprint, (string)($blueprint['focus']['code'] ?? ''));
+    if (training_selection_mode() === 'active' && !empty($selection['blueprint'])) $blueprint = $selection['blueprint'];
+  } catch (Throwable $shadowError) {
+    // Shadow selection is observational and must never block legacy Training.
+    error_log('Training Selection v2 shadow failed: ' . $shadowError->getMessage());
+  }
   $pdo = db();
   $pdo->beginTransaction();
   try {
@@ -334,12 +367,19 @@ function coach_prepare_session(int $userId, int $sessionId, array $trainingFocus
         $blueprint['coach_version'], $blueprint['focus']['code'], $blueprint['focus']['title'], $blueprint['rationale'],
         $evidenceJson, $blueprint['estimated_duration_min'], $blueprint['item_count'], $sessionId, $userId,
       ]);
-    $insert = $pdo->prepare('INSERT INTO training_session_items (session_id,user_id,position,item_type,exercise_id,scenario_id,concept_code,reason,evidence_json,status,created_at) VALUES (?,?,?,?,?,?,?,?,?,"pending",NOW())');
+    $insert = $pdo->prepare('INSERT INTO training_session_items
+      (session_id,user_id,position,item_type,exercise_id,scenario_id,opportunity_id,concept_code,reason,selection_reason_code,selection_version,evidence_json,status,created_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,"pending",NOW())');
     foreach ($blueprint['items'] as $item) {
       $insert->execute([
-        $sessionId, $userId, $item['position'], $item['item_type'], $item['exercise_id'], $item['scenario_id'],
-        $item['concept_code'], $item['reason'], json_encode($item['evidence'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        $sessionId, $userId, $item['position'], $item['item_type'], $item['exercise_id'], $item['scenario_id'], $item['opportunity_id'] ?? null,
+        $item['concept_code'], $item['reason'], $item['selection_reason_code'] ?? null, $item['selection_version'] ?? 1,
+        json_encode($item['evidence'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
       ]);
+      if (!empty($item['opportunity_id'])) {
+        $pdo->prepare('UPDATE training_opportunities SET last_selected_at=NOW() WHERE id=? AND user_id=?')
+          ->execute([(int)$item['opportunity_id'], $userId]);
+      }
     }
     $pdo->commit();
     coach_record_message($userId, $sessionId, $blueprint['intro_message']);

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/training.php';
 require_once __DIR__ . '/review_progress.php';
+require_once __DIR__ . '/coach_decision.php';
 
 const TRAINING_PLAN_GENERATION_VERSION = 2;
 
@@ -44,6 +45,21 @@ function training_plan_review_candidate(int $userId): ?array {
 }
 
 function training_plan_focus_candidate(int $userId): ?array {
+  try {
+    $decision = coach_decision_public(coach_decision_for_user($userId));
+    if ($decision) {
+      return [
+        'context_type' => 'concept',
+        'context_key' => (string)$decision['primary_concept_code'],
+        'label' => (string)$decision['primary_label'],
+        'exercise_count' => 0,
+        'rationale' => (string)$decision['reason'],
+        'decision_id' => (int)$decision['id'],
+      ];
+    }
+  } catch (Throwable $e) {
+    // Goals remain available during a partial deployment before migration 037.
+  }
   $st = db()->prepare('SELECT tet.tag_code,d.label,COUNT(DISTINCT te.id) AS exercise_count
                        FROM training_exercise_tags tet
                        JOIN training_exercises te ON te.id=tet.exercise_id AND te.user_id=? AND te.status="active"
@@ -56,9 +72,11 @@ function training_plan_focus_candidate(int $userId): ?array {
   $st->execute([$userId]);
   $row = $st->fetch();
   return $row ? [
-    'tag_code' => (string)$row['tag_code'],
+    'context_type' => 'smart_tag',
+    'context_key' => (string)$row['tag_code'],
     'label' => (string)$row['label'],
     'exercise_count' => (int)$row['exercise_count'],
+    'rationale' => 'Tu patrón pendiente más frecuente.',
   ] : null;
 }
 
@@ -127,10 +145,19 @@ function training_plan_definitions(int $userId): array {
   }
   $focus = training_plan_focus_candidate($userId);
   if ($focus) {
-    $add('daily', $daily, 'focus_exercises', 'Trabaja ' . $focus['label'], 'Tu patrón pendiente más frecuente.', 2, 'smart_tag', $focus['tag_code']);
+    $add(
+      'daily',
+      $daily,
+      'focus_exercises',
+      'Trabaja ' . $focus['label'],
+      (string)$focus['rationale'],
+      2,
+      (string)$focus['context_type'],
+      (string)$focus['context_key']
+    );
   }
 
-  $add('weekly', $weekly, 'training_days', 'Entrena con regularidad', 'Días con al menos un ejercicio completado.', (int)$settings['weekly_training_days_goal']);
+  $add('weekly', $weekly, 'training_days', 'Entrena con regularidad', 'Días con al menos una actividad de entrenamiento finalizada.', (int)$settings['weekly_training_days_goal']);
   $add('weekly', $weekly, 'training_exercises', 'Completa el trabajo semanal', 'Volumen semanal configurado.', (int)$settings['weekly_exercise_goal']);
   if ($review && $weeklyProgress['reviews'] < 2) {
     $add('weekly', $weekly, 'review_games', 'Revisa tus partidas', 'Convierte análisis recientes en aprendizaje.', 2);
@@ -159,17 +186,23 @@ function training_plan_upsert_goal(int $userId, array $goal): void {
 }
 
 function training_plan_period_progress(int $userId, string $start, string $end): array {
-  $st = db()->prepare('SELECT COUNT(DISTINCT sr.id) AS exercises,
-                              COUNT(DISTINCT DATE(sr.completed_at)) AS training_days,
-                              COALESCE(SUM(run_duration.duration_ms),0) AS duration_ms
-                       FROM training_solve_runs sr
-                       LEFT JOIN (
-                         SELECT solve_run_id,MAX(duration_ms) AS duration_ms
-                         FROM training_attempts WHERE user_id=? AND solve_run_id IS NOT NULL GROUP BY solve_run_id
-                       ) run_duration ON run_duration.solve_run_id=sr.id
-                       WHERE sr.user_id=? AND sr.status IN ("solved","failed")
-                         AND DATE(sr.completed_at) BETWEEN ? AND ?');
-  $st->execute([$userId, $userId, $start, $end]);
+  $st = db()->prepare('SELECT COUNT(*) AS exercises,
+                              COUNT(DISTINCT activity_date) AS training_days,
+                              COALESCE(SUM(duration_ms),0) AS duration_ms
+                       FROM (
+                         SELECT DATE(completed_at) AS activity_date,
+                                GREATEST(0,TIMESTAMPDIFF(MICROSECOND,started_at,completed_at) DIV 1000) AS duration_ms
+                         FROM training_solve_runs
+                         WHERE user_id=? AND status IN ("solved","failed") AND completed_at IS NOT NULL
+                           AND DATE(completed_at) BETWEEN ? AND ?
+                         UNION ALL
+                         SELECT DATE(completed_at) AS activity_date,
+                                GREATEST(0,TIMESTAMPDIFF(MICROSECOND,started_at,completed_at) DIV 1000) AS duration_ms
+                         FROM training_scenario_runs
+                         WHERE user_id=? AND status IN ("completed","failed") AND completed_at IS NOT NULL
+                           AND DATE(completed_at) BETWEEN ? AND ?
+                       ) finalized_activity');
+  $st->execute([$userId, $start, $end, $userId, $start, $end]);
   $row = $st->fetch() ?: [];
   $reviews = db()->prepare('SELECT COUNT(*) FROM game_review_progress WHERE user_id=? AND DATE(completed_at) BETWEEN ? AND ?');
   $reviews->execute([$userId, $start, $end]);
@@ -194,6 +227,28 @@ function training_plan_goal_progress(int $userId, array $goal, array $periodProg
     return min(1, (int)$st->fetchColumn());
   }
   if ($type === 'focus_exercises') {
+    if (($goal['context_type'] ?? '') === 'concept') {
+      $st = db()->prepare('SELECT COUNT(*) FROM (
+                           SELECT sr.id
+                           FROM training_solve_runs sr
+                           JOIN training_exercises te ON te.id=sr.exercise_id AND te.user_id=sr.user_id
+                           JOIN training_opportunities o ON o.id=te.opportunity_id AND o.user_id=sr.user_id
+                           WHERE sr.user_id=? AND sr.status IN ("solved","failed")
+                             AND o.primary_concept_code=? AND DATE(sr.completed_at) BETWEEN ? AND ?
+                           UNION ALL
+                           SELECT ssr.id
+                           FROM training_scenario_runs ssr
+                           JOIN training_scenarios ts ON ts.id=ssr.scenario_id AND ts.user_id=ssr.user_id
+                           JOIN training_opportunities o ON o.id=ts.opportunity_id AND o.user_id=ssr.user_id
+                           WHERE ssr.user_id=? AND ssr.status IN ("completed","failed")
+                             AND o.primary_concept_code=? AND DATE(ssr.completed_at) BETWEEN ? AND ?
+                         ) completed_focus');
+      $st->execute([
+        $userId, $goal['context_key'], $goal['period_start'], $goal['period_end'],
+        $userId, $goal['context_key'], $goal['period_start'], $goal['period_end'],
+      ]);
+      return (int)$st->fetchColumn();
+    }
     $st = db()->prepare('SELECT COUNT(DISTINCT sr.id)
                          FROM training_solve_runs sr
                          JOIN training_exercise_tags tet ON tet.exercise_id=sr.exercise_id AND tet.tag_code=?

@@ -1,10 +1,12 @@
 let playerDnaSnapshot = null;
+let playerDnaCoachDecision = null;
 
 async function loadPlayerDna() {
   const response = await fetch('api/player-dna.php?action=snapshot', { cache: 'no-store' });
   const payload = await response.json();
   if (!payload.ok) throw new Error(payload.error || 'No se pudo cargar el ADN del jugador.');
   playerDnaSnapshot = payload.snapshot || null;
+  playerDnaCoachDecision = payload.coach_decision || null;
   renderPlayerDna(payload.period || {});
 }
 
@@ -52,7 +54,7 @@ function renderSummary() {
   const el = document.getElementById('playerDnaSummary');
   if (!el) return;
   const rec = playerDnaSnapshot.recommendations || {};
-  const primary = rec.primary || {};
+  const primary = playerDnaCoachDecision || rec.primary || {};
   const overview = playerDnaSnapshot.overview || {};
   const improvement = overview.biggest_improvement || rec.biggest_improvement || null;
   const problem = overview.most_persistent_problem || rec.most_persistent_problem || null;
@@ -62,7 +64,9 @@ function renderSummary() {
       <span class="trainer-state-badge ${confidenceClass(playerDnaSnapshot.confidence)}">Confianza ${escapeHtml(confidenceLabel(playerDnaSnapshot.confidence))}</span>
       <h2>${escapeHtml(playerDnaSnapshot.profile_label || 'Perfil en construcción')}</h2>
       <p>${escapeHtml(playerDnaSnapshot.summary_text || '')}</p>
-      ${primary.url ? `<a class="btn small" href="${escapeAttr(primary.url)}">${escapeHtml(primary.action_label || 'Ver foco')}</a>` : ''}
+      ${playerDnaCoachDecision
+        ? '<a class="btn small" href="training.php">Entrenar foco actual</a>'
+        : (primary.url ? `<a class="btn small" href="${escapeAttr(primary.url)}">${escapeHtml(primary.action_label || 'Ver foco')}</a>` : '')}
     </div>
     <div class="trainer-mini-kpis player-dna-kpis">
       ${miniKpi('Analizadas', playerDnaSnapshot.analyzed_games || 0)}
@@ -161,6 +165,16 @@ function renderNextStep() {
   const el = document.getElementById('playerDnaNext');
   if (!el) return;
   const primary = (playerDnaSnapshot.recommendations || {}).primary || {};
+  if (playerDnaCoachDecision) {
+    el.innerHTML = `<div class="player-dna-next-card">
+      <span>Foco actual del Coach</span>
+      <h3>${escapeHtml(playerDnaCoachDecision.primary_label || 'Entrenamiento recomendado')}</h3>
+      <p>${escapeHtml(playerDnaCoachDecision.reason || playerDnaCoachDecision.session_objective || '')}</p>
+      <small>El ADN aporta el contexto longitudinal; la prioridad actual también considera rendimiento reciente, progreso y oportunidades disponibles.</small>
+      <a class="btn" href="training.php">Abrir entrenamiento</a>
+    </div>`;
+    return;
+  }
   const target = primary.source === 'tag'
     ? `<span class="smart-tag ${smartTagClass(primary)}">${escapeHtml(primary.title || primary.code || 'Objetivo')}</span>`
     : `<span>Objetivo</span>`;

@@ -39,6 +39,7 @@ let trainingMobileExplanation = '';
 let trainingMobileCoachSlideIndex = 0;
 let trainingMobileCoachMessages = [];
 let trainingMobileCoachAnimateAdvance = false;
+let trainingNovaThinkingTimer = null;
 const TRAINING_PIECE_ASSET_PATH = (window.CHESS_COACH_PIECE_PATH || 'assets/pieces/Set%201/').toString();
 const TRAINING_PREFERENCES = window.CHESS_TRAINING_PREFERENCES || {};
 const TRAINING_SHOW_LEGAL_MOVES = TRAINING_PREFERENCES.showLegalMoves !== false;
@@ -1000,25 +1001,47 @@ function renderTrainingMobileProgress() {
 
 function trainingCoachAvatar(state) {
   return {
-    welcome: 'nova-avatar--success', neutral: 'nova-avatar--neutral', thinking: 'nova-avatar--thinking',
-    explaining: 'nova-avatar--focus', correct: 'nova-avatar--success', error: 'nova-avatar--error',
+    welcome: 'nova-avatar--neutral', neutral: 'nova-avatar--neutral', idle: 'nova-avatar--neutral', thinking: 'nova-avatar--thinking',
+    hint: 'nova-avatar--warning', explaining: 'nova-avatar--focus', correct: 'nova-avatar--success',
+    session_complete: 'nova-avatar--success', error: 'nova-avatar--error',
   }[state] || 'nova-avatar--neutral';
 }
 
 function trainingCoachMessageMode(message) {
-  if (message.type === 'hint') return 'hint';
+  if (message.type === 'hint' || message.state === 'hint') return 'hint';
   if (message.type === 'explanation') return 'explanation';
-  if (message.state === 'correct') return 'success';
+  if (message.state === 'correct') return 'correct';
+  if (message.state === 'session_complete') return 'session-complete';
   if (message.state === 'error') return message.type === 'completion' ? 'solution' : 'error';
-  return message.state || 'neutral';
+  return message.state === 'idle' ? 'objective' : (message.state || 'neutral');
 }
 
 function trainingCoachMessageAvatar(message, mode) {
   if (mode === 'hint') return 'nova-avatar--warning';
   if (mode === 'explanation') return 'nova-avatar--focus';
-  if (mode === 'success') return 'nova-avatar--success';
+  if (mode === 'success' || mode === 'correct' || mode === 'session-complete') return 'nova-avatar--success';
   if (mode === 'error' || mode === 'solution') return 'nova-avatar--error';
   return trainingCoachAvatar(message.state);
+}
+
+function beginTrainingNovaProcessing() {
+  window.clearTimeout(trainingNovaThinkingTimer);
+  trainingNovaThinkingTimer = window.setTimeout(() => {
+    const card = document.getElementById('trainingMobileCoach');
+    const avatar = document.getElementById('trainingMobileNova');
+    if (!card || !avatar || !activeExercise) return;
+    card.dataset.novaState = 'thinking';
+    card.classList.add('nova-state-thinking');
+    avatar.dataset.novaState = 'thinking';
+    avatar.className = 'nova-avatar nova-avatar--thinking';
+  }, 220);
+}
+
+function endTrainingNovaProcessing() {
+  window.clearTimeout(trainingNovaThinkingTimer);
+  trainingNovaThinkingTimer = null;
+  const card = document.getElementById('trainingMobileCoach');
+  if (card) card.classList.remove('nova-state-thinking');
 }
 
 function trainingCoachTitle(type) {
@@ -1051,6 +1074,7 @@ async function showTrainingExplanation() {
   if (!trainingSolveRun) await startTrainingSolveRun();
   if (!trainingSolveRun) return;
   trainingHintLoading = true;
+  beginTrainingNovaProcessing();
   renderTrainingControls();
   try {
     const data = await trainingPost('api/training.php?action=why', {
@@ -1063,6 +1087,7 @@ async function showTrainingExplanation() {
   } catch (error) {
     trainingHintError = error?.message || 'No se pudo generar la explicación.';
   } finally {
+    endTrainingNovaProcessing();
     trainingHintLoading = false;
   }
   renderTrainingControls();
@@ -1158,8 +1183,11 @@ function renderTrainingMobileCoach() {
   trainingMobileCoachSlideIndex = Math.max(0, Math.min(slides.length - 1, trainingMobileCoachSlideIndex));
   const slide = slides[trainingMobileCoachSlideIndex];
 
+  const semanticState = slide.mode === 'success' ? 'correct' : (slide.mode === 'solution' ? 'error' : (slide.mode || trainingMobileCoachMode));
   card.className = `training-mobile-coach nova-state-${slide.mode || trainingMobileCoachMode}`;
+  card.dataset.novaState = semanticState;
   avatar.className = `nova-avatar ${slide.avatar}`;
+  avatar.dataset.novaState = semanticState;
   setText('trainingMobileCoachTitle', slide.title);
   setText('trainingMobileCoachText', slide.text);
   setText('trainingMobileCoachStep', `${trainingMobileCoachSlideIndex + 1} de ${slides.length}`);
@@ -1773,6 +1801,7 @@ function applyTrainingSolveRun(run) {
 async function startTrainingSolveRun() {
   if (!activeExercise || trainingExerciseFinished()) return;
   trainingHintLoading = true;
+  beginTrainingNovaProcessing();
   renderTrainingControls();
   try {
     const response = await fetch('api/training.php?action=solve_start', {
@@ -1793,6 +1822,7 @@ async function startTrainingSolveRun() {
   } catch (error) {
     trainingHintError = error && error.message ? error.message : 'Las pistas no están disponibles temporalmente.';
   } finally {
+    endTrainingNovaProcessing();
     trainingHintLoading = false;
   }
   renderTrainingHints();
@@ -1811,6 +1841,7 @@ async function showTrainingHint() {
   if (currentLevel >= 3) return;
 
   trainingHintLoading = true;
+  beginTrainingNovaProcessing();
   trainingHintError = '';
   renderTrainingControls();
   try {
@@ -1835,6 +1866,7 @@ async function showTrainingHint() {
   } catch (error) {
     trainingHintError = error && error.message ? error.message : 'No se pudo obtener la pista.';
   } finally {
+    endTrainingNovaProcessing();
     trainingHintLoading = false;
   }
   renderTrainingHints();
@@ -1939,17 +1971,23 @@ function renderTrainingCompletion() {
   const solved = Number(completedTraining.solved_count || 0);
   const failed = Number(completedTraining.failed_count || 0);
   const attempts = Number(completedTraining.total_attempts || 0);
+  const learning = completedTraining.learning_summary || null;
   kpis.innerHTML = [
     ['Resueltos', solved],
     ['Fallados', failed],
     ['Intentos', attempts],
     ['Tiempo medio', trainingFormatDuration(completedTraining.avg_time_ms)],
+    ...(learning ? [
+      ['Autonomía', `${Number(learning.autonomy_percent || 0)}%`],
+      ['Consolidación', learning.mastery_label || 'Iniciando'],
+      ['Próxima revisión', learning.next_review_at ? String(learning.next_review_at).slice(0, 10) : 'Por programar'],
+    ] : []),
   ].map(item => `<div><span>${escapeHtml(item[0])}</span><strong>${escapeHtml(item[1])}</strong></div>`).join('');
   if (message) {
     const delta = completedTraining.attempt_delta;
-    message.textContent = delta === null || typeof delta === 'undefined'
+    message.textContent = learning?.nova_observation || (delta === null || typeof delta === 'undefined'
       ? `Has completado ${Number(completedTraining.exercise_count || solved + failed)} ejercicios. Nova ya puede prepararte el siguiente entrenamiento.`
-      : (delta < 0 ? `Has necesitado ${Math.abs(delta)} intentos menos que la vez anterior.` : delta > 0 ? `Has necesitado ${delta} intentos más que la vez anterior.` : 'Has igualado el número de intentos de la vez anterior.');
+      : (delta < 0 ? `Has necesitado ${Math.abs(delta)} intentos menos que la vez anterior.` : delta > 0 ? `Has necesitado ${delta} intentos más que la vez anterior.` : 'Has igualado el número de intentos de la vez anterior.'));
   }
   panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -1986,6 +2024,7 @@ async function repeatCompletedTraining(sessionId) {
 async function submitTrainingMove() {
   if (!activeExercise || selectedTrainingSquare.length < 4 || trainingExerciseFinished() || trainingMoveSubmitting) return;
   trainingMoveSubmitting = true;
+  beginTrainingNovaProcessing();
   updateTrainingDraft();
   try {
     let move = selectedTrainingSquare.toLowerCase();
@@ -2038,6 +2077,7 @@ async function submitTrainingMove() {
       renderTrainingMobileProgress();
     }
   } finally {
+    endTrainingNovaProcessing();
     trainingMoveSubmitting = false;
     updateTrainingDraft();
   }

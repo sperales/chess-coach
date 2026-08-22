@@ -1,3 +1,54 @@
+# Chess Coach v1.6.0 Update Notes
+
+## Release type
+
+Training Quality & Coach Foundation with controlled shadow rollout.
+
+## Changes
+
+- Adds a ten-concept Spanish training taxonomy with versioned mappings and evidence.
+- Separates engine detections from publishable training through canonical `Training Opportunities`.
+- Keeps obsolete, ambiguous, duplicate or weak candidates out of the selectable inventory with auditable rejection reasons.
+- Adds versioned Pedagogical Score, independent difficulty and pedagogical Flash/Scenario routing.
+- Runs Training Selection v2 in `shadow` mode by default, persisting comparisons without changing the legacy player experience.
+- Adds concept Mastery, Recent Performance and deterministic deferred review based on actual Flash and Scenario results.
+- Persists one Coach Decision shared by Home, Training, Nova and generated training objectives.
+- Adds short, standard and long quality-first composition for explicit future activation.
+- Aligns streaks and daily/weekly progress with genuinely finalized Flash or Scenario activity.
+- Adds factual training closure, structured Nova states and subtle reactive animations with reduced-motion support.
+- Adds a bounded, repeatable Profile backfill and compact quality/selector diagnostics for shared hosting.
+- Removes obsolete Profile backfill controls now covered automatically by completed analysis, while keeping the v1.6 quality foundation and historical opening processes.
+- Tightens Profile's narrow-screen containment to remove the remaining horizontal scroll.
+- Fixes the Training foundation backfill opportunity upsert and shows useful partial diagnostics when an individual record cannot be processed.
+- Archives the previous roadmap and replaces it with an outcome-oriented roadmap grounded in the product audit.
+- Bumps the app version and PWA cache to `1.6.0`.
+
+## SQL migration
+
+Run `sql/migrations/037_changes_1.6.0.sql` once after uploading the release. It creates the taxonomy, opportunity, audit, selection, mastery, Coach Decision and backfill foundation, and adds non-destructive links and first-move timing fields to existing Training tables.
+
+## Rollout
+
+- Keep `training_selection_mode` set to `shadow` initially.
+- Run the new Training foundation backfill from Profile in bounded batches until it reports zero pending items.
+- Review rejection, duplicate and shadow-comparison metrics shown beside the batch action.
+- Confirm Profile only exposes the quality/concepts and openings maintenance processes.
+- Change the mode to `active` only after explicitly validating production data. Set it to `legacy` for an immediate functional rollback without deleting new evidence.
+
+## Verification
+
+- Run all v1.6 foundation tests listed in `VERIFY.md`.
+- Confirm the migration and `sql/install.sql` remain in schema parity.
+- Confirm shadow mode does not alter the visible legacy plan or its order.
+- Complete both a Flash and a Scenario and confirm Mastery, Recent Performance, deferred review, daily goals and streak use finalized activity.
+- Confirm Home, Training, Nova and the focus objective report the same Coach Decision.
+- Open Profile on a narrow mobile viewport and confirm there is no horizontal scroll.
+- Confirm Review only offers training when a current canonical opportunity is published and delivered.
+- Confirm Nova reacts to real processing and respects `prefers-reduced-motion`.
+- Confirm `config/version.php` and `service-worker.js` both use `1.6.0`.
+
+---
+
 # Chess Coach v1.5.2 Update Notes
 
 ## Release type

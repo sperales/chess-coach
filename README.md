@@ -756,32 +756,32 @@ Current planned direction:
 - Multi-move conversion, defense and mate Scenarios
 - Ordered Coach Feed, progressive help and contextual explanations
 
-### v1.6.0 — AI Coach MVP
+### v1.6.0 — Training Quality & Coach Foundation
 
-- Higher-level coaching explanations
-- Grounded training summaries and reports
-- Recommendations based on games, tags, exercises and Player DNA
+- Ten-concept pedagogical taxonomy and canonical Training Opportunities
+- Auditable filtering, scoring, deduplication and Flash/Scenario routing
+- Training Selection v2 in safe shadow mode by default
+- Mastery, Recent Performance and deterministic deferred review
+- One Coach Decision shared by Home, Training, Nova and objectives
+- Quality-first composition, meaningful closure and reactive Nova states
 
-### v1.6.1 — AI Coach Plus
+### Next — Transfer & Adaptation
 
-- Better reports
-- More precise training recommendations
-- Richer use of Training Experience data
+- Measure concept recurrence and severity after training with confidence and sample-size guards
+- Distinguish transfer, relapse and insufficient evidence
+- Recalibrate Coach Decision, Mastery, difficulty and review using subsequent games
 
-### v1.7.0 — Conversación con el entrenador
+### Later — AI Coach / Nova Intelligence
 
-- Ask questions about games, training and weaknesses
-- Coach answers grounded in stored Chess Coach data
+- Natural explanations and contextual questions grounded in structured Chess Coach facts
+- Level-appropriate communication using Coach Decision, Mastery, training history and transfer
+- Traceable evidence and a functional fallback when an external AI service is unavailable
 
-### v1.8.0 — Automation
+### Backlog
 
-- Automatic Chess.com Sync
-- Duplicate-safe recurring import
-- Scheduled maintenance processes
-
-### v2.0.0 — Full Personal Chess Coach
-
-- Unified analysis, training, repetition, openings, Player DNA, automation and coaching
+- Advanced repertoire and openings work
+- More sophisticated repetition and difficulty adaptation when enough evidence exists
+- Automatic Chess.com synchronization and scheduled maintenance processes
 
 ---
 

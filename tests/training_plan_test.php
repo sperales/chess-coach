@@ -50,6 +50,17 @@ assert_plan_value(
   'completed'
 );
 assert_plan_value('Objetivo semanal de apertura acotado', training_plan_opening_exercise_target(), 2);
+
+$planSource = file_get_contents(__DIR__ . '/../includes/training_plan.php');
+if (!str_contains($planSource, 'coach_decision_for_user($userId)')) {
+  throw new RuntimeException('Los objetivos deben consumir la Coach Decision única.');
+}
+if (!str_contains($planSource, "'context_type' => 'concept'")) {
+  throw new RuntimeException('El objetivo de foco debe persistir el concepto pedagógico, no inventar otro foco.');
+}
+if (!str_contains($planSource, 'FROM training_scenario_runs')) {
+  throw new RuntimeException('Los objetivos generales deben contabilizar escenarios finalizados además de ejercicios Flash.');
+}
 assert_plan_value(
   'Clave semanal de ejercicios de apertura',
   training_plan_goal_key('weekly', '2026-07-13', 'opening_exercises', 'C45'),

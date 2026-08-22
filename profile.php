@@ -1,26 +1,19 @@
 <?php
 require_once __DIR__.'/includes/auth.php';
 require_once __DIR__.'/includes/helpers.php';
-require_once __DIR__.'/includes/smart_tags.php';
 require_once __DIR__.'/includes/training.php';
 require_once __DIR__.'/includes/openings.php';
-require_once __DIR__.'/includes/player_dna.php';
 require_once __DIR__.'/includes/player_progress.php';
 require_once __DIR__.'/includes/pieces.php';
+require_once __DIR__.'/includes/training_opportunities.php';
 
 $u = require_login();
 $msg = '';
 $err = '';
 $assetVersion = (string)filemtime(__DIR__.'/assets/css/app.css');
 $layoutJsVersion = (string)filemtime(__DIR__.'/assets/js/layout.js');
-$pendingSmartTags = smart_tag_backfill_pending_count((int)$u['id']);
-$pendingTrainingExercises = training_backfill_pending_count((int)$u['id']);
-$pendingTrainingContent = training_content_backfill_pending_count((int)$u['id']);
-$pendingTrainingEngine = training_engine_backfill_pending_count((int)$u['id']);
-$pendingTrainingScenarios = training_scenario_backfill_pending_count((int)$u['id']);
+$pendingTrainingFoundation = training_opportunity_backfill_pending_count((int)$u['id']);
 $pendingOpeningProfiles = openings_profile_pending_count((int)$u['id']);
-$latestPlayerDna = player_dna_latest_snapshot((int)$u['id']);
-$playerDnaConfidenceLabels = ['low' => 'baja', 'medium' => 'media', 'high' => 'alta'];
 $pieceSets = available_piece_sets();
 $currentPieceSet = normalize_piece_set($u['piece_set'] ?? null);
 $boardThemes = board_theme_options();
@@ -255,52 +248,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
 
     <section class="card batch-card">
       <h2>Procesos batch</h2>
-      <p class="muted">Procesos manuales de mantenimiento para recalcular datos derivados sin reanalizar partidas con Stockfish.</p>
+      <p class="muted">Procesos manuales que siguen siendo necesarios para completar datos históricos o auditar la selección de entrenamiento.</p>
       <div class="batch-row">
         <div>
-          <strong>Backfill de Smart Tags</strong>
-          <p class="muted">Etiqueta partidas ya analizadas que todavía no tienen Smart Tags. Procesa hasta 20 partidas por ejecución.</p>
-          <p class="muted" id="smartTagBackfillPending">Pendientes: <?= (int)$pendingSmartTags ?></p>
+          <strong>Calidad y conceptos de entrenamiento</strong>
+          <p class="muted">Clasifica ejercicios y escenarios existentes, elimina duplicados lógicos y calcula su valor pedagógico. Es reanudable y no modifica intentos ni progreso.</p>
+          <p class="muted" id="trainingFoundationBackfillPending">Pendientes: <?= (int)$pendingTrainingFoundation ?></p>
         </div>
-        <button type="button" onclick="runSmartTagBackfill()" id="smartTagBackfillBtn">Ejecutar backfill</button>
+        <button type="button" onclick="runTrainingFoundationBackfill()" id="trainingFoundationBackfillBtn">Procesar lote</button>
       </div>
-      <p class="muted" id="smartTagBackfillResult"></p>
-      <div class="batch-row">
-        <div>
-          <strong>Backfill de ejercicios</strong>
-          <p class="muted">Genera ejercicios de entrenamiento desde partidas ya analizadas. Procesa hasta 10 análisis por ejecución.</p>
-          <p class="muted" id="trainingBackfillPending">Pendientes: <?= (int)$pendingTrainingExercises ?></p>
-        </div>
-        <button type="button" onclick="runTrainingBackfill()" id="trainingBackfillBtn">Generar ejercicios</button>
-      </div>
-      <p class="muted" id="trainingBackfillResult"></p>
-      <div class="batch-row">
-        <div>
-          <strong>Actualizar contenido de ejercicios</strong>
-          <p class="muted">Corrige la clasificación contextual, los textos, la prioridad y los Smart Tags asociados sin borrar intentos ni progreso. Procesa hasta 200 ejercicios por ejecución.</p>
-          <p class="muted" id="trainingContentBackfillPending">Pendientes: <?= (int)$pendingTrainingContent ?></p>
-        </div>
-        <button type="button" onclick="runTrainingContentBackfill()" id="trainingContentBackfillBtn">Actualizar ejercicios</button>
-      </div>
-      <p class="muted" id="trainingContentBackfillResult"></p>
-      <div class="batch-row">
-        <div>
-          <strong>Enriquecer ejercicios con Stockfish</strong>
-          <p class="muted">Guarda una nueva evaluación y la variante principal para ejercicios pendientes de resolver. Procesa hasta 50 ejercicios por ejecución y conserva la solución original si la nueva bestmove es distinta.</p>
-          <p class="muted" id="trainingEngineBackfillPending">Pendientes: <?= (int)$pendingTrainingEngine ?></p>
-        </div>
-        <button type="button" onclick="runTrainingEngineBackfill()" id="trainingEngineBackfillBtn">Mejorar ejercicios</button>
-      </div>
-      <p class="muted" id="trainingEngineBackfillResult"></p>
-      <div class="batch-row">
-        <div>
-          <strong>Generar escenarios multi-jugada</strong>
-          <p class="muted">Detecta posiciones de conversión, defensa y mate en análisis anteriores. No vuelve a analizar partidas y procesa hasta 10 análisis por ejecución.</p>
-          <p class="muted" id="trainingScenarioBackfillPending">Pendientes: <?= (int)$pendingTrainingScenarios ?></p>
-        </div>
-        <button type="button" onclick="runTrainingScenarioBackfill()" id="trainingScenarioBackfillBtn">Generar escenarios</button>
-      </div>
-      <p class="muted" id="trainingScenarioBackfillResult"></p>
+      <p class="muted" id="trainingFoundationBackfillResult"></p>
       <div class="batch-row">
         <div>
           <strong>Backfill de aperturas</strong>
@@ -310,164 +267,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
         <button type="button" onclick="runOpeningsBackfill()" id="openingsBackfillBtn">Perfilar aperturas</button>
       </div>
       <p class="muted" id="openingsBackfillResult"></p>
-      <div class="batch-row">
-        <div>
-          <strong>ADN del jugador</strong>
-          <p class="muted">El perfil se actualiza automáticamente al completar un análisis. Usa este proceso solo para forzar una regeneración con las partidas ya analizadas.</p>
-          <p class="muted" id="playerDnaStatus">
-            <?php if ($latestPlayerDna): ?>
-              Último snapshot: <?=e((string)$latestPlayerDna['generated_at'])?> · Confianza: <?=e($playerDnaConfidenceLabels[(string)$latestPlayerDna['confidence']] ?? (string)$latestPlayerDna['confidence'])?> · Partidas: <?= (int)$latestPlayerDna['analyzed_games'] ?>
-            <?php else: ?>
-              Sin snapshot generado todavía.
-            <?php endif; ?>
-          </p>
-        </div>
-        <button type="button" onclick="runPlayerDnaRecompute()" id="playerDnaBtn">Regenerar ADN</button>
-      </div>
-      <p class="muted" id="playerDnaResult"></p>
     </section>
   </main>
 </div>
 <?= csrf_script() ?>
 <script src="assets/js/layout.js?v=<?=e($layoutJsVersion)?>"></script>
 <script>
-async function runSmartTagBackfill() {
-  const btn = document.getElementById('smartTagBackfillBtn');
-  const result = document.getElementById('smartTagBackfillResult');
-  const pending = document.getElementById('smartTagBackfillPending');
+async function runTrainingFoundationBackfill() {
+  const btn = document.getElementById('trainingFoundationBackfillBtn');
+  const result = document.getElementById('trainingFoundationBackfillResult');
+  const pending = document.getElementById('trainingFoundationBackfillPending');
   if (btn) btn.disabled = true;
-  if (result) result.textContent = 'Ejecutando backfill de Smart Tags...';
+  if (result) result.textContent = 'Clasificando oportunidades de entrenamiento...';
   try {
-    const r = await fetch('api/analyze.php?action=smart_tags_backfill', {
+    const response = await fetch('api/analyze.php?action=training_foundation_backfill', {
       method: 'POST',
       headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ limit: 20 })
-    });
-    const data = await r.json();
-    if (!data.ok && Number(data.error_count || 0) > 0) throw new Error(data.message || 'Backfill completado con errores.');
-    if (result) result.textContent = `${data.message || 'Backfill ejecutado.'} Procesadas: ${data.processed_games || 0}. Con tags: ${data.tagged_games || 0}. Pendientes: ${data.pending_after || 0}.`;
-    if (pending) pending.textContent = `Pendientes: ${data.pending_after || 0}`;
-  } catch (e) {
-    if (result) result.textContent = e.message || 'No se pudo ejecutar el backfill.';
-  } finally {
-    if (btn) btn.disabled = false;
-  }
-}
-
-async function runTrainingBackfill() {
-  const btn = document.getElementById('trainingBackfillBtn');
-  const result = document.getElementById('trainingBackfillResult');
-  const pending = document.getElementById('trainingBackfillPending');
-  if (btn) btn.disabled = true;
-  if (result) result.textContent = 'Generando ejercicios de entrenamiento...';
-  try {
-    const r = await fetch('api/analyze.php?action=training_backfill', {
-      method: 'POST',
-      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ limit: 10 })
-    });
-    const data = await r.json();
-    if (!data.ok && Number(data.error_count || 0) > 0) throw new Error(data.message || 'Backfill completado con errores.');
-    if (result) result.textContent = `${data.message || 'Backfill ejecutado.'} Análisis: ${data.processed_analyses || 0}. Ejercicios nuevos: ${data.created_exercises || 0}. Existentes/omitidos: ${data.skipped_existing || 0}. Pendientes: ${data.pending_after || 0}.`;
-    if (pending) pending.textContent = `Pendientes: ${data.pending_after || 0}`;
-  } catch (e) {
-    if (result) result.textContent = e.message || 'No se pudo ejecutar el backfill de ejercicios.';
-  } finally {
-    if (btn) btn.disabled = false;
-  }
-}
-
-async function runTrainingContentBackfill() {
-  const btn = document.getElementById('trainingContentBackfillBtn');
-  const result = document.getElementById('trainingContentBackfillResult');
-  const pending = document.getElementById('trainingContentBackfillPending');
-  if (btn) btn.disabled = true;
-  if (result) result.textContent = 'Actualizando el contenido de los ejercicios...';
-  try {
-    const r = await fetch('api/analyze.php?action=training_content_backfill', {
-      method: 'POST',
-      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ limit: 200 })
-    });
-    const data = await r.json();
-    if (!data.ok && Number(data.error_count || 0) > 0) throw new Error(data.message || 'Actualización completada con errores.');
-    if (result) result.textContent = `${data.message || 'Actualización ejecutada.'} Actualizados: ${data.updated || 0}. Reclasificados: ${data.retyped || 0}. Conflictos conservados: ${data.type_conflicts || 0}. Pendientes: ${data.pending_after || 0}.`;
-    if (pending) pending.textContent = `Pendientes: ${data.pending_after || 0}`;
-  } catch (e) {
-    if (result) result.textContent = e.message || 'No se pudo actualizar el contenido de los ejercicios.';
-  } finally {
-    if (btn) btn.disabled = false;
-  }
-}
-
-async function runTrainingEngineBackfill() {
-  const btn = document.getElementById('trainingEngineBackfillBtn');
-  const result = document.getElementById('trainingEngineBackfillResult');
-  const pending = document.getElementById('trainingEngineBackfillPending');
-  if (btn) btn.disabled = true;
-  if (result) result.textContent = 'Stockfish está enriqueciendo hasta 50 ejercicios en lotes seguros...';
-  try {
-    const totals = { updated: 0, mismatches: 0, accepted: 0, rejected: 0 };
-    const errors = [];
-    let pendingAfter = Number(pending?.textContent.match(/\d+/)?.[0] || 0);
-    let message = 'Ejercicios enriquecidos con Stockfish correctamente.';
-
-    for (let batch = 0; batch < 5; batch += 1) {
-      if (result) result.textContent = `Stockfish está procesando el lote ${batch + 1}/5...`;
-      const response = await fetch('api/analyze.php?action=training_engine_backfill', {
-        method: 'POST',
-        headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ limit: 10 })
-      });
-      const responseText = await response.text();
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        const status = response.status ? ` HTTP ${response.status}` : '';
-        throw new Error(`El servidor interrumpió el lote antes de devolver JSON.${status}. Prueba de nuevo; los lotes anteriores sí se han conservado.`);
-      }
-
-      if (!response.ok) throw new Error(data.error || `El servidor rechazó el lote (HTTP ${response.status}).`);
-      totals.updated += Number(data.updated || 0);
-      totals.mismatches += Number(data.mismatches || 0);
-      totals.accepted += Number(data.alternatives_accepted || 0);
-      totals.rejected += Number(data.alternatives_rejected || 0);
-      pendingAfter = Number(data.pending_after || 0);
-      message = data.message || message;
-      errors.push(...(Array.isArray(data.errors) ? data.errors.filter(Boolean) : []));
-
-      if (pending) pending.textContent = `Pendientes: ${pendingAfter}`;
-      if (errors.length || Number(data.processed || 0) === 0 || pendingAfter === 0) break;
-    }
-
-    const summary = `${message} Mejorados: ${totals.updated}. Bestmoves distintas: ${totals.mismatches}. Alternativas válidas: ${totals.accepted}. Alternativas descartadas: ${totals.rejected}. Pendientes: ${pendingAfter}.`;
-    if (result) result.textContent = errors.length ? `${summary} Errores: ${errors.join(' | ')}` : summary;
-  } catch (e) {
-    if (result) result.textContent = e.message || 'No se pudieron enriquecer los ejercicios con Stockfish.';
-  } finally {
-    if (btn) btn.disabled = false;
-  }
-}
-
-async function runTrainingScenarioBackfill() {
-  const btn = document.getElementById('trainingScenarioBackfillBtn');
-  const result = document.getElementById('trainingScenarioBackfillResult');
-  const pending = document.getElementById('trainingScenarioBackfillPending');
-  if (btn) btn.disabled = true;
-  if (result) result.textContent = 'Generando escenarios multi-jugada...';
-  try {
-    const response = await fetch('api/analyze.php?action=training_scenario_backfill', {
-      method: 'POST',
-      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ limit: 10 })
+      body: JSON.stringify({ limit: <?= (int)(app_config()['training_foundation_backfill_batch_size'] ?? 100) ?> })
     });
     const data = await response.json();
-    if (!response.ok || !data.ok) throw new Error(data.message || data.error || 'Backfill completado con errores.');
-    if (result) result.textContent = `${data.message} Análisis: ${data.processed_analyses || 0}. Escenarios nuevos: ${data.created_scenarios || 0}. Pendientes: ${data.pending || 0}.`;
+    if (!response.ok) throw new Error(data.message || 'El servidor no pudo procesar el lote.');
+    const shadow = data.metrics?.shadow || null;
+    const shadowText = shadow && Number(shadow.runs || 0) > 0
+      ? ` Shadow: ${shadow.runs} comparaciones, calidad media ${shadow.average_quality ?? 'n/d'}, coincidencia ${shadow.overlap_rate ?? 'n/d'}%.`
+      : '';
+    const errors = Array.isArray(data.errors) ? data.errors.filter(Boolean) : [];
+    const errorText = errors.length ? ` Errores: ${errors.slice(0, 3).join(' | ')}` : '';
+    if (result) result.textContent = `Procesados: ${data.processed || 0}. Publicados: ${data.published || 0}. Reserva: ${data.reserve || 0}. Rechazados: ${data.rejected || 0}. Duplicados evitados: ${data.duplicates || 0}. Conceptos recalculados: ${data.mastery_recalculated || 0}. Pendientes: ${data.pending || 0}.${shadowText}${errorText}`;
     if (pending) pending.textContent = `Pendientes: ${data.pending || 0}`;
   } catch (error) {
-    if (result) result.textContent = error.message || 'No se pudieron generar los escenarios.';
+    if (result) result.textContent = error.message || 'No se pudo procesar el lote.';
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -496,33 +325,6 @@ async function runOpeningsBackfill() {
   }
 }
 
-async function runPlayerDnaRecompute() {
-  const btn = document.getElementById('playerDnaBtn');
-  const result = document.getElementById('playerDnaResult');
-  const status = document.getElementById('playerDnaStatus');
-  if (btn) btn.disabled = true;
-  if (result) result.textContent = 'Recalculando ADN del jugador...';
-  try {
-    const r = await fetch('api/player-dna.php?action=recompute', {
-      method: 'POST',
-      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({})
-    });
-    const data = await r.json();
-    if (!data.ok) throw new Error(data.error || 'No se pudo recalcular el ADN del jugador.');
-    const snapshot = data.snapshot || {};
-    if (result) result.textContent = `${data.message || 'ADN recalculado.'} Partidas procesadas: ${data.processed_games || 0}.`;
-    if (status) status.textContent = `Último snapshot: ${snapshot.generated_at || 'ahora'} · Confianza: ${playerDnaConfidenceLabel(snapshot.confidence || 'low')} · Partidas: ${snapshot.analyzed_games || 0}`;
-  } catch (e) {
-    if (result) result.textContent = e.message || 'No se pudo recalcular el ADN del jugador.';
-  } finally {
-    if (btn) btn.disabled = false;
-  }
-}
-
-function playerDnaConfidenceLabel(value) {
-  return { low: 'baja', medium: 'media', high: 'alta' }[value] || value || 'baja';
-}
 </script>
 </body>
 </html>

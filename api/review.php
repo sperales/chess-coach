@@ -77,6 +77,7 @@ $m->execute([$analysis['id']]);
 $moves = $m->fetchAll();
 $gameTags = review_game_tags((int)$analysis['id'], $userId);
 $moveTags = review_move_tags((int)$analysis['id'], $userId);
+$trainingOpportunities = review_training_opportunities((int)$analysis['id'], $userId);
 
 $moveCount = count($moves);
 $userSide = review_user_side($game, (string)($u['username'] ?? ''));
@@ -126,6 +127,7 @@ foreach ($moves as $row) {
   $row['explanation'] = chess_move_explanation($row, $assessment);
   $row['bestmove_human'] = $row['bestmove_display'];
   $row['smart_tags'] = $moveTags[(int)$row['id']] ?? [];
+  $row['training_opportunity'] = $trainingOpportunities[(int)$row['id']] ?? null;
   $reviewMoves[] = $row;
 }
 // Si la última posición es mate, forzamos la dirección del mate según el resultado real de la partida.
@@ -208,4 +210,40 @@ function review_move_tags(int $analysisId, int $userId): array {
     $byMove[(int)$tag['move_analysis_id']][] = $tag;
   }
   return $byMove;
+}
+
+function review_training_opportunities(int $analysisId, int $userId): array {
+  try {
+    $st = db()->prepare('SELECT s.move_analysis_id,o.id,o.primary_concept_code,c.label,o.pedagogical_score,o.recommended_format,
+                                e.id exercise_id,sc.id scenario_id
+                         FROM training_opportunity_sources s
+                         JOIN training_opportunities o ON o.id=s.opportunity_id
+                         JOIN training_concepts c ON c.code=o.primary_concept_code
+                         LEFT JOIN training_exercises e ON e.id=s.exercise_id AND e.user_id=s.user_id AND e.status="active"
+                         LEFT JOIN training_scenarios sc ON sc.id=s.scenario_id AND sc.user_id=s.user_id AND sc.status="active"
+                         WHERE s.analysis_id=? AND s.user_id=? AND s.source_valid=1
+                           AND o.publication_state="published" AND o.currency_state="current"
+                           AND (e.id IS NOT NULL OR sc.id IS NOT NULL)
+                         ORDER BY o.pedagogical_score DESC,o.id ASC');
+    $st->execute([$analysisId, $userId]);
+    $byMove = [];
+    foreach ($st->fetchAll() as $row) {
+      $moveId = (int)($row['move_analysis_id'] ?? 0);
+      if ($moveId <= 0 || isset($byMove[$moveId])) continue;
+      $exerciseId = (int)($row['exercise_id'] ?? 0);
+      $scenarioId = (int)($row['scenario_id'] ?? 0);
+      $byMove[$moveId] = [
+        'id' => (int)$row['id'],
+        'concept_code' => (string)$row['primary_concept_code'],
+        'concept_label' => (string)$row['label'],
+        'pedagogical_score' => (int)$row['pedagogical_score'],
+        'format' => (string)$row['recommended_format'],
+        'training_url' => $scenarioId > 0 ? 'training-scenario.php?id=' . $scenarioId : 'training-exercise.php?id=' . $exerciseId,
+      ];
+    }
+    return $byMove;
+  } catch (Throwable $e) {
+    // Partial deployments must keep Review available before migration 037 is applied.
+    return [];
+  }
 }

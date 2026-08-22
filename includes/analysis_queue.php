@@ -5,6 +5,7 @@ require_once __DIR__ . '/stockfish.php';
 require_once __DIR__ . '/adaptive_analysis.php';
 require_once __DIR__ . '/smart_tags.php';
 require_once __DIR__ . '/training.php';
+require_once __DIR__ . '/training_opportunities.php';
 require_once __DIR__ . '/openings.php';
 
 function analysis_status_values(): array {
@@ -542,7 +543,7 @@ function process_analysis_job_with_engine(int $analysisId, int $userId): array {
     try {
       training_generate_for_analysis($analysisId, $userId);
     } catch (Throwable $trainingError) {
-      // Training exercises are derived metadata; generation can be retried from the profile backfill.
+      // Training exercises are derived metadata; a generation failure must not invalidate the analysis.
     }
     db()->prepare('UPDATE game_analysis
                    SET status="done", completed_at=NOW(), updated_at=NOW(), blunders=?, mistakes=?, inaccuracies=?,
@@ -564,6 +565,12 @@ function process_analysis_job_with_engine(int $analysisId, int $userId): array {
       $analysisId,
     ]);
     try {
+      training_opportunity_sync_analysis($analysisId, $userId);
+    } catch (Throwable $opportunityError) {
+      // Opportunity derivation is auditable metadata and must not invalidate a completed engine analysis.
+      error_log('Training opportunity sync failed: ' . $opportunityError->getMessage());
+    }
+    try {
       player_progress_recalculate($userId, 'analysis_completed');
     } catch (Throwable $progressError) {
       // El progreso es derivado y no debe invalidar un analisis Stockfish completado.
@@ -573,7 +580,7 @@ function process_analysis_job_with_engine(int $analysisId, int $userId): array {
       require_once __DIR__ . '/player_dna.php';
       player_dna_refresh_after_analysis($userId, (string)($a['username'] ?? ''), $analysisId);
     } catch (Throwable $dnaError) {
-      // El ADN es derivado y puede regenerarse manualmente desde el perfil.
+      // El ADN es derivado y se volverá a actualizar con el siguiente análisis completado.
       error_log('Player DNA refresh failed: ' . $dnaError->getMessage());
     }
     return ['ok' => true, 'processed' => true, 'analysis_id' => $analysisId, 'status' => 'done', 'summary' => $counts];

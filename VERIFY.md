@@ -1,5 +1,42 @@
 # VERIFY.md
 
+## v1.6.0 Training Quality & Coach Foundation
+
+```powershell
+$tests = @(
+  'tests\training_quality_foundation_test.php',
+  'tests\training_selection_v2_test.php',
+  'tests\training_mastery_test.php',
+  'tests\coach_decision_test.php',
+  'tests\training_composer_v2_test.php',
+  'tests\training_foundation_schema_test.php',
+  'tests\training_habit_streak_test.php',
+  'tests\training_adaptation_test.php',
+  'tests\training_metrics_test.php',
+  'tests\nova_reactive_test.php',
+  'tests\training_plan_test.php'
+)
+foreach ($test in $tests) { php $test; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+
+node --check assets\js\training.js
+node --check assets\js\training-scenario.js
+node --check assets\js\review.js
+node --check assets\js\player_dna.js
+```
+
+Manual checks:
+
+1. Apply migration `037_changes_1.6.0.sql`, upload the code and keep `training_selection_mode` as `shadow`.
+2. Run the Profile Training foundation backfill repeatedly and confirm pending work decreases without duplicating canonical opportunities or sources.
+3. Confirm Profile shows bounded publication, rejection, duplicate and legacy/v2 comparison metrics.
+4. Prepare Training in shadow mode and confirm the visible order and quantity still come from the legacy selector.
+5. Complete one Flash and one Scenario and confirm both count toward daily/weekly progress and streak only after finalization.
+6. Confirm Home, Training, Nova and the focus objective use the same concept and rationale from Coach Decision.
+7. Confirm Review only shows its Training CTA for a current published opportunity with a delivered Flash or Scenario.
+8. Confirm Nova uses semantic states for real processing and animations stop when reduced motion is enabled.
+9. Switch a staging copy to `active`, prepare short/standard/long plans and confirm poor or duplicate content is not used to fill quotas.
+10. Set the mode back to `legacy` and confirm the existing Training flow remains operational without deleting foundation data.
+
 ## v1.5.2 training completion and stability
 
 ```powershell
