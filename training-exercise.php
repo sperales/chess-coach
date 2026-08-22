@@ -89,7 +89,7 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
       <button class="secondary" type="button" onclick="showTrainingHint()" id="trainingMobileHintBtn">Ayuda</button>
     </div>
     <div class="training-mobile-actions training-mobile-done" id="trainingMobileDoneControls" hidden>
-      <button type="button" onclick="openNextTrainingExercise()">Siguiente ejercicio</button>
+      <button type="button" id="trainingMobileNextBtn" onclick="openNextTrainingExercise()">Siguiente ejercicio</button>
     </div>
 
     <section class="training-mobile-summary">
@@ -156,7 +156,7 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
         <button class="secondary" type="button" onclick="skipTrainingExercise()" id="trainingSkipBtn">Saltar</button>
       </div>
       <div class="review-controls training-controls training-solve-controls" id="trainingDoneControls" hidden>
-        <button type="button" onclick="openNextTrainingExercise()">Siguiente</button>
+        <button type="button" id="trainingNextBtn" onclick="openNextTrainingExercise()">Siguiente</button>
         <button class="secondary" type="button" onclick="closeTrainingSolver()">Cerrar</button>
         <a class="btn secondary" href="#" id="trainingReviewLink">Ver partida</a>
       </div>

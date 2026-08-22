@@ -85,6 +85,17 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
     <a class="btn training-nova-start" id="trainingNovaStart" href="#trainingContinue">▶ <span>Empezar entrenamiento</span></a>
   </section>
 
+  <section class="panel training-completion-panel" id="trainingCompletionPanel" hidden>
+    <div class="training-completion-nova" aria-hidden="true"><span class="nova-avatar nova-avatar--success"></span></div>
+    <div>
+      <span class="eyebrow">Entrenamiento completado</span>
+      <h2>Buen trabajo. Ya puedes comparar tu progreso.</h2>
+      <p id="trainingCompletionMessage">Nova está preparando el resumen.</p>
+      <div class="training-completion-kpis" id="trainingCompletionKpis"></div>
+      <button type="button" onclick="startRecommendedTraining()">Empezar un entrenamiento nuevo</button>
+    </div>
+  </section>
+
   <section class="training-category-section" aria-labelledby="trainingCategoryTitle">
     <h2 id="trainingCategoryTitle">Entrena por categoría</h2>
     <p>Elige el tipo de entrenamiento que mejor se adapta a tu objetivo de hoy.</p>
@@ -154,6 +165,13 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
     <div class="training-list" id="trainingExerciseList"></div>
     <div class="pagination" id="trainingPagination"></div>
     <div class="muted page-info" id="trainingPageInfo"></div>
+  </section>
+
+  <section class="panel training-history-section" id="trainingHistorySection">
+    <div class="panel-head training-section-head">
+      <div><h2>Entrenamientos completados</h2><p>Repite un plan y comprueba si necesitas menos intentos o tiempo.</p></div>
+    </div>
+    <div class="training-history-list" id="trainingHistoryList"></div>
   </section>
 
   <section class="training-coach-tip">

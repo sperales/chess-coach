@@ -641,7 +641,7 @@ function training_session_metrics(int $sessionId, int $userId): array {
       SUM(max_attempts) AS total_attempts,
       AVG(NULLIF(max_duration_ms,0)) AS avg_time_ms
     FROM (
-      SELECT exercise_id,
+      SELECT CONCAT("flash:",exercise_id) AS item_key,
              MAX(is_solved) AS exercise_solved,
              MAX(result="skipped") AS exercise_skipped,
              MAX(CASE WHEN result="failed" AND attempts_count>=5 THEN 1 ELSE 0 END) AS exercise_failed,
@@ -650,8 +650,18 @@ function training_session_metrics(int $sessionId, int $userId): array {
       FROM training_attempts
       WHERE session_id=? AND user_id=?
       GROUP BY exercise_id
+      UNION ALL
+      SELECT CONCAT("scenario:",scenario_id) AS item_key,
+             MAX(status="completed") AS exercise_solved,
+             MAX(status="skipped") AS exercise_skipped,
+             MAX(status="failed") AS exercise_failed,
+             MAX(attempts_count) AS max_attempts,
+             MAX(duration_ms) AS max_duration_ms
+      FROM training_scenario_runs
+      WHERE session_id=? AND user_id=? AND status IN ("completed","failed","skipped")
+      GROUP BY scenario_id
     ) session_exercises');
-  $st->execute([$sessionId, $userId]);
+  $st->execute([$sessionId, $userId, $sessionId, $userId]);
   $row = $st->fetch() ?: [];
   return [
     'exercise_count' => (int)($row['exercise_count'] ?? 0),
@@ -723,9 +733,95 @@ function training_public_session(array $session): array {
   $session['coach_version'] = (int)($session['coach_version'] ?? 1);
   $session['estimated_duration_min'] = $session['estimated_duration_min'] === null ? null : (int)$session['estimated_duration_min'];
   $session['planned_item_count'] = (int)($session['planned_item_count'] ?? 0);
+  $session['repeated_from_session_id'] = $session['repeated_from_session_id'] === null ? null : (int)$session['repeated_from_session_id'];
   $session['coach_evidence'] = coach_decode_json($session['coach_evidence_json'] ?? null);
   unset($session['coach_evidence_json']);
   return $session;
+}
+
+function training_completed_sessions(int $userId, int $limit = 8): array {
+  $limit = max(1, min(30, $limit));
+  $st = db()->prepare('SELECT ts.*,
+      source.total_attempts AS source_total_attempts,
+      source.avg_time_ms AS source_avg_time_ms
+    FROM training_sessions ts
+    LEFT JOIN training_sessions source ON source.id=ts.repeated_from_session_id AND source.user_id=ts.user_id
+    WHERE ts.user_id=? AND ts.status="completed"
+    ORDER BY ts.completed_at DESC, ts.id DESC
+    LIMIT ' . $limit);
+  $st->execute([$userId]);
+  return array_map(function (array $row): array {
+    $session = training_public_session($row);
+    $session['source_total_attempts'] = $row['source_total_attempts'] === null ? null : (int)$row['source_total_attempts'];
+    $session['source_avg_time_ms'] = $row['source_avg_time_ms'] === null ? null : (int)$row['source_avg_time_ms'];
+    $session['attempt_delta'] = $session['source_total_attempts'] === null
+      ? null
+      : $session['total_attempts'] - $session['source_total_attempts'];
+    $session['avg_time_delta_ms'] = $session['source_avg_time_ms'] === null || $session['avg_time_ms'] === null
+      ? null
+      : $session['avg_time_ms'] - $session['source_avg_time_ms'];
+    unset($session['source_total_attempts'], $session['source_avg_time_ms']);
+    return $session;
+  }, $st->fetchAll());
+}
+
+function training_completed_session(int $sessionId, int $userId): ?array {
+  foreach (training_completed_sessions($userId, 30) as $session) {
+    if ((int)$session['id'] === $sessionId) return $session;
+  }
+  return null;
+}
+
+function training_session_pending_exercise(int $sessionId, int $userId, int $exerciseId): bool {
+  if ($sessionId <= 0 || $exerciseId <= 0) return false;
+  $st = db()->prepare('SELECT COUNT(*) FROM training_session_items tsi
+                       JOIN training_sessions ts ON ts.id=tsi.session_id AND ts.user_id=tsi.user_id
+                       WHERE tsi.session_id=? AND tsi.user_id=? AND tsi.exercise_id=?
+                         AND tsi.item_type="flash" AND tsi.status IN ("pending","active")
+                         AND ts.status="active"');
+  $st->execute([$sessionId, $userId, $exerciseId]);
+  return (int)$st->fetchColumn() > 0;
+}
+
+function training_repeat_session(int $userId, int $sourceSessionId): array {
+  $source = training_completed_session($sourceSessionId, $userId);
+  if (!$source) return ['ok' => false, 'error' => 'Entrenamiento completado no encontrado.'];
+  $itemsSt = db()->prepare('SELECT * FROM training_session_items WHERE session_id=? AND user_id=? ORDER BY position');
+  $itemsSt->execute([$sourceSessionId, $userId]);
+  $items = $itemsSt->fetchAll();
+  if (!$items) return ['ok' => false, 'error' => 'Este entrenamiento no conserva ejercicios para repetir.'];
+
+  $active = training_active_session($userId, false);
+  if ($active) training_end_session($userId, (int)$active['id'], 'abandoned');
+  $pdo = db();
+  $pdo->beginTransaction();
+  try {
+    $insert = $pdo->prepare('INSERT INTO training_sessions
+      (user_id,focus_code,selected_type,source,coach_version,coach_focus_code,coach_focus_title,coach_rationale,
+       coach_evidence_json,estimated_duration_min,planned_item_count,repeated_from_session_id,status,started_at,created_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,"active",NOW(),NOW())');
+    $insert->execute([
+      $userId, $source['focus_code'] ?? null, $source['selected_type'], 'manual', $source['coach_version'],
+      $source['coach_focus_code'] ?? null, $source['coach_focus_title'] ?? null, $source['coach_rationale'] ?? null,
+      !empty($source['coach_evidence']) ? json_encode($source['coach_evidence'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
+      $source['estimated_duration_min'], count($items), $sourceSessionId,
+    ]);
+    $sessionId = (int)$pdo->lastInsertId();
+    $itemInsert = $pdo->prepare('INSERT INTO training_session_items
+      (session_id,user_id,position,item_type,exercise_id,scenario_id,concept_code,reason,evidence_json,status,created_at)
+      VALUES (?,?,?,?,?,?,?,?,?,"pending",NOW())');
+    foreach ($items as $item) {
+      $itemInsert->execute([
+        $sessionId, $userId, $item['position'], $item['item_type'], $item['exercise_id'], $item['scenario_id'],
+        $item['concept_code'], $item['reason'], $item['evidence_json'],
+      ]);
+    }
+    $pdo->commit();
+    return ['ok' => true, 'session' => training_session_for_user($sessionId, $userId), 'coach_plan' => coach_session_plan($userId, $sessionId)];
+  } catch (Throwable $e) {
+    if ($pdo->inTransaction()) $pdo->rollBack();
+    throw $e;
+  }
 }
 
 function training_start_session(int $userId, string $selectedType = 'recommended', string $source = 'manual'): array {
@@ -1001,7 +1097,9 @@ function training_sanitize_attempted_moves(array $moves): array {
 function training_record_attempt(int $userId, int $exerciseId, array $attemptedMoves, int $durationMs = 0, bool $usedHint = false, ?int $sessionId = null, ?int $solveRunId = null): array {
   $exercise = training_exercise_for_user($exerciseId, $userId);
   if (!$exercise) return ['ok' => false, 'error' => 'Ejercicio no encontrado.'];
-  if (!empty($exercise['resolved_at']) && empty($exercise['is_repeat_due'])) {
+  $sessionId = $sessionId && training_session_is_active($sessionId, $userId) ? $sessionId : null;
+  $isPlanReplay = $sessionId && training_session_pending_exercise($sessionId, $userId, $exerciseId);
+  if (!empty($exercise['resolved_at']) && empty($exercise['is_repeat_due']) && !$isPlanReplay) {
     return [
       'ok' => true,
       'already_resolved' => true,
@@ -1022,7 +1120,6 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
   $isExhausted = count($moves) >= 5;
   $result = $isSolved ? 'solved' : 'failed';
   $durationMs = max(0, min(86400000, $durationMs));
-  $sessionId = $sessionId && training_session_is_active($sessionId, $userId) ? $sessionId : null;
   if (!$sessionId) {
     $sessionResult = training_ensure_active_session($userId, 'recommended', 'manual');
     $sessionId = !empty($sessionResult['session']['id']) ? (int)$sessionResult['session']['id'] : null;
