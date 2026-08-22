@@ -78,7 +78,7 @@ function gameTitle(job) {
 function actionButtons(job) {
   if (job.status === 'queued') return `<button class="secondary small" onclick="cancelJob(${job.analysis_id})">Cancelar</button>`;
   if (job.status === 'running') return `<button class="secondary small" onclick="cancelJob(${job.analysis_id})">Pedir cancelación</button>`;
-  if (job.status === 'error' || job.status === 'cancelled') return `<button class="secondary small" onclick="requeueGame(${job.game_id})">Reintentar</button>`;
+  if (job.status === 'error' || job.status === 'cancelled') return `<button class="secondary small" onclick="retryAnalysis(${job.analysis_id})">Reintentar</button>`;
   if (job.status === 'done') return `<button class="secondary small" onclick="requeueGame(${job.game_id}, true)">Reanalizar</button>`;
   return '';
 }
@@ -292,6 +292,14 @@ async function retryErrors() {
   if (msg) msg.textContent = 'Reintentando errores/canceladas...';
   const data = await apiPost('api/analyze.php?action=retry_errors');
   if (msg) msg.textContent = data.ok ? `Análisis preparados para reintento: ${data.updated}.` : (data.error || 'No se pudo reintentar.');
+  await refreshQueue(true);
+}
+
+async function retryAnalysis(analysisId) {
+  const msg = document.getElementById('queueMsg');
+  if (msg) msg.textContent = 'Preparando el análisis para reintento...';
+  const data = await apiPost('api/analyze.php?action=retry', { analysis_id: analysisId });
+  if (msg) msg.textContent = data.ok ? 'Análisis añadido de nuevo a la cola.' : (data.error || 'No se pudo reintentar.');
   await refreshQueue(true);
 }
 

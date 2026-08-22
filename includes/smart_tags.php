@@ -1,6 +1,21 @@
 <?php
 require_once __DIR__ . '/helpers.php';
 
+const SMART_TAG_GENERATOR_VERSION = 2;
+
+function smart_tag_mark_generation(int $analysisId, int $userId, ?string $error = null): void {
+  db()->prepare('UPDATE game_analysis
+                 SET smart_tags_version=?, smart_tags_generated_at=?, smart_tags_error=?, updated_at=NOW()
+                 WHERE id=? AND user_id=?')
+    ->execute([
+      $error === null ? SMART_TAG_GENERATOR_VERSION : 0,
+      $error === null ? date('Y-m-d H:i:s') : null,
+      $error,
+      $analysisId,
+      $userId,
+    ]);
+}
+
 function smart_tag_fen_side_to_move(?string $fen): string {
   $parts = preg_split('/\s+/', trim((string)$fen));
   return ($parts[1] ?? 'w') === 'b' ? 'b' : 'w';
@@ -117,11 +132,15 @@ function smart_tag_generate_for_analysis(int $analysisId, int $userId): array {
   $movesSt->execute([$analysisId]);
   $moves = $movesSt->fetchAll();
   smart_tag_clear_analysis($analysisId, $userId);
-  if (!$moves) return ['ok' => true, 'game_tags' => 0, 'move_tags' => 0, 'message' => 'No hay jugadas analizadas.'];
+  if (!$moves) {
+    smart_tag_mark_generation($analysisId, $userId);
+    return ['ok' => true, 'game_tags' => 0, 'move_tags' => 0, 'message' => 'No hay jugadas analizadas.'];
+  }
 
   $gameId = (int)$game['game_id'];
   $userSide = smart_tag_user_side($game, (string)$game['username']);
   if ($userSide === null) {
+    smart_tag_mark_generation($analysisId, $userId);
     return ['ok' => true, 'game_tags' => 0, 'move_tags' => 0, 'message' => 'No se pudo identificar el color del usuario.'];
   }
 
@@ -216,6 +235,7 @@ function smart_tag_generate_for_analysis(int $analysisId, int $userId): array {
     $gameTags++;
   }
 
+  smart_tag_mark_generation($analysisId, $userId);
   return [
     'ok' => true,
     'game_tags' => $gameTags,
@@ -230,9 +250,9 @@ function smart_tag_backfill_pending_count(int $userId): int {
           WHERE a.user_id=?
             AND a.status="done"
             AND a.id=(SELECT id FROM game_analysis WHERE game_id=a.game_id AND user_id=? AND status="done" ORDER BY id DESC LIMIT 1)
-            AND NOT EXISTS (SELECT 1 FROM game_tags gt WHERE gt.analysis_id=a.id AND gt.user_id=?)';
+            AND COALESCE(a.smart_tags_version,0) < ?';
   $st = db()->prepare($sql);
-  $st->execute([$userId, $userId, $userId]);
+  $st->execute([$userId, $userId, SMART_TAG_GENERATOR_VERSION]);
   return (int)$st->fetchColumn();
 }
 
@@ -255,11 +275,11 @@ function smart_tag_backfill_batch(int $userId, int $limit = 10, string $trigger 
           WHERE a.user_id=?
             AND a.status="done"
             AND a.id=(SELECT id FROM game_analysis WHERE game_id=a.game_id AND user_id=? AND status="done" ORDER BY id DESC LIMIT 1)
-            AND NOT EXISTS (SELECT 1 FROM game_tags gt WHERE gt.analysis_id=a.id AND gt.user_id=?)
+            AND COALESCE(a.smart_tags_version,0) < ?
           ORDER BY COALESCE(a.completed_at,a.updated_at,a.created_at) DESC, a.id DESC
           LIMIT '.(int)$limit;
   $st = db()->prepare($sql);
-  $st->execute([$userId, $userId, $userId]);
+  $st->execute([$userId, $userId, SMART_TAG_GENERATOR_VERSION]);
   $analysisIds = array_map('intval', array_column($st->fetchAll(), 'id'));
 
   $processed = 0;
@@ -279,7 +299,9 @@ function smart_tag_backfill_batch(int $userId, int $limit = 10, string $trigger 
     } catch (Throwable $e) {
       $processed++;
       $errors++;
-      $messages[] = public_error_message($e);
+      $publicError = public_error_message($e);
+      smart_tag_mark_generation($analysisId, $userId, $publicError);
+      $messages[] = $publicError;
     }
   }
 
