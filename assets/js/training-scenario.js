@@ -398,6 +398,13 @@ function renderScenarioControls() {
   if (done) done.hidden = !finished;
   const skip = document.getElementById('scenarioSkip');
   if (skip) skip.disabled = scenarioBusy || finished;
+  const next = document.getElementById('scenarioNext');
+  if (next) {
+    const current = currentScenarioPlanItem();
+    const pending = scenarioPlanItems().find(item => item.status === 'pending' && Number(item.position) > Number(current?.position || 0))
+      || scenarioPlanItems().find(item => item.status === 'pending' && item !== current);
+    next.textContent = SCENARIO_PLAN_ID > 0 && !pending ? 'Finalizar entrenamiento' : 'Siguiente ejercicio';
+  }
 }
 
 async function goToNextScenarioPlanItem() {
@@ -407,6 +414,11 @@ async function goToNextScenarioPlanItem() {
   const pending = items.find(item => item.status === 'pending' && Number(item.position) > Number(current?.position || 0))
     || items.find(item => item.status === 'pending');
   if (!pending) {
+    if (SCENARIO_PLAN_ID > 0) {
+      await scenarioPost('session_end', { session_id: SCENARIO_PLAN_ID, status: 'completed' });
+      window.location.href = `training.php?completed_training=${SCENARIO_PLAN_ID}`;
+      return;
+    }
     window.location.href = 'training.php';
     return;
   }

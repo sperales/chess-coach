@@ -4,7 +4,7 @@
 
 This roadmap describes the planned evolution of Chess Coach from the current stable baseline.
 
-Current release candidate: **v1.5.1**
+Current release candidate: **v1.5.2**
 
 The roadmap should be treated as a planning document, not as an implementation contract. Features may be moved, split or refined as the product evolves.
 
@@ -32,7 +32,13 @@ The product should help answer questions like:
 
 ---
 
-## Current baseline — v1.5.1
+## Current baseline — v1.5.2
+
+v1.5.2 closes the training loop with an explicit final action, a Nova-led completion summary and a history of completed plans that can be repeated to compare attempts and average time. The player-facing UI continues to avoid the internal session concept.
+
+The release also makes new Coach Feed slides visibly transition, gives every Dashboard metric its own vertical scale, contains Profile on narrow mobile viewports, repairs retries for legacy cancelled analyses and records Smart Tag generation even when a valid analysis produces zero tags.
+
+### Review and interactive analysis baseline — v1.5.1
 
 v1.5.1 connects Review and Training to a shared interactive position-analysis layer. Review can apply the real best move, explore a Stockfish variation without losing its context and transfer any position to an independent analysis board. The board supports strict FEN input, legal play for both colors and temporary branches.
 
@@ -831,6 +837,7 @@ Add an AI-assisted explanation and reporting layer on top of the deterministic C
 ### Main features
 
 - Plain-language game and training summaries grounded in stored evidence.
+- Replace internal diagnostic phrases in Nova messages with specific, player-friendly explanations that say what was detected and what action to take.
 - Review explanations that distinguish engine facts from coaching interpretation.
 - Recent-period coaching reports and actionable recommendations.
 - No replacement of Stockfish calculation and no invented chess facts.

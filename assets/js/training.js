@@ -7,6 +7,8 @@ let trainingExperience = {};
 let trainingPlan = null;
 let trainingProgress = null;
 let trainingCoachPlan = null;
+let trainingHistory = [];
+let completedTraining = null;
 let trainingExtrasLoaded = false;
 let activeTrainingSession = null;
 let trainingPagination = { page: 1, per_page: (window.CHESS_COACH_CONFIG && window.CHESS_COACH_CONFIG.trainingPerPage) || 20, total: 0, pages: 1 };
@@ -74,7 +76,9 @@ function trainingNextPlanItem(currentType = '', currentId = 0) {
   const current = items.find(item => item.item_type === currentType
     && Number(currentType === 'scenario' ? item.scenario_id : item.exercise_id) === Number(currentId));
   const after = current ? items.filter(item => Number(item.position || 0) > Number(current.position || 0)) : items;
-  return after.find(item => item.status === 'pending') || items.find(item => item.status === 'pending') || null;
+  return after.find(item => item.status === 'pending')
+    || items.find(item => item.status === 'pending' && item !== current)
+    || null;
 }
 
 const TRAINING_PIECE_IMAGES = {
@@ -105,6 +109,8 @@ function trainingQueryString(page = currentTrainingPage) {
     status: filters.status,
     category: filters.category,
   });
+  const completedId = Number(TRAINING_INITIAL_PARAMS.get('completed_training') || 0);
+  if (completedId > 0) params.set('completed_training', String(completedId));
   return params.toString();
 }
 
@@ -121,6 +127,8 @@ async function loadTraining(page = currentTrainingPage) {
   trainingExperience = data.experience || {};
   activeTrainingSession = data.session || null;
   trainingCoachPlan = data.coach_plan || trainingCoachPlan;
+  trainingHistory = data.training_history || [];
+  completedTraining = data.completed_training || null;
   if (TRAINING_SOLVER_MODE && TRAINING_INITIAL_PLAN_ID <= 0) {
     activeTrainingSession = null;
     trainingCoachPlan = null;
@@ -128,6 +136,8 @@ async function loadTraining(page = currentTrainingPage) {
   trainingPagination = data.pagination || trainingPagination;
   currentTrainingPage = trainingPagination.page || currentTrainingPage;
   if (!trainingExtrasLoaded) await loadTrainingExtras();
+  renderTrainingCompletion();
+  renderTrainingHistory();
   renderTrainingTypeOptions();
   syncTrainingPlanType();
   renderTrainingStats();
@@ -660,7 +670,7 @@ function trainingTags(item) {
 }
 
 function trainingExerciseIsTrainable(item) {
-  return !!(item && (item.is_trainable || !item.resolved_at));
+  return !!(item && (item.plan_trainable || item.is_trainable || !item.resolved_at));
 }
 
 function renderTrainingPagination() {
@@ -715,7 +725,10 @@ function clearTrainingFilters() {
 
 async function openTrainingExercise(id) {
   if (!TRAINING_SOLVER_MODE) await ensureTrainingSession();
-  const response = await fetch(`api/training.php?action=get&id=${Number(id)}`, { cache: 'no-store' });
+  const query = new URLSearchParams({ action: 'get', id: String(Number(id)) });
+  const trainingId = trainingContextSessionId();
+  if (trainingId > 0) query.set('training_id', String(trainingId));
+  const response = await fetch(`api/training.php?${query.toString()}`, { cache: 'no-store' });
   const data = await response.json();
   if (!data.ok) throw new Error(data.error || 'No se pudo cargar el ejercicio.');
   activeExercise = data.exercise;
@@ -1856,6 +1869,14 @@ function renderTrainingControls() {
   const mobileDone = document.getElementById('trainingMobileDoneControls');
   const mobileHint = document.getElementById('trainingMobileHintBtn');
   const finished = trainingExerciseFinished();
+  const currentId = activeExercise ? Number(activeExercise.id || 0) : 0;
+  const hasPlanContext = trainingContextSessionId() > 0 && Array.isArray(trainingCoachPlan?.items);
+  const finalPlanItem = hasPlanContext && !trainingNextPlanItem('flash', currentId);
+  const nextLabel = finalPlanItem ? 'Finalizar entrenamiento' : 'Siguiente ejercicio';
+  const nextButton = document.getElementById('trainingNextBtn');
+  const mobileNextButton = document.getElementById('trainingMobileNextBtn');
+  if (nextButton) nextButton.textContent = nextLabel;
+  if (mobileNextButton) mobileNextButton.textContent = nextLabel;
   if (active) active.hidden = finished;
   if (done) done.hidden = !finished;
   if (mobileActive) mobileActive.hidden = finished;
@@ -1882,12 +1903,84 @@ async function openNextTrainingExercise() {
     window.location.href = trainingPlanItemUrl(planned, activeTrainingSession?.id || TRAINING_INITIAL_PLAN_ID);
     return;
   }
+  const trainingId = Number(activeTrainingSession?.id || TRAINING_INITIAL_PLAN_ID || 0);
+  if (trainingId > 0 && Array.isArray(trainingCoachPlan?.items)) {
+    const response = await fetch('api/training.php?action=session_end', {
+      method: 'POST',
+      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ session_id: trainingId, status: 'completed' })
+    });
+    const data = await response.json();
+    if (!data.ok) throw new Error(data.error || 'No se pudo finalizar el entrenamiento.');
+    window.location.href = `training.php?completed_training=${trainingId}`;
+    return;
+  }
   const next = trainingExercises.find(item => trainingExerciseIsTrainable(item) && Number(item.id || 0) !== currentId);
   if (!next) {
     closeTrainingSolver();
     return;
   }
   await openTrainingExercise(next.id);
+}
+
+function trainingFormatDuration(ms) {
+  const seconds = Math.max(0, Math.round(Number(ms || 0) / 1000));
+  if (seconds < 60) return `${seconds}s`;
+  return `${Math.floor(seconds / 60)} min ${seconds % 60}s`;
+}
+
+function renderTrainingCompletion() {
+  const panel = document.getElementById('trainingCompletionPanel');
+  const kpis = document.getElementById('trainingCompletionKpis');
+  const message = document.getElementById('trainingCompletionMessage');
+  if (!panel || !kpis) return;
+  panel.hidden = !completedTraining;
+  if (!completedTraining) return;
+  const solved = Number(completedTraining.solved_count || 0);
+  const failed = Number(completedTraining.failed_count || 0);
+  const attempts = Number(completedTraining.total_attempts || 0);
+  kpis.innerHTML = [
+    ['Resueltos', solved],
+    ['Fallados', failed],
+    ['Intentos', attempts],
+    ['Tiempo medio', trainingFormatDuration(completedTraining.avg_time_ms)],
+  ].map(item => `<div><span>${escapeHtml(item[0])}</span><strong>${escapeHtml(item[1])}</strong></div>`).join('');
+  if (message) {
+    const delta = completedTraining.attempt_delta;
+    message.textContent = delta === null || typeof delta === 'undefined'
+      ? `Has completado ${Number(completedTraining.exercise_count || solved + failed)} ejercicios. Nova ya puede prepararte el siguiente entrenamiento.`
+      : (delta < 0 ? `Has necesitado ${Math.abs(delta)} intentos menos que la vez anterior.` : delta > 0 ? `Has necesitado ${delta} intentos más que la vez anterior.` : 'Has igualado el número de intentos de la vez anterior.');
+  }
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderTrainingHistory() {
+  const list = document.getElementById('trainingHistoryList');
+  if (!list) return;
+  if (!trainingHistory.length) {
+    list.innerHTML = '<div class="empty-state compact"><strong>Todavía no hay entrenamientos completados.</strong><span>Aparecerán aquí al finalizar tu primer plan.</span></div>';
+    return;
+  }
+  list.innerHTML = trainingHistory.map(item => {
+    const focus = item.coach_focus_title || trainingSessionTypeLabel(item.selected_type);
+    const date = String(item.completed_at || item.started_at || '').slice(0, 10);
+    return `<article class="training-history-item">
+      <div><span>${escapeHtml(date)}</span><strong>${escapeHtml(focus)}</strong><small>${Number(item.solved_count || 0)} resueltos · ${Number(item.total_attempts || 0)} intentos · ${escapeHtml(trainingFormatDuration(item.avg_time_ms))} de media</small></div>
+      <button class="secondary small" type="button" onclick="repeatCompletedTraining(${Number(item.id)})">Repetir</button>
+    </article>`;
+  }).join('');
+}
+
+async function repeatCompletedTraining(sessionId) {
+  const response = await fetch('api/training.php?action=session_repeat', {
+    method: 'POST',
+    headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ session_id: Number(sessionId) })
+  });
+  const data = await response.json();
+  if (!data.ok) throw new Error(data.error || 'No se pudo repetir el entrenamiento.');
+  const first = (data.coach_plan?.items || []).find(item => item.status === 'pending');
+  window.location.href = first ? trainingPlanItemUrl(first, data.session?.id) : 'training.php';
 }
 
 async function submitTrainingMove() {

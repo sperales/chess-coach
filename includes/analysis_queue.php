@@ -79,11 +79,26 @@ function queue_missing_games(int $userId): array {
 function queue_retry_errors(int $userId): array {
   $st = db()->prepare('UPDATE game_analysis
                        SET status="queued", error_message=NULL, current_ply=0, total_ply=0,
-                           completed_at=NULL, started_at=NULL, engine_exit_code=NULL,
+                           attempts=0, cancel_requested=0, completed_at=NULL, started_at=NULL,
+                           engine_evaluations=0, engine_deep_evaluations=0, engine_retry_count=0,
+                           engine_nodes=0, engine_time_ms=0, engine_exit_code=NULL,
                            engine_error_code=NULL, engine_error_message=NULL, updated_at=NOW()
                        WHERE user_id=? AND status IN ("error","cancelled")');
   $st->execute([$userId]);
   return ['ok' => true, 'updated' => $st->rowCount()];
+}
+
+function queue_retry_analysis(int $analysisId, int $userId): array {
+  $st = db()->prepare('UPDATE game_analysis
+                       SET status="queued", error_message=NULL, current_ply=0, total_ply=0,
+                           attempts=0, cancel_requested=0, completed_at=NULL, started_at=NULL,
+                           engine_evaluations=0, engine_deep_evaluations=0, engine_retry_count=0,
+                           engine_nodes=0, engine_time_ms=0, engine_exit_code=NULL,
+                           engine_error_code=NULL, engine_error_message=NULL, updated_at=NOW()
+                       WHERE id=? AND user_id=? AND status IN ("error","cancelled")');
+  $st->execute([$analysisId, $userId]);
+  if ($st->rowCount() < 1) return ['ok' => false, 'error' => 'El análisis ya no está disponible para reintentar.'];
+  return ['ok' => true, 'analysis_id' => $analysisId, 'status' => 'queued'];
 }
 
 function queue_cancel_waiting(int $userId): array {
@@ -115,6 +130,7 @@ function queue_total_count(int $userId): int {
 }
 
 function queue_list(int $userId, int $limit = 50, int $offset = 0): array {
+  queue_recover_stale_analyses($userId);
   $limit = max(1, min(200, $limit));
   $offset = max(0, $offset);
   $sql = 'SELECT a.id AS analysis_id, a.game_id, a.status, a.engine_name, a.engine_version, a.engine_build,
@@ -158,7 +174,8 @@ function queue_recover_stale_analyses(?int $userId = null): array {
                            SET status="error", completed_at=NOW(), updated_at=NOW(),
                                error_message="El proceso de Stockfish quedó interrumpido y agotó sus reintentos.",
                                engine_error_code="stale_worker",
-                               engine_error_message="Stale running analysis exceeded the configured job attempts."
+                               engine_error_message="Stale running analysis exceeded the configured job attempts.",
+                               cancel_requested=0
                            WHERE status="running" AND attempts>=?
                              AND updated_at<DATE_SUB(NOW(), INTERVAL '.(int)$staleMinutes.' MINUTE)'.$scope);
   $failed->execute(array_merge([$maxAttempts], $params));
@@ -167,7 +184,8 @@ function queue_recover_stale_analyses(?int $userId = null): array {
                              SET status="queued", current_ply=0, completed_at=NULL, started_at=NULL,
                                  updated_at=NOW(), error_message="Reintentando un análisis interrumpido.",
                                  engine_error_code="stale_worker",
-                                 engine_error_message="Stale running analysis was automatically requeued."
+                                 engine_error_message="Stale running analysis was automatically requeued.",
+                                 cancel_requested=0
                              WHERE status="running" AND attempts<?
                                AND updated_at<DATE_SUB(NOW(), INTERVAL '.(int)$staleMinutes.' MINUTE)'.$scope);
   $requeued->execute(array_merge([$maxAttempts], $params));
@@ -513,6 +531,7 @@ function process_analysis_job_with_engine(int $analysisId, int $userId): array {
     try {
       smart_tag_generate_for_analysis($analysisId, $userId);
     } catch (Throwable $tagError) {
+      smart_tag_mark_generation($analysisId, $userId, public_error_message($tagError));
       // Smart Tags are derived metadata; a tagging failure must not invalidate a completed Stockfish analysis.
     }
     try {

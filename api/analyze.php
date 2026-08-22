@@ -10,6 +10,7 @@ $mutatingActions = [
   'queue',
   'queue_missing',
   'retry_errors',
+  'retry',
   'cancel_waiting',
   'cancel',
   'process_next',
@@ -72,6 +73,11 @@ if ($action === 'queue_missing') {
 
 if ($action === 'retry_errors') {
   json_response(queue_retry_errors($userId));
+}
+
+if ($action === 'retry') {
+  $body = request_json_body();
+  json_response(queue_retry_analysis((int)($body['analysis_id'] ?? 0), $userId));
 }
 
 if ($action === 'cancel_waiting') {

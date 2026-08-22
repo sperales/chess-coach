@@ -9,7 +9,7 @@ require_once __DIR__.'/../includes/scenario_runtime.php';
 $u = require_login();
 $userId = (int)$u['id'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
-$mutatingActions = ['session_start', 'session_end', 'solve_start', 'hint', 'why', 'attempt', 'skip', 'goal_settings', 'progress_refresh',
+$mutatingActions = ['session_start', 'session_end', 'session_repeat', 'solve_start', 'hint', 'why', 'attempt', 'skip', 'goal_settings', 'progress_refresh',
   'scenario_start', 'scenario_move', 'scenario_hint', 'scenario_why', 'scenario_skip'];
 if (in_array($action, $mutatingActions, true)) {
   require_post_csrf();
@@ -35,6 +35,8 @@ if ($action === 'list' || $action === 'dashboard') {
     'experience' => training_experience_summary($userId),
     'session' => $session,
     'coach_plan' => $coachPlan,
+    'training_history' => training_completed_sessions($userId, 8),
+    'completed_training' => training_completed_session((int)($_GET['completed_training'] ?? 0), $userId),
     'exercises' => $scenarioList ? [] : $list['items'],
     'scenarios' => $scenarioList ? $list['items'] : [],
     'pagination' => $list['pagination'],
@@ -113,14 +115,24 @@ if ($action === 'session_end') {
     : ['ok' => false, 'error' => 'Sesión no indicada.']);
 }
 
+if ($action === 'session_repeat') {
+  $body = request_json_body();
+  json_response(training_repeat_session($userId, (int)($body['session_id'] ?? 0)));
+}
+
 if ($action === 'get') {
   $id = (int)($_GET['id'] ?? 0);
+  $trainingId = (int)($_GET['training_id'] ?? 0);
   $exercise = $id > 0 ? training_exercise_for_user($id, $userId) : null;
   if (!$exercise) json_response(['ok' => false, 'error' => 'Ejercicio no encontrado.']);
-  $includeSolution = !empty($exercise['resolved_at']) && empty($exercise['is_repeat_due']);
+  $planTrainable = training_session_pending_exercise($trainingId, $userId, $id);
+  $includeSolution = !empty($exercise['resolved_at']) && empty($exercise['is_repeat_due']) && !$planTrainable;
+  $publicExercise = training_public_exercise($exercise, $includeSolution);
+  $publicExercise['plan_trainable'] = $planTrainable;
+  if ($planTrainable) $publicExercise['is_trainable'] = true;
   json_response([
     'ok' => true,
-    'exercise' => training_public_exercise($exercise, $includeSolution),
+    'exercise' => $publicExercise,
   ]);
 }
 

@@ -57,6 +57,9 @@ CREATE TABLE IF NOT EXISTS game_analysis (
   engine_exit_code SMALLINT DEFAULT NULL,
   engine_error_code VARCHAR(40) DEFAULT NULL,
   engine_error_message TEXT DEFAULT NULL,
+  smart_tags_version SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  smart_tags_generated_at TIMESTAMP NULL DEFAULT NULL,
+  smart_tags_error TEXT DEFAULT NULL,
   status ENUM('queued','running','done','error','cancelled') NOT NULL DEFAULT 'queued',
   blunders INT UNSIGNED NOT NULL DEFAULT 0,
   mistakes INT UNSIGNED NOT NULL DEFAULT 0,
@@ -443,6 +446,7 @@ CREATE TABLE IF NOT EXISTS training_sessions (
   coach_evidence_json TEXT DEFAULT NULL,
   estimated_duration_min SMALLINT UNSIGNED DEFAULT NULL,
   planned_item_count SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  repeated_from_session_id BIGINT UNSIGNED DEFAULT NULL,
   status ENUM('active','completed','abandoned') NOT NULL DEFAULT 'active',
   started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   completed_at TIMESTAMP NULL DEFAULT NULL,
@@ -458,6 +462,7 @@ CREATE TABLE IF NOT EXISTS training_sessions (
   PRIMARY KEY (id),
   KEY idx_training_sessions_user_started (user_id, started_at),
   KEY idx_training_sessions_user_status (user_id, status),
+  KEY idx_training_sessions_repeated_from (repeated_from_session_id),
   CONSTRAINT fk_training_sessions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
