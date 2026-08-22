@@ -19,6 +19,7 @@ Training Quality & Coach Foundation with controlled shadow rollout.
 - Adds a bounded, repeatable Profile backfill and compact quality/selector diagnostics for shared hosting.
 - Removes obsolete Profile backfill controls now covered automatically by completed analysis, while keeping the v1.6 quality foundation and historical opening processes.
 - Tightens Profile's narrow-screen containment to remove the remaining horizontal scroll.
+- Fixes the Training foundation backfill opportunity upsert and shows useful partial diagnostics when an individual record cannot be processed.
 - Archives the previous roadmap and replaces it with an outcome-oriented roadmap grounded in the product audit.
 - Bumps the app version and PWA cache to `1.6.0`.
 

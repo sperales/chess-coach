@@ -2,6 +2,7 @@
 
 $migration = file_get_contents(__DIR__ . '/../sql/migrations/037_changes_1.6.0.sql');
 $install = file_get_contents(__DIR__ . '/../sql/install.sql');
+$opportunities = file_get_contents(__DIR__ . '/../includes/training_opportunities.php');
 $failures = [];
 
 foreach ([
@@ -15,6 +16,18 @@ foreach ([
 foreach (['opportunity_id', 'selection_reason_code', 'selection_version', 'first_move_at', 'time_to_first_move_ms'] as $column) {
   if (!str_contains($migration, $column)) $failures[] = "La migración no contiene {$column}.";
   if (!str_contains($install, $column)) $failures[] = "install.sql no contiene {$column}.";
+}
+
+$upsert = [];
+if (!preg_match('/INSERT INTO training_opportunities\s*\((?<columns>[\s\S]*?)\)\s*VALUES\s*\((?<values>[\s\S]*?)\)\s*ON DUPLICATE KEY UPDATE/', $opportunities, $upsert)) {
+  $failures[] = 'No se pudo inspeccionar el upsert de oportunidades.';
+} else {
+  $columnCount = count(array_filter(array_map('trim', explode(',', $upsert['columns']))));
+  $placeholderCount = substr_count($upsert['values'], '?');
+  $literalCount = preg_match('/\bNOW\(\)/i', $upsert['values']) ? 1 : 0;
+  if ($columnCount !== $placeholderCount + $literalCount) {
+    $failures[] = "El upsert de oportunidades declara {$columnCount} columnas pero envía " . ($placeholderCount + $literalCount) . ' valores.';
+  }
 }
 if (substr_count($migration, "('tactics_combinations'") !== 1 || substr_count($install, "('tactics_combinations'") !== 1) {
   $failures[] = 'La taxonomía v1 debe sembrarse una sola vez en cada baseline.';

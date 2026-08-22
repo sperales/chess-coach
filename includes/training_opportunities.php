@@ -187,7 +187,7 @@ function training_opportunity_persist(int $userId, array $candidate): array {
      ambiguity_penalty,redundancy_penalty,complexity_penalty,overexposure_penalty,pedagogical_score,
      publication_state,rejection_reason_code,rejection_evidence_json,currency_state,filter_version,scoring_version,
      difficulty_version,format_version,review_rule_version,created_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())
     ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id),normalized_fen=VALUES(normalized_fen),side_to_move=VALUES(side_to_move),
       objective_code=VALUES(objective_code),objective_json=VALUES(objective_json),primary_solution_uci=VALUES(primary_solution_uci),
       accepted_solutions_json=VALUES(accepted_solutions_json),primary_concept_code=VALUES(primary_concept_code),

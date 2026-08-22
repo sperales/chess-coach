@@ -286,12 +286,14 @@ async function runTrainingFoundationBackfill() {
       body: JSON.stringify({ limit: <?= (int)(app_config()['training_foundation_backfill_batch_size'] ?? 100) ?> })
     });
     const data = await response.json();
-    if (!response.ok || !data.ok) throw new Error(data.message || 'El lote terminó con errores.');
+    if (!response.ok) throw new Error(data.message || 'El servidor no pudo procesar el lote.');
     const shadow = data.metrics?.shadow || null;
     const shadowText = shadow && Number(shadow.runs || 0) > 0
       ? ` Shadow: ${shadow.runs} comparaciones, calidad media ${shadow.average_quality ?? 'n/d'}, coincidencia ${shadow.overlap_rate ?? 'n/d'}%.`
       : '';
-    if (result) result.textContent = `Procesados: ${data.processed || 0}. Publicados: ${data.published || 0}. Reserva: ${data.reserve || 0}. Rechazados: ${data.rejected || 0}. Duplicados evitados: ${data.duplicates || 0}. Conceptos recalculados: ${data.mastery_recalculated || 0}. Pendientes: ${data.pending || 0}.${shadowText}`;
+    const errors = Array.isArray(data.errors) ? data.errors.filter(Boolean) : [];
+    const errorText = errors.length ? ` Errores: ${errors.slice(0, 3).join(' | ')}` : '';
+    if (result) result.textContent = `Procesados: ${data.processed || 0}. Publicados: ${data.published || 0}. Reserva: ${data.reserve || 0}. Rechazados: ${data.rejected || 0}. Duplicados evitados: ${data.duplicates || 0}. Conceptos recalculados: ${data.mastery_recalculated || 0}. Pendientes: ${data.pending || 0}.${shadowText}${errorText}`;
     if (pending) pending.textContent = `Pendientes: ${data.pending || 0}`;
   } catch (error) {
     if (result) result.textContent = error.message || 'No se pudo procesar el lote.';
