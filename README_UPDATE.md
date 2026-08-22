@@ -1,3 +1,40 @@
+# Chess Coach v1.5.2 Update Notes
+
+## Release type
+
+Training completion, repeatable history and operational stability.
+
+## Changes
+
+- Renames the last plan action to `Finalizar entrenamiento` for Flash and Scenario items.
+- Shows a Nova completion summary before proposing another training.
+- Adds completed-training history and lets the player repeat a complete plan to compare attempts and average time.
+- Keeps the internal session model out of player-facing copy.
+- Makes appended Coach Feed messages transition for 0.85 seconds.
+- Calculates a dedicated vertical domain for each Home progress metric.
+- Prevents horizontal overflow in Profile on narrow mobile screens.
+- Retries the exact legacy cancelled/error analysis and clears stale cancellation, attempts, progress and engine telemetry.
+- Persists Smart Tag generation state even when an analysis correctly produces zero tags.
+- Bumps the app version and PWA cache to `1.5.2`.
+
+## SQL migration
+
+Run `sql/migrations/036_changes_1.5.2.sql` once after uploading the release. It adds Smart Tag generation state and the provenance link used when repeating a completed training.
+
+## Verification
+
+- Finish the last Flash and Scenario item in a plan and confirm the button reads `Finalizar entrenamiento`.
+- Confirm the completion summary is shown and Nova offers a new training.
+- Repeat an item from `Entrenamientos completados` and confirm already-solved exercises can be attempted inside that repeated plan.
+- Add a new hint or feedback message and confirm the carousel transition is clearly visible.
+- Switch Home chart metrics and confirm each graph receives an independent useful vertical scale.
+- Open Profile on mobile and confirm there is no horizontal blank area.
+- Retry a cancelled analysis and confirm it returns to `En cola` instead of remaining in `Preparando`.
+- Run the Smart Tags backfill until it reaches zero, including analyzed games that produce no tags.
+- Confirm `config/version.php` and `service-worker.js` both use `1.5.2`.
+
+---
+
 # Chess Coach v1.5.1 Update Notes
 
 ## Release type

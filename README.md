@@ -732,6 +732,16 @@ Current planned direction:
 - Autonomía based on solving without assistance
 - Measurable personal plans and completed-review tracking
 
+### v1.5.2 — Training completion and stability
+
+- Closes a completed training plan with a dedicated Nova summary.
+- Keeps a compact history of completed training plans and allows repeating them.
+- Makes newly appended coach messages visibly transition into the carousel.
+- Stores durable Smart Tag processing state, including valid analyses with zero tags.
+- Retries the exact failed or cancelled analysis instead of creating an ambiguous replacement.
+- Uses an independent vertical scale for each dashboard progress metric.
+- Fixes horizontal overflow in mobile profile settings.
+
 ### v1.5.1 — Interactive Review and analysis
 
 - Review can apply the best move and explore a temporary Stockfish variation without losing the original game context.

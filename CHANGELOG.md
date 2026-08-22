@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## v1.5.2 - Training completion and stability
+
+### Added
+
+- Added a completion summary after the final item in a Nova training plan.
+- Added completed-training history with full-plan repetition and attempt/time comparison.
+- Added durable Smart Tag generator state, including valid zero-tag results.
+
+### Changed
+
+- The final action now reads `Finalizar entrenamiento` and leads to a new recommendation.
+- Newly appended Nova carousel messages use a clearly visible 0.85-second transition.
+- Dashboard chart domains are calculated independently for Accuracy, Win rate and performance.
+- Profile settings are contained on narrow mobile viewports.
+- Retry now resets the exact cancelled/error analysis, including stale cancellation and engine state.
+
+### Database
+
+- Added migration `036_changes_1.5.2.sql` for Smart Tag processing state and repeat-plan provenance.
+
 ## v1.5.1 - Review variations and interactive analysis
 
 ### Added

@@ -1,5 +1,24 @@
 # VERIFY.md
 
+## v1.5.2 training completion and stability
+
+```powershell
+php tests\training_completion_stability_test.php
+node --check assets\js\training.js
+node --check assets\js\training-scenario.js
+node --check assets\js\dashboard.js
+node --check assets\js\analysis_queue.js
+```
+
+Manual checks:
+
+1. Finish the last exercise in a planned training and confirm that the CTA says `Finalizar entrenamiento`.
+2. Confirm that the completion summary appears and that the completed training can be repeated from history.
+3. Append a new Nova message and confirm that its carousel transition remains visible for about 0.85 seconds.
+4. Retry one cancelled analysis and confirm that the same analysis row returns to the queue.
+5. Run the Smart Tags backfill until it reports zero pending analyses, including games that generate no global tags.
+6. Open profile settings on mobile and confirm that the page has no horizontal overflow.
+
 ## v1.5.1 interactive analysis
 
 ```powershell
