@@ -8,12 +8,24 @@ function coach_message_types(): array {
 }
 
 function coach_message_states(): array {
-  return ['welcome', 'neutral', 'thinking', 'explaining', 'correct', 'error'];
+  return ['idle', 'thinking', 'correct', 'error', 'hint', 'explaining', 'session_complete'];
+}
+
+function coach_message_semantic_state(string $state): string {
+  $legacy = [
+    'welcome' => 'idle',
+    'neutral' => 'idle',
+    'success' => 'correct',
+    'warning' => 'hint',
+    'focus' => 'explaining',
+  ];
+  $state = $legacy[$state] ?? $state;
+  return in_array($state, coach_message_states(), true) ? $state : 'idle';
 }
 
 function coach_message_payload(string $type, string $state, string $text, array $metadata = [], ?int $relatedPly = null): array {
   $type = in_array($type, coach_message_types(), true) ? $type : 'system';
-  $state = in_array($state, coach_message_states(), true) ? $state : 'neutral';
+  $state = coach_message_semantic_state($state);
   return [
     'type' => $type,
     'state' => $state,
@@ -34,7 +46,7 @@ function coach_public_message(array $row): array {
     'id' => (int)$row['id'],
     'sequence' => (int)$row['sequence_no'],
     'type' => (string)$row['message_type'],
-    'state' => (string)$row['coach_state'],
+    'state' => coach_message_semantic_state((string)$row['coach_state']),
     'text' => (string)$row['message_text'],
     'related_ply' => $row['related_ply'] === null ? null : (int)$row['related_ply'],
     'metadata' => coach_decode_json($row['metadata_json'] ?? null),

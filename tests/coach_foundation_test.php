@@ -33,7 +33,7 @@ expect_coach($plan['items'][0]['exercise_id'] === 2, 'Un fallo relacionado con e
 expect_coach($plan['items'][0]['item_type'] === 'flash', 'Los ejercicios actuales deben inferirse como Flash.');
 expect_coach(!in_array(3, array_column($plan['items'], 'exercise_id'), true), 'Un ejercicio recién resuelto debe evitarse si hay alternativas.');
 expect_coach(in_array('3 omisiones graves en 8 partidas', $plan['evidence'], true), 'La recomendación debe conservar evidencia estructurada.');
-expect_coach($plan['intro_message']['state'] === 'welcome', 'El Coach debe emitir un estado semántico, no un color.');
+expect_coach($plan['intro_message']['state'] === 'idle', 'El Coach debe emitir el estado semántico idle, no un color o un estado visual legacy.');
 expect_coach(!array_key_exists('color', $plan['intro_message']), 'La lógica del Coach no debe contener decisiones visuales.');
 
 $forced = coach_forced_focus('find_mate');
@@ -46,7 +46,7 @@ expect_coach(array_column($filteredScenarios, 'id') === [10], 'El plan forzado d
 
 $message = coach_message_payload('hint', 'thinking', 'Mira el flanco de rey.', ['hint_level' => 1]);
 expect_coach($message['type'] === 'hint' && $message['state'] === 'thinking', 'El contrato de mensajes debe conservar tipo y estado.');
-expect_coach(coach_message_payload('bad', 'orange', 'Fallback')['state'] === 'neutral', 'Estados de UI o inválidos deben normalizarse.');
+expect_coach(coach_message_payload('bad', 'orange', 'Fallback')['state'] === 'idle', 'Estados de UI o inválidos deben normalizarse a idle.');
 
 $source = file_get_contents(__DIR__ . '/../includes/coach.php');
 expect_coach(stripos($source, 'nova') === false, 'El servicio Coach no debe depender de Nova.');

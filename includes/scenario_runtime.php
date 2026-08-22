@@ -164,6 +164,11 @@ function training_scenario_move(int $userId, int $runId, string $moveUci): array
   if (chess_fen_side_to_move($fen) !== $scenario['player_color']) throw new RuntimeException('La posición no corresponde al turno del jugador.');
   $fenAfterUser = chess_apply_uci_to_fen($fen, $moveUci);
   if ($fenAfterUser === null) return ['ok' => false, 'error' => 'La jugada no es legal en esta posición.', 'accepted' => false];
+  db()->prepare('UPDATE training_scenario_runs
+                 SET first_move_at=COALESCE(first_move_at,NOW()),
+                     time_to_first_move_ms=COALESCE(time_to_first_move_ms,TIMESTAMPDIFF(MICROSECOND,started_at,NOW()) DIV 1000),
+                     updated_at=NOW() WHERE id=? AND user_id=? AND status="active"')
+    ->execute([$runId, $userId]);
 
   $engine = training_scenario_engine();
   $before = $engine->evaluate($fen);
@@ -242,6 +247,12 @@ function training_scenario_move(int $userId, int $runId, string $moveUci): array
     } catch (Throwable $progressError) {
       error_log('Scenario progress event failed: ' . $progressError->getMessage());
     }
+    try {
+      training_mastery_record_source($userId, 'scenario', $runId);
+    } catch (Throwable $masteryError) {
+      error_log('Scenario mastery update failed: ' . $masteryError->getMessage());
+    }
+    training_adapt_pending_session($userId, empty($run['session_id']) ? null : (int)$run['session_id']);
   }
   $updated = training_scenario_run_for_user($runId, $userId);
   return [

@@ -166,6 +166,18 @@ body {
 .nova-avatar--error {
   background-position:right bottom
 }
+.nova-avatar[data-nova-state="thinking"] {
+  animation:novaThinking 1.1s ease-in-out infinite
+}
+.nova-avatar[data-nova-state="correct"] {
+  animation:novaCorrect .52s ease-out 1
+}
+.nova-avatar[data-nova-state="error"] {
+  animation:novaError .34s ease-out 1
+}
+.nova-avatar[data-nova-state="session_complete"] {
+  animation:novaSessionComplete .8s ease-out 1
+}
 .nova-coach {
   --nova-accent:#42a5f5;
   display:flex;
@@ -6247,7 +6259,11 @@ a.training-plan-goal:hover {
   .training-mobile-coach.nova-state-solution {
     --coach-state:#e58d2c
   }
-  .training-mobile-coach.nova-state-success {
+.training-mobile-coach.nova-state-success {
+    --coach-state:#78ca35
+  }
+  .training-mobile-coach.nova-state-correct,
+  .training-mobile-coach.nova-state-session-complete {
     --coach-state:#78ca35
   }
   .training-mobile-coach.nova-state-explanation {
@@ -8496,6 +8512,10 @@ body.login-page::before {
   55%{opacity:.72;transform:translateX(12px)}
   to{opacity:1;transform:translateX(0)}
 }
+@keyframes novaThinking{50%{transform:translateY(-2px);filter:brightness(1.08)}}
+@keyframes novaCorrect{45%{transform:translateY(-4px) scale(1.035)}to{transform:none}}
+@keyframes novaError{25%{transform:translateX(-2px)}55%{transform:translateX(2px)}to{transform:none}}
+@keyframes novaSessionComplete{35%{transform:scale(1.05)}65%{transform:scale(.985)}to{transform:none}}
 .training-completion-panel{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:center;border-color:#429b45;background:linear-gradient(110deg,#0a2b20,#0c171c)}
 .training-completion-panel[hidden]{display:none!important}
 .training-completion-nova .nova-avatar{width:92px;height:92px}
@@ -8514,6 +8534,12 @@ body.login-page::before {
   .profile-page .board-theme-options{grid-template-columns:minmax(0,1fr)}
   .profile-page input,.profile-page select,.profile-page textarea,.profile-page button{min-width:0;max-width:100%}
   .profile-page .batch-row>*{min-width:0;overflow-wrap:anywhere}
+}
+@media(prefers-reduced-motion:reduce){
+  .nova-avatar[data-nova-state]{animation:none!important;transform:none!important}
+  .training-mobile-coach.is-changing .training-mobile-coach-copy,
+  .training-mobile-coach.is-advancing .training-mobile-coach-copy,
+  .training-scenario-coach.is-advancing .training-mobile-coach-copy{animation:none!important}
 }
 @media(max-width:760px){
   .training-scenario-workspace{grid-template-columns:1fr}

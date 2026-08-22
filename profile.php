@@ -7,6 +7,7 @@ require_once __DIR__.'/includes/openings.php';
 require_once __DIR__.'/includes/player_dna.php';
 require_once __DIR__.'/includes/player_progress.php';
 require_once __DIR__.'/includes/pieces.php';
+require_once __DIR__.'/includes/training_opportunities.php';
 
 $u = require_login();
 $msg = '';
@@ -18,6 +19,7 @@ $pendingTrainingExercises = training_backfill_pending_count((int)$u['id']);
 $pendingTrainingContent = training_content_backfill_pending_count((int)$u['id']);
 $pendingTrainingEngine = training_engine_backfill_pending_count((int)$u['id']);
 $pendingTrainingScenarios = training_scenario_backfill_pending_count((int)$u['id']);
+$pendingTrainingFoundation = training_opportunity_backfill_pending_count((int)$u['id']);
 $pendingOpeningProfiles = openings_profile_pending_count((int)$u['id']);
 $latestPlayerDna = player_dna_latest_snapshot((int)$u['id']);
 $playerDnaConfidenceLabels = ['low' => 'baja', 'medium' => 'media', 'high' => 'alta'];
@@ -303,6 +305,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['profile_action'] ?? '') ==
       <p class="muted" id="trainingScenarioBackfillResult"></p>
       <div class="batch-row">
         <div>
+          <strong>Calidad y conceptos de entrenamiento</strong>
+          <p class="muted">Clasifica ejercicios y escenarios existentes, elimina duplicados lógicos y calcula su valor pedagógico. Es reanudable y no modifica intentos ni progreso.</p>
+          <p class="muted" id="trainingFoundationBackfillPending">Pendientes: <?= (int)$pendingTrainingFoundation ?></p>
+        </div>
+        <button type="button" onclick="runTrainingFoundationBackfill()" id="trainingFoundationBackfillBtn">Procesar lote</button>
+      </div>
+      <p class="muted" id="trainingFoundationBackfillResult"></p>
+      <div class="batch-row">
+        <div>
           <strong>Backfill de aperturas</strong>
           <p class="muted">Genera perfiles de apertura para partidas importadas o analizadas antes del Lab de Aperturas. Procesa hasta 25 partidas por ejecucion.</p>
           <p class="muted" id="openingsBackfillPending">Pendientes: <?= (int)$pendingOpeningProfiles ?></p>
@@ -349,6 +360,33 @@ async function runSmartTagBackfill() {
     if (pending) pending.textContent = `Pendientes: ${data.pending_after || 0}`;
   } catch (e) {
     if (result) result.textContent = e.message || 'No se pudo ejecutar el backfill.';
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function runTrainingFoundationBackfill() {
+  const btn = document.getElementById('trainingFoundationBackfillBtn');
+  const result = document.getElementById('trainingFoundationBackfillResult');
+  const pending = document.getElementById('trainingFoundationBackfillPending');
+  if (btn) btn.disabled = true;
+  if (result) result.textContent = 'Clasificando oportunidades de entrenamiento...';
+  try {
+    const response = await fetch('api/analyze.php?action=training_foundation_backfill', {
+      method: 'POST',
+      headers: window.chessCoachCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ limit: <?= (int)(app_config()['training_foundation_backfill_batch_size'] ?? 100) ?> })
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.message || 'El lote terminó con errores.');
+    const shadow = data.metrics?.shadow || null;
+    const shadowText = shadow && Number(shadow.runs || 0) > 0
+      ? ` Shadow: ${shadow.runs} comparaciones, calidad media ${shadow.average_quality ?? 'n/d'}, coincidencia ${shadow.overlap_rate ?? 'n/d'}%.`
+      : '';
+    if (result) result.textContent = `Procesados: ${data.processed || 0}. Publicados: ${data.published || 0}. Reserva: ${data.reserve || 0}. Rechazados: ${data.rejected || 0}. Duplicados evitados: ${data.duplicates || 0}. Conceptos recalculados: ${data.mastery_recalculated || 0}. Pendientes: ${data.pending || 0}.${shadowText}`;
+    if (pending) pending.textContent = `Pendientes: ${data.pending || 0}`;
+  } catch (error) {
+    if (result) result.textContent = error.message || 'No se pudo procesar el lote.';
   } finally {
     if (btn) btn.disabled = false;
   }

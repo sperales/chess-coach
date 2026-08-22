@@ -7,6 +7,7 @@ require_once __DIR__ . '/training_progress.php';
 require_once __DIR__ . '/player_progress.php';
 require_once __DIR__ . '/coach_messages.php';
 require_once __DIR__ . '/training_scenarios.php';
+require_once __DIR__ . '/training_taxonomy.php';
 
 const TRAINING_EXERCISE_CONTENT_VERSION = 2;
 
@@ -391,19 +392,26 @@ function training_goal_completed(array $settings, int $exerciseCount, int $durat
 
 function training_activity_rows(int $userId, int $days = 60): array {
   $days = max(1, min(365, $days));
-  $sql = 'SELECT DATE(created_at) AS activity_date,
-                 COUNT(DISTINCT exercise_id) AS exercises,
-                 SUM(result="solved") AS solved,
-                 SUM(result="failed") AS failed,
-                 SUM(duration_ms) AS duration_ms
-          FROM training_attempts
-          WHERE user_id=?
-            AND result<>"skipped"
-            AND created_at >= DATE_SUB(CURDATE(), INTERVAL ' . (int)($days - 1) . ' DAY)
-          GROUP BY DATE(created_at)
+  $sql = 'SELECT activity_date,SUM(exercises) exercises,SUM(solved) solved,SUM(failed) failed,SUM(duration_ms) duration_ms
+          FROM (
+            SELECT DATE(completed_at) activity_date,COUNT(*) exercises,SUM(status="solved") solved,SUM(status="failed") failed,
+                   SUM(GREATEST(0,TIMESTAMPDIFF(MICROSECOND,started_at,completed_at) DIV 1000)) duration_ms
+            FROM training_solve_runs
+            WHERE user_id=? AND status IN ("solved","failed") AND completed_at IS NOT NULL
+              AND completed_at>=DATE_SUB(CURDATE(),INTERVAL ' . (int)($days - 1) . ' DAY)
+            GROUP BY DATE(completed_at)
+            UNION ALL
+            SELECT DATE(completed_at),COUNT(*),SUM(status="completed"),SUM(status="failed"),
+                   SUM(GREATEST(0,TIMESTAMPDIFF(MICROSECOND,started_at,completed_at) DIV 1000))
+            FROM training_scenario_runs
+            WHERE user_id=? AND status IN ("completed","failed") AND completed_at IS NOT NULL
+              AND completed_at>=DATE_SUB(CURDATE(),INTERVAL ' . (int)($days - 1) . ' DAY)
+            GROUP BY DATE(completed_at)
+          ) activity
+          GROUP BY activity_date
           ORDER BY activity_date DESC';
   $st = db()->prepare($sql);
-  $st->execute([$userId]);
+  $st->execute([$userId, $userId]);
   $rows = [];
   foreach ($st->fetchAll() as $row) {
     $date = (string)$row['activity_date'];
@@ -419,13 +427,16 @@ function training_activity_rows(int $userId, int $days = 60): array {
 }
 
 function training_today_progress(int $userId, array $settings): array {
-  $st = db()->prepare('SELECT COUNT(DISTINCT exercise_id) AS exercises,
-                              SUM(result="solved") AS solved,
-                              SUM(result="failed") AS failed,
-                              SUM(duration_ms) AS duration_ms
-                       FROM training_attempts
-                       WHERE user_id=? AND result<>"skipped" AND DATE(created_at)=CURDATE()');
-  $st->execute([$userId]);
+  $st = db()->prepare('SELECT SUM(exercises) exercises,SUM(solved) solved,SUM(failed) failed,SUM(duration_ms) duration_ms FROM (
+      SELECT COUNT(*) exercises,SUM(status="solved") solved,SUM(status="failed") failed,
+             SUM(GREATEST(0,TIMESTAMPDIFF(MICROSECOND,started_at,completed_at) DIV 1000)) duration_ms
+      FROM training_solve_runs WHERE user_id=? AND status IN ("solved","failed") AND DATE(completed_at)=CURDATE()
+      UNION ALL
+      SELECT COUNT(*),SUM(status="completed"),SUM(status="failed"),
+             SUM(GREATEST(0,TIMESTAMPDIFF(MICROSECOND,started_at,completed_at) DIV 1000))
+      FROM training_scenario_runs WHERE user_id=? AND status IN ("completed","failed") AND DATE(completed_at)=CURDATE()
+    ) activity');
+  $st->execute([$userId, $userId]);
   $row = $st->fetch() ?: [];
   $exercises = (int)($row['exercises'] ?? 0);
   $durationMs = (int)($row['duration_ms'] ?? 0);
@@ -442,16 +453,19 @@ function training_today_progress(int $userId, array $settings): array {
 }
 
 function training_week_progress(int $userId, array $settings): array {
-  $st = db()->prepare('SELECT COUNT(DISTINCT DATE(created_at)) AS training_days,
-                              COUNT(DISTINCT exercise_id) AS exercises,
-                              SUM(result="solved") AS solved,
-                              SUM(result="failed") AS failed,
-                              SUM(duration_ms) AS duration_ms
-                       FROM training_attempts
-                       WHERE user_id=?
-                         AND result<>"skipped"
-                         AND YEARWEEK(created_at, 1)=YEARWEEK(CURDATE(), 1)');
-  $st->execute([$userId]);
+  $st = db()->prepare('SELECT COUNT(DISTINCT activity_date) training_days,SUM(exercises) exercises,
+                              SUM(solved) solved,SUM(failed) failed,SUM(duration_ms) duration_ms FROM (
+      SELECT DATE(completed_at) activity_date,COUNT(*) exercises,SUM(status="solved") solved,SUM(status="failed") failed,
+             SUM(GREATEST(0,TIMESTAMPDIFF(MICROSECOND,started_at,completed_at) DIV 1000)) duration_ms
+      FROM training_solve_runs WHERE user_id=? AND status IN ("solved","failed")
+        AND YEARWEEK(completed_at,1)=YEARWEEK(CURDATE(),1) GROUP BY DATE(completed_at)
+      UNION ALL
+      SELECT DATE(completed_at),COUNT(*),SUM(status="completed"),SUM(status="failed"),
+             SUM(GREATEST(0,TIMESTAMPDIFF(MICROSECOND,started_at,completed_at) DIV 1000))
+      FROM training_scenario_runs WHERE user_id=? AND status IN ("completed","failed")
+        AND YEARWEEK(completed_at,1)=YEARWEEK(CURDATE(),1) GROUP BY DATE(completed_at)
+    ) activity');
+  $st->execute([$userId, $userId]);
   $row = $st->fetch() ?: [];
   $trainingDays = (int)($row['training_days'] ?? 0);
   $exercises = (int)($row['exercises'] ?? 0);
@@ -468,17 +482,17 @@ function training_week_progress(int $userId, array $settings): array {
   ];
 }
 
-function training_goal_streak(int $userId, array $settings): array {
-  $rows = training_activity_rows($userId, 120);
-  $today = new DateTimeImmutable('today');
+function training_streak_from_activity_rows(array $rows, array $settings, ?DateTimeImmutable $today = null): array {
+  $today ??= new DateTimeImmutable('today');
   $todayKey = $today->format('Y-m-d');
+  $trainedToday = isset($rows[$todayKey]) && (int)$rows[$todayKey]['exercises'] > 0;
   $todayMet = isset($rows[$todayKey]) && training_goal_completed($settings, $rows[$todayKey]['exercises'], $rows[$todayKey]['duration_ms']);
-  $cursor = $todayMet ? $today : $today->modify('-1 day');
+  $cursor = $trainedToday ? $today : $today->modify('-1 day');
   $days = 0;
 
   while (true) {
     $key = $cursor->format('Y-m-d');
-    if (!isset($rows[$key]) || !training_goal_completed($settings, $rows[$key]['exercises'], $rows[$key]['duration_ms'])) {
+    if (!isset($rows[$key]) || (int)$rows[$key]['exercises'] < 1) {
       break;
     }
     $days++;
@@ -487,9 +501,14 @@ function training_goal_streak(int $userId, array $settings): array {
 
   return [
     'days' => $days,
+    'trained_today' => $trainedToday,
     'today_goal_met' => $todayMet,
-    'continues_if_completed_today' => !$todayMet && $days > 0,
+    'continues_if_completed_today' => !$trainedToday && $days > 0,
   ];
+}
+
+function training_goal_streak(int $userId, array $settings): array {
+  return training_streak_from_activity_rows(training_activity_rows($userId, 120), $settings);
 }
 
 function training_repetition_interval_days(string $result, int $attemptsCount = 0, bool $usedHint = false): int {
@@ -560,7 +579,7 @@ function training_experience_milestones(int $userId, array $today, array $week, 
     [
       'code' => 'today_goal',
       'label' => 'Objetivo diario',
-      'description' => 'Completa tu objetivo de hoy para mantener la racha.',
+      'description' => 'Completa el plan diario; la racha solo exige una actividad finalizada.',
       'achieved' => !empty($today['goal_met']),
     ],
     [
@@ -767,9 +786,63 @@ function training_completed_sessions(int $userId, int $limit = 8): array {
 
 function training_completed_session(int $sessionId, int $userId): ?array {
   foreach (training_completed_sessions($userId, 30) as $session) {
-    if ((int)$session['id'] === $sessionId) return $session;
+    if ((int)$session['id'] === $sessionId) {
+      try {
+        $session['learning_summary'] = training_session_learning_summary($sessionId, $userId);
+      } catch (Throwable $summaryError) {
+        error_log('Training learning summary unavailable: ' . $summaryError->getMessage());
+        $session['learning_summary'] = null;
+      }
+      return $session;
+    }
   }
   return null;
+}
+
+function training_session_learning_summary(int $sessionId, int $userId): ?array {
+  $conceptSt = db()->prepare('SELECT concept_code,COUNT(*) total FROM training_session_items
+    WHERE session_id=? AND user_id=? AND status IN ("completed","failed") AND concept_code IS NOT NULL AND concept_code<>""
+    GROUP BY concept_code ORDER BY total DESC,concept_code LIMIT 1');
+  $conceptSt->execute([$sessionId, $userId]);
+  $concept = $conceptSt->fetch();
+  if (!$concept) return null;
+  $statsSt = db()->prepare('SELECT
+      SUM(finalized) finalized,SUM(autonomous) autonomous,MIN(next_review_at) next_review_at
+    FROM (
+      SELECT 1 finalized,IF(r.status="solved" AND r.attempts_count<=1 AND r.highest_hint_level=0,1,0) autonomous,o.next_review_at
+      FROM training_solve_runs r JOIN training_exercises e ON e.id=r.exercise_id LEFT JOIN training_opportunities o ON o.id=e.opportunity_id
+      WHERE r.session_id=? AND r.user_id=? AND r.status IN ("solved","failed")
+      UNION ALL
+      SELECT 1,IF(r.status="completed" AND r.attempts_count<=r.player_moves_count AND r.highest_hint_level=0,1,0),o.next_review_at
+      FROM training_scenario_runs r JOIN training_scenarios s ON s.id=r.scenario_id LEFT JOIN training_opportunities o ON o.id=s.opportunity_id
+      WHERE r.session_id=? AND r.user_id=? AND r.status IN ("completed","failed")
+    ) evidence');
+  $statsSt->execute([$sessionId,$userId,$sessionId,$userId]);
+  $stats = $statsSt->fetch() ?: [];
+  $masterySt = db()->prepare('SELECT mastery_state,recent_performance_state,confidence,adjusted_autonomy_rate,next_review_at
+    FROM training_concept_mastery WHERE user_id=? AND concept_code=?');
+  $masterySt->execute([$userId, $concept['concept_code']]);
+  $mastery = $masterySt->fetch() ?: [];
+  $finalized = (int)($stats['finalized'] ?? 0);
+  $autonomous = (int)($stats['autonomous'] ?? 0);
+  $autonomy = $finalized > 0 ? (int)round($autonomous * 100 / $finalized) : 0;
+  $tone = $autonomy >= 80 ? 'excellent' : ($autonomy >= 50 ? 'normal' : 'difficult');
+  $state = (string)($mastery['mastery_state'] ?? 'starting');
+  $stateLabels = ['starting' => 'Iniciando', 'learning' => 'Aprendiendo', 'consolidating' => 'Consolidando', 'stable' => 'Estable'];
+  $taxonomy = training_taxonomy_concepts();
+  $conceptLabel = (string)($taxonomy[(string)$concept['concept_code']] ?? $concept['concept_code']);
+  $nova = match ($tone) {
+    'excellent' => 'Has trabajado ' . $conceptLabel . ' con mucha autonomía. La próxima revisión comprobará si se mantiene.',
+    'normal' => 'Has avanzado en ' . $conceptLabel . '. Conviene repetirlo en la fecha programada para consolidarlo.',
+    default => 'Hoy ' . $conceptLabel . ' ha requerido apoyo. Cuenta como práctica útil y volverá pronto, sin afirmar una mejora que aún no está confirmada.',
+  };
+  return [
+    'primary_concept_code' => (string)$concept['concept_code'], 'primary_concept_label' => $conceptLabel,
+    'autonomy_percent' => $autonomy, 'mastery_state' => $state, 'mastery_label' => $stateLabels[$state] ?? $state,
+    'recent_performance_state' => (string)($mastery['recent_performance_state'] ?? 'normal'),
+    'next_review_at' => $stats['next_review_at'] ?: ($mastery['next_review_at'] ?? null),
+    'tone' => $tone, 'nova_observation' => $nova,
+  ];
 }
 
 function training_session_pending_exercise(int $sessionId, int $userId, int $exerciseId): bool {
@@ -1131,6 +1204,7 @@ function training_record_attempt(int $userId, int $exerciseId, array $attemptedM
   }
   $solveRunId = (int)$solveRun['id'];
   $usedHint = (int)$solveRun['highest_hint_level'] > 0;
+  training_progress_mark_first_move($userId, $solveRunId);
 
   $ins = db()->prepare('INSERT INTO training_attempts
       (session_id,solve_run_id,exercise_id,user_id,started_at,completed_at,duration_ms,attempts_count,first_move_uci,final_move_uci,

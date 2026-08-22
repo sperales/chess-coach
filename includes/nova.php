@@ -1,13 +1,33 @@
 <?php
 
+function nova_semantic_state(string $state): string {
+  $aliases = [
+    'success' => 'correct',
+    'neutral' => 'idle',
+    'warning' => 'hint',
+    'focus' => 'explaining',
+    'welcome' => 'idle',
+  ];
+  $state = $aliases[$state] ?? $state;
+  $allowed = ['idle', 'thinking', 'correct', 'error', 'hint', 'explaining', 'session_complete'];
+  return in_array($state, $allowed, true) ? $state : 'idle';
+}
+
 function nova_state(string $state): string {
-  $allowed = ['success', 'neutral', 'warning', 'thinking', 'focus', 'error'];
-  return in_array($state, $allowed, true) ? $state : 'neutral';
+  return match (nova_semantic_state($state)) {
+    'correct', 'session_complete' => 'success',
+    'hint' => 'warning',
+    'explaining' => 'focus',
+    'thinking' => 'thinking',
+    'error' => 'error',
+    default => 'neutral',
+  };
 }
 
 function nova_avatar_html(string $state = 'neutral', string $label = 'Nova'): string {
-  $state = nova_state($state);
-  return '<span class="nova-avatar nova-avatar--'.e($state).'" role="img" aria-label="'.e($label).'"></span>';
+  $semantic = nova_semantic_state($state);
+  $visual = nova_state($semantic);
+  return '<span class="nova-avatar nova-avatar--'.e($visual).'" data-nova-state="'.e($semantic).'" role="img" aria-label="'.e($label).'"></span>';
 }
 
 function nova_internal_href(string $href): string {
@@ -18,15 +38,16 @@ function nova_internal_href(string $href): string {
 }
 
 function nova_coach_html(array $options = []): string {
-  $state = nova_state((string)($options['state'] ?? 'neutral'));
+  $semantic = nova_semantic_state((string)($options['state'] ?? 'idle'));
+  $state = nova_state($semantic);
   $title = trim((string)($options['title'] ?? 'Nova'));
   $message = trim((string)($options['message'] ?? ''));
   $actionLabel = trim((string)($options['action_label'] ?? ''));
   $actionHref = nova_internal_href(trim((string)($options['action_href'] ?? '')));
   $compact = !empty($options['compact']);
 
-  $html = '<section class="nova-coach nova-coach--'.e($state).($compact ? ' nova-coach--compact' : '').'">';
-  $html .= nova_avatar_html($state);
+  $html = '<section class="nova-coach nova-coach--'.e($state).($compact ? ' nova-coach--compact' : '').'" data-nova-state="'.e($semantic).'">';
+  $html .= nova_avatar_html($semantic);
   $html .= '<div class="nova-coach__content">';
   if ($title !== '') $html .= '<strong class="nova-coach__title">'.e($title).'</strong>';
   if ($message !== '') $html .= '<p class="nova-coach__message">'.e($message).'</p>';

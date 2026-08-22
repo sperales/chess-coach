@@ -86,7 +86,7 @@ $trainingPreferences = training_goal_settings_for_user((int)$u['id']);
   </section>
 
   <section class="panel training-completion-panel" id="trainingCompletionPanel" hidden>
-    <div class="training-completion-nova" aria-hidden="true"><span class="nova-avatar nova-avatar--success"></span></div>
+    <div class="training-completion-nova" aria-hidden="true"><span class="nova-avatar nova-avatar--success" data-nova-state="session_complete"></span></div>
     <div>
       <span class="eyebrow">Entrenamiento completado</span>
       <h2>Buen trabajo. Ya puedes comparar tu progreso.</h2>

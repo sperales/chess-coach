@@ -321,12 +321,18 @@ function reviewMobileCoachHtml() {
   const good = Number(counts.best || 0) + Number(counts.excellent || 0) + Number(counts.good || 0);
   const bad = Number(counts.mistake || 0) + Number(counts.blunder || 0);
   const critical = (reviewData.moves || []).map((move,index) => ({move,index})).filter(({move}) => ['mistake','blunder'].includes(move.review_bucket)).slice(0,2);
+  const currentOpportunity = reviewData?.moves?.[currentMoveIndex]?.training_opportunity || null;
+  const opportunity = currentOpportunity || (reviewData.moves || []).map(move => move.training_opportunity).find(Boolean) || null;
+  const trainingAction = opportunity
+    ? `<article class="review-sheet-coach-note"><strong>Práctica disponible</strong><p>${rEscape(opportunity.concept_label || 'Entrenamiento recomendado')} · oportunidad pedagógica validada.</p></article>
+       <a class="review-sheet-training-link" href="${rEscape(opportunity.training_url || 'training.php')}">Entrenar este patrón ›</a>`
+    : '<p class="muted">Esta partida no contiene todavía una oportunidad pedagógica válida para entrenar.</p>';
   return `<section class="review-sheet-coach-head"><span class="nova-avatar nova-avatar--neutral" role="img" aria-label="Nova"></span><div><strong>Diagnóstico de la partida</strong><p>${rEscape(summary.comment || '')}</p></div></section>
     <article class="review-sheet-coach-note success"><strong>Lo que hiciste bien</strong><p>${good} jugadas mantuvieron o mejoraron tu posición.</p></article>
     <article class="review-sheet-coach-note warning"><strong>Patrón a mejorar</strong><p>${bad ? `${bad} decisiones críticas cambiaron el rumbo de la partida.` : 'No aparecen errores graves propios.'}</p></article>
     <h3>Momentos relacionados</h3>
     <div class="review-sheet-related">${critical.map(({move,index}) => `<button type="button" data-review-move-index="${index}">Revisar jugada ${Math.floor((Number(move.ply)-1)/2)+1} ›</button>`).join('') || '<span class="muted">Sin momentos críticos pendientes.</span>'}</div>
-    <a class="review-sheet-training-link" href="training.php">Empezar entrenamiento ›</a>`;
+    ${trainingAction}`;
 }
 
 function ensureTagList(id, afterId, extraClass) {

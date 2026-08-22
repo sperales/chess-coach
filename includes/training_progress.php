@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/training_mastery.php';
+require_once __DIR__ . '/training_adaptation.php';
 
 const TRAINING_PROGRESS_RULE_VERSION = 1;
 const TRAINING_PROGRESS_MAX_HINT_LEVEL = 3;
@@ -225,6 +227,15 @@ function training_progress_update_solve_run_attempts(int $userId, int $runId, in
   return training_progress_run_for_user($runId, $userId);
 }
 
+function training_progress_mark_first_move(int $userId, int $runId): void {
+  db()->prepare('UPDATE training_solve_runs
+                 SET first_move_at=COALESCE(first_move_at,NOW()),
+                     time_to_first_move_ms=COALESCE(time_to_first_move_ms,TIMESTAMPDIFF(MICROSECOND,started_at,NOW()) DIV 1000),
+                     updated_at=NOW()
+                 WHERE id=? AND user_id=? AND status="active"')
+    ->execute([$runId, $userId]);
+}
+
 function training_progress_complete_solve_run(
   int $userId,
   int $runId,
@@ -290,6 +301,12 @@ function training_progress_complete_solve_run(
     $completed = training_progress_run_for_user($runId, $userId);
     $pdo->commit();
     if (!$completed) throw new RuntimeException('No se pudo recuperar la resolucion completada.');
+    try {
+      training_mastery_record_source($userId, 'solve', $runId);
+    } catch (Throwable $masteryError) {
+      error_log('Training mastery update failed: ' . $masteryError->getMessage());
+    }
+    training_adapt_pending_session($userId, empty($completed['session_id']) ? null : (int)$completed['session_id']);
     return $completed;
   } catch (Throwable $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();

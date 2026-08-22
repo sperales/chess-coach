@@ -5,6 +5,7 @@ require_once __DIR__ . '/stockfish.php';
 require_once __DIR__ . '/adaptive_analysis.php';
 require_once __DIR__ . '/smart_tags.php';
 require_once __DIR__ . '/training.php';
+require_once __DIR__ . '/training_opportunities.php';
 require_once __DIR__ . '/openings.php';
 
 function analysis_status_values(): array {
@@ -563,6 +564,12 @@ function process_analysis_job_with_engine(int $analysisId, int $userId): array {
       $runner?->exitCode(),
       $analysisId,
     ]);
+    try {
+      training_opportunity_sync_analysis($analysisId, $userId);
+    } catch (Throwable $opportunityError) {
+      // Opportunity derivation is auditable metadata and must not invalidate a completed engine analysis.
+      error_log('Training opportunity sync failed: ' . $opportunityError->getMessage());
+    }
     try {
       player_progress_recalculate($userId, 'analysis_completed');
     } catch (Throwable $progressError) {
